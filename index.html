@@ -404,6 +404,54 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
 .row-total{font-size:18px;font-weight:700;color:var(--rose);}
 
 .toast-wrap{position:fixed;bottom:24px;right:24px;z-index:1000;display:flex;flex-direction:column;gap:10px;}
+
+/* ===== Floating AI Chat Widget ===== */
+#chatWidgetBtn{
+  position:fixed;bottom:24px;right:24px;z-index:850;
+  width:58px;height:58px;border-radius:50%;
+  background:linear-gradient(135deg,var(--rose),var(--pink));
+  color:#fff;font-size:26px;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 6px 20px rgba(194,24,91,0.4);cursor:pointer;border:none;
+  transition:transform .2s;
+}
+#chatWidgetBtn:hover{transform:scale(1.08);}
+#chatWidgetWindow{
+  position:fixed;bottom:96px;right:24px;z-index:851;
+  width:360px;max-width:92vw;height:520px;max-height:75vh;
+  background:#fff;border-radius:18px;box-shadow:0 16px 48px rgba(0,0,0,0.22);
+  display:none;flex-direction:column;overflow:hidden;
+}
+#chatWidgetWindow.show{display:flex;}
+#chatWidgetHeader{
+  background:linear-gradient(120deg,var(--rose),var(--rose-dark));
+  color:#fff;padding:16px 18px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;
+}
+#chatWidgetBody{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;background:var(--blush);}
+.cw-msg{max-width:82%;padding:10px 14px;border-radius:14px;font-size:13.5px;line-height:1.55;}
+.cw-bot{background:#fff;color:var(--ink);align-self:flex-start;border:1px solid var(--line);border-bottom-left-radius:4px;}
+.cw-user{background:var(--rose);color:#fff;align-self:flex-end;border-bottom-right-radius:4px;}
+.cw-typing{display:flex;gap:4px;padding:12px 14px;}
+.cw-typing span{width:6px;height:6px;border-radius:50%;background:var(--ink-soft);opacity:.5;animation:cwBlink 1.2s infinite;}
+.cw-typing span:nth-child(2){animation-delay:.2s;} .cw-typing span:nth-child(3){animation-delay:.4s;}
+@keyframes cwBlink{0%,80%,100%{opacity:.3;} 40%{opacity:1;}}
+#chatWidgetQuickReplies{display:flex;gap:6px;padding:0 14px 10px;flex-wrap:wrap;flex-shrink:0;background:var(--blush);}
+#chatWidgetQuickReplies button{
+  font-size:11.5px;padding:6px 11px;border-radius:16px;background:#fff;border:1px solid var(--line);
+  color:var(--rose);white-space:nowrap;cursor:pointer;
+}
+#chatWidgetInputRow{display:flex;gap:8px;padding:12px 14px;border-top:1px solid var(--line);flex-shrink:0;background:#fff;}
+#chatWidgetInputRow input{
+  flex:1;border:1.5px solid var(--line);border-radius:22px;padding:10px 16px;font-size:13.5px;font-family:inherit;
+}
+#chatWidgetInputRow input:focus{outline:none;border-color:var(--pink);}
+#chatWidgetInputRow button{
+  width:40px;height:40px;border-radius:50%;background:var(--rose);color:#fff;border:none;
+  font-size:16px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;
+}
+@media(max-width:480px){
+  #chatWidgetBtn{bottom:70px;}
+  #chatWidgetWindow{bottom:140px;right:12px;width:94vw;height:65vh;}
+}
 .toast{background:var(--ink);color:#fff;padding:13px 20px;border-radius:10px;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,0.2);animation:toastin .25s;}
 @keyframes toastin{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
 
@@ -419,6 +467,8 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
   .mobile-nav a.active{color:var(--rose);}
   .mobile-nav .icon{font-size:20px;}
   body{padding-bottom:60px;}
+  #chatFab{bottom:76px;right:14px;}
+  #chatPanel{bottom:76px;right:14px;width:calc(100vw - 28px);height:65vh;}
   .hero{grid-template-columns:1fr;}
   .hero-side{flex-direction:row;}
   .header-row{flex-wrap:wrap;}
@@ -919,6 +969,7 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
           <a class="active" onclick="AdminDash.tab(this,'overview')">📊 ওভারভিউ</a>
           <a onclick="AdminDash.tab(this,'products')">📦 প্রোডাক্ট ম্যানেজমেন্ট</a>
           <a onclick="AdminDash.tab(this,'orders')">🧾 অর্ডার</a>
+          <a onclick="AdminDash.tab(this,'messages')">💬 মেসেজ <span id="adminUnreadBadge" style="display:none;background:var(--rose);color:#fff;font-size:10px;font-weight:700;border-radius:10px;padding:1px 6px;margin-left:4px;">0</span></a>
           <a onclick="AdminDash.tab(this,'finance')">💰 ফাইন্যান্স রিপোর্ট</a>
           <a onclick="AdminDash.tab(this,'settings')">⚙️ সেটিংস</a>
           <a onclick="OwnerAuth.lock()" class="dash-side-danger" style="color:#C0392B;">🔒 ড্যাশবোর্ড লক করুন</a>
@@ -1164,8 +1215,12 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
         <a href="mailto:golapishoponline.bd@gmail.com" style="word-break:break-all;">golapishoponline.bd@gmail.com</a>
       </div>
       <div style="display:flex;gap:10px;">
-        <a href="https://facebook.com/golapishoponline" target="_blank" rel="noopener" title="Facebook পেজ" style="width:34px;height:34px;background:#3D3043;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">📘</a>
-        <a href="https://facebook.com/golapishoponline.bd" target="_blank" rel="noopener" title="Facebook প্রোফাইল" style="width:34px;height:34px;background:#3D3043;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">👤</a>
+        <a href="https://facebook.com/golapishoponline" target="_blank" rel="noopener" title="Facebook পেজ" style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:#1877F2;box-shadow:0 2px 8px rgba(24,119,242,0.45);transition:.2s;" onmouseover="this.style.boxShadow='0 4px 14px rgba(24,119,242,0.65)'" onmouseout="this.style.boxShadow='0 2px 8px rgba(24,119,242,0.45)'">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M22 12.06C22 6.51 17.52 2 12 2S2 6.51 2 12.06c0 5 3.66 9.15 8.44 9.94v-7.03H7.9v-2.91h2.54V9.84c0-2.5 1.49-3.89 3.78-3.89 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56v1.88h2.78l-.45 2.91h-2.33V22c4.78-.79 8.44-4.94 8.44-9.94Z" fill="#fff"/></svg>
+        </a>
+        <a href="https://facebook.com/golapishoponline.bd" target="_blank" rel="noopener" title="Facebook প্রোফাইল" style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:#1877F2;box-shadow:0 2px 8px rgba(24,119,242,0.45);transition:.2s;" onmouseover="this.style.boxShadow='0 4px 14px rgba(24,119,242,0.65)'" onmouseout="this.style.boxShadow='0 2px 8px rgba(24,119,242,0.45)'">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M22 12.06C22 6.51 17.52 2 12 2S2 6.51 2 12.06c0 5 3.66 9.15 8.44 9.94v-7.03H7.9v-2.91h2.54V9.84c0-2.5 1.49-3.89 3.78-3.89 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56v1.88h2.78l-.45 2.91h-2.33V22c4.78-.79 8.44-4.94 8.44-9.94Z" fill="#fff"/></svg>
+        </a>
       </div>
     </div>
     <div>
@@ -1186,7 +1241,10 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
   <div class="footer-bottom">
     <span>© ২০২৬ Golapi Shop Online. সর্বস্বত্ব সংরক্ষিত।</span>
     <span style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
-      <a href="https://facebook.com/golapishoponline" target="_blank" rel="noopener">Facebook</a>
+      <a href="https://facebook.com/golapishoponline" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:5px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M22 12.06C22 6.51 17.52 2 12 2S2 6.51 2 12.06c0 5 3.66 9.15 8.44 9.94v-7.03H7.9v-2.91h2.54V9.84c0-2.5 1.49-3.89 3.78-3.89 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56v1.88h2.78l-.45 2.91h-2.33V22c4.78-.79 8.44-4.94 8.44-9.94Z" fill="#1877F2"/></svg>
+        Facebook
+      </a>
       <a href="#">প্রাইভেসি পলিসি</a><a href="#">শর্তাবলী</a>
     </span>
   </div>
@@ -1197,6 +1255,38 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
 </footer>
 
 <!-- ============ MOBILE BOTTOM NAV ============ -->
+<!-- ============ FLOATING AI CHAT WIDGET ============ -->
+<button id="chatWidgetBtn" onclick="ChatWidget.toggle()" aria-label="চ্যাট সহায়ক খুলুন">
+  <span id="chatWidgetIcon">💬</span>
+</button>
+
+<div id="chatWidgetWindow">
+  <div id="chatWidgetHeader">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="font-size:22px;">🌹</span>
+      <div>
+        <div style="font-weight:700;font-size:14.5px;">Golapi সহায়ক</div>
+        <div style="font-size:11.5px;opacity:.85;">প্রায় সাথে সাথেই উত্তর দেয়</div>
+      </div>
+    </div>
+    <button onclick="ChatWidget.toggle()" aria-label="চ্যাট বন্ধ করুন" style="background:none;border:none;color:#fff;font-size:20px;cursor:pointer;padding:4px;">✕</button>
+  </div>
+  <div id="chatWidgetBody">
+    <div class="cw-msg cw-bot">
+      হ্যালো! 🌹 আমি Golapi Shop-এর AI সহায়ক। প্রোডাক্ট, ডেলিভারি, পেমেন্ট বা অর্ডার নিয়ে যা জানতে চান, জিজ্ঞেস করুন।
+    </div>
+  </div>
+  <div id="chatWidgetQuickReplies">
+    <button onclick="ChatWidget.quickAsk('ডেলিভারি কতদিনে পাব?')">ডেলিভারি সময়</button>
+    <button onclick="ChatWidget.quickAsk('কোন কোন পেমেন্ট মেথড আছে?')">পেমেন্ট মেথড</button>
+    <button onclick="ChatWidget.quickAsk('রিটার্ন পলিসি কী?')">রিটার্ন পলিসি</button>
+  </div>
+  <div id="chatWidgetInputRow">
+    <input type="text" id="chatWidgetInput" placeholder="আপনার প্রশ্ন লিখুন..." onkeydown="if(event.key==='Enter')ChatWidget.send();">
+    <button onclick="ChatWidget.send()" aria-label="পাঠান">➤</button>
+  </div>
+</div>
+
 <nav class="mobile-nav">
   <a class="active" onclick="Router.go('home')"><span class="icon">🏠</span>হোম</a>
   <a onclick="Router.go('listing',{cat:'all'})"><span class="icon">📂</span>ক্যাটাগরি</a>
@@ -1386,6 +1476,31 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
   </div>
 </div>
 
+<!-- ============ FLOATING CHAT WIDGET ============ -->
+<button id="chatFab" onclick="ChatWidget.toggle()" style="position:fixed;bottom:24px;right:20px;width:56px;height:56px;border-radius:50%;background:var(--rose);color:#fff;box-shadow:0 6px 20px rgba(194,24,91,0.4);display:flex;align-items:center;justify-content:center;font-size:24px;z-index:400;transition:.2s;">
+  💬
+  <span id="chatUnreadBadge" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--gold);color:var(--ink);font-size:11px;font-weight:700;border-radius:50%;width:20px;height:20px;align-items:center;justify-content:center;display:flex;border:2px solid #fff;">0</span>
+</button>
+
+<div id="chatPanel" style="display:none;position:fixed;bottom:24px;right:20px;width:340px;max-width:92vw;height:480px;max-height:75vh;background:#fff;border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,0.2);z-index:401;flex-direction:column;overflow:hidden;">
+  <div style="background:var(--rose);color:#fff;padding:16px 18px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+    <div>
+      <strong style="font-size:15px;">🌹 Golapi Shop সাপোর্ট</strong>
+      <div style="font-size:11.5px;opacity:.85;margin-top:2px;">সাধারণত কিছুক্ষণের মধ্যে রিপ্লাই দেওয়া হয়</div>
+    </div>
+    <button onclick="ChatWidget.toggle()" style="color:#fff;font-size:20px;">✕</button>
+  </div>
+  <div id="chatMessages" style="flex:1;overflow-y:auto;padding:16px;background:var(--blush);display:flex;flex-direction:column;gap:10px;"></div>
+  <div id="chatLoginPrompt" style="display:none;padding:20px;text-align:center;background:#fff;border-top:1px solid var(--line);">
+    <p style="font-size:13px;color:var(--ink-soft);margin-bottom:12px;">চ্যাট করতে লগইন করুন</p>
+    <button class="btn btn-primary" style="padding:9px 20px;font-size:13px;" onclick="ChatWidget.toggle();AuthUI.open();">লগইন করুন</button>
+  </div>
+  <div id="chatInputRow" style="display:flex;gap:8px;padding:12px;border-top:1px solid var(--line);background:#fff;flex-shrink:0;">
+    <input type="text" id="chatInput" placeholder="মেসেজ লিখুন..." style="flex:1;padding:10px 14px;border:1.5px solid var(--line);border-radius:20px;font-size:13.5px;background:var(--blush);">
+    <button onclick="ChatWidget.send()" style="width:38px;height:38px;border-radius:50%;background:var(--rose);color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;">➤</button>
+  </div>
+</div>
+
 <div class="toast-wrap" id="toastWrap"></div>
 
 <script>
@@ -1407,6 +1522,108 @@ window.addEventListener('firebase-ready', () => {
   Auth.init();
   ProductStore.refreshAndRerender();
 });
+
+/* ---------- Floating AI Chat Widget (customer support assistant) ----------
+   প্রতিটা মেসেজ Anthropic API-তে যায় (Claude), পুরো shop-context সহ একটা system
+   prompt পাঠানো হয় যাতে AI সঠিকভাবে ডেলিভারি/পেমেন্ট/নীতি সংক্রান্ত প্রশ্নের উত্তর
+   দিতে পারে। API key এখানে দরকার নেই — fetch সরাসরি endpoint-এ যায়। */
+const ChatWidget = {
+  isOpen: false,
+  history: [], // [{role:'user'|'assistant', content:'...'}]
+  systemPrompt: `তুমি Golapi Shop Online-এর কাস্টমার সাপোর্ট সহায়ক। বাংলায় উত্তর দাও, সংক্ষিপ্ত ও বন্ধুত্বপূর্ণভাবে।
+
+দোকানের তথ্য:
+- আমরা শুধু নোয়াখালী সদর ও বেগমগঞ্জ উপজেলায় ডেলিভারি দিই (নিজস্ব লোকাল ড্রাইভার দিয়ে, কোনো বাইরের কুরিয়ার নয়)
+- ডেলিভারি সময়: এক্সপ্রেস ৬০-৯০ মিনিট (অতিরিক্ত ৳২০), বা আজই ডেলিভারি (ফ্রি)
+- পেমেন্ট পদ্ধতি: ক্যাশ অন ডেলিভারি (COD), bKash, Nagad, কার্ড/নেট ব্যাংকিং (SSLCommerz)
+- ফ্রি ডেলিভারি ৳১০০০+ অর্ডারে
+- রিটার্ন পলিসি: পণ্য হাতে পাওয়ার ৩ দিনের মধ্যে রিটার্ন করা যায়
+- কাস্টমার রেজিস্ট্রেশনে নাম, ইমেইল, মোবাইল, NID, পাসওয়ার্ড লাগে
+- ক্যাটাগরি: ইলেকট্রনিক্স, ফ্যাশন, হোম & লিভিং, বিউটি, বুকস, গ্রোসারি, স্পোর্টস, টয়েস, হেলথ, বেবি
+- যোগাযোগ ইমেইল: golapishoponline.bd@gmail.com
+
+যদি কোনো প্রশ্নের উত্তর তোমার জানা তথ্যের মধ্যে না থাকে (যেমন একটা নির্দিষ্ট প্রোডাক্টের স্টক আছে কিনা, কোনো অর্ডারের বর্তমান অবস্থা), সততার সাথে বলো যে এই তথ্য তোমার কাছে নেই এবং কাস্টমারকে ইমেইলে যোগাযোগ করতে বা সরাসরি ওয়েবসাইটে প্রোডাক্ট পেজ দেখতে বলো। কখনো অনুমান করে ভুল তথ্য দিও না।`,
+
+  toggle(){
+    this.isOpen = !this.isOpen;
+    document.getElementById('chatWidgetWindow').classList.toggle('show', this.isOpen);
+    document.getElementById('chatWidgetIcon').textContent = this.isOpen ? '✕' : '💬';
+    if(this.isOpen){
+      setTimeout(()=>document.getElementById('chatWidgetInput').focus(), 200);
+    }
+  },
+
+  quickAsk(question){
+    document.getElementById('chatWidgetInput').value = question;
+    this.send();
+  },
+
+  appendMessage(role, text){
+    const body = document.getElementById('chatWidgetBody');
+    const div = document.createElement('div');
+    div.className = 'cw-msg ' + (role==='user' ? 'cw-user' : 'cw-bot');
+    div.textContent = text;
+    body.appendChild(div);
+    body.scrollTop = body.scrollHeight;
+    return div;
+  },
+
+  showTyping(){
+    const body = document.getElementById('chatWidgetBody');
+    const div = document.createElement('div');
+    div.className = 'cw-msg cw-bot cw-typing';
+    div.id = 'cwTypingIndicator';
+    div.innerHTML = '<span></span><span></span><span></span>';
+    body.appendChild(div);
+    body.scrollTop = body.scrollHeight;
+  },
+
+  hideTyping(){
+    const el = document.getElementById('cwTypingIndicator');
+    if(el) el.remove();
+  },
+
+  async send(){
+    const input = document.getElementById('chatWidgetInput');
+    const message = input.value.trim();
+    if(!message) return;
+    input.value = '';
+
+    this.appendMessage('user', message);
+    this.history.push({role:'user', content: message});
+    this.showTyping();
+
+    try{
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6",
+          max_tokens: 500,
+          system: this.systemPrompt,
+          messages: this.history,
+        })
+      });
+      const data = await response.json();
+      this.hideTyping();
+
+      const replyText = (data.content || [])
+        .filter(b => b.type === 'text')
+        .map(b => b.text)
+        .join('\n') || 'দুঃখিত, এই মুহূর্তে উত্তর দিতে পারছি না। আবার চেষ্টা করুন।';
+
+      this.appendMessage('bot', replyText);
+      this.history.push({role:'assistant', content: replyText});
+
+      // কথোপকথন বেশি লম্বা হয়ে গেলে পুরনো অংশ ছেঁটে ফেলি, যাতে প্রতিটা request ছোট থাকে
+      if(this.history.length > 20) this.history = this.history.slice(-20);
+    }catch(e){
+      this.hideTyping();
+      devWarn('Chat widget error:', e.message);
+      this.appendMessage('bot', 'সংযোগে সমস্যা হয়েছে। একটু পরে আবার চেষ্টা করুন, বা golapishoponline.bd@gmail.com-এ মেসেজ দিন।');
+    }
+  }
+};
 
 /* ---------- Toast ---------- */
 function toast(msg){
