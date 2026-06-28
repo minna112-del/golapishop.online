@@ -212,7 +212,10 @@ nav.catnav a.flash{color:var(--gold);font-weight:700;}
 }
 .hero-main{
   border-radius:var(--radius);overflow:hidden;position:relative;
-  background:linear-gradient(120deg,#FFE3EC 0%,#FFD3E1 100%);
+  background:
+    linear-gradient(120deg, rgba(255,227,236,0.55) 0%, rgba(255,211,225,0.65) 100%),
+    url('https://raw.githubusercontent.com/minna112-del/create-ai-video/main/banner.jpeg');
+  background-size:cover;background-position:center;
   min-height:340px;display:flex;align-items:center;padding:48px;
 }
 .hero-main::after{
@@ -422,6 +425,14 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
   .search-wrap{order:3;flex:1 0 100%;margin-top:8px;}
   .topbar{display:none;}
   #areaPillMobile{display:flex !important;}
+
+  /* Footer: stack into a single readable column instead of squeezing into 2 tight columns */
+  footer{padding:36px 20px 90px;}
+  .footer-grid{grid-template-columns:1fr;gap:28px;text-align:left;}
+  .footer-grid > div{border-bottom:1px solid #3D3043;padding-bottom:22px;}
+  .footer-grid > div:last-child{border-bottom:none;padding-bottom:0;}
+  .pay-icons{justify-content:flex-start;}
+  .footer-bottom{flex-direction:column;align-items:flex-start;gap:10px;text-align:left;}
 }
 @media(max-width:480px){
   .hero-side{flex-direction:column;}
@@ -483,6 +494,11 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
 .stat-card .value{font-size:24px;font-weight:700;font-family:'Poppins';color:var(--ink);}
 .stat-card .value.rose{color:var(--rose);}
 .data-table{width:100%;border-collapse:collapse;background:#fff;border-radius:var(--radius);overflow:hidden;border:1px solid var(--line);}
+.table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+@media(max-width:760px){
+  .table-scroll{margin:0 -4px;}
+  .data-table{min-width:640px;}
+}
 .data-table th{background:var(--blush);text-align:left;padding:12px 14px;font-size:12.5px;color:var(--ink-soft);font-weight:600;}
 .data-table td{padding:12px 14px;font-size:13.5px;border-bottom:1px solid var(--line);}
 .status-pill{padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:600;}
@@ -531,7 +547,10 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
 <!-- ============ HEADER ============ -->
 <header class="main-header">
   <div class="header-row">
-    <a href="#" class="logo" onclick="Router.go('home')"><span class="petal"></span> Golapi Shop</a>
+    <a href="#" class="logo" onclick="Router.go('home')">
+      <img src="https://raw.githubusercontent.com/minna112-del/create-ai-video/main/logo.jpeg" alt="Golapi Shop Online" style="height:40px;width:auto;border-radius:8px;display:block;" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';">
+      <span style="display:none;align-items:center;gap:6px;"><span class="petal"></span> Golapi Shop</span>
+    </a>
     <button id="areaPillMobile" onclick="AreaUI.open()" style="display:none;align-items:center;gap:4px;font-size:11.5px;background:var(--blush);color:var(--rose);padding:5px 10px;border-radius:20px;white-space:nowrap;">📍 <span id="areaPillText">এলাকা সেট করুন</span></button>
     <div class="search-wrap">
       <input type="text" id="searchInput" placeholder="প্রোডাক্ট, ব্র্যান্ড বা ক্যাটাগরি খুঁজুন...">
@@ -893,10 +912,10 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
             </div>
             <div class="card-box">
               <h3 style="font-size:15px;margin-bottom:14px;">সাম্প্রতিক অর্ডার</h3>
-              <table class="data-table" id="adminRecentOrdersTable">
+              <div class="table-scroll"><table class="data-table" id="adminRecentOrdersTable">
                 <thead><tr><th>অর্ডার ID</th><th>কাস্টমার</th><th>মোট</th><th>স্ট্যাটাস</th></tr></thead>
                 <tbody></tbody>
-              </table>
+              </table></div>
             </div>
           </div>
 
@@ -905,18 +924,18 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
               <h2>প্রোডাক্ট ম্যানেজমেন্ট</h2>
               <button class="btn btn-primary" onclick="AdminDash.openAddProduct()">+ নতুন প্রোডাক্ট যুক্ত করুন</button>
             </div>
-            <table class="data-table">
+            <div class="table-scroll"><table class="data-table">
               <thead><tr><th>প্রোডাক্ট</th><th>শাখা</th><th>ক্যাটাগরি</th><th>মূল্য</th><th>স্টক</th><th>স্ট্যাটাস</th><th>একশন</th></tr></thead>
               <tbody id="adminProductsTable"></tbody>
-            </table>
+            </table></div>
           </div>
 
           <div id="adminOrdersPane" style="display:none;">
             <h2 style="margin-bottom:20px;">সব অর্ডার</h2>
-            <table class="data-table">
+            <div class="table-scroll"><table class="data-table">
               <thead><tr><th>অর্ডার ID</th><th>শাখা</th><th>কাস্টমার</th><th>ফোন</th><th>মোট</th><th>পেমেন্ট</th><th>ড্রাইভার</th><th>স্ট্যাটাস</th></tr></thead>
               <tbody id="adminOrdersTable"></tbody>
-            </table>
+            </table></div>
           </div>
 
           <div id="adminFinancePane" style="display:none;">
@@ -944,10 +963,10 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
                 <h3 style="font-size:15px;">🚴 ড্রাইভার ম্যানেজমেন্ট</h3>
                 <button class="btn btn-outline" style="padding:7px 14px;font-size:13px;" onclick="DriverManage.openAdd()">+ নতুন ড্রাইভার</button>
               </div>
-              <table class="data-table">
+              <div class="table-scroll"><table class="data-table">
                 <thead><tr><th>নাম</th><th>শাখা</th><th>মোবাইল</th><th>পিন</th><th>স্ট্যাটাস</th></tr></thead>
                 <tbody id="driverManageTable"></tbody>
-              </table>
+              </table></div>
               <p style="font-size:12px;color:var(--ink-soft);margin-top:10px;">ড্রাইভার এই নম্বর ও পিন দিয়ে <a href="#" onclick="Router.go('driver')" style="color:var(--rose);">ড্রাইভার পোর্টালে</a> লগইন করবে।</p>
             </div>
 
@@ -1057,18 +1076,18 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
                 <h2>এই শাখার প্রোডাক্ট</h2>
                 <button class="btn btn-primary" onclick="ZoneManagerDash.openAddProduct()">+ নতুন প্রোডাক্ট</button>
               </div>
-              <table class="data-table">
+              <div class="table-scroll"><table class="data-table">
                 <thead><tr><th>প্রোডাক্ট</th><th>ক্যাটাগরি</th><th>মূল্য</th><th>স্টক</th><th>স্ট্যাটাস</th><th>একশন</th></tr></thead>
                 <tbody id="zmProductsTable"></tbody>
-              </table>
+              </table></div>
             </div>
 
             <div id="zmOrdersPane" style="display:none;">
               <h2 style="margin-bottom:20px;">এই শাখার অর্ডার</h2>
-              <table class="data-table">
+              <div class="table-scroll"><table class="data-table">
                 <thead><tr><th>অর্ডার ID</th><th>কাস্টমার</th><th>ফোন</th><th>মোট</th><th>ড্রাইভার</th><th>স্ট্যাটাস</th></tr></thead>
                 <tbody id="zmOrdersTable"></tbody>
-              </table>
+              </table></div>
             </div>
 
             <div id="zmDriversPane" style="display:none;">
@@ -1076,10 +1095,10 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
                 <h2>এই শাখার ড্রাইভার</h2>
                 <button class="btn btn-outline" onclick="DriverManage.openAdd(ZoneManagerDash.currentZone)">+ নতুন ড্রাইভার</button>
               </div>
-              <table class="data-table">
+              <div class="table-scroll"><table class="data-table">
                 <thead><tr><th>নাম</th><th>শাখা</th><th>মোবাইল</th><th>পিন</th><th>স্ট্যাটাস</th></tr></thead>
                 <tbody id="zmDriverManageTable"></tbody>
-              </table>
+              </table></div>
             </div>
           </div>
         </div>
@@ -1093,6 +1112,7 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
 <footer>
   <div class="footer-grid">
     <div>
+      <img src="https://raw.githubusercontent.com/minna112-del/create-ai-video/main/logo.jpeg" alt="Golapi Shop Online" style="height:36px;width:auto;border-radius:8px;display:block;margin-bottom:10px;" onerror="this.style.display='none';">
       <h5 style="font-family:'Tiro Bangla';font-size:20px;color:var(--pink);">🌹 Golapi Shop</h5>
       <p style="font-size:13px;color:#9F8EA3;margin-bottom:14px;">আপনার শপিং দুনিয়া — নোয়াখালী সদর ও বেগমগঞ্জের নিজস্ব অনলাইন শপ।</p>
     </div>
@@ -1102,30 +1122,28 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
       <a href="#" onclick="Router.go('track')">অর্ডার ট্র্যাক করুন</a>
       <a href="#">রিটার্ন ও রিফান্ড</a>
       <a href="#">পেমেন্ট পদ্ধতি</a>
-      <a href="#" onclick="Router.go('admin-dash')" style="opacity:.5;font-size:11.5px;">শপ ম্যানেজমেন্ট (Owner)</a>
-      <a href="#" onclick="Router.go('zone-manager')" style="opacity:.5;font-size:11.5px;">শাখা ব্যবস্থাপনা (Zone Manager)</a>
     </div>
     <div>
       <h5>যোগাযোগ</h5>
-      <div style="font-size:13px;color:#9F8EA3;margin-bottom:10px;">
-        <strong style="color:#C5B7C9;">হেড অফিস:</strong><br>
-        <a href="tel:+8801833485939" style="display:inline;">+880 1833-485939</a>
+      <div style="font-size:13px;color:#9F8EA3;margin-bottom:12px;">
+        <strong style="color:#C5B7C9;display:block;margin-bottom:3px;">হেড অফিস:</strong>
+        <a href="tel:+8801833485939">+880 1833-485939</a>
       </div>
-      <div style="font-size:13px;color:#9F8EA3;margin-bottom:10px;">
-        <strong style="color:#C5B7C9;">CEO — মোঃ মহসিন</strong><br>
-        <span style="color:#9F8EA3;">যোগাযোগ: হেড অফিস নম্বরে</span>
+      <div style="font-size:13px;color:#9F8EA3;margin-bottom:12px;">
+        <strong style="color:#C5B7C9;display:block;margin-bottom:3px;">CEO — মোঃ মহসিন</strong>
+        <span>যোগাযোগ: হেড অফিস নম্বরে</span>
       </div>
-      <div style="font-size:13px;color:#9F8EA3;margin-bottom:14px;">
-        <strong style="color:#C5B7C9;">Co-CEO — তানভীর আহমেদ হৃদয়</strong><br>
-        <a href="tel:+8801612057371" style="display:inline;">+880 1612-057371</a>
+      <div style="font-size:13px;color:#9F8EA3;margin-bottom:12px;">
+        <strong style="color:#C5B7C9;display:block;margin-bottom:3px;">Co-CEO — তানভীর আহমেদ হৃদয়</strong>
+        <a href="tel:+8801612057371">+880 1612-057371</a>
       </div>
-      <div style="font-size:13px;color:#9F8EA3;margin-bottom:14px;">
-        <strong style="color:#C5B7C9;">ইমেইল:</strong><br>
-        <a href="mailto:golapishoponline.bd@gmail.com" style="display:inline;word-break:break-all;">golapishoponline.bd@gmail.com</a>
+      <div style="font-size:13px;color:#9F8EA3;margin-bottom:16px;">
+        <strong style="color:#C5B7C9;display:block;margin-bottom:3px;">ইমেইল:</strong>
+        <a href="mailto:golapishoponline.bd@gmail.com" style="word-break:break-all;">golapishoponline.bd@gmail.com</a>
       </div>
       <div style="display:flex;gap:10px;">
-        <a href="https://facebook.com/golapishoponline" target="_blank" rel="noopener" title="Facebook পেজ" style="width:32px;height:32px;background:#3D3043;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;">📘</a>
-        <a href="https://facebook.com/golapishoponline.bd" target="_blank" rel="noopener" title="Facebook প্রোফাইল" style="width:32px;height:32px;background:#3D3043;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;">👤</a>
+        <a href="https://facebook.com/golapishoponline" target="_blank" rel="noopener" title="Facebook পেজ" style="width:34px;height:34px;background:#3D3043;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">📘</a>
+        <a href="https://facebook.com/golapishoponline.bd" target="_blank" rel="noopener" title="Facebook প্রোফাইল" style="width:34px;height:34px;background:#3D3043;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">👤</a>
       </div>
     </div>
     <div>
@@ -1145,10 +1163,14 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
   </div>
   <div class="footer-bottom">
     <span>© ২০২৬ Golapi Shop Online. সর্বস্বত্ব সংরক্ষিত।</span>
-    <span style="display:flex;gap:14px;align-items:center;">
+    <span style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
       <a href="https://facebook.com/golapishoponline" target="_blank" rel="noopener">Facebook</a>
       <a href="#">প্রাইভেসি পলিসি</a><a href="#">শর্তাবলী</a>
     </span>
+  </div>
+  <div style="max-width:1280px;margin:14px auto 0;padding-top:14px;border-top:1px solid #2A2030;display:flex;gap:16px;flex-wrap:wrap;">
+    <a href="#" onclick="Router.go('admin-dash')" style="font-size:11px;opacity:.4;color:#9F8EA3;">শপ ম্যানেজমেন্ট</a>
+    <a href="#" onclick="Router.go('zone-manager')" style="font-size:11px;opacity:.4;color:#9F8EA3;">শাখা ব্যবস্থাপনা</a>
   </div>
 </footer>
 
@@ -1549,7 +1571,7 @@ const OwnerAuth = {
     if(!FB){ msgEl.textContent='Firebase কানেক্ট নেই'; msgEl.className='form-msg err'; return; }
 
     try{
-      const snap = await FB.getDoc(FB.doc(FB.db,'settings','owner_pin'));
+      const snap = await FB.getDoc(FB.doc(FB.db,'setting','owner_pin'));
       const storedPin = snap.exists() ? snap.data().pin : null;
 
       if(!storedPin){
@@ -2569,7 +2591,7 @@ const ZoneManagerDash = {
     if(!pin){ msgEl.textContent='পিন দিন'; msgEl.className='form-msg err'; return; }
     if(!FB){ msgEl.textContent='Firebase কনফিগার করা হয়নি'; msgEl.className='form-msg err'; return; }
     try{
-      const docSnap = await FB.getDoc(FB.doc(FB.db,'settings','zone_manager_pins'));
+      const docSnap = await FB.getDoc(FB.doc(FB.db,'setting','zone_manager_pins'));
       const pins = docSnap.exists() ? docSnap.data() : {};
       if(!pins[zone] || pins[zone] !== pin){
         msgEl.textContent='পিন সঠিক নয়'; msgEl.className='form-msg err'; return;
@@ -2783,7 +2805,7 @@ const AdminDash = {
   async loadZoneManagerPins(){
     if(!FB) return;
     try{
-      const docSnap = await FB.getDoc(FB.doc(FB.db,'settings','zone_manager_pins'));
+      const docSnap = await FB.getDoc(FB.doc(FB.db,'setting','zone_manager_pins'));
       const pins = docSnap.exists() ? docSnap.data() : {};
       document.getElementById('zmPinSadar').value = pins.noakhali_sadar || '';
       document.getElementById('zmPinBegumganj').value = pins.begumganj || '';
@@ -2794,7 +2816,7 @@ const AdminDash = {
     const begumganjPin = document.getElementById('zmPinBegumganj').value.trim();
     if(!FB){ toast('Firebase কনফিগার করা হয়নি'); return; }
     try{
-      await FB.setDoc(FB.doc(FB.db,'settings','zone_manager_pins'), {
+      await FB.setDoc(FB.doc(FB.db,'setting','zone_manager_pins'), {
         noakhali_sadar: sadarPin, begumganj: begumganjPin
       });
       toast('✓ জোন ম্যানেজার পিন সংরক্ষণ করা হয়েছে');
