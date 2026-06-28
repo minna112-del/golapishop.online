@@ -487,7 +487,29 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
 .dash-side{background:#fff;border-right:1px solid var(--line);padding:20px 0;}
 .dash-side a{display:flex;align-items:center;gap:10px;padding:11px 22px;font-size:14px;color:var(--ink-soft);border-left:3px solid transparent;}
 .dash-side a:hover,.dash-side a.active{background:var(--blush);color:var(--rose);border-color:var(--rose);}
+.dash-side a.dash-side-danger{margin-top:10px;border-top:1px solid var(--line);padding-top:14px;}
+.dash-side-header{padding:0 22px 14px;border-bottom:1px solid var(--line);margin-bottom:10px;}
 .dash-main{padding:24px;}
+@media(max-width:800px){
+  /* On mobile, the dashboard sidebar would otherwise stack as a tall vertical list
+     above the content, pushing everything else far down the screen. Instead, turn
+     it into a horizontally-scrollable tab strip pinned to the top — same links,
+     much more usable on a phone. */
+  .dash-side{
+    display:flex;flex-direction:row;overflow-x:auto;-webkit-overflow-scrolling:touch;
+    border-right:none;border-bottom:1px solid var(--line);padding:10px 12px;gap:4px;
+    background:#fff;
+  }
+  .dash-side a{
+    flex-shrink:0;white-space:nowrap;border-left:none;border-bottom:3px solid transparent;
+    padding:8px 14px;border-radius:8px;
+  }
+  .dash-side a:hover,.dash-side a.active{border-color:var(--rose);border-radius:8px 8px 0 0;}
+  .dash-side a.dash-side-danger{margin-top:0;border-top:none;padding-top:8px;padding-left:14px;border-left:1px solid var(--line) !important;border-radius:0;}
+  .dash-side-header{padding:0 12px 0 0;border-bottom:none;margin-bottom:0;border-right:1px solid var(--line);}
+  .dash-side-header div{white-space:nowrap;}
+  .dash-main{padding:16px;}
+}
 .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:24px;}
 .stat-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:18px;}
 .stat-card .label{font-size:12.5px;color:var(--ink-soft);margin-bottom:6px;}
@@ -899,7 +921,7 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
           <a onclick="AdminDash.tab(this,'orders')">🧾 অর্ডার</a>
           <a onclick="AdminDash.tab(this,'finance')">💰 ফাইন্যান্স রিপোর্ট</a>
           <a onclick="AdminDash.tab(this,'settings')">⚙️ সেটিংস</a>
-          <a onclick="OwnerAuth.lock()" style="color:#C0392B;margin-top:10px;border-top:1px solid var(--line);padding-top:14px;">🔒 ড্যাশবোর্ড লক করুন</a>
+          <a onclick="OwnerAuth.lock()" class="dash-side-danger" style="color:#C0392B;">🔒 ড্যাশবোর্ড লক করুন</a>
         </aside>
         <div class="dash-main">
           <div id="adminOverviewPane">
@@ -1049,7 +1071,7 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
       <div id="zmDashBox" style="display:none;">
         <div class="dash-layout">
           <aside class="dash-side">
-            <div style="padding:0 22px 14px;border-bottom:1px solid var(--line);margin-bottom:10px;">
+            <div class="dash-side-header">
               <div style="font-weight:700;color:var(--rose);font-size:14px;">📍 <span id="zmZoneNameLabel">শাখা</span></div>
               <div style="font-size:12px;color:var(--ink-soft);margin-top:4px;">👤 <span id="zmManagerNameLabel">ম্যানেজার</span></div>
             </div>
@@ -1057,7 +1079,7 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
             <a onclick="ZoneManagerDash.tab(this,'products')">📦 প্রোডাক্ট</a>
             <a onclick="ZoneManagerDash.tab(this,'orders')">🧾 অর্ডার</a>
             <a onclick="ZoneManagerDash.tab(this,'drivers')">🚴 ড্রাইভার</a>
-            <a onclick="ZoneManagerDash.logout()" style="color:#C0392B;margin-top:10px;border-top:1px solid var(--line);padding-top:14px;">🔒 লগআউট</a>
+            <a onclick="ZoneManagerDash.logout()" class="dash-side-danger" style="color:#C0392B;">🔒 লগআউট</a>
           </aside>
           <div class="dash-main">
             <div id="zmOverviewPane">
@@ -1193,21 +1215,34 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
     </div>
     <div id="authFormMsg" class="form-msg"></div>
 
-    <div id="loginForm">
-      <div class="field"><label>ইমেইল / মোবাইল</label><input type="text" id="loginEmail"></div>
-      <div class="field"><label>পাসওয়ার্ড</label><input type="password" id="loginPass"></div>
-      <button class="btn btn-primary btn-block" onclick="AuthUI.login()">লগইন করুন</button>
+    <form id="loginForm" onsubmit="event.preventDefault();AuthUI.login();">
+      <div class="field"><label>ইমেইল / মোবাইল</label><input type="text" id="loginEmail" name="username" autocomplete="username"></div>
+      <div class="field"><label>পাসওয়ার্ড</label><input type="password" id="loginPass" name="password" autocomplete="current-password"></div>
+      <button type="submit" class="btn btn-primary btn-block">লগইন করুন</button>
       <div class="divider-or">অথবা</div>
-      <button class="btn-google" onclick="AuthUI.googleLogin()">🔵 Google দিয়ে লগইন</button>
-    </div>
+      <button type="button" class="btn-google" onclick="AuthUI.googleLogin()">🔵 Google দিয়ে লগইন</button>
+    </form>
 
-    <div id="registerForm" style="display:none;">
-      <div class="field"><label>পূর্ণ নাম</label><input type="text" id="regName"></div>
-      <div class="field"><label>ইমেইল</label><input type="email" id="regEmail"></div>
-      <div class="field"><label>মোবাইল নম্বর</label><input type="tel" id="regPhone" placeholder="01XXXXXXXXX"></div>
-      <div class="field"><label>পাসওয়ার্ড</label><input type="password" id="regPass"></div>
-      <button class="btn btn-primary btn-block" onclick="AuthUI.register()">রেজিস্ট্রেশন করুন</button>
-    </div>
+    <form id="registerForm" style="display:none;" onsubmit="event.preventDefault();AuthUI.register();">
+      <div class="field"><label>পূর্ণ নাম *</label><input type="text" id="regName" name="name" autocomplete="name" required></div>
+      <div class="field"><label>ইমেইল *</label><input type="email" id="regEmail" name="email" autocomplete="email" required></div>
+      <div class="field"><label>মোবাইল নম্বর *</label><input type="tel" id="regPhone" name="tel" autocomplete="tel" placeholder="01XXXXXXXXX" required></div>
+      <div class="field"><label>জাতীয় পরিচয়পত্র (NID) নম্বর *</label><input type="text" id="regNid" placeholder="১০/১৩/১৭ ডিজিট NID নম্বর" required></div>
+      <div class="field"><label>পাসওয়ার্ড *</label><input type="password" id="regPass" name="new-password" autocomplete="new-password" required></div>
+      <button type="submit" class="btn btn-primary btn-block">রেজিস্ট্রেশন করুন</button>
+    </form>
+  </div>
+</div>
+
+<!-- ============ COMPLETE PROFILE MODAL (for Google sign-in users missing phone/NID) ============ -->
+<div class="overlay" id="completeProfileOverlay">
+  <div class="modal">
+    <h3>প্রোফাইল সম্পূর্ণ করুন</h3>
+    <p class="sub">অর্ডার ভেরিফিকেশনের জন্য মোবাইল নম্বর ও NID দরকার — শুধু একবার দিতে হবে</p>
+    <div id="completeProfileMsg" class="form-msg"></div>
+    <div class="field"><label>মোবাইল নম্বর *</label><input type="tel" id="cpPhone" placeholder="01XXXXXXXXX"></div>
+    <div class="field"><label>জাতীয় পরিচয়পত্র (NID) নম্বর *</label><input type="text" id="cpNid" placeholder="১০/১৩/১৭ ডিজিট NID নম্বর"></div>
+    <button class="btn btn-primary btn-block" onclick="CompleteProfile.submit()">সংরক্ষণ করুন</button>
   </div>
 </div>
 
@@ -1252,16 +1287,16 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
 
     <div class="field"><label>প্রোডাক্টের নাম *</label><input type="text" id="pfName"></div>
 
-    <div class="field"><label>শাখা / জোন *</label>
-      <select id="pfZone">
-        <option value="noakhali_sadar">নোয়াখালী সদর</option>
-        <option value="begumganj">বেগমগঞ্জ</option>
-      </select>
+    <div class="field"><label>শাখা / জোন * <span style="font-size:12px;color:var(--ink-soft);font-weight:400;">(একাধিক বেছে নেওয়া যাবে)</span></label>
+      <div style="display:flex;gap:18px;margin-top:6px;">
+        <label class="filter-opt"><input type="checkbox" id="pfZoneSadar" checked> নোয়াখালী সদর</label>
+        <label class="filter-opt"><input type="checkbox" id="pfZoneBegumganj"> বেগমগঞ্জ</label>
+      </div>
     </div>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
       <div class="field"><label>ক্যাটাগরি *</label>
-        <select id="pfCategory">
+        <select id="pfCategory" onchange="ProductForm.suggestUnit()">
           <option value="electronics">ইলেকট্রনিক্স</option>
           <option value="fashion">ফ্যাশন</option>
           <option value="home">হোম & লিভিং</option>
@@ -1278,6 +1313,7 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
         <select id="pfUnit">
           <option>পিস</option><option>কেজি</option><option>৫০০ গ্রাম</option>
           <option>লিটার</option><option>ডজন</option><option>প্যাকেট</option><option>১০০ মিলি</option>
+          <option>পাতা</option><option>বক্স</option>
         </select>
       </div>
     </div>
@@ -2074,6 +2110,11 @@ const AreaUI = {
   },
   init(){
     this.updateBadge();
+    // Owner, Zone Manager, এবং Driver Portal — এই তিনটা স্টাফ-সাইড পেজে কাস্টমারের
+    // এরিয়া-গেট মডাল দেখানোর কোনো মানে নেই, কারণ মালিক/ম্যানেজার/ড্রাইভার নিজেরা
+    // ডেলিভারির গন্তব্য নির্বাচন করছে না — তারা শুধু কাজ করতে এসেছে।
+    const staffPages = ['admin-dash','zone-manager','driver'];
+    if(staffPages.includes(Router.current)) return;
     if(!this.isServiceable()){
       // এলাকা সেট না থাকলে মডালটা জোর করে দেখাই — কোনো CSS conflict-এর কারণে
       // hidden হয়ে গিয়ে কাস্টমার ফাঁকা প্রোডাক্ট রো দেখুক, তা চাই না।
@@ -2546,14 +2587,26 @@ const AuthUI = {
     const name = document.getElementById('regName').value.trim();
     const email = document.getElementById('regEmail').value.trim();
     const phone = document.getElementById('regPhone').value.trim();
+    const nid = document.getElementById('regNid').value.trim();
     const pass = document.getElementById('regPass').value;
-    if(!name||!email||!phone||!pass){ this.showMsg('সব তথ্য পূরণ করুন','err'); return; }
+    if(!name||!email||!phone||!nid||!pass){ this.showMsg('সব তথ্য পূরণ করুন','err'); return; }
+
+    const phoneRegex = /^(?:\+880|880|0)1[3-9]\d{8}$/;
+    if(!phoneRegex.test(phone.replace(/[\s-]/g,''))){
+      this.showMsg('সঠিক বাংলাদেশি মোবাইল নম্বর দিন (যেমন: 01712345678)','err'); return;
+    }
+    // NID সাধারণত ১০ (পুরনো), ১৩, বা ১৭ (নতুন স্মার্ট কার্ড) ডিজিটের হয়
+    const nidDigitsOnly = nid.replace(/\D/g,'');
+    if(![10,13,17].includes(nidDigitsOnly.length)){
+      this.showMsg('সঠিক NID নম্বর দিন (১০, ১৩, বা ১৭ ডিজিট)','err'); return;
+    }
+
     if(!FB){ this.showMsg('Firebase কনফিগার করা হয়নি এখনো','err'); return; }
     try{
       const cred = await FB.createUserWithEmailAndPassword(FB.auth, email, pass);
       await FB.updateProfile(cred.user, {displayName:name});
       await FB.setDoc(FB.doc(FB.db,'users',cred.user.uid), {
-        name, email, phone, role:'customer', createdAt: FB.serverTimestamp()
+        name, email, phone, nid: nidDigitsOnly, role:'customer', createdAt: FB.serverTimestamp()
       });
       this.showMsg('✓ রেজিস্ট্রেশন সফল হয়েছে','ok');
       setTimeout(()=>this.close(),800);
@@ -2563,10 +2616,60 @@ const AuthUI = {
     if(!FB){ this.showMsg('Firebase কনফিগার করা হয়নি এখনো','err'); return; }
     try{
       const provider = new FB.GoogleAuthProvider();
-      await FB.signInWithPopup(FB.auth, provider);
+      const result = await FB.signInWithPopup(FB.auth, provider);
       this.showMsg('✓ লগইন সফল হয়েছে','ok');
-      setTimeout(()=>this.close(),800);
+
+      // Google দিয়ে প্রথমবার লগইন করলে phone/NID থাকে না — সেটা আছে কিনা চেক করি
+      const userDoc = await FB.getDoc(FB.doc(FB.db,'users',result.user.uid));
+      const hasCompleteProfile = userDoc.exists() && userDoc.data().phone && userDoc.data().nid;
+
+      if(!hasCompleteProfile){
+        // নতুন ইউজার ডকুমেন্ট তৈরি করি (না থাকলে) যাতে নাম/ইমেইল অন্তত সেভ থাকে
+        if(!userDoc.exists()){
+          await FB.setDoc(FB.doc(FB.db,'users',result.user.uid), {
+            name: result.user.displayName||'', email: result.user.email||'',
+            role:'customer', createdAt: FB.serverTimestamp()
+          });
+        }
+        setTimeout(()=>{ this.close(); CompleteProfile.open(); }, 600);
+      }else{
+        setTimeout(()=>this.close(),800);
+      }
     }catch(e){ this.showMsg('Google লগইন ব্যর্থ: ' + e.message, 'err'); }
+  }
+};
+
+/* ---------- Complete Profile (for Google sign-in users missing phone/NID) ---------- */
+const CompleteProfile = {
+  open(){
+    document.getElementById('cpPhone').value='';
+    document.getElementById('cpNid').value='';
+    document.getElementById('completeProfileMsg').className='form-msg';
+    document.getElementById('completeProfileOverlay').classList.add('show');
+  },
+  close(){ document.getElementById('completeProfileOverlay').classList.remove('show'); },
+  async submit(){
+    const msgEl = document.getElementById('completeProfileMsg');
+    const phone = document.getElementById('cpPhone').value.trim();
+    const nid = document.getElementById('cpNid').value.trim();
+
+    if(!phone || !nid){ msgEl.textContent='সব তথ্য পূরণ করুন'; msgEl.className='form-msg err'; return; }
+
+    const phoneRegex = /^(?:\+880|880|0)1[3-9]\d{8}$/;
+    if(!phoneRegex.test(phone.replace(/[\s-]/g,''))){
+      msgEl.textContent='সঠিক বাংলাদেশি মোবাইল নম্বর দিন (যেমন: 01712345678)'; msgEl.className='form-msg err'; return;
+    }
+    const nidDigitsOnly = nid.replace(/\D/g,'');
+    if(![10,13,17].includes(nidDigitsOnly.length)){
+      msgEl.textContent='সঠিক NID নম্বর দিন (১০, ১৩, বা ১৭ ডিজিট)'; msgEl.className='form-msg err'; return;
+    }
+    if(!FB || !Auth.currentUser){ msgEl.textContent='লগইন সমস্যা — আবার চেষ্টা করুন'; msgEl.className='form-msg err'; return; }
+
+    try{
+      await FB.setDoc(FB.doc(FB.db,'users',Auth.currentUser.uid), { phone, nid: nidDigitsOnly }, { merge:true });
+      msgEl.textContent='✓ প্রোফাইল সম্পূর্ণ হয়েছে'; msgEl.className='form-msg ok';
+      setTimeout(()=>this.close(),800);
+    }catch(e){ msgEl.textContent='সমস্যা হয়েছে: '+e.message; msgEl.className='form-msg err'; }
   }
 };
 
@@ -2699,9 +2802,12 @@ const ZoneManagerDash = {
   },
   openAddProduct(){
     ProductForm.openAdd();
-    // Lock the zone selector to this manager's own branch — they cannot add products to the other zone
-    document.getElementById('pfZone').value = this.currentZone;
-    document.getElementById('pfZone').disabled = true;
+    // Lock the zone checkboxes to this manager's own branch — they cannot add products to the other zone
+    const isSadar = this.currentZone === 'noakhali_sadar';
+    document.getElementById('pfZoneSadar').checked = isSadar;
+    document.getElementById('pfZoneBegumganj').checked = !isSadar;
+    document.getElementById('pfZoneSadar').disabled = true;
+    document.getElementById('pfZoneBegumganj').disabled = true;
   }
 };
 
@@ -2832,8 +2938,10 @@ const ProductForm = {
     document.getElementById('productFormTitle').textContent = 'নতুন প্রোডাক্ট যুক্ত করুন';
     document.getElementById('pfSubmitBtn').textContent = 'প্রোডাক্ট সংরক্ষণ করুন';
     ['pfName','pfPrice','pfSalePrice','pfStock','pfDescription'].forEach(id=>document.getElementById(id).value='');
-    document.getElementById('pfZone').disabled = false; // re-enable in case Zone Manager locked it last time
-    document.getElementById('pfZone').value='noakhali_sadar';
+    document.getElementById('pfZoneSadar').disabled = false; // re-enable in case Zone Manager locked it last time
+    document.getElementById('pfZoneBegumganj').disabled = false;
+    document.getElementById('pfZoneSadar').checked = true;
+    document.getElementById('pfZoneBegumganj').checked = false;
     document.getElementById('pfCategory').value='electronics';
     document.getElementById('pfUnit').value='পিস';
     document.getElementById('pfCod').checked=true;
@@ -2844,6 +2952,22 @@ const ProductForm = {
     document.getElementById('productFormMsg').className='form-msg';
     document.getElementById('productFormOverlay').classList.add('show');
   },
+  // ক্যাটাগরি বদলালে সেই ক্যাটাগরির জন্য সবচেয়ে স্বাভাবিক ইউনিট আগে থেকেই বেছে দেয়
+  // (যেমন হেলথ → পাতা), যাতে বারবার ম্যানুয়ালি ইউনিট বদলাতে না হয়।
+  // এডিট মোডে এটা চলে না, কারণ তখন প্রোডাক্টের আগের ইউনিট ঠিক রাখাই ভালো।
+  suggestUnit(){
+    if(this.mode==='edit') return;
+    const categoryDefaults = {
+      health: 'পাতা',
+      grocery: 'কেজি',
+      beauty: '১০০ মিলি',
+      baby: 'প্যাকেট',
+    };
+    const category = document.getElementById('pfCategory').value;
+    if(categoryDefaults[category]){
+      document.getElementById('pfUnit').value = categoryDefaults[category];
+    }
+  },
   openEdit(productId){
     const p = ALL_PRODUCTS.find(x=>x.id===productId);
     if(!p){ toast('প্রোডাক্ট পাওয়া যায়নি'); return; }
@@ -2851,9 +2975,13 @@ const ProductForm = {
     document.getElementById('productFormTitle').textContent = 'প্রোডাক্ট সম্পাদনা করুন';
     document.getElementById('pfSubmitBtn').textContent = 'পরিবর্তন সংরক্ষণ করুন';
     document.getElementById('pfName').value = p.name;
-    document.getElementById('pfZone').value = p.zone||'noakhali_sadar';
-    // If a Zone Manager is editing, lock the zone field so they can't move a product to the other branch
-    document.getElementById('pfZone').disabled = !!ZoneManagerDash.currentZone;
+    const editZone = p.zone || 'noakhali_sadar';
+    document.getElementById('pfZoneSadar').checked = editZone === 'noakhali_sadar';
+    document.getElementById('pfZoneBegumganj').checked = editZone === 'begumganj';
+    // এডিট মোডে একটা প্রোডাক্ট একই সাথে দুই জোনে সরানো যায় না (এটা একটাই ডকুমেন্ট) —
+    // তাই উভয় চেকবক্স লক থাকবে; Zone Manager-এর জন্যও লক (নিজের শাখার বাইরে নিতে পারবে না)।
+    document.getElementById('pfZoneSadar').disabled = true;
+    document.getElementById('pfZoneBegumganj').disabled = true;
     document.getElementById('pfCategory').value = p.category;
     document.getElementById('pfUnit').value = p.unit;
     document.getElementById('pfPrice').value = p.price;
@@ -2885,7 +3013,9 @@ const ProductForm = {
   async submit(){
     const msgEl = document.getElementById('productFormMsg');
     const name = document.getElementById('pfName').value.trim();
-    const zone = document.getElementById('pfZone').value;
+    const selectedZones = [];
+    if(document.getElementById('pfZoneSadar').checked) selectedZones.push('noakhali_sadar');
+    if(document.getElementById('pfZoneBegumganj').checked) selectedZones.push('begumganj');
     const category = document.getElementById('pfCategory').value;
     const unit = document.getElementById('pfUnit').value;
     const price = Number(document.getElementById('pfPrice').value);
@@ -2898,6 +3028,9 @@ const ProductForm = {
 
     if(!name || !price || !salePrice || stock===''){
       msgEl.textContent='সব প্রয়োজনীয় তথ্য পূরণ করুন'; msgEl.className='form-msg err'; return;
+    }
+    if(!selectedZones.length){
+      msgEl.textContent='অন্তত একটা শাখা/জোন বেছে নিন'; msgEl.className='form-msg err'; return;
     }
     if(this.mode==='add' && !this.imageFile){
       msgEl.textContent='প্রোডাক্টের ছবি যুক্ত করুন'; msgEl.className='form-msg err'; return;
@@ -2918,20 +3051,31 @@ const ProductForm = {
         imageUrl = await FB.getDownloadURL(fileRef);
       }
 
-      const productData = {
-        name, zone, category, unit, price, salePrice, stock, description,
+      const baseProductData = {
+        name, category, unit, price, salePrice, stock, description,
         cod, isFlash, isFeatured, status: stock>0?'active':'active',
         updatedAt: FB.serverTimestamp(),
       };
-      if(imageUrl) productData.imageUrl = imageUrl;
+      if(imageUrl) baseProductData.imageUrl = imageUrl;
 
       if(this.mode==='add'){
-        productData.createdAt = FB.serverTimestamp();
-        productData.rating = '৫.০'; productData.reviews = 0; productData.sold = 0;
-        productData.fastDelivery = true;
-        await FB.addDoc(FB.collection(FB.db,'products'), productData);
-        msgEl.textContent = '✓ প্রোডাক্ট সফলভাবে যুক্ত হয়েছে'; msgEl.className='form-msg ok';
+        // "দুই জোনেই" সিলেক্ট করলে প্রতিটা জোনের জন্য আলাদা প্রোডাক্ট ডকুমেন্ট তৈরি হয় —
+        // কারণ প্রতিটা শাখার স্টক/বিক্রি আলাদাভাবে ট্র্যাক হওয়া উচিত (Zone Manager সিস্টেমের
+        // সাথে সামঞ্জস্য রেখে)। দুটো ডকুমেন্ট একই groupId শেয়ার করে, যাতে ভবিষ্যতে
+        // চাইলে "এই প্রোডাক্ট সব শাখায় একসাথে এডিট করুন" এর মতো ফিচার বানানো সহজ হয়।
+        const groupId = selectedZones.length>1 ? `${Date.now()}` : null;
+        for(const zone of selectedZones){
+          const productData = { ...baseProductData, zone, createdAt: FB.serverTimestamp(), rating:'৫.০', reviews:0, sold:0, fastDelivery:true };
+          if(groupId) productData.groupId = groupId;
+          await FB.addDoc(FB.collection(FB.db,'products'), productData);
+        }
+        msgEl.textContent = selectedZones.length>1
+          ? '✓ প্রোডাক্ট দুই শাখাতেই যুক্ত হয়েছে'
+          : '✓ প্রোডাক্ট সফলভাবে যুক্ত হয়েছে';
+        msgEl.className='form-msg ok';
       } else {
+        // এডিট মোডে সবসময় একটাই জোন থাকে (চেকবক্স লক করা থাকে openEdit-এ), তাই শুধু সেই একটা ফিল্ড পাঠাই
+        const productData = { ...baseProductData, zone: selectedZones[0] };
         await FB.updateDoc(FB.doc(FB.db,'products',this.editId), productData);
         msgEl.textContent = '✓ প্রোডাক্ট আপডেট হয়েছে'; msgEl.className='form-msg ok';
       }
