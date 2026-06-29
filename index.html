@@ -469,14 +469,11 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
   .mobile-nav a.active{color:var(--rose);}
   .mobile-nav .icon{font-size:20px;}
   body{padding-bottom:60px;}
-  #chatFab{bottom:76px;right:14px;}
-  #chatPanel{bottom:76px;right:14px;width:calc(100vw - 28px);height:65vh;}
   .hero{grid-template-columns:1fr;}
   .hero-side{flex-direction:row;}
   .header-row{flex-wrap:wrap;}
   .search-wrap{order:3;flex:1 0 100%;margin-top:8px;}
   .topbar{display:none;}
-  #areaPillMobile{display:flex !important;}
 
   /* Footer: stack into a single readable column instead of squeezing into 2 tight columns */
   footer{padding:36px 20px 90px;}
@@ -611,7 +608,7 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
 
 <!-- ============ TOP BAR ============ -->
 <div class="topbar">
-  <span id="areaBadgeWrap" onclick="AreaUI.open()" style="cursor:pointer;">📍 <span id="areaBadgeText">ডেলিভারি এলাকা সেট করুন</span> ▾</span>
+  <span>📍 নোয়াখালী সদর ও বেগমগঞ্জে ডেলিভারি</span>
   <span style="display:flex;gap:16px;">
     <a href="#" onclick="Router.go('track')">অর্ডার ট্র্যাক করুন</a>
     <a href="#" onclick="Router.go('help')">সাহায্য</a>
@@ -625,7 +622,6 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
       <img src="https://raw.githubusercontent.com/minna112-del/create-ai-video/main/logo.jpeg" alt="Golapi Shop Online" style="height:40px;width:auto;border-radius:8px;display:block;" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';">
       <span style="display:none;align-items:center;gap:6px;"><span class="petal"></span> Golapi Shop</span>
     </a>
-    <button id="areaPillMobile" onclick="AreaUI.open()" style="display:none;align-items:center;gap:4px;font-size:11.5px;background:var(--blush);color:var(--rose);padding:5px 10px;border-radius:20px;white-space:nowrap;">📍 <span id="areaPillText">এলাকা সেট করুন</span></button>
     <div class="search-wrap">
       <input type="text" id="searchInput" placeholder="প্রোডাক্ট, ব্র্যান্ড বা ক্যাটাগরি খুঁজুন...">
       <button onclick="doSearch()">🔍</button>
@@ -867,9 +863,17 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
             <div class="field"><label>জেলা</label>
               <input type="text" value="নোয়াখালী" readonly style="background:var(--blush);color:var(--ink-soft);">
             </div>
-            <div class="field"><label>উপজেলা</label><input type="text" id="ckDistrict" readonly style="background:var(--blush);color:var(--ink-soft);"></div>
+            <div class="field"><label>উপজেলা *</label>
+              <select id="ckDistrict" onchange="Checkout.onUpazilaChange()">
+                <option value="">উপজেলা বেছে নিন</option>
+                <option value="noakhali_sadar">নোয়াখালী সদর</option>
+                <option value="begumganj">বেগমগঞ্জ</option>
+              </select>
+            </div>
           </div>
-          <div class="field"><label>এলাকা / ইউনিয়ন</label><input type="text" id="ckZone" readonly style="background:var(--blush);color:var(--ink-soft);"></div>
+          <div class="field"><label>এলাকা / ইউনিয়ন *</label>
+            <select id="ckZone"><option value="">প্রথমে উপজেলা বেছে নিন</option></select>
+          </div>
           <div class="field"><label>ডেলিভারি ইনস্ট্রাকশন (ঐচ্ছিক)</label><textarea id="ckInstructions" rows="2" placeholder="যেমন: বাড়ির গেট সবুজ রঙের, কল করে আসবেন / দোকানের পাশের গলি"></textarea></div>
           <div class="field">
             <label>সম্পূর্ণ ঠিকানা *</label>
@@ -1350,29 +1354,6 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
   </div>
 </div>
 
-<!-- ============ DELIVERY AREA MODAL (Chaldal-style) ============ -->
-<div class="overlay" id="areaOverlay">
-  <div class="modal">
-    <h3>📍 আপনার ডেলিভারি এলাকা</h3>
-    <p class="sub">আমরা বর্তমানে শুধু নোয়াখালী সদর ও বেগমগঞ্জ উপজেলায় ডেলিভারি দিচ্ছি</p>
-    <div class="field">
-      <label>উপজেলা</label>
-      <select id="areaCity" onchange="AreaUI.loadZones()">
-        <option value="">উপজেলা বেছে নিন</option>
-        <option value="noakhali_sadar">নোয়াখালী সদর</option>
-        <option value="begumganj">বেগমগঞ্জ</option>
-        <option value="other">অন্য জেলা/উপজেলা</option>
-      </select>
-    </div>
-    <div class="field">
-      <label>এলাকা / ইউনিয়ন</label>
-      <select id="areaZone"><option value="">প্রথমে উপজেলা বেছে নিন</option></select>
-    </div>
-    <div id="areaResultMsg" class="form-msg"></div>
-    <button class="btn btn-primary btn-block" onclick="AreaUI.confirm()">নিশ্চিত করুন</button>
-  </div>
-</div>
-
 <!-- ============ ADD/EDIT PRODUCT MODAL (Owner Dashboard) ============ -->
 <div class="overlay" id="productFormOverlay">
   <div class="modal" style="max-width:520px;">
@@ -1487,31 +1468,6 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
   <div class="drawer-foot" id="cartDrawerFoot" style="display:none;">
     <div class="row-between"><span>সাবটোটাল</span><span id="drawerSubtotal">৳০</span></div>
     <button class="btn btn-primary btn-block" style="margin-top:10px;" onclick="Cart.goCheckout()">চেকআউটে যান →</button>
-  </div>
-</div>
-
-<!-- ============ FLOATING CHAT WIDGET ============ -->
-<button id="chatFab" onclick="ChatWidget.toggle()" style="position:fixed;bottom:24px;right:20px;width:56px;height:56px;border-radius:50%;background:var(--rose);color:#fff;box-shadow:0 6px 20px rgba(194,24,91,0.4);display:flex;align-items:center;justify-content:center;font-size:24px;z-index:400;transition:.2s;">
-  💬
-  <span id="chatUnreadBadge" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--gold);color:var(--ink);font-size:11px;font-weight:700;border-radius:50%;width:20px;height:20px;align-items:center;justify-content:center;display:flex;border:2px solid #fff;">0</span>
-</button>
-
-<div id="chatPanel" style="display:none;position:fixed;bottom:24px;right:20px;width:340px;max-width:92vw;height:480px;max-height:75vh;background:#fff;border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,0.2);z-index:401;flex-direction:column;overflow:hidden;">
-  <div style="background:var(--rose);color:#fff;padding:16px 18px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
-    <div>
-      <strong style="font-size:15px;">🌹 Golapi Shop সাপোর্ট</strong>
-      <div style="font-size:11.5px;opacity:.85;margin-top:2px;">সাধারণত কিছুক্ষণের মধ্যে রিপ্লাই দেওয়া হয়</div>
-    </div>
-    <button onclick="ChatWidget.toggle()" style="color:#fff;font-size:20px;">✕</button>
-  </div>
-  <div id="chatMessages" style="flex:1;overflow-y:auto;padding:16px;background:var(--blush);display:flex;flex-direction:column;gap:10px;"></div>
-  <div id="chatLoginPrompt" style="display:none;padding:20px;text-align:center;background:#fff;border-top:1px solid var(--line);">
-    <p style="font-size:13px;color:var(--ink-soft);margin-bottom:12px;">চ্যাট করতে লগইন করুন</p>
-    <button class="btn btn-primary" style="padding:9px 20px;font-size:13px;" onclick="ChatWidget.toggle();AuthUI.open();">লগইন করুন</button>
-  </div>
-  <div id="chatInputRow" style="display:flex;gap:8px;padding:12px;border-top:1px solid var(--line);background:#fff;flex-shrink:0;">
-    <input type="text" id="chatInput" placeholder="মেসেজ লিখুন..." style="flex:1;padding:10px 14px;border:1.5px solid var(--line);border-radius:20px;font-size:13.5px;background:var(--blush);">
-    <button onclick="ChatWidget.send()" style="width:38px;height:38px;border-radius:50%;background:var(--rose);color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;">➤</button>
   </div>
 </div>
 
@@ -1801,13 +1757,11 @@ function skeletonCards(n=4){
     </div>`).join('');
 }
 
-/* Returns only products belonging to the customer's currently confirmed delivery zone.
-   This is the core of the multi-branch system: Sadar and Begumganj have separate
-   inventories, so a customer should only ever see/order products from their own zone. */
+/* হোমপেজ/লিস্টিং-এ এখন সব প্রোডাক্ট (দুই শাখা মিলিয়ে) দেখানো হয় — কাস্টমারকে
+   সাইটে ঢোকার সাথেই জোন বেছে নিতে বাধ্য করা হয় না। জোন/শাখা নির্বাচন এখন
+   চেকআউটের সময় ঠিকানার সাথেই হবে (Checkout.init() দেখো), browsing-এর সময় নয়। */
 function zoneProducts(){
-  const area = AreaUI.getArea();
-  if(!area || !area.serviceable) return [];
-  return ALL_PRODUCTS.filter(p => p.zone === area.city);
+  return ALL_PRODUCTS;
 }
 
 function pcardHTML(p){
@@ -1976,11 +1930,11 @@ const Home = {
       </a>`).join('');
 
     const zp = zoneProducts();
-    const emptyMsg = `<div class="empty-state" style="padding:40px 20px;"><div class="icon">📍</div><p>আপনার এলাকায় ডেলিভারি নিশ্চিত করুন</p><button class="btn btn-primary" style="margin-top:10px;" onclick="AreaUI.open()">এলাকা সেট করুন</button></div>`;
+    const emptyMsg = `<div class="empty-state" style="padding:40px 20px;"><p style="color:var(--ink-soft);">এই মুহূর্তে কোনো প্রোডাক্ট পাওয়া যাচ্ছে না</p></div>`;
 
-    // এলাকা সেট করা আছে কিন্তু প্রোডাক্ট এখনো লোড হয়নি (Firestore থেকে ডাটা আসার অপেক্ষায়) —
-    // এই অবস্থায় খালি স্ক্রিনের বদলে শিমার-স্কেলিটন দেখাই, যাতে "ভাঙা" না লাগে।
-    const stillLoading = AreaUI.isServiceable() && !ProductStore.loaded;
+    // প্রোডাক্ট এখনো Firestore থেকে লোড হয়নি — এই অবস্থায় খালি স্ক্রিনের বদলে
+    // শিমার-স্কেলিটন দেখাই, যাতে "ভাঙা" না লাগে।
+    const stillLoading = !ProductStore.loaded;
 
     if(stillLoading){
       document.getElementById('flashSaleRow').innerHTML = skeletonCards(4);
@@ -2067,11 +2021,10 @@ const Listing = {
     let title = 'সব প্রোডাক্ট';
     if(!items.length){
       document.getElementById('listingBreadTitle').textContent = title;
-      document.getElementById('listingCount').textContent = 'এলাকা নির্বাচন প্রয়োজন';
+      document.getElementById('listingCount').textContent = 'কোনো প্রোডাক্ট পাওয়া যায়নি';
       document.getElementById('listingGrid').innerHTML = `
         <div class="empty-state" style="grid-column:1/-1;">
-          <div class="icon">📍</div><h3>আপনার ডেলিভারি এলাকা নিশ্চিত করুন</h3><p>প্রোডাক্ট দেখার আগে এলাকা সেট করতে হবে</p>
-          <button class="btn btn-primary" onclick="AreaUI.open()">এলাকা সেট করুন</button>
+          <div class="icon">📦</div><h3>এখনো কোনো প্রোডাক্ট যুক্ত করা হয়নি</h3><p>শীঘ্রই প্রোডাক্ট যুক্ত হবে, পরে আবার চেক করুন</p>
         </div>`;
       return;
     }
@@ -2132,12 +2085,6 @@ document.getElementById('driverPin').addEventListener('keydown', e=>{ if(e.key==
 const PDP = {
   product:null, qty:1,
   load(id){
-    if(!AreaUI.isServiceable()){
-      toast('⚠ প্রথমে আপনার ডেলিভারি এলাকা নিশ্চিত করুন');
-      AreaUI.open();
-      return;
-    }
-
     const zp = zoneProducts();
     this.product = zp.find(p=>p.id===id);
 
@@ -2147,23 +2094,16 @@ const PDP = {
       if(FB){
         FB.getDoc(FB.doc(FB.db,'products',id)).then(snap=>{
           if(snap.exists()){
-            const p = snap.data();
-            const area = AreaUI.getArea();
-            if(p.zone !== area?.city){
-              toast('এই প্রোডাক্ট আপনার এলাকায় পাওয়া যাচ্ছে না');
-              Router.go('listing',{cat:'all'});
-            }else{
-              // সঠিক জোনেরই প্রোডাক্ট, শুধু cache stale ছিল — রিফ্রেশ করে আবার লোড করি
-              toast('প্রোডাক্ট লোড হচ্ছে...');
-              ProductStore.refreshAndRerender().then(()=>this.load(id));
-            }
+            // প্রোডাক্ট আছে, শুধু cache stale ছিল — রিফ্রেশ করে আবার লোড করি
+            toast('প্রোডাক্ট লোড হচ্ছে...');
+            ProductStore.refreshAndRerender().then(()=>this.load(id));
           }else{
             toast('প্রোডাক্ট পাওয়া যাচ্ছে না');
             Router.go('listing',{cat:'all'});
           }
         }).catch(()=>Router.go('listing',{cat:'all'}));
       }else{
-        toast('এই প্রোডাক্ট আপনার এলাকায় পাওয়া যাচ্ছে না');
+        toast('প্রোডাক্ট পাওয়া যাচ্ছে না');
         Router.go('listing',{cat:'all'});
       }
       return;
@@ -2350,95 +2290,9 @@ const COMPANY_INFO = {
   headOfficePhone: '+880 1833-485939',
 };
 
-const AreaUI = {
-  open(){ document.getElementById('areaOverlay').classList.add('show'); },
-  close(){ document.getElementById('areaOverlay').classList.remove('show'); },
-  loadZones(){
-    const city = document.getElementById('areaCity').value;
-    const zoneSelect = document.getElementById('areaZone');
-    const msgEl = document.getElementById('areaResultMsg');
-    msgEl.className = 'form-msg';
-    if(!city){ zoneSelect.innerHTML = '<option value="">প্রথমে উপজেলা বেছে নিন</option>'; return; }
-    if(city==='other'){
-      zoneSelect.innerHTML = '<option value="">এলাকা প্রযোজ্য নয়</option>';
-      msgEl.textContent = '😔 দুঃখিত, এই মুহূর্তে আমরা শুধু নোয়াখালী সদর ও বেগমগঞ্জ উপজেলায় ডেলিভারি দিচ্ছি। শীঘ্রই আরও এলাকায় যুক্ত হবো।';
-      msgEl.className = 'form-msg err';
-      return;
-    }
-    zoneSelect.innerHTML = '<option value="">এলাকা বেছে নিন</option>' + AREA_ZONES[city].map(z=>`<option value="${z}">${z}</option>`).join('');
-  },
-  confirm(){
-    const city = document.getElementById('areaCity').value;
-    const zone = document.getElementById('areaZone').value;
-    const msgEl = document.getElementById('areaResultMsg');
-    if(city==='other' || !city){
-      msgEl.textContent = city==='other' ? '😔 এই এলাকায় ডেলিভারি সুবিধা এখনো চালু হয়নি।' : 'উপজেলা ও এলাকা বেছে নিন';
-      msgEl.className='form-msg err';
-      return;
-    }
-    if(!zone){ msgEl.textContent='এলাকা বেছে নিন'; msgEl.className='form-msg err'; return; }
-
-    // If switching to a different branch/zone than before, the cart must be cleared —
-    // Sadar and Begumganj have separate inventories, so items from one zone's cart
-    // are meaningless (and undeliverable) once the customer is buying from the other zone.
-    const previousArea = this.getArea();
-    const isZoneChange = previousArea && previousArea.city !== city;
-    const cartItemCount = Object.keys(Cart.items).length;
-
-    // কার্টে প্রোডাক্ট থাকা অবস্থায় জোন বদলালে সরাসরি খালি করে দেওয়ার আগে নিশ্চিত হয়ে
-    // নিই — নইলে একটা ভুল করে ট্যাপ করা ড্রপডাউন সিলেকশনে পুরো কার্ট হারিয়ে যেতে পারে,
-    // আর একটা ছোট টোস্ট মেসেজ ছাড়া কাস্টমার বুঝতেও পারবে না কেন।
-    if(isZoneChange && cartItemCount > 0){
-      const proceed = confirm(`আপনার কার্টে ${cartItemCount}টি প্রোডাক্ট আছে। শাখা পরিবর্তন করলে কার্ট খালি হয়ে যাবে। আগে চালিয়ে যাবেন?`);
-      if(!proceed){
-        // ড্রপডাউন আগের অবস্থায় ফিরিয়ে দিই, নইলে মডাল কিছু না করেই বন্ধ হয়ে গেছে এমন লাগবে
-        document.getElementById('areaCity').value = previousArea.city;
-        this.loadZones();
-        document.getElementById('areaZone').value = previousArea.zone;
-        return;
-      }
-    }
-
-    const cityLabel = AREA_CITY_LABELS[city];
-    localStorage.setItem('golapi_area', JSON.stringify({city,cityLabel,zone,serviceable:true}));
-    this.updateBadge();
-
-    if(isZoneChange && cartItemCount>0){
-      Cart.items = {}; Cart.save();
-      msgEl.textContent = `✓ ${zone}, ${cityLabel}-এ পরিবর্তন হয়েছে। আগের শাখার কার্ট খালি করা হয়েছে।`;
-    }else{
-      msgEl.textContent = `✓ ${zone}, ${cityLabel}-এ ডেলিভারি দেওয়া হয়`;
-    }
-    msgEl.className='form-msg ok';
-    setTimeout(()=>{ this.close(); Home.render(); if(Router.current==='listing') Listing.render(); },1200);
-  },
-  isServiceable(){
-    const saved = JSON.parse(localStorage.getItem('golapi_area')||'null');
-    return !!(saved && saved.serviceable);
-  },
-  getArea(){
-    return JSON.parse(localStorage.getItem('golapi_area')||'null');
-  },
-  updateBadge(){
-    const saved = this.getArea();
-    const text = saved ? `${saved.zone}, ${saved.cityLabel}` : 'ডেলিভারি এলাকা সেট করুন';
-    document.getElementById('areaBadgeText').textContent = text;
-    document.getElementById('areaPillText').textContent = saved ? saved.zone : 'এলাকা সেট করুন';
-  },
-  init(){
-    this.updateBadge();
-    // Owner, Zone Manager, এবং Driver Portal — এই তিনটা স্টাফ-সাইড পেজে কাস্টমারের
-    // এরিয়া-গেট মডাল দেখানোর কোনো মানে নেই, কারণ মালিক/ম্যানেজার/ড্রাইভার নিজেরা
-    // ডেলিভারির গন্তব্য নির্বাচন করছে না — তারা শুধু কাজ করতে এসেছে।
-    const staffPages = ['admin-dash','zone-manager','driver'];
-    if(staffPages.includes(Router.current)) return;
-    if(!this.isServiceable()){
-      // এলাকা সেট না থাকলে মডালটা জোর করে দেখাই — কোনো CSS conflict-এর কারণে
-      // hidden হয়ে গিয়ে কাস্টমার ফাঁকা প্রোডাক্ট রো দেখুক, তা চাই না।
-      setTimeout(()=>{ this.open(); document.getElementById('areaOverlay').style.cssText = 'display:flex !important'; }, 300);
-    }
-  }
-};
+// AreaUI অবজেক্ট সরিয়ে ফেলা হয়েছে — আগে এটা সাইটে ঢোকার সাথেই একটা জোন-সিলেক্ট পপআপ
+// জোর করে দেখাত (Chaldal-স্টাইল)। এখন জোন/শাখা নির্বাচন checkout-এর Step 1-এ
+// ঠিকানার সাথেই হয় (Checkout.onUpazilaChange() দেখো), browsing শুরু করার আগে নয়।
 
 const Checkout = {
   paymentMethod:'cod',
@@ -2446,17 +2300,18 @@ const Checkout = {
   discount:0,
   currentStep:1,
   init(){
-    if(!AreaUI.isServiceable()){
-      toast('⚠ প্রথমে আপনার ডেলিভারি এলাকা নিশ্চিত করুন');
-      AreaUI.open();
-      Router.go('home');
-      return;
-    }
-    const area = AreaUI.getArea();
-    document.getElementById('ckDistrict').value = area.cityLabel;
-    document.getElementById('ckZone').value = area.zone;
+    // আগে এখানে এরিয়া-গেট চেক করে browsing ব্লক করা হতো — এখন আর হয় না। শাখা/উপজেলা
+    // এখন এই ফর্মেই (ঠিকানার সাথে) বেছে নেওয়া হয়, তাই ফর্মটা খালি অবস্থায় শুরু হয়।
+    document.getElementById('ckDistrict').value = '';
+    document.getElementById('ckZone').innerHTML = '<option value="">প্রথমে উপজেলা বেছে নিন</option>';
     this.goStep(1);
     this.renderSummary();
+  },
+  onUpazilaChange(){
+    const upazila = document.getElementById('ckDistrict').value;
+    const zoneSelect = document.getElementById('ckZone');
+    if(!upazila){ zoneSelect.innerHTML = '<option value="">প্রথমে উপজেলা বেছে নিন</option>'; return; }
+    zoneSelect.innerHTML = '<option value="">এলাকা বেছে নিন</option>' + AREA_ZONES[upazila].map(z=>`<option value="${z}">${z}</option>`).join('');
   },
   selectSlot(el, slot){
     el.parentElement.querySelectorAll('.radio-card').forEach(c=>{c.classList.remove('selected'); c.querySelector('input').checked=false;});
@@ -2486,8 +2341,10 @@ const Checkout = {
     const name = document.getElementById('ckName').value.trim();
     const phone = document.getElementById('ckPhone').value.trim().replace(/[\s-]/g,'');
     const address = document.getElementById('ckAddress').value.trim();
+    const upazila = document.getElementById('ckDistrict').value;
+    const zone = document.getElementById('ckZone').value;
     const phoneRegex = /^(?:\+880|880|0)1[3-9]\d{8}$/;
-    return name.length>0 && phoneRegex.test(phone) && address.length>=10;
+    return name.length>0 && phoneRegex.test(phone) && address.length>=10 && upazila.length>0 && zone.length>0;
   },
   validateNameLive(input){
     input.style.borderColor = input.value.trim().length>0 ? 'var(--green)' : '';
@@ -2598,6 +2455,8 @@ const Checkout = {
     const name = document.getElementById('ckName').value.trim();
     const phone = document.getElementById('ckPhone').value.trim();
     const address = document.getElementById('ckAddress').value.trim();
+    const upazila = document.getElementById('ckDistrict').value;
+    const zone = document.getElementById('ckZone').value;
 
     if(!name || !phone || !address){ toast('⚠ সব প্রয়োজনীয় তথ্য পূরণ করুন'); this.goStep(1); return; }
 
@@ -2613,6 +2472,11 @@ const Checkout = {
       this.goStep(1);
       return;
     }
+    if(!upazila || !zone){
+      toast('⚠ উপজেলা ও এলাকা বেছে নিন');
+      this.goStep(1);
+      return;
+    }
     if(!document.getElementById('ckTerms').checked){ toast('⚠ শর্তাবলীতে সম্মত হতে হবে'); return; }
 
     const btn = document.querySelector('#checkout-step-3 .btn-primary');
@@ -2621,7 +2485,7 @@ const Checkout = {
 
     const orderNo = 'GS-' + new Date().getFullYear() + '-' + String(Math.floor(Math.random()*900000)+100000);
     const shippingCost = (Cart.totalPrice()>1000?0:60) + (this.deliverySlot==='express'?20:0);
-    const area = AreaUI.getArea();
+    const branchZoneCode = document.getElementById('ckDistrict').value; // 'noakhali_sadar' or 'begumganj'
 
     if(!FB){
       toast('⚠ সংযোগ সমস্যা — অর্ডার সম্পন্ন হয়নি। আবার চেষ্টা করুন।');
@@ -2635,8 +2499,8 @@ const Checkout = {
         customerName: name,
         customerPhone: phone,
         address,
-        branchZone: area ? area.city : null, // 'noakhali_sadar' or 'begumganj' — used by Zone Manager Portal to filter orders
-        district: document.getElementById('ckDistrict').value,
+        branchZone: branchZoneCode || null, // 'noakhali_sadar' or 'begumganj' — used by Zone Manager Portal to filter orders
+        district: AREA_CITY_LABELS[branchZoneCode] || '', // human-readable upazila name shown to drivers
         zone: document.getElementById('ckZone').value, // human-readable union/area name shown to drivers
         instructions: document.getElementById('ckInstructions').value.trim(),
         paymentMethod: this.paymentMethod,
@@ -3499,7 +3363,6 @@ setInterval(()=>{
 
 /* ---------- Init ---------- */
 Router.handleInitialHash();
-AreaUI.init();
 
 // Register service worker — required for PWA installability and for the
 // GitHub Actions APK build (Bubblewrap checks for this).
