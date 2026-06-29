@@ -1561,6 +1561,11 @@ const ChatWidget = {
     if(el) el.remove();
   },
 
+  // ⚠️ এখানে Cloudflare Worker-এর URL বসাতে হবে — Worker ডিপ্লয় করার পর যে URL পাবে
+  // (যেমন: https://golapi-chat-proxy.তোমার-অ্যাকাউন্ট.workers.dev), সেটা এখানে বসাও।
+  // worker.js ফাইলের উপরের কমেন্টে সম্পূর্ণ ডিপ্লয় গাইড আছে।
+  workerUrl: 'https://golapi-chat-proxy.studiomt46.workers.dev',
+
   async send(){
     const input = document.getElementById('chatWidgetInput');
     const message = input.value.trim();
@@ -1571,8 +1576,16 @@ const ChatWidget = {
     this.history.push({role:'user', content: message});
     this.showTyping();
 
+    // worker.js ডিপ্লয় না করা পর্যন্ত workerUrl placeholder-এই থাকবে — সেক্ষেত্রে
+    // সরাসরি স্পষ্ট মেসেজ দেখাই, যাতে "সংযোগে সমস্যা" বলে confusing fail না হয়।
+    if(this.workerUrl.includes('YOUR-SUBDOMAIN')){
+      this.hideTyping();
+      this.appendMessage('bot', 'AI চ্যাট এখনো সেটআপ করা হয়নি — দোকান মালিককে worker.js ডিপ্লয় করতে হবে। এই মুহূর্তে golapishoponline.bd@gmail.com-এ মেসেজ দিন।');
+      return;
+    }
+
     try{
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
+      const response = await fetch(this.workerUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
