@@ -1222,6 +1222,14 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
         <strong style="color:#C5B7C9;display:block;margin-bottom:3px;">ইমেইল:</strong>
         <a href="mailto:golapishoponline.bd@gmail.com" style="word-break:break-all;">golapishoponline.bd@gmail.com</a>
       </div>
+      <div style="font-size:13px;color:#9F8EA3;margin-bottom:12px;">
+        <strong style="color:#C5B7C9;display:block;margin-bottom:3px;">📍 সদর শাখা ম্যানেজার — আবদুল্লাহ জাকের বাবু</strong>
+        <a href="tel:+8801813242779">+880 1813-242779</a>
+      </div>
+      <div style="font-size:13px;color:#9F8EA3;margin-bottom:16px;">
+        <strong style="color:#C5B7C9;display:block;margin-bottom:3px;">📍 বেগমগঞ্জ শাখা ম্যানেজার — তামজীদ আহমেদ সৃজন</strong>
+        <a href="tel:+8801310006959">+880 1310-006959</a>
+      </div>
       <div style="display:flex;gap:10px;">
         <a href="https://facebook.com/golapishoponline" target="_blank" rel="noopener" title="Facebook পেজ" style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:#1877F2;box-shadow:0 2px 8px rgba(24,119,242,0.45);transition:.2s;" onmouseover="this.style.boxShadow='0 4px 14px rgba(24,119,242,0.65)'" onmouseout="this.style.boxShadow='0 2px 8px rgba(24,119,242,0.45)'">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M22 12.06C22 6.51 17.52 2 12 2S2 6.51 2 12.06c0 5 3.66 9.15 8.44 9.94v-7.03H7.9v-2.91h2.54V9.84c0-2.5 1.49-3.89 3.78-3.89 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56v1.88h2.78l-.45 2.91h-2.33V22c4.78-.79 8.44-4.94 8.44-9.94Z" fill="#fff"/></svg>
@@ -1392,14 +1400,38 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
         <select id="pfUnit">
           <option>পিস</option><option>কেজি</option><option>৫০০ গ্রাম</option><option>২৫০ গ্রাম</option>
           <option>লিটার</option><option>ডজন</option><option>প্যাকেট</option><option>১০০ মিলি</option>
-          <option>পাতা</option><option>বক্স</option>
+          <option>পাতা</option><option>বক্স</option><option>কার্টন</option>
         </select>
       </div>
     </div>
 
+    <div style="background:var(--blush);border-radius:10px;padding:14px;margin-bottom:14px;">
+      <div style="font-size:13px;font-weight:600;color:var(--rose);margin-bottom:10px;">💰 দাম হিসাব (পাইকারি ব্যবসার জন্য)</div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div class="field" style="margin-bottom:0;"><label>কেনা দাম (৳) *</label><input type="number" id="pfCostPrice" min="0" oninput="ProductForm.recalcSalePrice()"></div>
+        <div class="field" style="margin-bottom:0;"><label>অতিরিক্ত খরচ (৳)</label><input type="number" id="pfExtraCost" min="0" value="0" placeholder="পরিবহন/হ্যান্ডলিং" oninput="ProductForm.recalcSalePrice()"></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div class="field" style="margin-bottom:0;"><label>ডেলিভারি চার্জ (%)</label><input type="number" id="pfDeliveryPercent" min="0" value="0" step="0.1" oninput="ProductForm.recalcSalePrice()"></div>
+        <div class="field" style="margin-bottom:0;"><label>লাভ (%) *</label><input type="number" id="pfProfitPercent" min="0" value="20" step="0.1" oninput="ProductForm.recalcSalePrice()"></div>
+      </div>
+
+      <div style="font-size:12px;color:var(--ink-soft);background:#fff;border-radius:8px;padding:10px 12px;margin-bottom:0;">
+        হিসাব: (কেনা দাম + অতিরিক্ত খরচ) → +ডেলিভারি% → +লাভ% = <strong id="pfCalcBreakdown" style="color:var(--rose);">৳০</strong>
+      </div>
+    </div>
+
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-      <div class="field"><label>নিয়মিত মূল্য (৳) *</label><input type="number" id="pfPrice" min="0"></div>
-      <div class="field"><label>বিক্রয় মূল্য (৳) *</label><input type="number" id="pfSalePrice" min="0"></div>
+      <div class="field">
+        <label>নিয়মিত মূল্য (৳) *</label>
+        <input type="number" id="pfPrice" min="0" placeholder="ছাড়ের আগের দাম (ঐচ্ছিক)">
+      </div>
+      <div class="field">
+        <label>বিক্রয় মূল্য (৳) * <span style="font-size:11px;color:var(--ink-soft);font-weight:400;">(স্বয়ংক্রিয়, চাইলে বদলাও)</span></label>
+        <input type="number" id="pfSalePrice" min="0">
+      </div>
     </div>
 
     <div class="field"><label>স্টক পরিমাণ *</label><input type="number" id="pfStock" min="0"></div>
@@ -3221,7 +3253,11 @@ const ProductForm = {
     this.mode='add'; this.editId=null; this.imageFile=null;
     document.getElementById('productFormTitle').textContent = 'নতুন প্রোডাক্ট যুক্ত করুন';
     document.getElementById('pfSubmitBtn').textContent = 'প্রোডাক্ট সংরক্ষণ করুন';
-    ['pfName','pfPrice','pfSalePrice','pfStock','pfDescription'].forEach(id=>document.getElementById(id).value='');
+    ['pfName','pfPrice','pfSalePrice','pfStock','pfDescription','pfCostPrice'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('pfExtraCost').value = '0';
+    document.getElementById('pfDeliveryPercent').value = '0';
+    document.getElementById('pfProfitPercent').value = '20';
+    document.getElementById('pfCalcBreakdown').textContent = '৳০';
     document.getElementById('pfZoneSadar').disabled = false; // re-enable in case Zone Manager locked it last time
     document.getElementById('pfZoneBegumganj').disabled = false;
     document.getElementById('pfZoneSadar').checked = true;
@@ -3236,7 +3272,28 @@ const ProductForm = {
     document.getElementById('productFormMsg').className='form-msg';
     document.getElementById('productFormOverlay').classList.add('show');
   },
-  // ক্যাটাগরি বদলালে সেই ক্যাটাগরির জন্য সবচেয়ে স্বাভাবিক ইউনিট আগে থেকেই বেছে দেয়
+  // কেনা দাম + অতিরিক্ত খরচ + ডেলিভারি% + লাভ% থেকে বিক্রয় মূল্য স্বয়ংক্রিয়ভাবে হিসাব করে।
+  // মালিক চাইলে "বিক্রয় মূল্য" ফিল্ডে সরাসরি গিয়ে ম্যানুয়ালি বদলেও দিতে পারে।
+  recalcSalePrice(){
+    const cost = Number(document.getElementById('pfCostPrice').value) || 0;
+    const extra = Number(document.getElementById('pfExtraCost').value) || 0;
+    const deliveryPercent = Number(document.getElementById('pfDeliveryPercent').value) || 0;
+    const profitPercent = Number(document.getElementById('pfProfitPercent').value) || 0;
+
+    const baseCost = cost + extra;
+    const afterDelivery = baseCost + (baseCost * deliveryPercent / 100);
+    const finalPrice = afterDelivery + (afterDelivery * profitPercent / 100);
+    const rounded = Math.round(finalPrice);
+
+    document.getElementById('pfCalcBreakdown').textContent =
+      `৳${cost}+৳${extra} → +${deliveryPercent}% → +${profitPercent}% = ৳${rounded}`;
+
+    if(cost > 0){
+      document.getElementById('pfSalePrice').value = rounded;
+      const priceField = document.getElementById('pfPrice');
+      if(!priceField.value){ priceField.value = Math.round(rounded * 1.1); }
+    }
+  },
   // (যেমন হেলথ → পাতা), যাতে বারবার ম্যানুয়ালি ইউনিট বদলাতে না হয়।
   // এডিট মোডে এটা চলে না, কারণ তখন প্রোডাক্টের আগের ইউনিট ঠিক রাখাই ভালো।
   suggestUnit(){
@@ -3271,6 +3328,15 @@ const ProductForm = {
     document.getElementById('pfPrice').value = p.price;
     document.getElementById('pfSalePrice').value = p.salePrice;
     document.getElementById('pfStock').value = p.stock;
+    // আগে এই প্রোডাক্ট খরচ-হিসাব ছাড়াই অ্যাড করা হয়ে থাকলে এই ফিল্ডগুলো খালি/ডিফল্ট
+    // থাকবে — মালিক চাইলে এখন থেকে এডিটের সময় ভরে নিতে পারবে।
+    document.getElementById('pfCostPrice').value = p.costPrice || '';
+    document.getElementById('pfExtraCost').value = p.extraCost || 0;
+    document.getElementById('pfDeliveryPercent').value = p.deliveryPercent || 0;
+    document.getElementById('pfProfitPercent').value = p.profitPercent || 20;
+    document.getElementById('pfCalcBreakdown').textContent = p.costPrice
+      ? `৳${p.costPrice}+৳${p.extraCost||0} → +${p.deliveryPercent||0}% → +${p.profitPercent||20}% = ৳${p.salePrice}`
+      : '৳০';
     document.getElementById('pfDescription').value = p.description||'';
     document.getElementById('pfCod').checked = !!p.cod;
     document.getElementById('pfFlash').checked = !!p.isFlash;
@@ -3309,6 +3375,12 @@ const ProductForm = {
     const cod = document.getElementById('pfCod').checked;
     const isFlash = document.getElementById('pfFlash').checked;
     const isFeatured = document.getElementById('pfFeatured').checked;
+    // দাম-হিসাবের তথ্যও সেভ করে রাখি — এডিট করার সময় আগের হিসাব আবার দেখা/বদলানো যাবে,
+    // এবং ফাইন্যান্স রিপোর্টে ভবিষ্যতে প্রকৃত লাভ-ক্ষতি হিসাব করার ভিত্তি তৈরি হবে।
+    const costPrice = Number(document.getElementById('pfCostPrice').value) || 0;
+    const extraCost = Number(document.getElementById('pfExtraCost').value) || 0;
+    const deliveryPercent = Number(document.getElementById('pfDeliveryPercent').value) || 0;
+    const profitPercent = Number(document.getElementById('pfProfitPercent').value) || 0;
 
     if(!name || !price || !salePrice || stock===''){
       msgEl.textContent='সব প্রয়োজনীয় তথ্য পূরণ করুন'; msgEl.className='form-msg err'; return;
@@ -3337,6 +3409,7 @@ const ProductForm = {
 
       const baseProductData = {
         name, category, unit, price, salePrice, stock, description,
+        costPrice, extraCost, deliveryPercent, profitPercent,
         cod, isFlash, isFeatured, status: stock>0?'active':'active',
         updatedAt: FB.serverTimestamp(),
       };
