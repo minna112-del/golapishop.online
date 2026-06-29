@@ -122,14 +122,13 @@
   --shadow-lg:0 16px 48px rgba(194,24,91,0.14);
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-html{scroll-behavior:smooth;}
+html{scroll-behavior:smooth;overflow-x:hidden;}
 body{
   font-family:'Hind Siliguri','Poppins',sans-serif;
   background:var(--blush);
   color:var(--ink);
   line-height:1.7;
   -webkit-font-smoothing:antialiased;
-  overflow-x:hidden;
 }
 .en{font-family:'Poppins','Hind Siliguri',sans-serif;}
 h1,h2,h3,.display{font-family:'Tiro Bangla',serif;}
@@ -1763,6 +1762,7 @@ function skeletonCards(n=4){
    দুটো আলাদা সারি দেখা যায় (AdminDash.renderProductsTable ALL_PRODUCTS সরাসরি ব্যবহার করে)। */
 function zoneProducts(){
   const seenGroups = new Set();
+  const seenNameKeys = new Set();
   const merged = [];
   for(const p of ALL_PRODUCTS){
     if(p.groupId){
@@ -1772,7 +1772,16 @@ function zoneProducts(){
       const combinedStock = siblings.reduce((sum, s) => sum + (s.stock||0), 0);
       merged.push({ ...p, stock: combinedStock });
     }else{
-      merged.push(p);
+      // groupId ফিচার আসার আগে যে প্রোডাক্টগুলো দুই জোনে আলাদাভাবে অ্যাড করা হয়েছিল,
+      // তাদের জন্য নাম+দাম+ক্যাটাগরি মিলিয়ে fallback ম্যাচিং — এতে পুরনো ডাটাও
+      // ঠিকভাবে একসাথে দেখানো যায়, নতুন করে কিছু এডিট/রিইম্পোর্ট করতে হয় না।
+      const nameKey = `${p.name.trim().toLowerCase()}|${p.category}|${p.salePrice}`;
+      if(seenNameKeys.has(nameKey)) continue;
+      seenNameKeys.add(nameKey);
+      const siblings = ALL_PRODUCTS.filter(x => !x.groupId &&
+        `${x.name.trim().toLowerCase()}|${x.category}|${x.salePrice}` === nameKey);
+      const combinedStock = siblings.reduce((sum, s) => sum + (s.stock||0), 0);
+      merged.push(siblings.length>1 ? { ...p, stock: combinedStock } : p);
     }
   }
   return merged;
