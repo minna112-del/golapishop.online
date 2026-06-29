@@ -213,14 +213,14 @@ nav.catnav a.flash{color:var(--gold);font-weight:700;}
 .hero-main{
   border-radius:var(--radius);overflow:hidden;position:relative;
   background:
-    linear-gradient(120deg, rgba(255,227,236,0.55) 0%, rgba(255,211,225,0.65) 100%),
+    linear-gradient(to bottom, rgba(0,0,0,0) 60%, rgba(45,34,51,0.55) 100%),
     url('https://raw.githubusercontent.com/minna112-del/create-ai-video/main/banner.jpeg');
   background-size:cover;background-position:center;
   min-height:340px;display:flex;align-items:center;padding:48px;
 }
 .hero-main::after{
   content:'';position:absolute;right:-60px;top:-60px;width:280px;height:280px;
-  background:var(--pink);opacity:.25;border-radius:70% 30% 70% 30%;
+  background:var(--pink);opacity:.12;border-radius:70% 30% 70% 30%;
 }
 .hero-main::before{
   content:'';position:absolute;left:30%;bottom:-80px;width:180px;height:180px;
@@ -657,14 +657,9 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
   <!-- ===================== PAGE: HOME ===================== -->
   <div class="page active" id="page-home">
     <div class="hero">
-      <div class="hero-main">
-        <div class="hero-content">
-          <div class="eyebrow"><span class="petal" style="color:var(--rose)"></span> ঈদ স্পেশাল কালেকশন ২০২৬</div>
-          <h1>আপনার শপিং দুনিয়া,<br>এখন এক জায়গায়</h1>
-          <p>হাজারো বিক্রেতা, লাখো প্রোডাক্ট — bKash, Nagad, COD সহ সবচেয়ে সহজ কেনাকাটার অভিজ্ঞতা।</p>
-          <div style="display:flex;gap:12px;flex-wrap:wrap;">
-            <button class="btn btn-primary" onclick="Router.go('listing',{cat:'all'})">কেনাকাটা শুরু করুন →</button>
-          </div>
+      <div class="hero-main" style="display:flex;align-items:flex-end;padding:0 0 24px;">
+        <div style="position:relative;z-index:2;padding:0 24px;width:100%;">
+          <button class="btn btn-primary" onclick="Router.go('listing',{cat:'all'})">কেনাকাটা শুরু করুন →</button>
         </div>
       </div>
       <div class="hero-side">
