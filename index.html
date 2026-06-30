@@ -365,12 +365,13 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
 .modal h3{font-size:22px;margin-bottom:6px;}
 .modal .sub{color:var(--ink-soft);font-size:13.5px;margin-bottom:20px;}
 .modal .close{position:absolute;top:16px;right:16px;font-size:20px;color:var(--ink-soft);}
-.field{margin-bottom:14px;}
+.field{margin-bottom:14px;min-width:0;}
 .field label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;}
-.field input,.field select,.field textarea{
+.field input:not([type="radio"]):not([type="checkbox"]),.field select,.field textarea{
   width:100%;padding:11px 14px;border:1.5px solid var(--line);border-radius:8px;font-size:14px;
   font-family:inherit;background:var(--blush);
 }
+.field input[type="radio"],.field input[type="checkbox"]{flex-shrink:0;width:auto;}
 .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--pink);background:#fff;}
 .tabs{display:flex;gap:0;margin-bottom:20px;border-bottom:2px solid var(--line);}
 .tabs button{flex:1;padding:10px;font-weight:600;color:var(--ink-soft);border-bottom:3px solid transparent;}
@@ -612,6 +613,8 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
 .step-item span{font-size:12.5px;color:var(--ink-soft);}
 .step-item.active span{color:var(--ink);font-weight:600;}
 .radio-card{display:flex;align-items:center;gap:12px;border:1.5px solid var(--line);border-radius:10px;padding:14px;margin-bottom:10px;cursor:pointer;}
+.radio-card > div{min-width:0;flex:1;}
+.radio-card > div strong{display:block;}
 .radio-card.selected{border-color:var(--rose);background:#FFF5F7;}
 </style>
 </head>
@@ -899,6 +902,14 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
             <span id="ckAddressError" style="color:#C0392B;font-size:12px;display:none;margin-top:4px;"></span>
           </div>
           <div class="field">
+            <label>📍 ডেলিভারি লোকেশন <span style="font-size:11px;color:var(--ink-soft);font-weight:400;">(ঐচ্ছিক, কিন্তু থাকলে ড্রাইভার সহজে খুঁজে পাবে)</span></label>
+            <button type="button" class="btn btn-outline" style="width:100%;padding:11px;" onclick="Checkout.pinLocation()" id="ckPinBtn">
+              📍 আমার বর্তমান লোকেশন পিন করুন
+            </button>
+            <div id="ckLocationStatus" style="font-size:12.5px;color:var(--ink-soft);margin-top:6px;display:none;"></div>
+            <div id="ckMapPreview" style="display:none;margin-top:10px;border-radius:10px;overflow:hidden;border:1px solid var(--line);height:180px;"></div>
+          </div>
+          <div class="field">
             <label>ডেলিভারি সময়</label>
             <div class="radio-card selected" onclick="Checkout.selectSlot(this,'express')">
               <input type="radio" name="slot" checked> <div><strong>⚡ এক্সপ্রেস (৬০-৯০ মিনিট) <span style="background:var(--gold);color:var(--ink);font-size:10px;padding:1px 6px;border-radius:8px;margin-left:4px;">সবচেয়ে দ্রুত</span></strong><div class="subtext">আমাদের লোকাল ড্রাইভার দ্রুত পৌঁছে দেবে, অতিরিক্ত ৳২০</div></div>
@@ -1044,7 +1055,7 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
           <div id="adminOrdersPane" style="display:none;">
             <h2 style="margin-bottom:20px;">সব অর্ডার</h2>
             <div class="table-scroll"><table class="data-table">
-              <thead><tr><th>অর্ডার ID</th><th>শাখা</th><th>কাস্টমার</th><th>ফোন</th><th>মোট</th><th>পেমেন্ট</th><th>ড্রাইভার</th><th>স্ট্যাটাস</th></tr></thead>
+              <thead><tr><th>অর্ডার ID</th><th>শাখা</th><th>কাস্টমার</th><th>ফোন</th><th>মোট</th><th>ম্যাপ</th><th>পেমেন্ট</th><th>ড্রাইভার</th><th>স্ট্যাটাস</th></tr></thead>
               <tbody id="adminOrdersTable"></tbody>
             </table></div>
           </div>
@@ -1198,7 +1209,7 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
             <div id="zmOrdersPane" style="display:none;">
               <h2 style="margin-bottom:20px;">এই শাখার অর্ডার</h2>
               <div class="table-scroll"><table class="data-table">
-                <thead><tr><th>অর্ডার ID</th><th>কাস্টমার</th><th>ফোন</th><th>মোট</th><th>ড্রাইভার</th><th>স্ট্যাটাস</th></tr></thead>
+                <thead><tr><th>অর্ডার ID</th><th>কাস্টমার</th><th>ফোন</th><th>মোট</th><th>ম্যাপ</th><th>ড্রাইভার</th><th>স্ট্যাটাস</th></tr></thead>
                 <tbody id="zmOrdersTable"></tbody>
               </table></div>
             </div>
@@ -2465,6 +2476,13 @@ const Checkout = {
     // এখন এই ফর্মেই (ঠিকানার সাথে) বেছে নেওয়া হয়, তাই ফর্মটা খালি অবস্থায় শুরু হয়।
     document.getElementById('ckDistrict').value = '';
     document.getElementById('ckZone').innerHTML = '<option value="">প্রথমে উপজেলা বেছে নিন</option>';
+    // আগের চেকআউটের লোকেশন পিন এখানে রিসেট করি — নতুন অর্ডারে পুরোনো GPS ডাটা যেন
+    // ভুলবশত যুক্ত না হয়ে যায়
+    this.customerLat = null;
+    this.customerLng = null;
+    document.getElementById('ckLocationStatus').style.display = 'none';
+    document.getElementById('ckMapPreview').style.display = 'none';
+    document.getElementById('ckMapPreview').innerHTML = '';
     this.goStep(1);
     this.renderSummary();
   },
@@ -2536,6 +2554,53 @@ const Checkout = {
       errEl.style.display='none';
       input.style.borderColor = 'var(--green)';
     }
+  },
+  customerLat: null,
+  customerLng: null,
+  // কাস্টমারের বর্তমান GPS লোকেশন নিয়ে নেয় (ব্রাউজার পারমিশন চাইবে), lat/lng সেভ করে
+  // রাখে এবং একটা ছোট ম্যাপ প্রিভিউ দেখায়। এই lat/lng অর্ডারের সাথে Firestore-এ সেভ হয়,
+  // যাতে Owner Dashboard/Zone Manager/Driver সরাসরি Google Maps-এ ঠিকানা দেখতে পারে।
+  pinLocation(){
+    const statusEl = document.getElementById('ckLocationStatus');
+    const btn = document.getElementById('ckPinBtn');
+    if(!navigator.geolocation){
+      statusEl.style.display='block';
+      statusEl.style.color='#C0392B';
+      statusEl.textContent = 'এই ব্রাউজারে লোকেশন সুবিধা সাপোর্ট করে না';
+      return;
+    }
+    const originalText = btn.textContent;
+    btn.textContent = '📍 লোকেশন খোঁজা হচ্ছে...'; btn.disabled = true;
+    statusEl.style.display='block'; statusEl.style.color='var(--ink-soft)';
+    statusEl.textContent = 'GPS লোকেশন অনুমতি দিন...';
+
+    navigator.geolocation.getCurrentPosition(
+      (position)=>{
+        this.customerLat = position.coords.latitude;
+        this.customerLng = position.coords.longitude;
+        btn.textContent = originalText; btn.disabled = false;
+        statusEl.style.color='var(--green)';
+        statusEl.textContent = `✓ লোকেশন পিন করা হয়েছে (নির্ভুলতা: প্রায় ${Math.round(position.coords.accuracy)} মিটার)`;
+
+        // ছোট embedded ম্যাপ দেখাই — Google Maps-এর সাধারণ embed URL ব্যবহার করে,
+        // যেটার জন্য আলাদা API key লাগে না (শুধু একটা সিম্পল iframe)।
+        const mapPreview = document.getElementById('ckMapPreview');
+        mapPreview.style.display = 'block';
+        mapPreview.innerHTML = `<iframe width="100%" height="180" frameborder="0" style="border:0;"
+          src="https://maps.google.com/maps?q=${this.customerLat},${this.customerLng}&z=16&output=embed"
+          allowfullscreen></iframe>`;
+      },
+      (error)=>{
+        btn.textContent = originalText; btn.disabled = false;
+        statusEl.style.color='#C0392B';
+        if(error.code === error.PERMISSION_DENIED){
+          statusEl.textContent = '⚠ লোকেশন অনুমতি দেওয়া হয়নি — ফোনের সেটিংস থেকে ব্রাউজারের জন্য লোকেশন অন করুন';
+        }else{
+          statusEl.textContent = '⚠ লোকেশন পাওয়া যায়নি — আবার চেষ্টা করুন বা ঠিকানা ম্যানুয়ালি লিখুন';
+        }
+      },
+      { enableHighAccuracy: true, timeout: 15000 }
+    );
   },
   selectPayment(el, method){
     el.parentElement.querySelectorAll('.radio-card').forEach(c=>{c.classList.remove('selected'); c.querySelector('input').checked=false;});
@@ -2660,6 +2725,10 @@ const Checkout = {
         customerName: name,
         customerPhone: phone,
         address,
+        // কাস্টমার GPS পিন করলে এখানে lat/lng সেভ থাকে — না করলে null (ম্যানুয়াল ঠিকানার
+        // উপরই ভরসা করতে হবে, যা আগে থেকেই required)
+        customerLat: this.customerLat,
+        customerLng: this.customerLng,
         branchZone: branchZoneCode || null, // 'noakhali_sadar' or 'begumganj' — used by Zone Manager Portal to filter orders
         district: AREA_CITY_LABELS[branchZoneCode] || '', // human-readable upazila name shown to drivers
         zone: document.getElementById('ckZone').value, // human-readable union/area name shown to drivers
@@ -2721,6 +2790,9 @@ const MyOrders = {
         const p = ALL_PRODUCTS.find(x=>x.id===it.productId);
         return p ? `${p.name} × ${it.qty}` : `প্রোডাক্ট × ${it.qty}`;
       }).join(', ');
+      const mapLink = (o.customerLat && o.customerLng)
+        ? `<a href="https://www.google.com/maps?q=${o.customerLat},${o.customerLng}" target="_blank" rel="noopener" style="font-size:12.5px;color:var(--rose);">📍 আমার পিন করা লোকেশন দেখুন</a>`
+        : '';
       return `
       <div class="card-box" style="margin-bottom:14px;">
         <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
@@ -2730,6 +2802,7 @@ const MyOrders = {
         <div style="font-size:13.5px;color:var(--ink-soft);margin-bottom:6px;">📦 ${itemsText}</div>
         <div style="font-size:13.5px;font-weight:600;">মোট: ${money(o.subtotal||0)}</div>
         ${o.driverName?`<div style="font-size:12.5px;color:var(--ink-soft);margin-top:4px;">🚴 ড্রাইভার: ${o.driverName}</div>`:''}
+        ${mapLink?`<div style="margin-top:6px;">${mapLink}</div>`:''}
       </div>`;
     }).join('');
   }
@@ -2917,6 +2990,12 @@ const DriverPortal = {
       if(o.status==='assigned') nextBtn = `<button class="btn btn-primary btn-block" onclick="DriverPortal.advance('${o.id}','picked_up')">✓ পিকআপ সম্পন্ন হয়েছে</button>`;
       else if(o.status==='picked_up') nextBtn = `<button class="btn btn-primary btn-block" onclick="DriverPortal.advance('${o.id}','in_transit')">🚴 ডেলিভারির পথে রওনা</button>`;
       else if(o.status==='in_transit') nextBtn = `<button class="btn btn-primary btn-block" onclick="DriverPortal.advance('${o.id}','delivered')">✅ ডেলিভারি সম্পন্ন হয়েছে</button>`;
+      // কাস্টমার GPS পিন করে থাকলে সরাসরি Google Maps Navigation (driving directions)
+      // খুলবে — ড্রাইভারের নিজের বর্তমান লোকেশন থেকে কাস্টমারের পিন করা ঠিকানা পর্যন্ত।
+      // &dir_action=navigate প্যারামিটারটাই মোবাইলে সরাসরি turn-by-turn navigation চালু করে।
+      const navBtn = (o.customerLat && o.customerLng)
+        ? `<a href="https://www.google.com/maps/dir/?api=1&destination=${o.customerLat},${o.customerLng}&dir_action=navigate" target="_blank" rel="noopener" class="btn btn-outline btn-block" style="margin-bottom:8px;display:block;text-align:center;text-decoration:none;">📍 গুগল ম্যাপে নেভিগেট করুন</a>`
+        : '';
       return `
       <div class="card-box" style="margin-bottom:14px;">
         <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px;">
@@ -2928,6 +3007,7 @@ const DriverPortal = {
         <div style="font-size:13.5px;margin-bottom:4px;">📍 ${o.zone||''}, ${o.district||''} — ${o.address}</div>
         ${o.instructions?`<div style="font-size:13px;background:var(--blush);padding:8px 10px;border-radius:8px;margin:8px 0;color:var(--ink-soft);">💬 ${o.instructions}</div>`:''}
         <div style="font-size:13.5px;font-weight:600;margin:8px 0;">মোট: ${money(o.subtotal||0)} ${o.paymentMethod==='cod'?'(COD)':''}</div>
+        ${navBtn}
         ${nextBtn}
       </div>`;
     }).join('');
@@ -3170,7 +3250,7 @@ const ZoneManagerDash = {
   renderOrdersTable(orders){
     const tbody = document.getElementById('zmOrdersTable');
     if(!orders.length){
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--ink-soft);padding:30px;">এই শাখায় কোনো অর্ডার নেই</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--ink-soft);padding:30px;">এই শাখায় কোনো অর্ডার নেই</td></tr>`;
       return;
     }
     const zoneDrivers = DriverManage.drivers.filter(d=>d.branchZone===this.currentZone);
@@ -3179,12 +3259,17 @@ const ZoneManagerDash = {
       const driverOptions = zoneDrivers.map(d=>
         `<option value="${d.id}" ${o.driverId===d.id?'selected':''}>${d.name}</option>`
       ).join('');
+      // কাস্টমার GPS পিন করলে এখান থেকে সরাসরি Google Maps-এ ঠিকানা দেখা যাবে
+      const mapLink = (o.customerLat && o.customerLng)
+        ? `<a href="https://www.google.com/maps?q=${o.customerLat},${o.customerLng}" target="_blank" rel="noopener" style="color:var(--rose);font-weight:600;">📍 ম্যাপ</a>`
+        : `<span style="color:var(--ink-soft);font-size:11.5px;">পিন নেই</span>`;
       return `
       <tr>
         <td>${o.orderNumber||o.id}</td>
         <td>${o.customerName||''}</td>
         <td>${o.customerPhone||''}</td>
         <td>${money(o.subtotal||0)}</td>
+        <td>${mapLink}</td>
         <td>
           <select onchange="ZoneManagerDash.assignDriver('${o.id}', this.value)" style="padding:5px 8px;border:1px solid var(--line);border-radius:6px;font-size:12.5px;">
             <option value="">— বেছে নিন —</option>
@@ -3256,7 +3341,7 @@ const AdminDash = {
   renderOrdersTable(orders){
     const tbody = document.getElementById('adminOrdersTable');
     if(!orders.length){
-      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--ink-soft);padding:30px;">কোনো অর্ডার নেই</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--ink-soft);padding:30px;">কোনো অর্ডার নেই</td></tr>`;
       return;
     }
     tbody.innerHTML = orders.map(o=>{
@@ -3265,6 +3350,9 @@ const AdminDash = {
       const driverOptions = zoneDrivers.map(d=>
         `<option value="${d.id}" ${o.driverId===d.id?'selected':''}>${d.name}</option>`
       ).join('');
+      const mapLink = (o.customerLat && o.customerLng)
+        ? `<a href="https://www.google.com/maps?q=${o.customerLat},${o.customerLng}" target="_blank" rel="noopener" style="color:var(--rose);font-weight:600;">📍 ম্যাপ</a>`
+        : `<span style="color:var(--ink-soft);font-size:11.5px;">পিন নেই</span>`;
       return `
       <tr>
         <td>${o.orderNumber||o.id}</td>
@@ -3272,6 +3360,7 @@ const AdminDash = {
         <td>${o.customerName||''}</td>
         <td>${o.customerPhone||''}</td>
         <td>${money(o.subtotal||0)}</td>
+        <td>${mapLink}</td>
         <td>${o.paymentMethod==='cod'?'COD':(o.paymentMethod||'').toUpperCase()}</td>
         <td>
           <select onchange="AdminDash.assignDriver('${o.id}', this.value)" style="padding:5px 8px;border:1px solid var(--line);border-radius:6px;font-size:12.5px;">
