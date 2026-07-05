@@ -662,14 +662,13 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
   <nav class="catnav">
     <div class="inner">
       <a href="#" onclick="Router.go('listing',{cat:'all'})">সব ক্যাটাগরি ▾</a>
-      <a href="#" onclick="Router.go('listing',{cat:'electronics'})">ইলেকট্রনিক্স</a>
-      <a href="#" onclick="Router.go('listing',{cat:'fashion'})">ফ্যাশন</a>
-      <a href="#" onclick="Router.go('listing',{cat:'home'})">হোম & লিভিং</a>
-      <a href="#" onclick="Router.go('listing',{cat:'beauty'})">বিউটি</a>
-      <a href="#" onclick="Router.go('listing',{cat:'books'})">বুকস</a>
-      <a href="#" onclick="Router.go('listing',{cat:'grocery'})">গ্রোসারি</a>
-      <a href="#" class="flash" onclick="Router.go('listing',{cat:'flash'})">🔥 ফ্ল্যাশ সেল</a>
-      <a href="#" onclick="Router.go('listing',{cat:'bestseller'})">বেস্ট সেলার</a>
+      <a href="#" onclick="Router.go('listing',{cat:'medicine'})">💊 ঔষধ</a>
+      <a href="#" onclick="Router.go('listing',{cat:'grocery'})">🛒 মুদি বাজার</a>
+      <a href="#" onclick="Router.go('listing',{cat:'gas'})">🔥 গ্যাস সিলিন্ডার</a>
+      <a href="#" onclick="Router.go('listing',{cat:'mobile'})">📱 মোবাইল</a>
+      <a href="#" onclick="Router.go('listing',{cat:'cosmetics'})">💄 কসমেটিকস</a>
+      <a href="#" onclick="Router.go('custom-bazar')" class="flash">📝 কাস্টম বাজার</a>
+      <a href="#" onclick="Router.go('listing',{cat:'flash'})">🔥 ফ্ল্যাশ সেল</a>
     </div>
   </nav>
 </header>
@@ -749,6 +748,81 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
         <h2>✨ আপনার জন্য বাছাই করা</h2>
       </div>
       <div class="scroll-row" id="recommendedRow"></div>
+    </section>
+  </div>
+
+  <!-- ===================== PAGE: CUSTOM BAZAR ===================== -->
+  <div class="page" id="page-custom-bazar">
+    <section style="max-width:600px;">
+      <div class="breadcrumb"><a href="#" onclick="Router.go('home')">হোম</a> &gt; কাস্টম বাজার অর্ডার</div>
+      <h2 style="margin-bottom:6px;">📝 আপনার বাজারের লিস্ট দিন</h2>
+      <p class="subtext" style="margin-bottom:20px;">সাপ্তাহিক মুদি, মাসিক বাজার, বিয়ের বাজার, রমজানের বাজার, কুরবানির বাজার — যেকোনো বাজারের লিস্ট লিখে দিন। আমাদের ড্রাইভার বাজার করে আপনার বাসায় পৌঁছে দেবে।</p>
+
+      <div class="card-box">
+        <div class="field"><label>আপনার নাম *</label><input type="text" id="cbName"></div>
+        <div class="field"><label>মোবাইল নম্বর *</label><input type="tel" id="cbPhone" placeholder="01XXXXXXXXX"></div>
+        <div class="field"><label>সম্পূর্ণ ঠিকানা *</label><textarea id="cbAddress" rows="2" placeholder="বাড়ি/রোড/এলাকা"></textarea></div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="field"><label>উপজেলা *</label>
+            <select id="cbDistrict" onchange="CustomBazar.onUpazilaChange()">
+              <option value="">বেছে নিন</option>
+              <option value="noakhali_sadar">নোয়াখালী সদর</option>
+              <option value="begumganj">বেগমগঞ্জ</option>
+            </select>
+          </div>
+          <div class="field"><label>এলাকা *</label>
+            <select id="cbZone"><option value="">প্রথমে উপজেলা বেছে নিন</option></select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>বাজারের ধরন *</label>
+          <select id="cbType">
+            <option value="weekly">সাপ্তাহিক মুদি বাজার</option>
+            <option value="monthly">মাসিক মুদি বাজার</option>
+            <option value="wedding">বিয়ের বাজার</option>
+            <option value="ramadan">রমজানের বাজার</option>
+            <option value="qurbani">কুরবানির বাজার</option>
+            <option value="other">অন্যান্য</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>বাজারের লিস্ট * <span class="subtext">(প্রতিটা আইটেম আলাদা লাইনে লিখুন, পরিমাণ সহ)</span></label>
+          <textarea id="cbList" rows="8" placeholder="যেমন:
+চাল মিনিকেট — ৫ কেজি
+মসুর ডাল — ২ কেজি
+সয়াবিন তেল — ২ লিটার
+আলু — ৩ কেজি
+পেঁয়াজ — ২ কেজি
+লবণ — ১ প্যাকেট
+চিনি — ১ কেজি
+..."></textarea>
+        </div>
+
+        <div class="field">
+          <label>বিশেষ নির্দেশনা (ঐচ্ছিক)</label>
+          <textarea id="cbNotes" rows="2" placeholder="যেমন: সবচেয়ে ভালো মানের চাল নিবেন, পেঁয়াজ দেশি হতে হবে"></textarea>
+        </div>
+
+        <div style="background:var(--blush);border:1.5px solid var(--pink);border-radius:10px;padding:14px;margin-bottom:16px;">
+          <strong style="color:var(--rose);">⚠️ গুরুত্বপূর্ণ:</strong><br>
+          <span class="subtext" style="line-height:1.7;">
+            অর্ডার কনফার্ম করতে <strong>১০০ টাকা বিকাশ পে বাধ্যতামূলক</strong>।<br>
+            বিকাশ নম্বর: <strong id="cbBkashNumber">উপজেলা বেছে নিলে দেখাবে</strong><br>
+            বাকি টাকা সম্পূর্ণ ক্যাশ অন ডেলিভারি।
+          </span>
+        </div>
+
+        <div class="field">
+          <label>বিকাশ ট্রানজেকশন ID *</label>
+          <input type="text" id="cbTrxId" placeholder="বিকাশ পেমেন্টের পর ট্রানজেকশন ID লিখুন">
+        </div>
+
+        <div id="cbMsg" class="form-msg"></div>
+        <button class="btn btn-primary btn-block" onclick="CustomBazar.submit()" id="cbSubmitBtn">📝 বাজার অর্ডার জমা দিন</button>
+      </div>
     </section>
   </div>
 
@@ -937,6 +1011,7 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
           <div class="radio-card" onclick="Checkout.selectPayment(this,'sslcommerz')">
             <input type="radio" name="pm"> <div><strong>কার্ড / নেট ব্যাংকিং</strong><div class="subtext">Visa, Mastercard, EMI সুবিধা</div></div>
           </div>
+          <div id="ckPaymentZoneInfo" style="display:none;"></div>
           <div class="field" style="margin-top:14px;">
             <label>প্রোমো কোড</label>
             <div style="display:flex;gap:8px;"><input type="text" id="ckCoupon" placeholder="কুপন কোড লিখুন"><button id="ckApplyCouponBtn" class="btn btn-outline" style="padding:11px 18px;" onclick="Checkout.applyCoupon()">প্রয়োগ করুন</button></div>
@@ -1250,15 +1325,15 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
     <div>
       <h5>যোগাযোগ</h5>
       <div style="font-size:13px;color:#9F8EA3;margin-bottom:12px;">
-        <strong class="footer-label">হেড অফিস:</strong>
-        <a href="tel:+8801833485939">+880 1833-485939</a>
+        <strong class="footer-label">🏢 CEO / উপদেষ্টা — মহসিন</strong>
+        <a href="tel:+15165858019">+1 516-585-8019</a>
       </div>
       <div style="font-size:13px;color:#9F8EA3;margin-bottom:12px;">
-        <strong class="footer-label">CEO — মোঃ মহসিন</strong>
-        <span>যোগাযোগ: হেড অফিস নম্বরে</span>
+        <strong class="footer-label">💬 হেড অফিস (WhatsApp)</strong>
+        <a href="https://wa.me/19174199814" target="_blank" rel="noopener">+1 917-419-9814</a>
       </div>
       <div style="font-size:13px;color:#9F8EA3;margin-bottom:12px;">
-        <strong class="footer-label">Co-CEO — তানভীর আহমেদ হৃদয়</strong>
+        <strong class="footer-label">🔴 হটলাইন</strong>
         <a href="tel:+8801612057371">+880 1612-057371</a>
       </div>
       <div style="font-size:13px;color:#9F8EA3;margin-bottom:16px;">
@@ -1266,12 +1341,12 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
         <a href="mailto:golapishoponline.bd@gmail.com" style="word-break:break-all;">golapishoponline.bd@gmail.com</a>
       </div>
       <div style="font-size:13px;color:#9F8EA3;margin-bottom:12px;">
-        <strong class="footer-label">📍 সদর শাখা ম্যানেজার — আবদুল্লাহ জাকের বাবু</strong>
-        <a href="tel:+8801813242779">+880 1813-242779</a>
+        <strong class="footer-label">📍 সদর শাখা — ম্যানেজার রিমন</strong>
+        <a href="tel:+8801627010060">+880 1627-010060</a> · জোন পয়েন্ট: মাইজদী বাজার
       </div>
       <div style="font-size:13px;color:#9F8EA3;margin-bottom:16px;">
-        <strong class="footer-label">📍 বেগমগঞ্জ শাখা ম্যানেজার — তামজীদ আহমেদ সৃজন</strong>
-        <a href="tel:+8801310006959">+880 1310-006959</a>
+        <strong class="footer-label">📍 বেগমগঞ্জ শাখা — ম্যানেজার সৃজন</strong>
+        <a href="tel:+8801310006959">+880 1310-006959</a> · জোন পয়েন্ট: আমানতপুর
       </div>
       <div style="display:flex;gap:10px;">
         <a href="https://facebook.com/golapishoponline" target="_blank" rel="noopener" title="Facebook পেজ" style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:#1877F2;box-shadow:0 2px 8px rgba(24,119,242,0.45);transition:.2s;" onmouseover="this.style.boxShadow='0 4px 14px rgba(24,119,242,0.65)'" onmouseout="this.style.boxShadow='0 2px 8px rgba(24,119,242,0.45)'">
@@ -1427,16 +1502,16 @@ footer{background:var(--ink);color:#E6DCE8;padding:50px 20px 20px;}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
       <div class="field"><label>ক্যাটাগরি *</label>
         <select id="pfCategory" onchange="ProductForm.suggestUnit()">
-          <option value="electronics">ইলেকট্রনিক্স</option>
-          <option value="fashion">ফ্যাশন</option>
-          <option value="home">হোম & লিভিং</option>
-          <option value="beauty">বিউটি</option>
-          <option value="books">বুকস</option>
-          <option value="grocery">গ্রোসারি</option>
-          <option value="sports">স্পোর্টস</option>
-          <option value="toys">টয়েস</option>
-          <option value="health">হেলথ</option>
-          <option value="baby">বেবি</option>
+          <option value="medicine">ঔষধ</option>
+          <option value="grocery">মুদি বাজার</option>
+          <option value="confectionery">কনফেকশনারি</option>
+          <option value="stationery">স্টেশনারি</option>
+          <option value="gas">গ্যাস সিলিন্ডার</option>
+          <option value="mobile">মোবাইল এক্সেসরিস</option>
+          <option value="watch">ঘড়ি ও ব্যাটারি</option>
+          <option value="cosmetics">কসমেটিকস</option>
+          <option value="clothing">জামা-কাপড়</option>
+          <option value="furniture">ফার্নিচার</option>
         </select>
       </div>
       <div class="field"><label>একক (Unit) *</label>
@@ -1566,22 +1641,81 @@ window.addEventListener('firebase-ready', () => {
    প্রতিটা মেসেজ Anthropic API-তে যায় (Claude), পুরো shop-context সহ একটা system
    prompt পাঠানো হয় যাতে AI সঠিকভাবে ডেলিভারি/পেমেন্ট/নীতি সংক্রান্ত প্রশ্নের উত্তর
    দিতে পারে। API key এখানে দরকার নেই — fetch সরাসরি endpoint-এ যায়। */
+/* ---------- Push Notification System ----------
+   Zone Manager-কে নতুন অর্ডারের push notification পাঠায়। কাস্টমার অর্ডার করলে
+   placeOrder() থেকে NotificationSystem.send() কল হয়, এবং সংশ্লিষ্ট Zone Manager-এর
+   ব্রাউজারে real-time notification আসে, এমনকি ট্যাব বন্ধ থাকলেও (background push)।
+   এর জন্য firebase-messaging-sw.js ফাইলটা Netlify-তে root-এ আপলোড করা জরুরি। */
+const NotificationSystem = {
+  VAPID_KEY: 'BPRxlznMoYaznW3dnf-OcB-MSplrzV6xA2bWWbPENH37-iAelbKjcwO5OXbGMirLpNu6w4XZBr7kwZLPepf9KRQ',
+  WORKER_URL: null, // push notification পাঠানোর জন্য Cloudflare Worker URL — পরে সেট করতে হবে
+  async setup(zone){
+    if(!('Notification' in window) || !FB) return;
+    const p = await Notification.requestPermission();
+    if(p !== 'granted'){ toast('⚠ Notification permission দেওয়া হয়নি'); return; }
+    try{
+      const sw = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+      await navigator.serviceWorker.ready;
+      const {getMessaging, getToken, onMessage} = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js');
+      const msg = getMessaging(FB.auth.app);
+      const token = await getToken(msg, {vapidKey: this.VAPID_KEY, serviceWorkerRegistration: sw});
+      if(!token) return;
+      await FB.setDoc(FB.doc(FB.db, 'setting', 'notification_tokens'), {[zone]: token}, {merge: true});
+      onMessage(msg, payload => {
+        toast('🔔 ' + (payload.notification?.body || 'নতুন অর্ডার এসেছে'));
+        if(ZoneManagerDash.currentZone) ZoneManagerDash.render();
+      });
+      navigator.serviceWorker.addEventListener('message', e => {
+        if(e.data?.type === 'OPEN_ZM'){
+          Router.go('zone-manager');
+          if(ZoneManagerDash.currentZone) ZoneManagerDash.render();
+        }
+      });
+      toast('✅ নটিফিকেশন চালু হয়েছে');
+    }catch(e){ devWarn('NS error:', e.message); }
+  },
+  async send(orderData){
+    if(!FB || !this.WORKER_URL) return;
+    try{
+      const snap = await FB.getDoc(FB.doc(FB.db, 'setting', 'notification_tokens'));
+      if(!snap.exists()) return;
+      const token = snap.data()[orderData.branchZone];
+      if(!token) return;
+      const zl = orderData.branchZone === 'noakhali_sadar' ? 'নোয়াখালী সদর' : 'বেগমগঞ্জ';
+      await fetch(this.WORKER_URL, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          token,
+          title: `🌹 নতুন অর্ডার — ${zl}`,
+          body: `${orderData.customerName} | ${money(orderData.subtotal)} | ${orderData.orderNumber}`,
+          data: {orderNumber: orderData.orderNumber, branchZone: orderData.branchZone}
+        })
+      });
+    }catch(e){ devWarn('NS send error:', e.message); }
+  }
+};
+
 const ChatWidget = {
   isOpen: false,
   history: [], // [{role:'user'|'assistant', content:'...'}]
-  systemPrompt: `তুমি Golapi Shop Online-এর কাস্টমার সাপোর্ট সহায়ক। বাংলায় উত্তর দাও, সংক্ষিপ্ত ও বন্ধুত্বপূর্ণভাবে।
+  systemPrompt: `তুমি Golapi Shop Online (www.golapishop.online) এর কাস্টমার সাপোর্ট সহায়ক। বাংলায় উত্তর দাও, সংক্ষিপ্ত ও বন্ধুত্বপূর্ণভাবে।
 
 দোকানের তথ্য:
-- আমরা শুধু নোয়াখালী সদর ও বেগমগঞ্জ উপজেলায় ডেলিভারি দিই (নিজস্ব লোকাল ড্রাইভার দিয়ে, কোনো বাইরের কুরিয়ার নয়)
+- নোয়াখালীর নিত্যপ্রয়োজনীয় পণ্যের অনলাইন শপ
+- শুধু নোয়াখালী সদর ও বেগমগঞ্জ উপজেলায় ডেলিভারি (নিজস্ব লোকাল ড্রাইভার)
+- ক্যাটাগরি: ঔষধ, মুদি বাজার, কনফেকশনারি, স্টেশনারি, গ্যাস সিলিন্ডার (LPG), মোবাইল এক্সেসরিস, ঘড়ি ও ব্যাটারি, কসমেটিকস, জামা-কাপড়, ফার্নিচার
+- বিশেষ সেবা: কাস্টম বাজার — সাপ্তাহিক/মাসিক/বিয়ের/রমজানের/কুরবানির বাজারের লিস্ট দিলে ড্রাইভার বাজার করে বাসায় পৌঁছে দেবে (১০০ টাকা বিকাশ অগ্রিম + বাকি COD)
 - ডেলিভারি সময়: এক্সপ্রেস ৬০-৯০ মিনিট (অতিরিক্ত ৳২০), বা আজই ডেলিভারি (ফ্রি)
-- পেমেন্ট পদ্ধতি: ক্যাশ অন ডেলিভারি (COD), bKash, Nagad, কার্ড/নেট ব্যাংকিং (SSLCommerz)
+- পেমেন্ট: COD, bKash, Nagad (জোন-ভিত্তিক নম্বর)
 - ফ্রি ডেলিভারি ৳১০০০+ অর্ডারে
-- রিটার্ন পলিসি: পণ্য হাতে পাওয়ার ৩ দিনের মধ্যে রিটার্ন করা যায়
-- কাস্টমার রেজিস্ট্রেশনে নাম, ইমেইল, মোবাইল, NID, পাসওয়ার্ড লাগে
-- ক্যাটাগরি: ইলেকট্রনিক্স, ফ্যাশন, হোম & লিভিং, বিউটি, বুকস, গ্রোসারি, স্পোর্টস, টয়েস, হেলথ, বেবি
-- যোগাযোগ ইমেইল: golapishoponline.bd@gmail.com
+- সদর শাখা ম্যানেজার: রিমন (+880 1627-010060), জোন পয়েন্ট: মাইজদী বাজার
+- বেগমগঞ্জ শাখা ম্যানেজার: সৃজন (+880 1310-006959), জোন পয়েন্ট: আমানতপুর
+- CEO: মহসিন (+1 516-585-8019)
+- হটলাইন: +880 1612-057371
+- WhatsApp (হেড অফিস): +1 917-419-9814
 
-যদি কোনো প্রশ্নের উত্তর তোমার জানা তথ্যের মধ্যে না থাকে (যেমন একটা নির্দিষ্ট প্রোডাক্টের স্টক আছে কিনা, কোনো অর্ডারের বর্তমান অবস্থা), সততার সাথে বলো যে এই তথ্য তোমার কাছে নেই এবং কাস্টমারকে ইমেইলে যোগাযোগ করতে বা সরাসরি ওয়েবসাইটে প্রোডাক্ট পেজ দেখতে বলো। কখনো অনুমান করে ভুল তথ্য দিও না।`,
+যদি কোনো প্রশ্নের উত্তর তোমার কাছে না থাকে, সততার সাথে বলো এবং হটলাইন বা WhatsApp-এ যোগাযোগ করতে বলো।`,
 
   // Owner/Zone Manager/Driver পোর্টালে এই উইজেট পুরোপুরি হাইড থাকবে — সেখানে দেখানোর
   // কোনো মানে নেই, কারণ এটা শুধু কাস্টমার সাপোর্টের জন্য বানানো।
@@ -1702,31 +1836,32 @@ function toast(msg){
 
 /* ---------- Sample/seed product data (replace with Firestore data once collection 'products' is populated) ---------- */
 const CATEGORIES = [
-  {id:'electronics',label:'ইলেকট্রনিক্স',icon:'📱'},
-  {id:'fashion',label:'ফ্যাশন',icon:'👗'},
-  {id:'home',label:'হোম & লিভিং',icon:'🏠'},
-  {id:'beauty',label:'বিউটি',icon:'💄'},
-  {id:'books',label:'বুকস',icon:'📚'},
-  {id:'grocery',label:'গ্রোসারি',icon:'🛒'},
-  {id:'sports',label:'স্পোর্টস',icon:'⚽'},
-  {id:'toys',label:'টয়েস',icon:'🧸'},
-  {id:'health',label:'হেলথ',icon:'💊'},
-  {id:'baby',label:'বেবি',icon:'🍼'},
+  {id:'medicine',label:'ঔষধ',icon:'💊'},
+  {id:'grocery',label:'মুদি বাজার',icon:'🛒'},
+  {id:'confectionery',label:'কনফেকশনারি',icon:'🍰'},
+  {id:'stationery',label:'স্টেশনারি',icon:'📒'},
+  {id:'gas',label:'গ্যাস সিলিন্ডার',icon:'🔥'},
+  {id:'mobile',label:'মোবাইল এক্সেসরিস',icon:'📱'},
+  {id:'watch',label:'ঘড়ি ও ব্যাটারি',icon:'⌚'},
+  {id:'cosmetics',label:'কসমেটিকস',icon:'💄'},
+  {id:'clothing',label:'জামা-কাপড়',icon:'👕'},
+  {id:'furniture',label:'ফার্নিচার',icon:'🪑'},
+  {id:'custom-bazar',label:'কাস্টম বাজার',icon:'📝'},
 ];
 
 function sampleProduct(i,opts={}){
   const names = ['গোলাপি সিল্ক শাড়ি','স্মার্ট ওয়াচ প্রো','ব্লুটুথ হেডফোন','চামড়ার হ্যান্ডব্যাগ','রোজ গোল্ড লিপস্টিক','কটন পাঞ্জাবি','LED ডেস্ক ল্যাম্প','অরগানিক হেয়ার অয়েল','কিডস টয় কার','স্পোর্টস শু','কিচেন অর্গানাইজার','বেবি ডায়াপার ব্যাগ','দেশি চাল (মিনিকেট)','তাজা দেশি মুরগি','খোলা দুধ','লাল আলু','দেশি ডিম','সয়াবিন তেল','মসুর ডাল','পাকা কাঁঠাল'];
   const unitsByCat = {
-    grocery: ['কেজি','৫০০ গ্রাম','লিটার','ডজন','প্যাকেট'],
-    beauty: ['পিস','১০০ মিলি'],
-    fashion: ['পিস'],
-    electronics: ['পিস'],
-    home: ['পিস'],
-    books: ['পিস'],
-    sports: ['পিস'],
-    toys: ['পিস'],
-    health: ['পিস','প্যাকেট'],
-    baby: ['পিস','প্যাকেট'],
+    medicine: ['পাতা','বক্স','পিস','প্যাকেট'],
+    grocery: ['কেজি','৫০০ গ্রাম','২৫০ গ্রাম','লিটার','ডজন','প্যাকেট'],
+    confectionery: ['পিস','বক্স','প্যাকেট','ডজন'],
+    stationery: ['পিস','প্যাকেট','বক্স'],
+    gas: ['পিস'], // সিলিন্ডার প্রতি
+    mobile: ['পিস'],
+    watch: ['পিস'],
+    cosmetics: ['পিস','১০০ মিলি','প্যাকেট'],
+    clothing: ['পিস'],
+    furniture: ['পিস'],
   };
   const cat = opts.category || CATEGORIES[i%CATEGORIES.length].id;
   const units = unitsByCat[cat] || ['পিস'];
@@ -2057,6 +2192,7 @@ const Router = {
     if(page==='driver') DriverPortal.render();
     if(page==='zone-manager') ZoneManagerDash.render();
     if(page==='home') Home.render();
+    if(page==='custom-bazar') CustomBazar.init();
 
     // চ্যাট উইজেট এবং কাস্টমার-নির্দিষ্ট হেডার/টপবার শুধু কাস্টমার-ফেসিং পেজে দেখানো
     // হবে — Owner/Zone Manager/Driver পোর্টালে এসবের কোনো কাজ নেই (লগইন/কার্ট/সার্চ/
@@ -2086,10 +2222,14 @@ const Router = {
 const Home = {
   rendered:false,
   render(){
-    document.getElementById('categoryGrid').innerHTML = CATEGORIES.map(c=>`
-      <a href="#" class="cat-item" onclick="Router.go('listing',{cat:'${c.id}'})">
+    document.getElementById('categoryGrid').innerHTML = CATEGORIES.map(c=>{
+      const route = c.id === 'custom-bazar'
+        ? `Router.go('custom-bazar')`
+        : `Router.go('listing',{cat:'${c.id}'})`;
+      return `<a href="#" class="cat-item" onclick="${route}">
         <div class="cat-circle">${c.icon}</div><span>${c.label}</span>
-      </a>`).join('');
+      </a>`;
+    }).join('');
 
     const zp = zoneProducts();
     const emptyMsg = `<div class="empty-state" style="padding:40px 20px;"><p style="color:var(--ink-soft);">এই মুহূর্তে কোনো প্রোডাক্ট পাওয়া যাচ্ছে না</p></div>`;
@@ -2441,25 +2581,34 @@ const AREA_ZONES = {
 const BRANCH_INFO = {
   noakhali_sadar: {
     label: 'নোয়াখালী সদর',
-    address: 'কৃষ্ণরামপুর, সদর, নোয়াখালী, চট্টগ্রাম, বাংলাদেশ',
-    managerName: 'আবদুল্লাহ জাকের বাবু',
-    managerPhone: '+880 1813-242779',
+    address: 'মাইজদী বাজার, সদর, নোয়াখালী',
+    zonePoint: 'মাইজদী বাজার',
+    managerName: 'রিমন',
+    managerPhone: '+880 1627-010060',
+    managerWhatsApp: '+880 1627-010060',
+    bkashNumber: '01627010060', // এই জোনের কাস্টমাররা এই bKash-এ পেমেন্ট করবে
+    nagadNumber: '01627010060',
   },
   begumganj: {
     label: 'বেগমগঞ্জ',
-    address: 'আমানতপুর, বেগমগঞ্জ, নোয়াখালী, চট্টগ্রাম, বাংলাদেশ',
-    managerName: 'তামজীদ আহমেদ সৃজন',
+    address: 'আমানতপুর, বেগমগঞ্জ, নোয়াখালী',
+    zonePoint: 'আমানতপুর',
+    managerName: 'সৃজন',
     managerPhone: '+880 1310-006959',
+    managerWhatsApp: '+880 1310-006959',
+    bkashNumber: '01310006959', // এই জোনের কাস্টমাররা এই bKash-এ পেমেন্ট করবে
+    nagadNumber: '01310006959',
   },
 };
 const AREA_CITY_LABELS = { noakhali_sadar: BRANCH_INFO.noakhali_sadar.label, begumganj: BRANCH_INFO.begumganj.label };
 
-// Company leadership — shown in the footer "যোগাযোগ" section.
+// Company leadership & contact
 const COMPANY_INFO = {
-  ceoName: 'মোঃ মহসিন',
-  coCeoName: 'তানভীর আহমেদ হৃদয়',
-  coCeoPhone: '+880 1612-057371',
-  headOfficePhone: '+880 1833-485939',
+  ceoName: 'মহসিন',
+  ceoTitle: 'CEO / উপদেষ্টা',
+  ceoPhone: '+1 516-585-8019',
+  headOfficeWhatsApp: '+1 917-419-9814',
+  hotline: '+880 1612-057371',
 };
 
 // AreaUI অবজেক্ট সরিয়ে ফেলা হয়েছে — আগে এটা সাইটে ঢোকার সাথেই একটা জোন-সিলেক্ট পপআপ
@@ -2594,7 +2743,11 @@ const Checkout = {
         btn.textContent = originalText; btn.disabled = false;
         statusEl.style.color='#C0392B';
         if(error.code === error.PERMISSION_DENIED){
-          statusEl.textContent = '⚠ লোকেশন অনুমতি দেওয়া হয়নি — ফোনের সেটিংস থেকে ব্রাউজারের জন্য লোকেশন অন করুন';
+          statusEl.innerHTML = `⚠ লোকেশন অনুমতি দেওয়া হয়নি।<br>
+            <span style="color:var(--ink-soft);font-size:12px;line-height:1.7;">
+              iPhone হলে: ঠিকানা বারের <strong>aA</strong> বা 🔒 আইকন → Website Settings → Location → Allow<br>
+              বা: Settings → Safari → Location → Allow
+            </span>`;
         }else{
           statusEl.textContent = '⚠ লোকেশন পাওয়া যায়নি — আবার চেষ্টা করুন বা ঠিকানা ম্যানুয়ালি লিখুন';
         }
@@ -2606,6 +2759,25 @@ const Checkout = {
     el.parentElement.querySelectorAll('.radio-card').forEach(c=>{c.classList.remove('selected'); c.querySelector('input').checked=false;});
     el.classList.add('selected'); el.querySelector('input').checked=true;
     this.paymentMethod = method;
+
+    // কাস্টমার bKash/Nagad সিলেক্ট করলে সংশ্লিষ্ট জোনের পেমেন্ট নম্বর দেখাই
+    const payInfoEl = document.getElementById('ckPaymentZoneInfo');
+    if(!payInfoEl) return;
+    const zone = document.getElementById('ckDistrict').value;
+    const branch = BRANCH_INFO[zone];
+    if((method==='bkash' || method==='nagad') && branch){
+      const num = method==='bkash' ? branch.bkashNumber : branch.nagadNumber;
+      const label = method==='bkash' ? 'bKash' : 'Nagad';
+      payInfoEl.style.display='block';
+      payInfoEl.innerHTML = `<div style="background:var(--blush);border:1.5px solid var(--pink);border-radius:10px;padding:14px;margin-top:12px;">
+        <strong style="color:var(--rose);">📲 ${label} পেমেন্ট নম্বর (${branch.label}):</strong><br>
+        <span style="font-size:20px;font-weight:700;letter-spacing:1px;">${num}</span><br>
+        <span class="subtext">এই নম্বরে Send Money করে ট্রানজেকশন ID অর্ডারের সাথে দিন</span>
+      </div>`;
+    }else{
+      payInfoEl.style.display='none';
+      payInfoEl.innerHTML='';
+    }
   },
   async applyCoupon(){
     const code = document.getElementById('ckCoupon').value.trim().toUpperCase();
@@ -2745,6 +2917,9 @@ const Checkout = {
       };
       await FB.addDoc(FB.collection(FB.db,'orders'), orderData);
 
+      // অর্ডার সফলভাবে সেভ হওয়ার পর সংশ্লিষ্ট Zone Manager-কে push notification পাঠাই
+      NotificationSystem.send(orderData);
+
       // শুধু এখানে এলেই (Firestore write সফল হলে) success page দেখানো হবে
       document.getElementById('successOrderNo').textContent = orderNo;
       localStorage.setItem('golapi_last_order_items', JSON.stringify(Object.keys(Cart.items)));
@@ -2759,6 +2934,91 @@ const Checkout = {
 };
 
 /* ---------- My Orders (Customer) ---------- */
+/* ---------- কাস্টম বাজার অর্ডার ----------
+   কাস্টমার নিজের বাজারের লিস্ট টেক্সটে লিখে সাবমিট করে, ড্রাইভার সেই তালিকা অনুযায়ী
+   বাজার করে কাস্টমারের বাসায় পৌঁছে দেয়। অর্ডার কনফার্মের জন্য ১০০ টাকা বিকাশ পে
+   বাধ্যতামূলক, বাকিটা COD। */
+const CustomBazar = {
+  init(){
+    ['cbName','cbPhone','cbAddress','cbList','cbNotes','cbTrxId'].forEach(id=>{
+      const el = document.getElementById(id);
+      if(el) el.value='';
+    });
+    document.getElementById('cbDistrict').value='';
+    document.getElementById('cbZone').innerHTML='<option value="">প্রথমে উপজেলা বেছে নিন</option>';
+    document.getElementById('cbBkashNumber').textContent='উপজেলা বেছে নিলে দেখাবে';
+    document.getElementById('cbMsg').className='form-msg';
+  },
+  onUpazilaChange(){
+    const upazila = document.getElementById('cbDistrict').value;
+    const zoneSelect = document.getElementById('cbZone');
+    if(!upazila){ zoneSelect.innerHTML='<option value="">প্রথমে উপজেলা বেছে নিন</option>'; return; }
+    zoneSelect.innerHTML = '<option value="">এলাকা বেছে নিন</option>' + AREA_ZONES[upazila].map(z=>`<option value="${z}">${z}</option>`).join('');
+    // জোন-ভিত্তিক bKash নম্বর দেখাই
+    const branch = BRANCH_INFO[upazila];
+    if(branch){
+      document.getElementById('cbBkashNumber').innerHTML = `<span style="font-size:17px;font-weight:700;">${branch.bkashNumber}</span>`;
+    }
+  },
+  async submit(){
+    const msgEl = document.getElementById('cbMsg');
+    const name = document.getElementById('cbName').value.trim();
+    const phone = document.getElementById('cbPhone').value.trim();
+    const address = document.getElementById('cbAddress').value.trim();
+    const district = document.getElementById('cbDistrict').value;
+    const zone = document.getElementById('cbZone').value;
+    const type = document.getElementById('cbType').value;
+    const list = document.getElementById('cbList').value.trim();
+    const notes = document.getElementById('cbNotes').value.trim();
+    const trxId = document.getElementById('cbTrxId').value.trim();
+
+    if(!name||!phone||!address||!district||!zone||!list||!trxId){
+      msgEl.textContent='সব প্রয়োজনীয় তথ্য পূরণ করুন'; msgEl.className='form-msg err'; return;
+    }
+    const phoneRegex = /^(?:\+880|880|0)1[3-9]\d{8}$/;
+    if(!phoneRegex.test(phone.replace(/[\s-]/g,''))){
+      msgEl.textContent='সঠিক মোবাইল নম্বর দিন'; msgEl.className='form-msg err'; return;
+    }
+    if(!FB){ msgEl.textContent='সংযোগ সমস্যা'; msgEl.className='form-msg err'; return; }
+
+    const btn = document.getElementById('cbSubmitBtn');
+    btn.textContent='জমা হচ্ছে...'; btn.disabled=true;
+
+    const typeLabels = {weekly:'সাপ্তাহিক',monthly:'মাসিক',wedding:'বিয়ের',ramadan:'রমজানের',qurbani:'কুরবানির',other:'অন্যান্য'};
+    const orderNo = 'CB-' + new Date().getFullYear() + '-' + String(Math.floor(Math.random()*900000)+100000);
+
+    try{
+      await FB.addDoc(FB.collection(FB.db,'orders'), {
+        orderNumber: orderNo,
+        orderType: 'custom-bazar',
+        bazarType: type,
+        bazarTypeLabel: typeLabels[type]||type,
+        customerName: name,
+        customerPhone: phone,
+        address,
+        branchZone: district,
+        district: AREA_CITY_LABELS[district]||'',
+        zone,
+        bazarList: list,
+        notes,
+        bkashTrxId: trxId,
+        advanceAmount: 100,
+        paymentMethod: 'bkash+cod',
+        status: 'pending',
+        userId: Auth.currentUser?.uid || null,
+        createdAt: FB.serverTimestamp()
+      });
+
+      msgEl.innerHTML = `✅ আপনার বাজার অর্ডার (${orderNo}) সফলভাবে জমা হয়েছে!<br><span class="subtext">আমাদের টিম শীঘ্রই যোগাযোগ করবে।</span>`;
+      msgEl.className='form-msg ok';
+      btn.textContent='📝 বাজার অর্ডার জমা দিন'; btn.disabled=false;
+    }catch(e){
+      msgEl.textContent='সমস্যা হয়েছে: '+e.message; msgEl.className='form-msg err';
+      btn.textContent='📝 বাজার অর্ডার জমা দিন'; btn.disabled=false;
+    }
+  }
+};
+
 const MyOrders = {
   async render(){
     const list = document.getElementById('myOrdersList');
@@ -3194,6 +3454,9 @@ const ZoneManagerDash = {
       document.getElementById('zmDashBox').style.display='block';
       this.applyBranchHeader(zone);
       await this.render();
+      // Zone Manager লগইন সফল হওয়ার পরই push notification setup করি — এতে
+      // নতুন অর্ডার আসলে এই জোনের ম্যানেজার ব্রাউজার বন্ধ থাকলেও নটিফিকেশন পাবে।
+      NotificationSystem.setup(zone);
     }catch(e){ msgEl.textContent='লগইন সমস্যা: '+e.message; msgEl.className='form-msg err'; }
   },
   logout(){
@@ -3214,6 +3477,9 @@ const ZoneManagerDash = {
     document.getElementById('zmLoginBox').style.display='none';
     document.getElementById('zmDashBox').style.display='block';
     this.applyBranchHeader(this.currentZone);
+    // সেশন auto-restore হলেও notification setup চালু করি, যাতে ব্রাউজার রিফ্রেশ
+    // করলেও push notification কাজ করতে থাকে
+    NotificationSystem.setup(this.currentZone);
 
     const zoneOrders = (await OrdersService.loadAll()).filter(o=>o.branchZone===this.currentZone);
     const zoneProductsList = ALL_PRODUCTS.filter(p=>p.zone===this.currentZone);
@@ -3659,7 +3925,7 @@ Router.handleInitialHash();
 // GitHub Actions APK build (Bubblewrap checks for this).
 if('serviceWorker' in navigator){
   window.addEventListener('load', ()=>{
-    navigator.serviceWorker.register('./service-worker.js').catch(e=>devWarn('SW registration failed:', e.message));
+    navigator.serviceWorker.register('/firebase-messaging-sw.js').catch(e=>devWarn('SW registration failed:', e.message));
   });
 }
 </script>
