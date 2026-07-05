@@ -1,0 +1,61 @@
+const Router = {
+  current:'home',
+  params:{},
+  go(page, params={}, opts={}){
+    // Owner Dashboard is PIN-gated
+    if(page==='admin-dash' && !OwnerAuth.isUnlocked()){
+      OwnerAuth.requestAccess();
+      return;
+    }
+    this.current = page; this.params = params;
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    const target = document.getElementById('page-'+page);
+    if(target) target.classList.add('active');
+    window.scrollTo({top:0,behavior:'smooth'});
+
+    // Mobile bottom nav active-state sync — without this, "হোম" always stayed
+    // highlighted no matter which page was open.
+    const navMap = { 'home':0, 'listing':1, 'checkout':2, 'myorders':3, 'product':3 };
+    document.querySelectorAll('.mobile-nav a').forEach((a,i)=>{
+      a.classList.toggle('active', i === (navMap[page] ?? -1));
+    });
+
+    if(!opts.skipHash){
+      const hashName = page==='admin-dash' ? 'owner' : page;
+      history.replaceState(null,'','#'+hashName);
+    }
+    if(page==='listing') Listing.render();
+    if(page==='product') PDP.load(params.id);
+    if(page==='checkout') Checkout.init();
+    if(page==='myorders') MyOrders.render();
+    if(page==='admin-dash') AdminDash.render();
+    if(page==='driver') DriverPortal.render();
+    if(page==='zone-manager') ZoneManagerDash.render();
+    if(page==='home') Home.render();
+    if(page==='custom-bazar') CustomBazar.init();
+
+    // চ্যাট উইজেট এবং কাস্টমার-নির্দিষ্ট হেডার/টপবার শুধু কাস্টমার-ফেসিং পেজে দেখানো
+    // হবে — Owner/Zone Manager/Driver পোর্টালে এসবের কোনো কাজ নেই (লগইন/কার্ট/সার্চ/
+    // ক্যাটাগরি বার owner-এর জন্য বিভ্রান্তিকর ও জায়গা নষ্ট করে), তাই সম্পূর্ণ হাইড।
+    const staffPages = ['admin-dash','zone-manager','driver'];
+    const isStaffPage = staffPages.includes(page);
+    ChatWidget.setVisible(!isStaffPage);
+    document.getElementById('customerTopbar').style.display = isStaffPage ? 'none' : '';
+    document.getElementById('customerHeader').style.display = isStaffPage ? 'none' : '';
+    document.getElementById('customerMobileNav').style.display = isStaffPage ? 'none' : '';
+    document.getElementById('customerFooter').style.display = isStaffPage ? 'none' : '';
+    document.body.style.paddingBottom = isStaffPage ? '0' : '';
+  },
+  /* Reads the current URL hash on page load and routes accordingly.
+     This is what makes yoursite.com/#driver, yoursite.com/#owner, and
+     yoursite.com/#zone-manager work as memorable URLs. */
+  handleInitialHash(){
+    const hash = (location.hash||'').replace('#','').trim();
+    if(hash==='driver'){ this.go('driver', {}, {skipHash:true}); history.replaceState(null,'','#driver'); }
+    else if(hash==='owner'){ this.go('admin-dash', {}, {skipHash:true}); }
+    else if(hash==='zone-manager'){ this.go('zone-manager', {}, {skipHash:true}); history.replaceState(null,'','#zone-manager'); }
+    else { this.go('home', {}, {skipHash:true}); }
+  }
+};
+
+/* ---------- Home page render ---------- */
