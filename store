@@ -1,0 +1,232 @@
+function zoneProducts(){
+  const seenGroups = new Set();
+  const seenNameKeys = new Set();
+  const merged = [];
+  for(const p of ALL_PRODUCTS){
+    if(p.groupId){
+      if(seenGroups.has(p.groupId)) continue; // এই গ্রুপের আগেরটা ইতিমধ্যে যুক্ত হয়ে গেছে
+      seenGroups.add(p.groupId);
+      const siblings = ALL_PRODUCTS.filter(x => x.groupId === p.groupId);
+      const combinedStock = siblings.reduce((sum, s) => sum + (s.stock||0), 0);
+      merged.push({ ...p, stock: combinedStock });
+    }else{
+      // groupId ফিচার আসার আগে যে প্রোডাক্টগুলো দুই জোনে আলাদাভাবে অ্যাড করা হয়েছিল,
+      // তাদের জন্য নাম+দাম+ক্যাটাগরি মিলিয়ে fallback ম্যাচিং — এতে পুরনো ডাটাও
+      // ঠিকভাবে একসাথে দেখানো যায়, নতুন করে কিছু এডিট/রিইম্পোর্ট করতে হয় না।
+      const nameKey = `${p.name.trim().toLowerCase()}|${p.category}|${p.salePrice}`;
+      if(seenNameKeys.has(nameKey)) continue;
+      seenNameKeys.add(nameKey);
+      const siblings = ALL_PRODUCTS.filter(x => !x.groupId &&
+        `${x.name.trim().toLowerCase()}|${x.category}|${x.salePrice}` === nameKey);
+      const combinedStock = siblings.reduce((sum, s) => sum + (s.stock||0), 0);
+      merged.push(siblings.length>1 ? { ...p, stock: combinedStock } : p);
+    }
+  }
+  return merged;
+}
+
+
+const ProductStore = {
+  loaded:false,
+  unsubscribe:null, // onSnapshot listener বন্ধ করার রেফারেন্স — পেজ ছাড়লে memory leak এড়াতে
+  async loadFromFirestore(){
+    if(!FB) return false;
+    try{
+      const snap = await FB.getDocs(FB.collection(FB.db,'products'));
+      if(snap.empty){
+        devWarn('Firestore "products" collection is empty — showing demo data (dev) or coming-soon message (prod)');
+        this.loaded = true; // লোডিং শেষ হয়েছে এটা মার্ক করা জরুরি, নইলে skeleton loader অনন্তকাল ঘুরবে
+        if(!isDev){
+          // প্রোডাকশনে ডেমো ডাটা দেখানো ঠিক না — আসল কাস্টমার ভুল প্রোডাক্ট দেখে ফেলতে পারে
+          document.getElementById('flashSaleRow').innerHTML = '<p style="padding:20px;color:var(--ink-soft);">শীঘ্রই প্রোডাক্ট যুক্ত হবে...</p>';
+          document.getElementById('bestSellerRow').innerHTML = '';
+          document.getElementById('newArrivalGrid').innerHTML = '';
+          document.getElementById('recommendedRow').innerHTML = '';
+          ALL_PRODUCTS = []; // ডেমো ডাটা ক্লিয়ার করি
+        }
+        return false;
+      }
+      const realProducts = [];
+      snap.forEach(docSnap=>{
+        const d = docSnap.data();
+        realProducts.push({
+          id: docSnap.id,
+          name: d.name||'নামহীন প্রোডাক্ট',
+          category: d.category||'home',
+          zone: d.zone||'noakhali_sadar',
+          unit: d.unit||'পিস',
+          price: Number(d.price)||0,
+          salePrice: Number(d.salePrice ?? d.price)||0,
+          rating: d.rating||'৫.০',
+          reviews: d.reviews||0,
+          sold: d.sold||0,
+          cod: d.cod!==false,
+          img: d.imageUrl || `https://picsum.photos/seed/${docSnap.id}/400/400`,
+          isFlash: !!d.isFlash,
+          isFeatured: !!d.isFeatured,
+          fastDelivery: d.fastDelivery!==false,
+          stock: Number(d.stock)||0,
+          description: d.description||'',
+          status: d.status||'active',
+        });
+      });
+      ALL_PRODUCTS = realProducts.filter(p=>p.status==='active');
+      this.loaded = true;
+      return true;
+    }catch(e){
+      devWarn('Could not load products from Firestore (using demo data):', e.message);
+      this.loaded = true; // ব্যর্থ হলেও লোডিং অবস্থা শেষ — ডেমো ডাটা/fallback দেখানো হবে, অনন্ত স্কেলিটন নয়
+      return false;
+    }
+  },
+  // পেজ একবার লোড হওয়ার পর থেকে Firestore-এর সাথে লাইভ সংযোগ রাখে — অন্য কোনো ডিভাইস
+  // থেকে (Owner Dashboard, Zone Manager) স্টক/দাম বদলালে এই ট্যাবেও রিফ্রেশ ছাড়াই
+  // স্বয়ংক্রিয়ভাবে আপডেট হয়ে যায়। দুই-জোন স্টক সিস্টেমে এটা বিশেষভাবে জরুরি, কারণ
+  // একই সময়ে একাধিক কাস্টমার একই প্রোডাক্ট দেখতে/অর্ডার করতে পারে।
+  startLiveSync(){
+    if(!FB || this.unsubscribe) return; // আগে থেকে চালু থাকলে দ্বিতীয়বার শুরু করি না
+    try{
+      this.unsubscribe = FB.onSnapshot(FB.collection(FB.db,'products'), (snap)=>{
+        const realProducts = [];
+        snap.forEach(docSnap=>{
+          const d = docSnap.data();
+          realProducts.push({
+            id: docSnap.id,
+            name: d.name||'নামহীন প্রোডাক্ট',
+            category: d.category||'home',
+            zone: d.zone||'noakhali_sadar',
+            unit: d.unit||'পিস',
+            price: Number(d.price)||0,
+            salePrice: Number(d.salePrice ?? d.price)||0,
+            rating: d.rating||'৫.০',
+            reviews: d.reviews||0,
+            sold: d.sold||0,
+            cod: d.cod!==false,
+            img: d.imageUrl || `https://picsum.photos/seed/${docSnap.id}/400/400`,
+            isFlash: !!d.isFlash,
+            isFeatured: !!d.isFeatured,
+            fastDelivery: d.fastDelivery!==false,
+            stock: Number(d.stock)||0,
+            description: d.description||'',
+            status: d.status||'active',
+            groupId: d.groupId||null,
+          });
+        });
+        ALL_PRODUCTS = realProducts.filter(p=>p.status==='active');
+        this.loaded = true;
+        // শুধু কাস্টমার-ফেসিং পেজেই re-render করি — Owner/Zone Manager Dashboard নিজেরাই
+        // তাদের নিজস্ব render() মেথড দিয়ে ম্যানেজ করে, এখানে ছোঁয়ার দরকার নেই
+        if(Router.current==='home') Home.render();
+        if(Router.current==='listing') Listing.render();
+        if(Router.current==='product' && PDP.product) PDP.load(PDP.product.id);
+      }, (err)=>{ devWarn('Live product sync error:', err.message); });
+    }catch(e){ devWarn('Could not start live product sync:', e.message); }
+  },
+  async refreshAndRerender(){
+    const ok = await this.loadFromFirestore();
+    // আগে শুধু success (ok===true) হলে re-render হতো — মানে empty collection বা
+    // network error হলে skeleton loader কখনো সরতো না, কারণ কেউ Home.render() আবার
+    // কল করত না। এখন যেকোনো ফলাফলেই (সফল/খালি/এরর) re-render হবে, যাতে শেষ অবস্থা
+    // (real products, "শীঘ্রই আসছে" মেসেজ, বা ডেমো ডাটা) সঠিকভাবে দেখানো হয়।
+    Home.render();
+    if(Router.current==='listing') Listing.render();
+    return ok;
+  }
+};
+
+
+const Cart = {
+  items:{}, // {productId: qty}
+  load(){ try{ this.items = JSON.parse(localStorage.getItem('golapi_cart')||'{}'); }catch(e){ this.items={}; } this.renderBadge(); },
+  save(){ localStorage.setItem('golapi_cart', JSON.stringify(this.items)); this.renderBadge(); },
+  add(id, qty=1){
+    this.items[id] = (this.items[id]||0) + qty;
+    this.save();
+    toast('✓ কার্টে যুক্ত হয়েছে');
+    this.renderDrawer();
+  },
+  remove(id){ delete this.items[id]; this.save(); this.renderDrawer(); },
+  setQty(id, qty){ if(qty<=0){ this.remove(id); return;} this.items[id]=qty; this.save(); this.renderDrawer(); },
+  totalCount(){ return Object.values(this.items).reduce((a,b)=>a+b,0); },
+  totalPrice(){
+    return Object.entries(this.items).reduce((sum,[id,qty])=>{
+      const p = ALL_PRODUCTS.find(x=>x.id===id);
+      return sum + (p? p.salePrice*qty : 0);
+    },0);
+  },
+  renderBadge(){ document.getElementById('cartCount').textContent = this.totalCount(); },
+  renderDrawer(){
+    const body = document.getElementById('cartDrawerBody');
+    const foot = document.getElementById('cartDrawerFoot');
+    const entries = Object.entries(this.items);
+    if(entries.length===0){
+      body.innerHTML = `<div class="cart-empty"><div style="font-size:40px;margin-bottom:10px;">🛍️</div><p>আপনার কার্ট খালি</p></div>`;
+      foot.style.display='none';
+      return;
+    }
+    body.innerHTML = entries.map(([id,qty])=>{
+      const p = ALL_PRODUCTS.find(x=>x.id===id);
+      if(!p) return '';
+      return `
+      <div class="cart-line">
+        <img src="${p.img}">
+        <div style="flex:1;">
+          <div class="ci-name">${p.name}</div>
+          <div style="font-size:11px;color:var(--ink-soft);margin-bottom:4px;">প্রতি ${p.unit} — ${money(p.salePrice)}</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div class="qty-ctrl">
+              <button onclick="Cart.setQty('${id}',${qty-1})">−</button>
+              <span>${qty}</span>
+              <button onclick="Cart.setQty('${id}',${qty+1})">+</button>
+            </div>
+            <strong style="color:var(--rose);font-family:'Poppins';">${money(p.salePrice*qty)}</strong>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+    foot.style.display='block';
+    document.getElementById('drawerSubtotal').textContent = money(this.totalPrice());
+  },
+  openDrawer(){ document.getElementById('cartDrawer').classList.add('show'); document.getElementById('cartOverlay').classList.add('show'); this.renderDrawer(); },
+  closeDrawer(){ document.getElementById('cartDrawer').classList.remove('show'); document.getElementById('cartOverlay').classList.remove('show'); },
+  goCheckout(){
+    if(this.totalCount()===0){ toast('কার্ট খালি আছে'); return; }
+    this.closeDrawer();
+    Router.go('checkout');
+  }
+};
+Cart.load();
+
+/* ---------- Wishlist (simple local) ---------- */
+const Wishlist = {
+  items: JSON.parse(localStorage.getItem('golapi_wishlist')||'[]'),
+  async toggle(id){
+    const i = this.items.indexOf(id);
+    if(i>=0){ this.items.splice(i,1); toast('উইশলিস্ট থেকে মুছে ফেলা হয়েছে'); }
+    else { this.items.push(id); toast('❤️ উইশলিস্টে যুক্ত হয়েছে'); }
+    localStorage.setItem('golapi_wishlist', JSON.stringify(this.items));
+
+    // লগইন করা থাকলে Firestore-এও সিঙ্ক করি, যাতে অন্য ডিভাইসেও উইশলিস্ট দেখা যায়
+    if(FB && Auth.currentUser){
+      try{
+        await FB.setDoc(
+          FB.doc(FB.db,'users',Auth.currentUser.uid),
+          { wishlist: this.items },
+          { merge: true }
+        );
+      }catch(e){ devWarn('Wishlist sync failed:', e.message); }
+    }
+  },
+  async loadFromFirestore(){
+    if(!FB || !Auth.currentUser) return;
+    try{
+      const snap = await FB.getDoc(FB.doc(FB.db,'users',Auth.currentUser.uid));
+      if(snap.exists() && snap.data().wishlist){
+        this.items = snap.data().wishlist;
+        localStorage.setItem('golapi_wishlist', JSON.stringify(this.items));
+      }
+    }catch(e){ devWarn('Wishlist load failed:', e.message); }
+  }
+};
+
+/* ---------- Delivery Area Check (Chaldal-style) ---------- */
