@@ -11,6 +11,10 @@
 <meta property="og:locale" content="bn_BD">
 <meta name="theme-color" content="#C2185B">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<!-- Favicon -->
+<link rel="icon" type="image/jpeg" href="https://z-cdn-media.chatglm.cn/files/82b9ff40-3abd-48c2-8193-aff6b4591d20.jpeg?auth_key=1883378719-6b884e5e96464418960cc70ff10a3c74-0-0f318689e5e633fd8e77e130eb94ff20">
+<link rel="apple-touch-icon" href="https://z-cdn-media.chatglm.cn/files/82b9ff40-3abd-48c2-8193-aff6b4591d20.jpeg?auth_key=1883378719-6b884e5e96464418960cc70ff10a3c74-0-0f318689e5e633fd8e77e130eb94ff20">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Tiro+Bangla:ital@0;1&family=Hind+Siliguri:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -146,7 +150,9 @@ select.form-input option{background:#0F172A;color:#e2e8f0}
 <div class="max-w-7xl mx-auto px-4 sm:px-6">
 <div class="flex items-center justify-between h-16 gap-4">
 <a href="#" onclick="go('home')" class="flex items-center gap-2.5 shrink-0">
-<div class="w-10 h-10 rounded-xl bg-gradient-to-br from-gold to-rose flex items-center justify-center shadow-lg shadow-gold/20"><span class="text-lg">🌹</span></div>
+<div class="w-11 h-11 rounded-xl overflow-hidden flex items-center justify-center shadow-lg shadow-gold/20 border border-white/10 bg-white/5">
+    <img src="https://z-cdn-media.chatglm.cn/files/82b9ff40-3abd-48c2-8193-aff6b4591d20.jpeg?auth_key=1883378719-6b884e5e96464418960cc70ff10a3c74-0-0f318689e5e633fd8e77e130eb94ff20" alt="Golapi Shop Logo" class="w-full h-full object-cover">
+</div>
 <div class="hidden sm:block"><span class="font-pop font-bold text-sm text-white">Golapi<span class="text-gold">Shop</span><span class="text-rose">.bd</span></span><p class="text-[9px] text-slate-500 -mt-0.5 font-medium tracking-wider">GOLAPISHOPONLINE.BD</p></div>
 </a>
 <div class="hidden md:flex flex-1 max-w-xl relative" id="searchWrap">
@@ -362,12 +368,12 @@ select.form-input option{background:#0F172A;color:#e2e8f0}
     </div>
 
     <!-- Memo Header -->
-    <div class="bg-gradient-to-r from-pink to-rose p-6 text-center text-white">
-        <div class="flex items-center justify-center gap-2 mb-1">
-            <span class="text-3xl">🌹</span>
-            <h2 class="font-pop font-bold text-2xl">GolapiShop.online</h2>
+    <div class="bg-gradient-to-r from-pink to-rose p-6 text-center text-white flex flex-col items-center">
+        <div class="w-16 h-16 rounded-xl overflow-hidden border-2 border-white/40 mb-2">
+            <img src="https://z-cdn-media.chatglm.cn/files/82b9ff40-3abd-48c2-8193-aff6b4591d20.jpeg?auth_key=1883378719-6b884e5e96464418960cc70ff10a3c74-0-0f318689e5e633fd8e77e130eb94ff20" alt="Logo" class="w-full h-full object-cover">
         </div>
-        <p class="text-xs opacity-90">📱 ০১৬১২-০৫৭৩৭১ | 📧 golapishoponline.bd@gmail.com</p>
+        <h2 class="font-pop font-bold text-2xl">GolapiShop.online</h2>
+        <p class="text-xs opacity-90 mt-1">📱 ০১৬১২-০৫৭৩৭১ | 📧 golapishoponline.bd@gmail.com</p>
         <div class="flex justify-center gap-4 mt-2 text-xs">
             <a href="https://facebook.com/golapishoponline" target="_blank" class="underline">Facebook</a>
             <a href="https://wa.me/8801612057371" target="_blank" class="underline">WhatsApp</a>
@@ -476,7 +482,7 @@ select.form-input option{background:#0F172A;color:#e2e8f0}
 <p class="text-green-400 text-sm mb-5" id="pdpStock"></p>
 <div class="flex items-center gap-4 mb-6"><span class="text-sm font-semibold">পরিমাণ:</span><div class="flex items-center border border-white/10 rounded-lg overflow-hidden"><button onclick="changeQty(-1)" class="w-10 h-10 text-slate-400 hover:text-gold hover:bg-white/5 transition text-lg">−</button><span class="w-12 h-10 flex items-center justify-center font-semibold" id="pdpQty">১</span><button onclick="changeQty(1)" class="w-10 h-10 text-slate-400 hover:text-gold hover:bg-white/5 transition text-lg">+</button></div></div>
 <div class="flex gap-3 mb-6"><button onclick="addToCartFromPdp()" class="btn-gold flex-1 py-3.5 flex items-center justify-center gap-2">🛍️ কার্টে যুক্ত করুন</button><button onclick="buyNow()" class="btn-outline flex-1 py-3.5">এখনই কিনুন</button></div>
-<div class="card p-4 flex items-center justify-between mb-6"><div><span class="text-rose font-semibold">🌹 Golapi Shop Online</span><p class="text-xs text-slate-400">১০০% অরিজিনাল</p></div><span class="badge-green text-[10px]">✓ Verified</span></div>
+<div class="card p-4 flex items-center justify-between mb-6"><div class="flex items-center gap-2"><div class="w-10 h-10 rounded-lg overflow-hidden border border-white/10"><img src="https://z-cdn-media.chatglm.cn/files/82b9ff40-3abd-48c2-8193-aff6b4591d20.jpeg?auth_key=1883378719-6b884e5e96464418960cc70ff10a3c74-0-0f318689e5e633fd8e77e130eb94ff20" alt="logo" class="w-full h-full object-cover"></div><div><span class="text-rose font-semibold text-sm">Golapi Shop Online</span><p class="text-xs text-slate-400">১০০% অরিজিনাল</p></div></div><span class="badge-green text-[10px]">✓ Verified</span></div>
 <div class="border-t border-white/5 pt-5"><h3 class="font-semibold mb-3">ডেলিভারি তথ্য</h3><p class="text-sm text-slate-400 leading-relaxed">🚚 নোয়াখালী সদর ও বেগমগঞ্জে নিজস্ব ড্রাইভার দিয়ে।<br>⚡ এক্সপ্রেস: ৬০-৯০ মিনিট | 📅 আজই: ফ্রি<br>↩️ ৩ দিনের মধ্যে রিটার্ন</p></div>
 </div>
 </div>
@@ -551,7 +557,12 @@ select.form-input option{background:#0F172A;color:#e2e8f0}
 <footer class="border-t border-white/5 mt-16 pt-12 pb-6">
 <div class="max-w-7xl mx-auto px-4 sm:px-6 grid sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
 <div>
-<div class="flex items-center gap-2 mb-3"><div class="w-9 h-9 rounded-lg bg-gradient-to-br from-gold to-rose flex items-center justify-center text-sm">🌹</div><span class="font-pop font-bold text-sm text-white">Golapi<span class="text-gold">Shop</span>.bd</span></div>
+<div class="flex items-center gap-2 mb-3">
+    <div class="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center border border-white/10">
+        <img src="https://z-cdn-media.chatglm.cn/files/82b9ff40-3abd-48c2-8193-aff6b4591d20.jpeg?auth_key=1883378719-6b884e5e96464418960cc70ff10a3c74-0-0f318689e5e633fd8e77e130eb94ff20" alt="Logo" class="w-full h-full object-cover">
+    </div>
+    <span class="font-pop font-bold text-sm text-white">Golapi<span class="text-gold">Shop</span>.bd</span>
+</div>
 <p class="text-xs text-slate-500 leading-relaxed">নোয়াখালী সদর ও বেগমগঞ্জের নিজস্ব অনলাইন শপ।</p>
 </div>
 <div>
@@ -594,7 +605,10 @@ select.form-input option{background:#0F172A;color:#e2e8f0}
 <button class="chat-btn" onclick="toggleChat()"><span class="text-2xl" id="chatIcon">💬</span></button>
 <div class="chat-window" id="chatWindow">
 <div class="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-pink to-pink-dark text-white">
-<div class="flex items-center gap-2"><span class="text-xl">🌹</span><div><div class="font-semibold text-sm">Golapi সহায়ক</div><div class="text-[11px] opacity-80">প্রায় সাথে সাথেই উত্তর</div></div></div>
+<div class="flex items-center gap-2">
+    <img src="https://z-cdn-media.chatglm.cn/files/82b9ff40-3abd-48c2-8193-aff6b4591d20.jpeg?auth_key=1883378719-6b884e5e96464418960cc70ff10a3c74-0-0f318689e5e633fd8e77e130eb94ff20" alt="Logo" class="w-8 h-8 rounded-full object-cover border border-white/20">
+    <div><div class="font-semibold text-sm">Golapi সহায়ক</div><div class="text-[11px] opacity-80">প্রায় সাথে সাথেই উত্তর</div></div>
+</div>
 <button onclick="toggleChat()" class="text-white text-lg hover:opacity-80">✕</button>
 </div>
 <div class="p-4 max-h-[280px] overflow-y-auto no-sb min-h-[100px]" id="chatBody"><div class="bg-gold/[.08] border border-gold/[.12] rounded-xl p-3 text-sm text-slate-300 mb-3 max-w-[85%]">হ্যালো! 🌹 আমি Golapi Shop-এর সহায়ক। প্রোডাক্ট, ডেলিভারি, মেডিক্যাল বা অধিকারী সুবিধা নিয়ে প্রশ্ন করুন।</div></div>
