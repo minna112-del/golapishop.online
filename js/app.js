@@ -21,6 +21,28 @@ setInterval(()=>{
   document.getElementById('t-s').textContent = bn(String(s).padStart(2,'0'));
 },1000);
 
+/* ---------- Bangla / English toggle ----------
+   Lightweight i18n for the highest-visibility strings (nav, hero, mobile nav) via
+   data-bn/data-en attributes. Deeper screens (dashboards, product data) stay Bangla-only
+   for now — full coverage needs a proper translation layer across all dynamic content. */
+let currentLang = localStorage.getItem('golapi_lang') || 'bn';
+function applyLang(){
+  document.querySelectorAll('[data-bn][data-en]').forEach(el=>{
+    const text = el.dataset[currentLang];
+    if(el.children.length===0 || /^[📝🏥💊🛒🔥💄🏠📂🛍️📦]/.test(text)) el.innerHTML = text;
+    else el.textContent = text;
+  });
+  document.documentElement.lang = currentLang;
+  const label = document.getElementById('langBtnLabel');
+  if(label) label.textContent = currentLang==='bn' ? 'EN' : 'বাং';
+}
+function toggleLang(){
+  currentLang = currentLang==='bn' ? 'en' : 'bn';
+  localStorage.setItem('golapi_lang', currentLang);
+  applyLang();
+}
+applyLang();
+
 /* ---------- Init ---------- */
 Router.go('home', {}, {skipHash:true});
 if('serviceWorker' in navigator){
