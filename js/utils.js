@@ -1,129 +1,54 @@
-/* =========================================================================
-   GOLAPI SHOP ONLINE — Application Logic
-   Pattern: Single-file, vanilla JS, Firebase backend (Auth + Firestore)
-   Backend calls go through window.__fb (set once firebase-ready fires)
-   ========================================================================= */
+/* utils.js — helpers, constants, toast system */
+const isDev = location.hostname==='localhost' || location.hostname==='127.0.0.1';
+function devWarn(...a){ if(isDev) console.warn(...a); }
 
-// Dev-only logging — keeps sensitive error details out of the production console
-// while still letting us debug locally (localhost / 127.0.0.1).
-const isDev = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-function devLog(...args){ if(isDev) console.log(...args); }
-function devWarn(...args){ if(isDev) console.warn(...args); }
-
-function toast(msg){
+function toast(msg,type='info'){
   const wrap = document.getElementById('toastWrap');
   const t = document.createElement('div');
-  t.className='toast'; t.textContent=msg;
+  t.className = 'toast ' + (type==='error'?'err':type==='success'?'ok':'');
+  t.textContent = msg;
   wrap.appendChild(t);
-  setTimeout(()=>t.remove(),3000);
+  setTimeout(()=>t.remove(), 3200);
 }
 
-/* ---------- Sample/seed product data (replace with Firestore data once collection 'products' is populated) ---------- */
+/* ---------- Static data ---------- */
 const CATEGORIES = [
-  {id:'medicine',label:'ঔষধ',icon:'💊'},
-  {id:'grocery',label:'মুদি বাজার',icon:'🛒'},
-  {id:'confectionery',label:'কনফেকশনারি',icon:'🍰'},
-  {id:'stationery',label:'স্টেশনারি',icon:'📒'},
-  {id:'gas',label:'গ্যাস সিলিন্ডার',icon:'🔥'},
-  {id:'mobile',label:'মোবাইল এক্সেসরিস',icon:'📱'},
-  {id:'watch',label:'ঘড়ি ও ব্যাটারি',icon:'⌚'},
-  {id:'cosmetics',label:'কসমেটিকস',icon:'💄'},
-  {id:'clothing',label:'জামা-কাপড়',icon:'👕'},
-  {id:'furniture',label:'ফার্নিচার',icon:'🪑'},
-  {id:'custom-bazar',label:'কাস্টম বাজার',icon:'📝'},
+  {id:'medicine',label:'ঔষধ',icon:'💊'},{id:'grocery',label:'মুদি বাজার',icon:'🛒'},
+  {id:'confectionery',label:'কনফেকশনারি',icon:'🍬'},{id:'stationery',label:'স্টেশনারি',icon:'📒'},
+  {id:'gas',label:'গ্যাস সিলিন্ডার',icon:'🔥'},{id:'mobile',label:'মোবাইল',icon:'📱'},
+  {id:'watch',label:'ঘড়ি ও ব্যাটারি',icon:'⌚'},{id:'cosmetics',label:'কসমেটিকস',icon:'💄'},
+  {id:'clothing',label:'জামা-কাপড়',icon:'👕'},{id:'furniture',label:'ফার্নিচার',icon:'🪑'}
+];
+const AREA_ZONES = {
+  noakhali_sadar: ['মাইজদী কোর্ট','সোনাপুর','লক্ষ্মীনারায়ণপুর','বিনোদপুর','চরমটুয়া','নোয়াখালী শহর','ধর্মপুর'],
+  begumganj: ['বেগমগঞ্জ সদর','রাজগঞ্জ','সোনাইমুড়ী রোড','একলাশপুর','দুর্গাপুর','শরীফপুর','চাটখিল রোড','নাটেশ্বর']
+};
+const BRANCH_INFO = {
+  noakhali_sadar:{label:'নোয়াখালী সদর',address:'মাইজদী বাজার, সদর, নোয়াখালী',managerName:'রিমন',managerPhone:'+880 1627-010060',bkashNumber:'01627010060',nagadNumber:'01627010060'},
+  begumganj:{label:'বেগমগঞ্জ',address:'আমানতপুর, বেগমগঞ্জ, নোয়াখালী',managerName:'সৃজন',managerPhone:'+880 1310-006959',bkashNumber:'01310006959',nagadNumber:'01310006959'}
+};
+const AREA_LABELS = {noakhali_sadar:BRANCH_INFO.noakhali_sadar.label, begumganj:BRANCH_INFO.begumganj.label};
+const ORDER_STATUS = {
+  pending:{label:'পেন্ডিং',cls:'pending'}, confirmed:{label:'কনফার্মড',cls:'confirmed'},
+  assigned:{label:'ড্রাইভার অ্যাসাইনড',cls:'confirmed'}, picked_up:{label:'পিকআপ হয়েছে',cls:'confirmed'},
+  in_transit:{label:'ডেলিভারির পথে',cls:'confirmed'}, delivered:{label:'ডেলিভারি সম্পন্ন',cls:'delivered'},
+  cancelled:{label:'বাতিল',cls:'cancelled'}
+};
+const MED_LIST = [
+  {icon:'👨‍⚕️',name:'ডাঃ রহিম উদ্দিন',spec:'মেডিসিন বিশেষজ্ঞ',sched:'প্রতিদিন সকাল ৯টা - দুপুর ২টা'},
+  {icon:'👩‍⚕️',name:'ডাঃ করিনা আক্তার',spec:'গাইনি ও প্রসূতি',sched:'শনি ও সোম বিকাল ৪টা - রাত ৮টা'},
+  {icon:'🧒',name:'ডাঃ আবুল কালাম',spec:'শিশু বিশেষজ্ঞ',sched:'রবি ও বুধ সকাল ১০টা - দুপুর ১টা'},
+  {icon:'🦷',name:'ডাঃ সালমা সুলতানা',spec:'ডেন্টাল সার্জন',sched:'শুক্র বিকাল ৩টা - রাত ৭টা'},
+  {icon:'❤️',name:'ডাঃ জাকির হোসেন',spec:'কার্ডিওলজি',sched:'মাসের ১ম ও ৩য় রবিবার'},
+  {icon:'👁️',name:'ডাঃ নাফিসা আহমেদ',spec:'চক্ষু বিশেষজ্ঞ',sched:'প্রতি মঙ্গলবার সকাল ৯টা - ১২টা'}
 ];
 
-
 function money(n){
-  const num = Number(n).toLocaleString('en-IN'); // comma-separated (lakh/crore style grouping)
+  const num = Number(n||0).toLocaleString('en-IN');
   const map = {'0':'০','1':'১','2':'২','3':'৩','4':'৪','5':'৫','6':'৬','7':'৭','8':'৮','9':'৯'};
-  return '৳' + num.replace(/[0-9]/g, d => map[d]);
+  return '৳' + num.replace(/[0-9]/g, d=>map[d]);
 }
-
-// Firestore থেকে প্রোডাক্ট লোড হওয়ার আগে এই শিমার-প্লেসহোল্ডার দেখানো হয়, যাতে slow
-// connection-এ পেজ "ভাঙা" বা "খালি" না লাগে — শুধু "লোড হচ্ছে" বোঝা যায়।
+function bn(n){ const map={'0':'০','1':'১','2':'২','3':'৩','4':'৪','5':'৫','6':'৬','7':'৭','8':'৮','9':'৯'}; return String(n).replace(/[0-9]/g,d=>map[d]); }
 function skeletonCards(n=4){
-  return Array.from({length:n}).map(()=>`
-    <div class="pcard" style="pointer-events:none;">
-      <div class="img-wrap" style="background:linear-gradient(90deg,#FBE9EF 25%,#FDF1F5 50%,#FBE9EF 75%);background-size:200% 100%;animation:cwShimmer 1.5s infinite;"></div>
-      <div class="body">
-        <div style="height:14px;background:var(--line);border-radius:4px;margin-bottom:8px;width:80%;"></div>
-        <div style="height:18px;background:var(--line);border-radius:4px;width:50%;"></div>
-      </div>
-    </div>`).join('');
-}
-
-/* হোমপেজ/লিস্টিং-এ এখন সব প্রোডাক্ট (দুই শাখা মিলিয়ে) দেখানো হয় — কাস্টমারকে
-   সাইটে ঢোকার সাথেই জোন বেছে নিতে বাধ্য করা হয় না। জোন/শাখা নির্বাচন এখন
-   চেকআউটের সময় ঠিকানার সাথেই হবে (Checkout.init() দেখো), browsing-এর সময় নয়।
-
-   একটা প্রোডাক্ট দুই শাখাতেই (Owner Dashboard থেকে "একাধিক বেছে নেওয়া যাবে" দিয়ে)
-   যুক্ত করা হলে Firestore-এ দুটো আলাদা ডকুমেন্ট তৈরি হয় (স্টক আলাদা ট্র্যাক করার জন্য),
-   কিন্তু কাস্টমারকে একই প্রোডাক্ট দুইবার দেখানো খারাপ লাগে — তাই এখানে groupId
-   দিয়ে মিলিয়ে নিয়ে একটাই কার্ড দেখানো হয় (স্টক যোগ করে), Owner Dashboard-এ তবু
-   দুটো আলাদা সারি দেখা যায় (AdminDash.renderProductsTable ALL_PRODUCTS সরাসরি ব্যবহার করে)। */
-
-function pcardHTML(p){
-  const discount = p.price>p.salePrice ? Math.round((1-p.salePrice/p.price)*100) : 0;
-  return `
-  <div class="pcard" onclick="Router.go('product',{id:'${p.id}'})">
-    <div class="img-wrap">
-      <img src="${p.img}" alt="${p.name}" loading="lazy">
-      ${discount?`<span class="badge">-${discount}%</span>`:''}
-      ${p.isFeatured?`<span class="badge gold" style="left:auto;right:8px;top:${discount?'40px':'8px'};">★ ফিচার্ড</span>`:''}
-      <button class="wish" onclick="event.stopPropagation();Wishlist.toggle('${p.id}')">🤍</button>
-    </div>
-    <div class="body">
-      ${p.fastDelivery?'<span class="fast-tag">⚡ ৬০ মিনিটে ডেলিভারি</span>':''}
-      <div class="name">${p.name}</div>
-      <div class="rating"><span class="stars">★</span> ${p.rating} (${p.reviews}) · ${p.sold} বিক্রি</div>
-      ${p.cod?'<span class="cod-tag">✓ COD আছে</span>':''}
-      <div class="price-row">
-        <span class="price-now">${money(p.salePrice)}</span>
-        ${discount?`<span class="price-old">${money(p.price)}</span>`:''}
-        <span class="unit-tag">/ ${p.unit}</span>
-      </div>
-      <button class="add-btn" onclick="event.stopPropagation();Cart.add('${p.id}')">কার্টে যুক্ত করুন</button>
-    </div>
-  </div>`;
-}
-
-/* ---------- Router ---------- */
-/* ---------- Owner Dashboard PIN Gate ----------
-   PIN টা এখন Firestore-এ থাকে (settings/owner_pin ডকুমেন্টে), HTML সোর্স কোডে নয়।
-   এর মানে কেউ ব্রাউজার DevTools থেকে View Source করলেও পিন দেখতে পাবে না।
-   প্রথমবার সেট করতে Firebase Console > Firestore > settings কালেকশনে
-   owner_pin নামে একটা ডকুমেন্ট বানিয়ে pin (string) ফিল্ডে নিজের গোপন পিন বসাও।
-   এখনো Firestore Security Rules (firestore.rules) সব collection-এর আসল সুরক্ষা দেয়—
-   এই PIN শুধু casual access আটকায়। */
-
-function bnDigits(n){ const map={'0':'০','1':'১','2':'২','3':'৩','4':'৪','5':'৫','6':'৬','7':'৭','8':'৮','9':'৯'}; return String(n).padStart(2,'0').replace(/[0-9]/g,d=>map[d]); }
-
-// প্রতিদিন রাত ৮টা পর্যন্ত আসল countdown — পেজ রিফ্রেশ করলেও সময় ঠিক থাকবে,
-// আগের মতো প্রতিবার 3:45:12 থেকে শুরু হবে না।
-function getFlashDeadlineSeconds(){
-  const now = new Date();
-  const deadline = new Date();
-  deadline.setHours(20, 0, 0, 0); // রাত ৮টা
-  if(now >= deadline) deadline.setDate(deadline.getDate() + 1); // আজকের ৮টা পার হলে আগামীকাল
-  return Math.floor((deadline - now) / 1000);
-}
-let flashSeconds = getFlashDeadlineSeconds();
-setInterval(()=>{
-  flashSeconds = flashSeconds > 0 ? flashSeconds - 1 : getFlashDeadlineSeconds();
-  const h = Math.floor(flashSeconds/3600), m = Math.floor((flashSeconds%3600)/60), s = flashSeconds%60;
-  document.getElementById('t-h').textContent = bnDigits(h);
-  document.getElementById('t-m').textContent = bnDigits(m);
-  document.getElementById('t-s').textContent = bnDigits(s);
-},1000);
-
-/* ---------- Init ---------- */
-Router.handleInitialHash();
-
-// Register service worker — required for PWA installability and for the
-// GitHub Actions APK build (Bubblewrap checks for this).
-if('serviceWorker' in navigator){
-  window.addEventListener('load', ()=>{
-    navigator.serviceWorker.register('/firebase-messaging-sw.js').catch(e=>devWarn('SW registration failed:', e.message));
-  });
+  return Array.from({length:n}).map(()=>`<div class="pcard" style="pointer-events:none"><div class="imgwrap" style="background:linear-gradient(90deg,#131c2e 25%,#1a2740 50%,#131c2e 75%);background-size:200% 100%;animation:shimmer 1.4s infinite"></div><div class="pbody"><div style="height:12px;background:var(--line);border-radius:4px;margin-bottom:8px;width:80%"></div><div style="height:16px;background:var(--line);border-radius:4px;width:50%"></div></div></div>`).join('');
 }
