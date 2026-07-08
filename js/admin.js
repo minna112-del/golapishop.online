@@ -1,466 +1,361 @@
+/* admin.js — OrdersService, DriverManage, DriverPortal, ZoneManagerDash, AdminDash, ProductForm */
+/* ---------- Order/Driver/ZoneManager/Admin services ---------- */
 const OrdersService = {
   cache:[],
   async loadAll(){
     if(!FB) return [];
     try{
       const snap = await FB.getDocs(FB.collection(FB.db,'orders'));
-      const orders = [];
-      snap.forEach(d=>orders.push({id:d.id, ...d.data()}));
-      orders.sort((a,b)=> (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
-      this.cache = orders;
-      return orders;
-    }catch(e){ devWarn('Could not load orders:', e.message); return []; }
+      const orders=[]; snap.forEach(d=>orders.push({id:d.id,...d.data()}));
+      orders.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+      this.cache=orders; return orders;
+    }catch(e){ devWarn(e.message); return []; }
   },
-  async assignDriver(orderId, driverId, driverName){
+  async assignDriver(orderId,driverId,driverName){
     if(!FB) return false;
-    try{
-      await FB.updateDoc(FB.doc(FB.db,'orders',orderId), {
-        driverId, driverName, status:'assigned', assignedAt: FB.serverTimestamp()
-      });
-      return true;
-    }catch(e){ toast('ড্রাইভার অ্যাসাইন করা যায়নি: '+e.message); return false; }
+    try{ await FB.updateDoc(FB.doc(FB.db,'orders',orderId),{driverId,driverName,status:'assigned',assignedAt:FB.serverTimestamp()}); return true; }
+    catch(e){ toast('ড্রাইভার অ্যাসাইন ব্যর্থ: '+e.message,'error'); return false; }
   },
-  async updateStatus(orderId, status){
+  async updateStatus(orderId,status){
     if(!FB) return false;
-    try{
-      const payload = {status};
-      if(status==='picked_up') payload.pickedUpAt = FB.serverTimestamp();
-      if(status==='in_transit') payload.inTransitAt = FB.serverTimestamp();
-      if(status==='delivered') payload.deliveredAt = FB.serverTimestamp();
-      await FB.updateDoc(FB.doc(FB.db,'orders',orderId), payload);
-      return true;
-    }catch(e){ toast('স্ট্যাটাস আপডেট ব্যর্থ: '+e.message); return false; }
+    try{ await FB.updateDoc(FB.doc(FB.db,'orders',orderId),{status}); return true; }
+    catch(e){ toast('স্ট্যাটাস আপডেট ব্যর্থ','error'); return false; }
   }
 };
 
-/* ---------- Driver Management (Owner side: add drivers, assign to orders) ---------- */
 const DriverManage = {
-  drivers:[],
+  drivers:[], presetZone:null,
   async loadDrivers(){
     if(!FB) return [];
-    try{
-      const snap = await FB.getDocs(FB.collection(FB.db,'drivers'));
-      const list = [];
-      snap.forEach(d=>list.push({id:d.id, ...d.data()}));
-      this.drivers = list;
-      return list;
-    }catch(e){ devWarn('Could not load drivers:', e.message); return []; }
+    try{ const snap=await FB.getDocs(FB.collection(FB.db,'drivers')); const list=[]; snap.forEach(d=>list.push({id:d.id,...d.data()})); this.drivers=list; return list; }
+    catch(e){ devWarn(e.message); return []; }
   },
-  // zoneFilter is optional: pass a branchZone code to show only that zone's drivers
-  // (used by Zone Manager Portal); omit it to show all drivers (used by Owner Dashboard)
   async renderTable(zoneFilter=null){
     await this.loadDrivers();
-    const tableId = zoneFilter ? 'zmDriverManageTable' : 'driverManageTable';
-    const tbody = document.getElementById(tableId);
+    const tbody = document.getElementById(zoneFilter?'zmDriverManageTable':'driverManageTable');
     if(!tbody) return;
-    const list = zoneFilter ? this.drivers.filter(d=>d.branchZone===zoneFilter) : this.drivers;
-    if(!list.length){
-      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--ink-soft);padding:20px;">এখনো কোনো ড্রাইভার যুক্ত করা হয়নি</td></tr>`;
-      return;
-    }
-    tbody.innerHTML = list.map(d=>`
-      <tr><td>${d.name}</td><td>${AREA_CITY_LABELS[d.branchZone]||d.branchZone||'—'}</td><td>${d.phone}</td><td>••${String(d.pin).slice(-2)}</td>
-      <td><span class="status-pill delivered">সক্রিয়</span></td></tr>`).join('');
+    const list = zoneFilter? this.drivers.filter(d=>d.branchZone===zoneFilter) : this.drivers;
+    if(!list.length){ tbody.innerHTML=`<tr><td colspan="4" style="text-align:center;color:var(--ink-muted);padding:20px">এখনো কোনো ড্রাইভার নেই</td></tr>`; return; }
+    tbody.innerHTML = list.map(d=> zoneFilter
+      ? `<tr><td>${d.name}</td><td>${d.phone}</td><td><span class="status-pill delivered">সক্রিয়</span></td></tr>`
+      : `<tr><td>${d.name}</td><td>${AREA_LABELS[d.branchZone]||'—'}</td><td>${d.phone}</td><td><span class="status-pill delivered">সক্রিয়</span></td></tr>`
+    ).join('');
   },
-  presetZone:null, // set before opening if invoked from Zone Manager Portal (locks the zone selector)
   openAdd(presetZone=null){
-    this.presetZone = presetZone;
-    document.getElementById('dfName').value='';
-    document.getElementById('dfPhone').value='';
-    document.getElementById('dfPin').value='';
-    const zoneSelect = document.getElementById('dfZone');
-    if(presetZone){ zoneSelect.value = presetZone; zoneSelect.disabled = true; }
-    else { zoneSelect.disabled = false; }
-    document.getElementById('driverFormMsg').className='form-msg';
-    document.getElementById('driverFormOverlay').classList.add('show');
+    this.presetZone=presetZone;
+    document.getElementById('dfName').value=''; document.getElementById('dfPhone').value=''; document.getElementById('dfPin').value='';
+    const sel=document.getElementById('dfZone');
+    if(presetZone){ sel.value=presetZone; sel.disabled=true; } else sel.disabled=false;
+    document.getElementById('dfMsg').className='form-msg';
+    document.getElementById('driverModal').classList.add('show');
   },
-  close(){ document.getElementById('driverFormOverlay').classList.remove('show'); },
+  close(){ document.getElementById('driverModal').classList.remove('show'); },
   async submit(){
-    const name = document.getElementById('dfName').value.trim();
-    const branchZone = document.getElementById('dfZone').value;
-    const phone = document.getElementById('dfPhone').value.trim();
-    const pin = document.getElementById('dfPin').value.trim();
-    const msgEl = document.getElementById('driverFormMsg');
-    if(!name||!phone||pin.length!==4){ msgEl.textContent='সব তথ্য সঠিকভাবে পূরণ করুন (পিন ৪ ডিজিট)'; msgEl.className='form-msg err'; return; }
-    if(!FB){ msgEl.textContent='Firebase কনফিগার করা হয়নি'; msgEl.className='form-msg err'; return; }
+    const name=document.getElementById('dfName').value.trim();
+    const branchZone=document.getElementById('dfZone').value;
+    const phone=document.getElementById('dfPhone').value.trim();
+    const pin=document.getElementById('dfPin').value.trim();
+    const msgEl=document.getElementById('dfMsg');
+    if(!name||!phone||pin.length!==4){ msgEl.textContent='সব তথ্য সঠিকভাবে দিন (পিন ৪ ডিজিট)'; msgEl.className='form-msg err'; return; }
+    if(!FB){ msgEl.textContent='সংযোগ সমস্যা'; msgEl.className='form-msg err'; return; }
     try{
-      await FB.addDoc(FB.collection(FB.db,'drivers'), {name, phone, pin, branchZone, active:true, createdAt:FB.serverTimestamp()});
+      await FB.addDoc(FB.collection(FB.db,'drivers'),{name,phone,pin,branchZone,active:true,createdAt:FB.serverTimestamp()});
       msgEl.textContent='✓ ড্রাইভার যুক্ত হয়েছে'; msgEl.className='form-msg ok';
       await this.renderTable(this.presetZone);
-      if(ZoneManagerDash.currentZone) await ZoneManagerDash.render();
-      else if(typeof AdminDash!=='undefined') AdminDash.render();
-      setTimeout(()=>this.close(),900);
+      if(ZoneManagerDash.currentZone) await ZoneManagerDash.render(); else AdminDash.render();
+      setTimeout(()=>this.close(),800);
     }catch(e){ msgEl.textContent='সমস্যা: '+e.message; msgEl.className='form-msg err'; }
   }
 };
 
-/* ---------- Driver Portal (Driver side: login, view assigned orders, update status) ---------- */
 const DriverPortal = {
-  currentDriver: null,
+  currentDriver:null,
   async login(){
-    const phone = document.getElementById('driverPhone').value.trim();
-    const pin = document.getElementById('driverPin').value.trim();
-    const msgEl = document.getElementById('driverLoginMsg');
-    if(!phone||!pin){ msgEl.textContent='মোবাইল নম্বর ও পিন দিন'; msgEl.className='form-msg err'; return; }
-    if(!FB){ msgEl.textContent='Firebase কনফিগার করা হয়নি'; msgEl.className='form-msg err'; return; }
+    const phone=document.getElementById('driverPhone').value.trim();
+    const pin=document.getElementById('driverPin').value.trim();
+    const msgEl=document.getElementById('driverLoginMsg');
+    if(!phone||!pin){ msgEl.textContent='মোবাইল ও পিন দিন'; msgEl.className='form-msg err'; return; }
+    if(!FB){ msgEl.textContent='সংযোগ সমস্যা'; msgEl.className='form-msg err'; return; }
     try{
       const snap = await FB.getDocs(FB.collection(FB.db,'drivers'));
-      let found = null;
-      snap.forEach(d=>{ const data=d.data(); if(data.phone===phone && String(data.pin)===pin){ found={id:d.id,...data}; } });
-      if(!found){ msgEl.textContent='মোবাইল নম্বর বা পিন সঠিক নয়'; msgEl.className='form-msg err'; return; }
-      this.currentDriver = found;
-      // localStorage-এ phone/pin না রেখে শুধু প্রয়োজনীয় তথ্য রাখি — ডিভাইস হারালে/শেয়ার
-      // হলেও পিন leak হবে না।
-      const safeDriverData = { id: found.id, name: found.name, branchZone: found.branchZone };
-      localStorage.setItem('golapi_driver_session', JSON.stringify(safeDriverData));
+      let found=null; snap.forEach(d=>{ const data=d.data(); if(data.phone===phone && String(data.pin)===pin) found={id:d.id,...data}; });
+      if(!found){ msgEl.textContent='মোবাইল বা পিন সঠিক নয়'; msgEl.className='form-msg err'; return; }
+      this.currentDriver=found;
+      localStorage.setItem('golapi_driver_session', JSON.stringify({id:found.id,name:found.name,branchZone:found.branchZone}));
       document.getElementById('driverLoginBox').style.display='none';
       document.getElementById('driverDashBox').style.display='block';
-      document.getElementById('driverNameLabel').textContent = found.name;
+      document.getElementById('driverNameLabel').textContent=found.name;
       await this.render();
     }catch(e){ msgEl.textContent='লগইন সমস্যা: '+e.message; msgEl.className='form-msg err'; }
   },
   logout(){
-    this.currentDriver = null;
-    localStorage.removeItem('golapi_driver_session');
+    this.currentDriver=null; localStorage.removeItem('golapi_driver_session');
     document.getElementById('driverLoginBox').style.display='block';
     document.getElementById('driverDashBox').style.display='none';
-    document.getElementById('driverPhone').value='';
-    document.getElementById('driverPin').value='';
   },
   async render(){
-    const saved = localStorage.getItem('golapi_driver_session');
-    if(saved && !this.currentDriver) this.currentDriver = JSON.parse(saved);
-    if(!this.currentDriver){
-      document.getElementById('driverLoginBox').style.display='block';
-      document.getElementById('driverDashBox').style.display='none';
-      return;
-    }
+    const saved=localStorage.getItem('golapi_driver_session');
+    if(saved && !this.currentDriver) this.currentDriver=JSON.parse(saved);
+    if(!this.currentDriver){ document.getElementById('driverLoginBox').style.display='block'; document.getElementById('driverDashBox').style.display='none'; return; }
     document.getElementById('driverLoginBox').style.display='none';
     document.getElementById('driverDashBox').style.display='block';
-    document.getElementById('driverNameLabel').textContent = this.currentDriver.name;
-
-    const allOrders = await OrdersService.loadAll();
-    const myOrders = allOrders.filter(o=>o.driverId===this.currentDriver.id && o.status!=='delivered' && o.status!=='cancelled');
-    const transit = myOrders.filter(o=>o.status==='in_transit'||o.status==='picked_up').length;
-    const doneToday = allOrders.filter(o=>o.driverId===this.currentDriver.id && o.status==='delivered').length;
-
-    document.getElementById('driverStatAssigned').textContent = myOrders.length;
-    document.getElementById('driverStatTransit').textContent = transit;
-    document.getElementById('driverStatDone').textContent = doneToday;
-
-    const listEl = document.getElementById('driverOrdersList');
-    if(!myOrders.length){
-      listEl.innerHTML = `<div class="empty-state"><div class="icon">📦</div><h3>কোনো অর্ডার অ্যাসাইন করা নেই</h3><p>নতুন অর্ডার অ্যাসাইন হলে এখানে দেখা যাবে</p></div>`;
-      return;
-    }
-    listEl.innerHTML = myOrders.map(o=>{
-      const statusInfo = ORDER_STATUS_LABELS[o.status]||ORDER_STATUS_LABELS.assigned;
-      const itemsText = (o.items||[]).map(it=>{
-        const p = ALL_PRODUCTS.find(x=>x.id===it.productId);
-        return p ? `${p.name} × ${it.qty}` : `প্রোডাক্ট × ${it.qty}`;
-      }).join(', ');
-      let nextBtn = '';
-      if(o.status==='assigned') nextBtn = `<button class="btn btn-primary btn-block" onclick="DriverPortal.advance('${o.id}','picked_up')">✓ পিকআপ সম্পন্ন হয়েছে</button>`;
-      else if(o.status==='picked_up') nextBtn = `<button class="btn btn-primary btn-block" onclick="DriverPortal.advance('${o.id}','in_transit')">🚴 ডেলিভারির পথে রওনা</button>`;
-      else if(o.status==='in_transit') nextBtn = `<button class="btn btn-primary btn-block" onclick="DriverPortal.advance('${o.id}','delivered')">✅ ডেলিভারি সম্পন্ন হয়েছে</button>`;
-      // কাস্টমার GPS পিন করে থাকলে সরাসরি Google Maps Navigation (driving directions)
-      // খুলবে — ড্রাইভারের নিজের বর্তমান লোকেশন থেকে কাস্টমারের পিন করা ঠিকানা পর্যন্ত।
-      // &dir_action=navigate প্যারামিটারটাই মোবাইলে সরাসরি turn-by-turn navigation চালু করে।
-      const navBtn = (o.customerLat && o.customerLng)
-        ? `<a href="https://www.google.com/maps/dir/?api=1&destination=${o.customerLat},${o.customerLng}&dir_action=navigate" target="_blank" rel="noopener" class="btn btn-outline btn-block" style="margin-bottom:8px;display:block;text-align:center;text-decoration:none;">📍 গুগল ম্যাপে নেভিগেট করুন</a>`
-        : '';
-      return `
-      <div class="card-box" style="margin-bottom:14px;">
-        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px;">
-          <strong>${o.orderNumber||o.id}</strong>
-          <span class="status-pill ${statusInfo.cls}">${statusInfo.label}</span>
-        </div>
-        <div style="font-size:13.5px;color:var(--ink-soft);margin-bottom:6px;">📦 ${itemsText}</div>
-        <div style="font-size:13.5px;margin-bottom:4px;">👤 ${o.customerName} — <a href="tel:${o.customerPhone}" style="color:var(--rose);">${o.customerPhone}</a></div>
-        <div style="font-size:13.5px;margin-bottom:4px;">📍 ${o.zone||''}, ${o.district||''} — ${o.address}</div>
-        ${o.instructions?`<div style="font-size:13px;background:var(--blush);padding:8px 10px;border-radius:8px;margin:8px 0;color:var(--ink-soft);">💬 ${o.instructions}</div>`:''}
-        <div style="font-size:13.5px;font-weight:600;margin:8px 0;">মোট: ${money(o.subtotal||0)} ${o.paymentMethod==='cod'?'(COD)':''}</div>
-        ${navBtn}
-        ${nextBtn}
-      </div>`;
+    document.getElementById('driverNameLabel').textContent=this.currentDriver.name;
+    const all = await OrdersService.loadAll();
+    const mine = all.filter(o=>o.driverId===this.currentDriver.id && o.status!=='delivered' && o.status!=='cancelled');
+    const transit = mine.filter(o=>o.status==='in_transit'||o.status==='picked_up').length;
+    const done = all.filter(o=>o.driverId===this.currentDriver.id && o.status==='delivered').length;
+    document.getElementById('dStatAssigned').textContent=bn(mine.length);
+    document.getElementById('dStatTransit').textContent=bn(transit);
+    document.getElementById('dStatDone').textContent=bn(done);
+    const listEl=document.getElementById('driverOrdersList');
+    if(!mine.length){ listEl.innerHTML=`<div class="empty-state"><div class="em">📦</div><h3>কোনো অর্ডার অ্যাসাইন করা নেই</h3></div>`; return; }
+    listEl.innerHTML = mine.map(o=>{
+      const s = ORDER_STATUS[o.status]||ORDER_STATUS.assigned;
+      let nextBtn='';
+      if(o.status==='assigned') nextBtn=`<button class="btn btn-gold btn-block" onclick="DriverPortal.advance('${o.id}','picked_up')">✓ পিকআপ সম্পন্ন</button>`;
+      else if(o.status==='picked_up') nextBtn=`<button class="btn btn-gold btn-block" onclick="DriverPortal.advance('${o.id}','in_transit')">🚴 রওনা দিন</button>`;
+      else if(o.status==='in_transit') nextBtn=`<button class="btn btn-gold btn-block" onclick="DriverPortal.advance('${o.id}','delivered')">✅ ডেলিভারি সম্পন্ন</button>`;
+      return `<div class="card-box"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><strong>${o.orderNumber||o.id}</strong><span class="status-pill ${s.cls}">${s.label}</span></div>
+        <div style="font-size:12.5px;margin-bottom:4px">👤 ${o.customerName} — <a href="tel:${o.customerPhone}">${o.customerPhone}</a></div>
+        <div style="font-size:12.5px;color:var(--ink-muted);margin-bottom:8px">📍 ${o.zone||''}, ${o.district||''} — ${o.address||''}</div>
+        <div style="font-size:13px;font-weight:600;margin-bottom:8px">মোট: ${money(o.subtotal||0)}</div>${nextBtn}</div>`;
     }).join('');
   },
-  async advance(orderId, newStatus){
-    const ok = await OrdersService.updateStatus(orderId, newStatus);
-    if(ok){
-      toast(newStatus==='delivered' ? '✓ ডেলিভারি সম্পন্ন হয়েছে' : '✓ স্ট্যাটাস আপডেট হয়েছে');
-      await this.render();
-    }
-  }
+  async advance(orderId,status){ const ok=await OrdersService.updateStatus(orderId,status); if(ok){ toast('✓ স্ট্যাটাস আপডেট হয়েছে','success'); this.render(); } }
 };
-
 
 const ZoneManagerDash = {
   currentZone:null,
-  applyBranchHeader(zone){
+  applyHeader(zone){
     const info = BRANCH_INFO[zone];
-    document.getElementById('zmZoneNameLabel').textContent = info.label;
-    document.getElementById('zmOverviewZoneLabel').textContent = info.label;
-    document.getElementById('zmManagerNameLabel').textContent = info.managerName;
-    document.getElementById('zmAddressLabel').textContent = info.address;
+    document.getElementById('zmZoneLabel').textContent = info.label;
+    document.getElementById('zmManagerLabel').textContent = 'ম্যানেজার: '+info.managerName;
   },
   async login(){
-    const zone = document.getElementById('zmZoneSelect').value;
-    const pin = document.getElementById('zmPinInput').value.trim();
-    const msgEl = document.getElementById('zmLoginMsg');
+    const zone=document.getElementById('zmZoneSelect').value;
+    const pin=document.getElementById('zmPinInput').value.trim();
+    const msgEl=document.getElementById('zmLoginMsg');
     if(!pin){ msgEl.textContent='পিন দিন'; msgEl.className='form-msg err'; return; }
-    if(!FB){ msgEl.textContent='Firebase কনফিগার করা হয়নি'; msgEl.className='form-msg err'; return; }
+    if(!FB){ msgEl.textContent='সংযোগ সমস্যা'; msgEl.className='form-msg err'; return; }
     try{
-      const docSnap = await FB.getDoc(FB.doc(FB.db,'setting','zone_manager_pins'));
-      const pins = docSnap.exists() ? docSnap.data() : {};
-      if(!pins[zone] || pins[zone] !== pin){
-        msgEl.textContent='পিন সঠিক নয়'; msgEl.className='form-msg err'; return;
-      }
-      this.currentZone = zone;
-      localStorage.setItem('golapi_zm_session', zone);
+      const snap = await FB.getDoc(FB.doc(FB.db,'setting','zone_manager_pins'));
+      const pins = snap.exists()? snap.data() : {};
+      if(!pins[zone] || pins[zone]!==pin){ msgEl.textContent='পিন সঠিক নয়'; msgEl.className='form-msg err'; return; }
+      this.currentZone=zone; localStorage.setItem('golapi_zm_session',zone);
       document.getElementById('zmLoginBox').style.display='none';
       document.getElementById('zmDashBox').style.display='block';
-      this.applyBranchHeader(zone);
-      await this.render();
-      // Zone Manager লগইন সফল হওয়ার পরই push notification setup করি — এতে
-      // নতুন অর্ডার আসলে এই জোনের ম্যানেজার ব্রাউজার বন্ধ থাকলেও নটিফিকেশন পাবে।
-      NotificationSystem.setup(zone);
+      this.applyHeader(zone); await this.render();
     }catch(e){ msgEl.textContent='লগইন সমস্যা: '+e.message; msgEl.className='form-msg err'; }
   },
-  logout(){
-    this.currentZone = null;
-    localStorage.removeItem('golapi_zm_session');
-    document.getElementById('zmLoginBox').style.display='block';
-    document.getElementById('zmDashBox').style.display='none';
-    document.getElementById('zmPinInput').value='';
-  },
+  logout(){ this.currentZone=null; localStorage.removeItem('golapi_zm_session'); document.getElementById('zmLoginBox').style.display='block'; document.getElementById('zmDashBox').style.display='none'; },
   async render(){
-    const saved = localStorage.getItem('golapi_zm_session');
-    if(saved && !this.currentZone) this.currentZone = saved;
-    if(!this.currentZone){
-      document.getElementById('zmLoginBox').style.display='block';
-      document.getElementById('zmDashBox').style.display='none';
-      return;
-    }
+    const saved=localStorage.getItem('golapi_zm_session');
+    if(saved && !this.currentZone) this.currentZone=saved;
+    if(!this.currentZone){ document.getElementById('zmLoginBox').style.display='block'; document.getElementById('zmDashBox').style.display='none'; return; }
     document.getElementById('zmLoginBox').style.display='none';
     document.getElementById('zmDashBox').style.display='block';
-    this.applyBranchHeader(this.currentZone);
-    // সেশন auto-restore হলেও notification setup চালু করি, যাতে ব্রাউজার রিফ্রেশ
-    // করলেও push notification কাজ করতে থাকে
-    NotificationSystem.setup(this.currentZone);
-
-    const zoneOrders = (await OrdersService.loadAll()).filter(o=>o.branchZone===this.currentZone);
-    const zoneProductsList = ALL_PRODUCTS.filter(p=>p.zone===this.currentZone);
+    this.applyHeader(this.currentZone);
+    const orders = (await OrdersService.loadAll()).filter(o=>o.branchZone===this.currentZone);
+    const products = ALL_PRODUCTS.filter(p=>p.zone===this.currentZone);
     await DriverManage.loadDrivers();
-
-    const totalSales = zoneOrders.filter(o=>o.status!=='cancelled').reduce((s,o)=>s+(o.subtotal||0),0);
-    const pendingCount = zoneOrders.filter(o=>o.status==='pending'||o.status==='confirmed').length;
-
-    document.getElementById('zmStatSales').textContent = money(totalSales);
-    document.getElementById('zmStatOrders').textContent = String(zoneOrders.length);
-    document.getElementById('zmStatPending').textContent = String(pendingCount);
-    document.getElementById('zmStatProducts').textContent = String(zoneProductsList.length);
-
-    this.renderProductsTable(zoneProductsList);
-    this.renderOrdersTable(zoneOrders);
-    DriverManage.renderTable(this.currentZone);
+    const sales = orders.filter(o=>o.status!=='cancelled').reduce((s,o)=>s+(o.subtotal||0),0);
+    const pending = orders.filter(o=>o.status==='pending'||o.status==='confirmed').length;
+    document.getElementById('zmStatSales').textContent=money(sales);
+    document.getElementById('zmStatOrders').textContent=bn(orders.length);
+    document.getElementById('zmStatPending').textContent=bn(pending);
+    document.getElementById('zmStatProducts').textContent=bn(products.length);
+    this.renderProducts(products); this.renderOrders(orders); DriverManage.renderTable(this.currentZone);
   },
-  renderProductsTable(list){
-    const tbody = document.getElementById('zmProductsTable');
-    if(!list.length){
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--ink-soft);padding:30px;">এই শাখায় এখনো কোনো প্রোডাক্ট যুক্ত করা হয়নি</td></tr>`;
-      return;
-    }
-    tbody.innerHTML = list.map(p=>`
-      <tr>
-        <td style="display:flex;align-items:center;gap:8px;"><img src="${p.img}" style="width:32px;height:32px;border-radius:6px;object-fit:cover;">${p.name}</td>
-        <td>${CATEGORIES.find(c=>c.id===p.category)?.label||p.category}</td>
-        <td>${money(p.salePrice)} / ${p.unit}</td>
-        <td>${p.stock}</td>
-        <td><span class="status-pill ${p.stock>0?'delivered':'cancelled'}">${p.stock>0?'লাইভ':'স্টক আউট'}</span></td>
-        <td><a href="#" style="color:var(--rose);font-weight:600;" onclick="event.preventDefault();ProductForm.openEdit('${p.id}')">এডিট</a></td>
-      </tr>`).join('');
+  renderProducts(list){
+    const tbody=document.getElementById('zmProductsTable');
+    if(!list.length){ tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--ink-muted);padding:24px">এই শাখায় কোনো প্রোডাক্ট নেই</td></tr>`; return; }
+    tbody.innerHTML = list.map(p=>`<tr><td>${p.name}</td><td>${CATEGORIES.find(c=>c.id===p.category)?.label||p.category}</td><td>${money(p.salePrice)}</td><td>${bn(p.stock)}</td><td><span class="status-pill ${p.stock>0?'delivered':'cancelled'}">${p.stock>0?'লাইভ':'স্টক আউট'}</span></td><td><a href="#" onclick="event.preventDefault();ProductForm.openEdit('${p.id}')">এডিট</a></td></tr>`).join('');
   },
-  renderOrdersTable(orders){
-    const tbody = document.getElementById('zmOrdersTable');
-    if(!orders.length){
-      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--ink-soft);padding:30px;">এই শাখায় কোনো অর্ডার নেই</td></tr>`;
-      return;
-    }
+  renderOrders(orders){
+    const tbody=document.getElementById('zmOrdersTable');
+    if(!orders.length){ tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--ink-muted);padding:24px">কোনো অর্ডার নেই</td></tr>`; return; }
     const zoneDrivers = DriverManage.drivers.filter(d=>d.branchZone===this.currentZone);
     tbody.innerHTML = orders.map(o=>{
-      const s = ORDER_STATUS_LABELS[o.status]||ORDER_STATUS_LABELS.pending;
-      const driverOptions = zoneDrivers.map(d=>
-        `<option value="${d.id}" ${o.driverId===d.id?'selected':''}>${d.name}</option>`
-      ).join('');
-      // কাস্টমার GPS পিন করলে এখান থেকে সরাসরি Google Maps-এ ঠিকানা দেখা যাবে
-      const mapLink = (o.customerLat && o.customerLng)
-        ? `<a href="https://www.google.com/maps?q=${o.customerLat},${o.customerLng}" target="_blank" rel="noopener" style="color:var(--rose);font-weight:600;">📍 ম্যাপ</a>`
-        : `<span style="color:var(--ink-soft);font-size:11.5px;">পিন নেই</span>`;
-      return `
-      <tr>
-        <td>${o.orderNumber||o.id}</td>
-        <td>${o.customerName||''}</td>
-        <td>${o.customerPhone||''}</td>
-        <td>${money(o.subtotal||0)}</td>
-        <td>${mapLink}</td>
-        <td>
-          <select onchange="ZoneManagerDash.assignDriver('${o.id}', this.value)" style="padding:5px 8px;border:1px solid var(--line);border-radius:6px;font-size:12.5px;">
-            <option value="">— বেছে নিন —</option>
-            ${driverOptions}
-          </select>
-        </td>
-        <td><span class="status-pill ${s.cls}">${s.label}</span></td>
-      </tr>`;
+      const s=ORDER_STATUS[o.status]||ORDER_STATUS.pending;
+      const opts = zoneDrivers.map(d=>`<option value="${d.id}" ${o.driverId===d.id?'selected':''}>${d.name}</option>`).join('');
+      return `<tr><td>${o.orderNumber||o.id}</td><td>${o.customerName||''}</td><td>${o.customerPhone||''}</td><td>${money(o.subtotal||0)}</td>
+      <td><select onchange="ZoneManagerDash.assignDriver('${o.id}',this.value)" style="padding:4px;border-radius:6px;background:var(--bg2);border:1px solid var(--line);color:#fff"><option value="">বেছে নিন</option>${opts}</select></td>
+      <td><span class="status-pill ${s.cls}">${s.label}</span></td></tr>`;
     }).join('');
   },
-  async assignDriver(orderId, driverId){
+  async assignDriver(orderId,driverId){
     if(!driverId) return;
-    const driver = DriverManage.drivers.find(d=>d.id===driverId);
-    if(!driver) return;
-    const ok = await OrdersService.assignDriver(orderId, driverId, driver.name);
-    if(ok){ toast(`✓ ${driver.name}-কে অর্ডার অ্যাসাইন করা হয়েছে`); this.render(); }
+    const d = DriverManage.drivers.find(x=>x.id===driverId); if(!d) return;
+    const ok = await OrdersService.assignDriver(orderId,driverId,d.name);
+    if(ok){ toast(`✓ ${d.name}-কে অ্যাসাইন করা হয়েছে`,'success'); this.render(); }
   },
-  tab(btn, name){
-    ['overview','products','orders','drivers'].forEach(t=>{
-      document.getElementById('zm'+t.charAt(0).toUpperCase()+t.slice(1)+'Pane').style.display = t===name?'block':'none';
-    });
+  tab(btn,name){
+    ['overview','products','orders','drivers'].forEach(t=>{ document.getElementById('zm'+t.charAt(0).toUpperCase()+t.slice(1)+'Pane').style.display = t===name?'block':'none'; });
     document.querySelectorAll('#page-zone-manager .dash-side a').forEach(a=>a.classList.remove('active'));
     if(btn) btn.classList.add('active');
   },
   openAddProduct(){
     ProductForm.openAdd();
-    // Lock the zone checkboxes to this manager's own branch — they cannot add products to the other zone
-    const isSadar = this.currentZone === 'noakhali_sadar';
-    document.getElementById('pfZoneSadar').checked = isSadar;
-    document.getElementById('pfZoneBegumganj').checked = !isSadar;
-    document.getElementById('pfZoneSadar').disabled = true;
-    document.getElementById('pfZoneBegumganj').disabled = true;
+    const isSadar = this.currentZone==='noakhali_sadar';
+    document.getElementById('pfZoneSadar').checked=isSadar; document.getElementById('pfZoneBegumganj').checked=!isSadar;
+    document.getElementById('pfZoneSadar').disabled=true; document.getElementById('pfZoneBegumganj').disabled=true;
   }
 };
-
 
 const AdminDash = {
   async render(){
     const orders = await OrdersService.loadAll();
     await DriverManage.loadDrivers();
-
-    const totalSales = orders.filter(o=>o.status!=='cancelled').reduce((s,o)=>s+(o.subtotal||0),0);
-    const pendingCount = orders.filter(o=>o.status==='pending'||o.status==='confirmed').length;
-
-    document.getElementById('aStatGmv').textContent = money(totalSales);
-    document.getElementById('aStatOrders').textContent = String(orders.length);
-    document.getElementById('aStatPendingOrders').textContent = String(pendingCount);
-    document.getElementById('aStatProducts').textContent = String(ALL_PRODUCTS.length);
-
-    const recentBody = document.querySelector('#adminRecentOrdersTable tbody');
-    if(!orders.length){
-      recentBody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--ink-soft);padding:30px;">কোনো সাম্প্রতিক অর্ডার নেই</td></tr>`;
-    }else{
-      recentBody.innerHTML = orders.slice(0,5).map(o=>{
-        const s = ORDER_STATUS_LABELS[o.status]||ORDER_STATUS_LABELS.pending;
-        return `<tr><td>${o.orderNumber||o.id}</td><td>${(o.items||[]).length} আইটেম</td><td>${money(o.subtotal||0)}</td><td><span class="status-pill ${s.cls}">${s.label}</span></td></tr>`;
-      }).join('');
-    }
-
-    this.renderProductsTable();
-    this.renderOrdersTable(orders);
-    DriverManage.renderTable();
-
-    const codTotal = orders.filter(o=>o.paymentMethod==='cod' && o.status!=='delivered' && o.status!=='cancelled').reduce((s,o)=>s+(o.subtotal||0),0);
-    const onlineTotal = orders.filter(o=>o.paymentMethod!=='cod').reduce((s,o)=>s+(o.subtotal||0),0);
-    document.getElementById('aFinMonth').textContent = money(totalSales);
-    document.getElementById('aFinCodPending').textContent = money(codTotal);
-    document.getElementById('aFinOnline').textContent = money(onlineTotal);
+    const sales = orders.filter(o=>o.status!=='cancelled').reduce((s,o)=>s+(o.subtotal||0),0);
+    const pending = orders.filter(o=>o.status==='pending'||o.status==='confirmed').length;
+    document.getElementById('aStatGmv').textContent=money(sales);
+    document.getElementById('aStatOrders').textContent=bn(orders.length);
+    document.getElementById('aStatPending').textContent=bn(pending);
+    document.getElementById('aStatProducts').textContent=bn(ALL_PRODUCTS.length);
+    document.getElementById('aRecentOrders').innerHTML = orders.length ? orders.slice(0,5).map(o=>{
+      const s=ORDER_STATUS[o.status]||ORDER_STATUS.pending;
+      return `<tr><td>${o.orderNumber||o.id}</td><td>${(o.items||[]).length} আইটেম</td><td>${money(o.subtotal||0)}</td><td><span class="status-pill ${s.cls}">${s.label}</span></td></tr>`;
+    }).join('') : `<tr><td colspan="4" style="text-align:center;color:var(--ink-muted);padding:24px">কোনো অর্ডার নেই</td></tr>`;
+    this.renderProducts(); this.renderOrders(orders); DriverManage.renderTable();
+    const cod = orders.filter(o=>o.paymentMethod==='cod'&&o.status!=='delivered'&&o.status!=='cancelled').reduce((s,o)=>s+(o.subtotal||0),0);
+    const online = orders.filter(o=>o.paymentMethod!=='cod').reduce((s,o)=>s+(o.subtotal||0),0);
+    document.getElementById('fMonth').textContent=money(sales);
+    document.getElementById('fCod').textContent=money(cod);
+    document.getElementById('fOnline').textContent=money(online);
   },
-  renderOrdersTable(orders){
-    const tbody = document.getElementById('adminOrdersTable');
-    if(!orders.length){
-      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--ink-soft);padding:30px;">কোনো অর্ডার নেই</td></tr>`;
-      return;
-    }
-    tbody.innerHTML = orders.map(o=>{
-      const s = ORDER_STATUS_LABELS[o.status]||ORDER_STATUS_LABELS.pending;
+  renderProducts(){
+    if(!ALL_PRODUCTS.length){ document.getElementById('aProductsTable').innerHTML=`<tr><td colspan="7" style="text-align:center;color:var(--ink-muted);padding:24px">কোনো প্রোডাক্ট নেই</td></tr>`; return; }
+    document.getElementById('aProductsTable').innerHTML = ALL_PRODUCTS.map(p=>`<tr><td>${p.name}</td><td>${AREA_LABELS[p.zone]||'—'}</td><td>${CATEGORIES.find(c=>c.id===p.category)?.label||p.category}</td><td>${money(p.salePrice)}</td><td>${bn(p.stock)}</td><td><span class="status-pill ${p.stock>0?'delivered':'cancelled'}">${p.stock>0?'লাইভ':'স্টক আউট'}</span></td><td><a href="#" onclick="event.preventDefault();ProductForm.openEdit('${p.id}')">এডিট</a></td></tr>`).join('');
+  },
+  renderOrders(orders){
+    if(!orders.length){ document.getElementById('aOrdersTable').innerHTML=`<tr><td colspan="7" style="text-align:center;color:var(--ink-muted);padding:24px">কোনো অর্ডার নেই</td></tr>`; return; }
+    document.getElementById('aOrdersTable').innerHTML = orders.map(o=>{
+      const s = ORDER_STATUS[o.status]||ORDER_STATUS.pending;
       const zoneDrivers = DriverManage.drivers.filter(d=>d.branchZone===o.branchZone);
-      const driverOptions = zoneDrivers.map(d=>
-        `<option value="${d.id}" ${o.driverId===d.id?'selected':''}>${d.name}</option>`
-      ).join('');
-      const mapLink = (o.customerLat && o.customerLng)
-        ? `<a href="https://www.google.com/maps?q=${o.customerLat},${o.customerLng}" target="_blank" rel="noopener" style="color:var(--rose);font-weight:600;">📍 ম্যাপ</a>`
-        : `<span style="color:var(--ink-soft);font-size:11.5px;">পিন নেই</span>`;
-      return `
-      <tr>
-        <td>${o.orderNumber||o.id}</td>
-        <td><span class="status-pill confirmed">${AREA_CITY_LABELS[o.branchZone]||'—'}</span></td>
-        <td>${o.customerName||''}</td>
-        <td>${o.customerPhone||''}</td>
-        <td>${money(o.subtotal||0)}</td>
-        <td>${mapLink}</td>
-        <td>${o.paymentMethod==='cod'?'COD':(o.paymentMethod||'').toUpperCase()}</td>
-        <td>
-          <select onchange="AdminDash.assignDriver('${o.id}', this.value)" style="padding:5px 8px;border:1px solid var(--line);border-radius:6px;font-size:12.5px;">
-            <option value="">— বেছে নিন —</option>
-            ${driverOptions}
-          </select>
-        </td>
-        <td><span class="status-pill ${s.cls}">${s.label}</span></td>
-      </tr>`;
+      const opts = zoneDrivers.map(d=>`<option value="${d.id}" ${o.driverId===d.id?'selected':''}>${d.name}</option>`).join('');
+      return `<tr><td>${o.orderNumber||o.id}</td><td>${AREA_LABELS[o.branchZone]||'—'}</td><td>${o.customerName||''}</td><td>${o.customerPhone||''}</td><td>${money(o.subtotal||0)}</td>
+      <td><select onchange="AdminDash.assignDriver('${o.id}',this.value)" style="padding:4px;border-radius:6px;background:var(--bg2);border:1px solid var(--line);color:#fff"><option value="">বেছে নিন</option>${opts}</select></td>
+      <td><span class="status-pill ${s.cls}">${s.label}</span></td></tr>`;
     }).join('');
   },
-  async assignDriver(orderId, driverId){
+  async assignDriver(orderId,driverId){
     if(!driverId) return;
-    const driver = DriverManage.drivers.find(d=>d.id===driverId);
-    if(!driver) return;
-    const ok = await OrdersService.assignDriver(orderId, driverId, driver.name);
-    if(ok){ toast(`✓ ${driver.name}-কে অর্ডার অ্যাসাইন করা হয়েছে`); this.render(); }
+    const d = DriverManage.drivers.find(x=>x.id===driverId); if(!d) return;
+    const ok = await OrdersService.assignDriver(orderId,driverId,d.name);
+    if(ok){ toast(`✓ ${d.name}-কে অ্যাসাইন করা হয়েছে`,'success'); this.render(); }
   },
-  renderProductsTable(){
-    if(!ALL_PRODUCTS.length){
-      document.getElementById('adminProductsTable').innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--ink-soft);padding:30px;">এখনো কোনো প্রোডাক্ট যুক্ত করা হয়নি</td></tr>`;
-      return;
-    }
-    document.getElementById('adminProductsTable').innerHTML = ALL_PRODUCTS.map(p=>`
-      <tr>
-        <td style="display:flex;align-items:center;gap:8px;"><img src="${p.img}" style="width:32px;height:32px;border-radius:6px;object-fit:cover;">${p.name}</td>
-        <td><span class="status-pill confirmed">${AREA_CITY_LABELS[p.zone]||'—'}</span></td>
-        <td>${CATEGORIES.find(c=>c.id===p.category)?.label||p.category}</td>
-        <td>${money(p.salePrice)} / ${p.unit}</td>
-        <td>${p.stock}</td>
-        <td><span class="status-pill ${p.stock>0?'delivered':'cancelled'}">${p.stock>0?'লাইভ':'স্টক আউট'}</span></td>
-        <td><a href="#" style="color:var(--rose);font-weight:600;" onclick="event.preventDefault();ProductForm.openEdit('${p.id}')">এডিট</a></td>
-      </tr>`).join('');
-  },
-  tab(btn, name){
-    ['overview','products','orders','finance','settings'].forEach(t=>{
-      document.getElementById('admin'+t.charAt(0).toUpperCase()+t.slice(1)+'Pane').style.display = t===name?'block':'none';
-    });
+  tab(btn,name){
+    ['overview','products','orders','finance','settings'].forEach(t=>{ document.getElementById('admin'+t.charAt(0).toUpperCase()+t.slice(1)+'Pane').style.display = t===name?'block':'none'; });
     document.querySelectorAll('#page-admin-dash .dash-side a').forEach(a=>a.classList.remove('active'));
     if(btn) btn.classList.add('active');
-    if(name==='products') this.renderProductsTable();
-    if(name==='settings') this.loadZoneManagerPins();
+    if(name==='products') this.renderProducts();
+    if(name==='settings') this.loadZmPins();
   },
-  openAddProduct(){ ProductForm.openAdd(); },
-  saveSettings(){ toast('✓ সেটিংস সংরক্ষণ করা হয়েছে'); },
-  async loadZoneManagerPins(){
+  async loadZmPins(){
     if(!FB) return;
     try{
-      const docSnap = await FB.getDoc(FB.doc(FB.db,'setting','zone_manager_pins'));
-      const pins = docSnap.exists() ? docSnap.data() : {};
-      document.getElementById('zmPinSadar').value = pins.noakhali_sadar || '';
-      document.getElementById('zmPinBegumganj').value = pins.begumganj || '';
-    }catch(e){ devWarn('Could not load zone manager pins:', e.message); }
+      const snap = await FB.getDoc(FB.doc(FB.db,'setting','zone_manager_pins'));
+      const pins = snap.exists()? snap.data() : {};
+      document.getElementById('zmPinSadar').value = pins.noakhali_sadar||'';
+      document.getElementById('zmPinBegumganj').value = pins.begumganj||'';
+    }catch(e){ devWarn(e.message); }
   },
-  async saveZoneManagerPins(){
-    const sadarPin = document.getElementById('zmPinSadar').value.trim();
-    const begumganjPin = document.getElementById('zmPinBegumganj').value.trim();
-    if(!FB){ toast('Firebase কনফিগার করা হয়নি'); return; }
+  async saveZmPins(){
+    if(!FB){ toast('সংযোগ সমস্যা','error'); return; }
     try{
-      await FB.setDoc(FB.doc(FB.db,'setting','zone_manager_pins'), {
-        noakhali_sadar: sadarPin, begumganj: begumganjPin
+      await FB.setDoc(FB.doc(FB.db,'setting','zone_manager_pins'),{
+        noakhali_sadar: document.getElementById('zmPinSadar').value.trim(),
+        begumganj: document.getElementById('zmPinBegumganj').value.trim()
       });
-      toast('✓ জোন ম্যানেজার পিন সংরক্ষণ করা হয়েছে');
-    }catch(e){ toast('সমস্যা: '+e.message); }
+      toast('✓ পিন সংরক্ষণ করা হয়েছে','success');
+    }catch(e){ toast('সমস্যা: '+e.message,'error'); }
   }
 };
 
-/* ---------- Product Form (Add / Edit, with image upload) ---------- */
+/* ---------- Product Form (Add/Edit) ---------- */
+const ProductForm = {
+  mode:'add', editId:null,
+  openAdd(){
+    this.mode='add'; this.editId=null;
+    document.getElementById('pfTitle').textContent='নতুন প্রোডাক্ট যুক্ত করুন';
+    document.getElementById('pfSubmitBtn').textContent='প্রোডাক্ট সংরক্ষণ করুন';
+    ['pfName','pfPrice','pfSalePrice','pfStock','pfDescription','pfCostPrice'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('pfExtraCost').value='0'; document.getElementById('pfDeliveryPercent').value='0'; document.getElementById('pfProfitPercent').value='20';
+    document.getElementById('pfBreakdown').textContent='৳০';
+    document.getElementById('pfZoneSadar').disabled=false; document.getElementById('pfZoneBegumganj').disabled=false;
+    document.getElementById('pfZoneSadar').checked=true; document.getElementById('pfZoneBegumganj').checked=false;
+    document.getElementById('pfCategory').value='grocery'; document.getElementById('pfUnit').value='পিস';
+    document.getElementById('pfCod').checked=true; document.getElementById('pfFlash').checked=false; document.getElementById('pfFeatured').checked=false;
+    document.getElementById('pfMsg').className='form-msg';
+    document.getElementById('productModal').classList.add('show');
+  },
+  recalc(){
+    const cost=Number(document.getElementById('pfCostPrice').value)||0;
+    const extra=Number(document.getElementById('pfExtraCost').value)||0;
+    const delp=Number(document.getElementById('pfDeliveryPercent').value)||0;
+    const profp=Number(document.getElementById('pfProfitPercent').value)||0;
+    const base=cost+extra;
+    const afterDel = base + base*delp/100;
+    const final = Math.round(afterDel + afterDel*profp/100);
+    document.getElementById('pfBreakdown').textContent = `৳${cost}+৳${extra} → +${delp}% → +${profp}% = ৳${final}`;
+    if(cost>0){
+      document.getElementById('pfSalePrice').value = final;
+      const priceField = document.getElementById('pfPrice');
+      if(!priceField.value) priceField.value = Math.round(final*1.1);
+    }
+  },
+  openEdit(id){
+    const p = ALL_PRODUCTS.find(x=>x.id===id); if(!p){ toast('প্রোডাক্ট পাওয়া যায়নি','error'); return; }
+    this.mode='edit'; this.editId=id;
+    document.getElementById('pfTitle').textContent='প্রোডাক্ট সম্পাদনা করুন';
+    document.getElementById('pfSubmitBtn').textContent='পরিবর্তন সংরক্ষণ করুন';
+    document.getElementById('pfName').value=p.name;
+    document.getElementById('pfZoneSadar').checked = p.zone==='noakhali_sadar';
+    document.getElementById('pfZoneBegumganj').checked = p.zone==='begumganj';
+    document.getElementById('pfZoneSadar').disabled=true; document.getElementById('pfZoneBegumganj').disabled=true;
+    document.getElementById('pfCategory').value=p.category; document.getElementById('pfUnit').value=p.unit;
+    document.getElementById('pfPrice').value=p.price; document.getElementById('pfSalePrice').value=p.salePrice; document.getElementById('pfStock').value=p.stock;
+    document.getElementById('pfCostPrice').value=p.costPrice||''; document.getElementById('pfExtraCost').value=p.extraCost||0;
+    document.getElementById('pfDeliveryPercent').value=p.deliveryPercent||0; document.getElementById('pfProfitPercent').value=p.profitPercent||20;
+    document.getElementById('pfBreakdown').textContent = p.costPrice ? `৳${p.costPrice}+৳${p.extraCost||0} → +${p.deliveryPercent||0}% → +${p.profitPercent||20}% = ৳${p.salePrice}` : '৳০';
+    document.getElementById('pfDescription').value=p.description||'';
+    document.getElementById('pfCod').checked=!!p.cod; document.getElementById('pfFlash').checked=!!p.isFlash; document.getElementById('pfFeatured').checked=!!p.isFeatured;
+    document.getElementById('pfMsg').className='form-msg';
+    document.getElementById('productModal').classList.add('show');
+  },
+  close(){ document.getElementById('productModal').classList.remove('show'); },
+  async submit(){
+    const msgEl=document.getElementById('pfMsg');
+    const name=document.getElementById('pfName').value.trim();
+    const selZones=[]; if(document.getElementById('pfZoneSadar').checked) selZones.push('noakhali_sadar'); if(document.getElementById('pfZoneBegumganj').checked) selZones.push('begumganj');
+    const category=document.getElementById('pfCategory').value, unit=document.getElementById('pfUnit').value;
+    const price=Number(document.getElementById('pfPrice').value), salePrice=Number(document.getElementById('pfSalePrice').value), stock=Number(document.getElementById('pfStock').value);
+    const description=document.getElementById('pfDescription').value.trim();
+    const cod=document.getElementById('pfCod').checked, isFlash=document.getElementById('pfFlash').checked, isFeatured=document.getElementById('pfFeatured').checked;
+    const costPrice=Number(document.getElementById('pfCostPrice').value)||0, extraCost=Number(document.getElementById('pfExtraCost').value)||0;
+    const deliveryPercent=Number(document.getElementById('pfDeliveryPercent').value)||0, profitPercent=Number(document.getElementById('pfProfitPercent').value)||0;
+    if(!name||!salePrice||stock===''){ msgEl.textContent='সব প্রয়োজনীয় তথ্য পূরণ করুন'; msgEl.className='form-msg err'; return; }
+    if(!selZones.length){ msgEl.textContent='অন্তত একটা শাখা বেছে নিন'; msgEl.className='form-msg err'; return; }
+    if(!FB){ msgEl.textContent='সংযোগ সমস্যা — Firebase কনফিগার নেই'; msgEl.className='form-msg err'; return; }
+    const btn=document.getElementById('pfSubmitBtn'); const orig=btn.textContent; btn.textContent='সংরক্ষণ হচ্ছে...'; btn.disabled=true;
+    try{
+      const base = {name,category,unit,price:price||salePrice,salePrice,stock,description,costPrice,extraCost,deliveryPercent,profitPercent,cod,isFlash,isFeatured,status:'active',updatedAt:FB.serverTimestamp()};
+      if(this.mode==='add'){
+        const groupId = selZones.length>1 ? `${Date.now()}` : null;
+        for(const zone of selZones){
+          const data = {...base, zone, createdAt:FB.serverTimestamp(), rating:'৫.০', reviews:0, sold:0, fastDelivery:true};
+          if(groupId) data.groupId = groupId;
+          await FB.addDoc(FB.collection(FB.db,'products'), data);
+        }
+        msgEl.textContent = selZones.length>1 ? '✓ দুই শাখাতেই যুক্ত হয়েছে' : '✓ প্রোডাক্ট যুক্ত হয়েছে'; msgEl.className='form-msg ok';
+      }else{
+        await FB.updateDoc(FB.doc(FB.db,'products',this.editId), {...base, zone:selZones[0]});
+        msgEl.textContent='✓ প্রোডাক্ট আপডেট হয়েছে'; msgEl.className='form-msg ok';
+      }
+      await ProductStore.refreshAndRerender();
+      if(ZoneManagerDash.currentZone) ZoneManagerDash.render(); else { AdminDash.renderProducts(); document.getElementById('aStatProducts').textContent=bn(ALL_PRODUCTS.length); }
+      setTimeout(()=>this.close(),900);
+    }catch(e){ msgEl.textContent='সমস্যা হয়েছে: '+e.message; msgEl.className='form-msg err'; }
+    finally{ btn.textContent=orig; btn.disabled=false; }
+  }
+};
