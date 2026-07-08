@@ -1,33 +1,664 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="bn" class="scroll-smooth">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Golapi Shop Online</title>
-<link rel="stylesheet" href="css/style.css">
+<title>Golapi Shop Online — নোয়াখালী সদর ও বেগমগঞ্জের অনলাইন শপ</title>
+<meta name="description" content="Golapi Shop Online — নোয়াখালী সদর ও বেগমগঞ্জের নিজস্ব অনলাইন শপ। ঔষধ, মুদি, গ্যাস, মোবাইল, কসমেটিকস — bKash, Nagad ও COD পেমেন্ট, নিজস্ব লোকাল ডেলিভারি, কাস্টম বাজার লিস্ট, ফ্রী স্বাস্থ্য সেবা।">
+<meta property="og:title" content="Golapi Shop Online — নোয়াখালীর বিশ্বস্ত অনলাইন শপ">
+<meta property="og:description" content="আপনার দায়িত্ব লিস্ট করা, আমাদের দায়িত্ব বাজার করে দেওয়া।">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://www.golapishop.online">
+<meta property="og:locale" content="bn_BD">
+<meta name="theme-color" content="#050810">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="./manifest.json">
+<link rel="canonical" href="https://www.golapishop.online">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tiro+Bangla:ital@0;1&family=Hind+Siliguri:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"OnlineStore","name":"Golapi Shop Online","url":"https://www.golapishop.online","email":"golapishoponline.bd@gmail.com","telephone":"+8801612057371","description":"নোয়াখালী সদর ও বেগমগঞ্জের নিজস্ব অনলাইন শপ। bKash, Nagad, COD পেমেন্ট।","areaServed":["নোয়াখালী সদর","বেগমগঞ্জ"],"sameAs":["https://facebook.com/golapishoponline"]}
+</script>
+
+<!-- ================= FIREBASE ================= -->
+<script type="module" src="./js/firebase-init.js"></script>
+
+<link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
 
-<button onclick="showHealth()">🩺 গোলাপি স্বাস্থ্য সেবা দেখুন</button>
+<a href="#appRoot" class="skip-link" onfocus="this.style.top='0'" onblur="this.style.top='-40px'">মূল কন্টেন্টে যান</a>
 
-<div id="healthPage" style="display:none; padding:20px; background:#111; color:white; min-height:100vh;">
-  <h1>🌹 গোলাপি ফ্রি স্বাস্থ্য সেবা</h1>
-  <div id="doctorList"></div>
-  <button onclick="book()">এপয়েন্টমেন্ট নিন</button>
+<div class="topbar" id="custTopbar">
+  <div class="topbar-inner">
+    <span>📍 নোয়াখালী সদর ও বেগমগঞ্জে ডেলিভারি</span>
+    <span>📞 <a href="tel:+8801612057371" style="color:inherit">+880 1612-057371</a></span>
+    <span>🔥 ক্যাশ অন ডেলিভারি চালু</span>
+    <span>🏥 গোলাপী ফ্রী স্বাস্থ্য সেবা</span>
+    <span>📍 নোয়াখালী সদর ও বেগমগঞ্জে ডেলিভারি</span>
+    <span>📞 <a href="tel:+8801612057371" style="color:inherit">+880 1612-057371</a></span>
+    <span>🔥 ক্যাশ অন ডেলিভারি চালু</span>
+    <span>🏥 গোলাপী ফ্রী স্বাস্থ্য সেবা</span>
+  </div>
 </div>
 
-<script>
-function showHealth() {
-  document.getElementById('healthPage').style.display = 'block';
-  document.getElementById('doctorList').innerHTML = `
-    <p>ডাঃ রহিম উদ্দিন - মেডিসিন</p>
-    <p>ডাঃ করিনা আক্তার - গাইনি</p>
-  `;
-}
-function book() {
-  alert('✅ অ্যাপয়েন্টমেন্ট রিকোয়েস্ট পাঠানো হয়েছে');
-}
-</script>
+<header class="main" id="custHeader">
+  <div class="header-row">
+    <a href="#" onclick="Router.go('home')" class="logo">
+      <div class="mark">🌹</div>
+      <div><div class="word">Golapi<span class="g">Shop</span><span class="r">.online</span></div><div class="tag">নোয়াখালীর বিশ্বস্ত অনলাইন শপ</div></div>
+    </a>
+    <div class="search-wrap" id="searchWrapDesktop">
+      <input type="search" id="searchInput" placeholder="প্রোডাক্ট, ব্র্যান্ড বা ক্যাটাগরি খুঁজুন..." oninput="doSearch(this.value)">
+      <button onclick="submitSearch()">🔍</button>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" onclick="AuthUI.open()"><span>👤</span><span id="accLabel" class="hide-sm">লগইন</span></button>
+      <button class="icon-btn" onclick="Cart.open()" style="position:relative"><span>🛍️</span><span class="hide-sm">কার্ট</span><span class="cart-badge" id="cartBadge" style="display:none">0</span></button>
+    </div>
+  </div>
+  <nav class="catnav">
+    <div class="inner">
+      <a href="#" onclick="Router.go('custom-bazar')" class="flash">📝 কাস্টম বাজার</a>
+      <a href="#" onclick="Router.go('medical')" class="medical">🏥 ফ্রী স্বাস্থ্য সেবা</a>
+      <a href="#" onclick="Router.go('listing',{cat:'all'})">সব ক্যাটাগরি ▾</a>
+      <a href="#" onclick="Router.go('listing',{cat:'medicine'})">💊 ঔষধ</a>
+      <a href="#" onclick="Router.go('listing',{cat:'grocery'})">🛒 মুদি বাজার</a>
+      <a href="#" onclick="Router.go('listing',{cat:'gas'})">🔥 গ্যাস সিলিন্ডার</a>
+      <a href="#" onclick="Router.go('listing',{cat:'cosmetics'})">💄 কসমেটিকস</a>
+      <a href="#" onclick="Router.go('listing',{cat:'flash'})">🔥 ফ্ল্যাশ সেল</a>
+    </div>
+  </nav>
+</header>
 
+<div class="overlay" id="cartOverlay" onclick="Cart.close()"></div>
+<div class="drawer" id="cartDrawer">
+  <div style="padding:20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center">
+    <h3 class="tiro" style="font-size:18px">🛍️ আপনার কার্ট</h3>
+    <button onclick="Cart.close()" style="width:32px;height:32px;border-radius:9px;background:rgba(255,255,255,.05)">✕</button>
+  </div>
+  <div style="padding:18px;flex:1" id="cartBody"></div>
+  <div style="padding:18px;border-top:1px solid var(--line);display:none" id="cartFoot">
+    <div class="row-between"><span>সাবটোটাল</span><span id="cartSub">৳০</span></div>
+    <div class="row-between"><span>ডেলিভারি চার্জ</span><span id="cartDel">৳৬০</span></div>
+    <div class="row-total row-between"><span>মোট</span><span id="cartTot">৳০</span></div>
+    <button class="btn btn-gold btn-block" style="margin-top:12px" onclick="Cart.goCheckout()">চেকআউট করুন →</button>
+  </div>
+</div>
+
+<main id="appRoot">
+
+<!-- ============ HOME ============ -->
+<div class="page active" id="page-home">
+  <section class="hero">
+    <div class="orb orb1"></div><div class="orb orb2"></div>
+    <div class="hero-inner">
+      <div class="hero-grid">
+        <div>
+          <div class="eyebrow anim-fadeUp"><span class="dot"></span> ১০০% ক্যাশ অন ডেলিভারি — নোয়াখালী জেলা</div>
+          <h1 class="hero-h anim-fadeUp d1">আপনার দায়িত্ব লিস্ট করা,<br>আমাদের দায়িত্ব বাজার করে দেওয়া</h1>
+          <p class="hero-p anim-fadeUp d2">সাপ্তাহিক মুদি, মাসিক বাজার, বিয়ের বাজার, রমজান বা কুরবানির বাজার — যেকোনো লিস্ট লিখে দিন। আমাদের ড্রাইভার বাজার করে পৌঁছে দেবে আপনার কিচেনে। সম্পূর্ণ ক্যাশ অন ডেলিভারি!</p>
+          <div class="btn-row anim-fadeUp d3">
+            <button class="btn btn-rose" onclick="Router.go('custom-bazar')">📝 বাজারের লিস্ট লিখুন</button>
+            <button class="btn btn-outline" onclick="Router.go('listing',{cat:'all'})">প্রোডাক্ট কিনুন</button>
+          </div>
+          <div class="badges anim-fadeUp d4">
+            <span class="badge b-green">✓ ক্যাশ অন ডেলিভারি</span>
+            <span class="badge b-gold">⚡ ৬০ মিনিট এক্সপ্রেস</span>
+            <span class="badge b-rose">🚚 নিজস্ব ড্রাইভার</span>
+            <span class="badge b-emerald">🏥 ফ্রী স্বাস্থ্য সেবা</span>
+          </div>
+        </div>
+        <div class="hero-side anim-fadeUp d4">
+          <div class="hero-card" onclick="Router.go('custom-bazar')"><h3>📝 কাস্টম বাজার লিস্ট</h3><p>নিজের মতো লিস্ট লিখুন, বাজার করে দেবো আমরা</p></div>
+          <div class="hero-card emerald" onclick="Router.go('medical')"><h3>🏥 গোলাপী ফ্রী স্বাস্থ্য সেবা</h3><p>ডাক্তারের পরামর্শ ও এপয়েন্টমেন্ট সম্পূর্ণ ফ্রী</p></div>
+          <div class="hero-card rose"><h3>🔥 ফ্ল্যাশ সেল</h3><p>প্রতিদিন রাত ৮টা — ৭০% পর্যন্ত ছাড়</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec"><div class="highlight hl-rose" onclick="Router.go('custom-bazar')"><div class="hl-flex">
+    <div class="hl-icon" style="background:linear-gradient(135deg,var(--pink),var(--rose))">🛵</div>
+    <div style="flex:1;min-width:200px"><span class="badge b-rose" style="margin-bottom:8px">🔥 মূল সেবা</span>
+    <h2 class="tiro" style="font-size:22px;color:#fff;margin:6px 0">আপনার বাজারের লিস্ট আমাদের দিন</h2>
+    <p style="font-size:13.5px;color:var(--ink-muted);max-width:560px">সাপ্তাহিক মুদি, মাসিক বাজার, বিয়ের বাজার বা রমজানের বাজার — যেকোনো লিস্ট লিখে দিন। আমাদের ড্রাইভার বাজার করে পৌঁছে দেবে আপনার বাসায়।</p>
+    <div style="color:var(--rose);font-size:13px;font-weight:600;margin-top:8px">লিস্ট পাঠান →</div></div>
+  </div></div></section>
+
+  <section class="sec" style="padding-top:6px"><div class="highlight hl-emerald" onclick="Router.go('medical')"><div class="hl-flex">
+    <div class="hl-icon" style="background:linear-gradient(135deg,var(--emerald-dark),var(--emerald))">🏥</div>
+    <div style="flex:1;min-width:200px"><span class="badge b-emerald" style="margin-bottom:8px">✨ বিশেষ সেবা</span>
+    <h2 class="tiro" style="font-size:22px;color:#fff;margin:6px 0">গোলাপী ফ্রী স্বাস্থ্য সেবা</h2>
+    <p style="font-size:13.5px;color:var(--ink-muted);max-width:560px">ডাক্তারের পরামর্শ ও এপয়েন্টমেন্ট বুকিং সম্পূর্ণ ফ্রী! অভিজ্ঞ চিকিৎসকদের ভিজিটিং সময়সূচি জানুন এবং এআই প্রাথমিক পরামর্শ নিন।</p>
+    <div style="color:var(--emerald);font-size:13px;font-weight:600;margin-top:8px">বিস্তারিত দেখুন →</div></div>
+  </div></div></section>
+
+  <section class="sec"><div class="cat-grid" id="catGrid"></div></section>
+
+  <section class="sec" style="padding:0"><div class="flash-strip"><div class="sec" style="padding:0 20px">
+    <div class="sec-head"><h2 class="tiro">🔥 ফ্ল্যাশ সেল</h2>
+      <div class="timer" id="flashTimer"><span id="t-h">০৩</span><span style="color:var(--gold);opacity:.5">:</span><span id="t-m">৪৫</span><span style="color:var(--gold);opacity:.5">:</span><span id="t-s">১২</span></div>
+    </div>
+    <div class="scroll-row" id="flashRow"></div>
+  </div></div></section>
+
+  <section class="sec"><div class="sec-head"><h2 class="tiro">⭐ বেস্ট সেলার</h2><a href="#" class="see-all" onclick="Router.go('listing',{cat:'bestseller'})">সব দেখুন →</a></div>
+  <div class="scroll-row" id="bestRow"></div></section>
+
+  <section class="sec"><div class="sec-head"><h2 class="tiro">🆕 নতুন এসেছে</h2></div>
+  <div class="grid-row" id="newGrid"></div></section>
+
+  <section class="sec"><div class="trust-grid">
+    <div class="card trust-item"><div class="em">🌹</div><h4>বিশ্বস্ততা</h4><p>১০০% অরিজিনাল পণ্য</p></div>
+    <div class="card trust-item"><div class="em">🚚</div><h4>দ্রুত ডেলিভারি</h4><p>৬০-৯০ মিনিট এক্সপ্রেস</p></div>
+    <div class="card trust-item"><div class="em">💰</div><h4>সেরা দাম</h4><p>বাজারের চেয়ে কম</p></div>
+    <div class="card trust-item"><div class="em">🏥</div><h4>ফ্রী স্বাস্থ্য সেবা</h4><p>চিকিৎসা পরামর্শ ও ঔষধ</p></div>
+  </div></section>
+</div>
+
+<!-- ============ MEDICAL ============ -->
+<div class="page" id="page-medical">
+  <section style="background:linear-gradient(135deg,#050810 0%,#051a12 30%,#0a2920 60%,#050810 100%);padding:60px 20px;text-align:center">
+    <div style="max-width:720px;margin:0 auto">
+      <div style="width:88px;height:88px;border-radius:22px;background:linear-gradient(135deg,var(--pink),var(--rose));display:flex;align-items:center;justify-content:center;font-size:42px;margin:0 auto 24px">🌹</div>
+      <h1 class="tiro" style="font-size:clamp(26px,5vw,44px);color:#fff;margin-bottom:10px">গোলাপী ফ্রী স্বাস্থ্য সেবা</h1>
+      <p style="color:var(--ink-muted);max-width:560px;margin:0 auto 24px">ডাক্তারের পরামর্শ ও এপয়েন্টমেন্ট বুকিং সম্পূর্ণ ফ্রী! অভিজ্ঞ চিকিৎসকদের ভিজিটিং সময়সূচি জানুন, এআই প্রাথমিক চিকিৎসা পরামর্শ নিন, এবং ভিডিও কলে ডাক্তার দেখান (ফি প্রযোজ্য)।</p>
+      <div class="badges" style="justify-content:center">
+        <span class="badge b-green">✓ ভিজিট শিডিউল ফ্রী</span><span class="badge b-emerald">🤖 এআই পরামর্শ ফ্রী</span><span class="badge b-gold">📅 সিরিয়াল বুকিং</span>
+      </div>
+    </div>
+  </section>
+  <section class="sec">
+    <h2 class="tiro" style="text-align:center;font-size:24px;margin-bottom:6px">চিকিৎসকদের ভিজিটিং সময়সূচি</h2>
+    <p style="text-align:center;color:var(--ink-muted);font-size:13px;margin-bottom:24px">প্রয়োজনীয় বিশেষজ্ঞ বেছে নিন এবং কল করে এপয়েন্টমেন্ট নিন</p>
+    <div class="grid-row" id="medGrid" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr))"></div>
+  </section>
+  <section class="sec">
+    <h2 class="tiro" style="text-align:center;font-size:22px;margin-bottom:20px">🤖 এআই প্রাথমিক চিকিৎসা পরামর্শ</h2>
+    <div class="card-box" style="max-width:640px;margin:0 auto">
+      <div class="field"><label>আপনার লক্ষণ লিখুন</label><textarea id="aiSymptom" rows="3" placeholder="যেমন: জ্বর, মাথা ব্যথা, কাশি..."></textarea></div>
+      <button class="btn btn-medical btn-block" onclick="getAIAdvice()">পরামর্শ নিন</button>
+      <div id="aiResultBox" style="display:none;margin-top:16px;background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.2);border-radius:12px;padding:16px;font-size:13.5px;color:var(--ink-soft);line-height:1.8"></div>
+      <p style="font-size:11.5px;color:var(--ink-dim);margin-top:10px">⚠️ এটি প্রাথমিক পরামর্শ মাত্র, চিকিৎসার বিকল্প নয়। জটিল সমস্যায় অবশ্যই ডাক্তার দেখান।</p>
+    </div>
+  </section>
+  <section class="sec"><div class="card" style="padding:36px;text-align:center;background:rgba(5,150,105,.04);border-color:rgba(5,150,105,.15)">
+    <div style="font-size:44px;margin-bottom:10px">🌹</div>
+    <h2 class="tiro" style="font-size:22px;margin-bottom:8px">জরুরি প্রয়োজনে যোগাযোগ করুন</h2>
+    <p style="color:var(--ink-muted);font-size:13px;margin-bottom:18px">প্রতিদিন সকাল ৮টা থেকে রাত ১০টা পর্যন্ত প্রস্তুত</p>
+    <div class="btn-row" style="justify-content:center">
+      <a href="tel:+8801612057371" class="btn btn-medical">📞 +880 1612-057371</a>
+      <a href="https://wa.me/8801612057371" target="_blank" rel="noopener" class="btn btn-outline" style="border-color:rgba(16,185,129,.3);color:#34d399">💬 WhatsApp এ এপয়েন্টমেন্ট</a>
+    </div>
+  </div></section>
+</div>
+
+<!-- ============ CUSTOM BAZAR ============ -->
+<div class="page" id="page-custom-bazar">
+  <section class="sec" style="max-width:640px">
+    <div class="crumb"><a href="#" onclick="Router.go('home')">হোম</a> &gt; কাস্টম বাজার অর্ডার</div>
+    <h2 class="tiro" style="font-size:24px;margin-bottom:6px">📝 আপনার বাজারের লিস্ট দিন</h2>
+    <p style="color:var(--ink-muted);font-size:13.5px;margin-bottom:20px">সাপ্তাহিক মুদি, মাসিক বাজার, বিয়ের বাজার, রমজানের বাজার, কুরবানির বাজার — যেকোনো লিস্ট লিখে দিন। আমাদের ড্রাইভার বাজার করে বাসায় পৌঁছে দেবে।</p>
+    <div class="card-box">
+      <div class="field"><label>আপনার নাম *</label><input type="text" id="cbName"></div>
+      <div class="field"><label>মোবাইল নম্বর *</label><input type="tel" id="cbPhone" placeholder="01XXXXXXXXX"></div>
+      <div class="field"><label>সম্পূর্ণ ঠিকানা *</label><textarea id="cbAddress" rows="2" placeholder="বাড়ি/রোড/এলাকা"></textarea></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="field"><label>উপজেলা *</label><select id="cbDistrict" onchange="onUpazilaChange('cb')"><option value="">বেছে নিন</option><option value="noakhali_sadar">নোয়াখালী সদর</option><option value="begumganj">বেগমগঞ্জ</option></select></div>
+        <div class="field"><label>এলাকা *</label><select id="cbZone"><option value="">প্রথমে উপজেলা বেছে নিন</option></select></div>
+      </div>
+      <div class="field"><label>বাজারের ধরন *</label>
+        <select id="cbType"><option value="weekly">সাপ্তাহিক মুদি বাজার</option><option value="monthly">মাসিক মুদি বাজার</option><option value="wedding">বিয়ের বাজার</option><option value="ramadan">রমজানের বাজার</option><option value="qurbani">কুরবানির বাজার</option><option value="other">অন্যান্য</option></select>
+      </div>
+      <div class="field"><label>বাজারের লিস্ট * <span style="color:var(--ink-dim)">(প্রতিটা আইটেম আলাদা লাইনে, পরিমাণ সহ)</span></label>
+        <textarea id="cbList" rows="7" placeholder="চাল মিনিকেট — ৫ কেজি&#10;মসুর ডাল — ২ কেজি&#10;সয়াবিন তেল — ২ লিটার&#10;পেঁয়াজ — ৩ কেজি..."></textarea>
+      </div>
+      <div class="field"><label>বিশেষ নির্দেশনা (ঐচ্ছিক)</label><textarea id="cbNotes" rows="2" placeholder="যেমন: সবচেয়ে ভালো মানের চাল নিবেন"></textarea></div>
+      <div style="background:rgba(212,175,55,.06);border:1px solid var(--gold-line);border-radius:12px;padding:14px;margin-bottom:16px">
+        <strong style="color:var(--gold);font-size:13px">⚠️ গুরুত্বপূর্ণ:</strong>
+        <p style="font-size:12.5px;color:var(--ink-soft);line-height:1.7;margin-top:4px">অর্ডার কনফার্ম করতে <strong style="color:#fff">১০০ টাকা বিকাশ পে বাধ্যতামূলক</strong>। বিকাশ নম্বর: <strong id="cbBkashNum" style="color:var(--gold)">উপজেলা বেছে নিলে দেখাবে</strong><br>বাকি টাকা সম্পূর্ণ ক্যাশ অন ডেলিভারি।</p>
+      </div>
+      <div class="field"><label>বিকাশ ট্রানজেকশন ID *</label><input type="text" id="cbTrxId" placeholder="পেমেন্টের পর ট্রানজেকশন ID"></div>
+      <div id="cbMsg" class="form-msg"></div>
+      <button class="btn btn-rose btn-block" id="cbSubmitBtn" onclick="CustomBazar.submit()">📝 বাজার অর্ডার জমা দিন</button>
+    </div>
+  </section>
+</div>
+
+<!-- ============ LISTING ============ -->
+<div class="page" id="page-listing">
+  <section class="sec">
+    <div class="crumb"><a href="#" onclick="Router.go('home')">হোম</a> &gt; <span id="listTitle">সব প্রোডাক্ট</span></div>
+    <button id="mobFilterBtn" onclick="Listing.toggleMobile()" style="display:none;width:100%;margin-bottom:14px;padding:11px;background:var(--card);border:1px solid var(--line);border-radius:11px;text-align:left;font-size:13.5px">⚙️ ফিল্টার ও সর্ট <span style="float:right">▾</span></button>
+    <div class="listing-layout">
+      <aside id="listingAside">
+        <div class="filter-box"><h4>মূল্য পরিসীমা</h4><input type="range" id="priceRange" min="0" max="10000" value="10000" style="width:100%;accent-color:var(--gold)">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink-muted)"><span>৳০</span><span id="priceMaxLabel">৳১০,০০০</span></div></div>
+        <div class="filter-box"><h4>অন্যান্য</h4><label class="filter-opt"><input type="checkbox" id="filterCOD" onchange="Listing.render()"> COD সুবিধা আছে</label></div>
+      </aside>
+      <div>
+        <div class="toolbar"><span id="listCount" style="font-size:13px;color:var(--ink-muted)"></span>
+          <select id="sortSelect" class="field" style="width:auto;padding:8px 32px 8px 12px" onchange="Listing.render()">
+            <option value="relevance">প্রাসঙ্গিকতা</option><option value="price_asc">মূল্য: কম→বেশি</option><option value="price_desc">মূল্য: বেশি→কম</option><option value="newest">নতুন প্রথমে</option><option value="rating">সর্বোচ্চ রেটিং</option><option value="sold">সর্বাধিক বিক্রি</option>
+          </select>
+        </div>
+        <div class="grid-row" id="listingGrid"></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ============ PRODUCT ============ -->
+<div class="page" id="page-product">
+  <section class="sec">
+    <div class="crumb" id="pdpCrumb"></div>
+    <div class="pdp-layout">
+      <div><div class="gallery"><img id="pdpImg" src="" alt=""></div></div>
+      <div>
+        <h1 class="tiro" style="font-size:24px;margin-bottom:8px" id="pdpName"></h1>
+        <div style="font-size:13px;color:var(--ink-muted);margin-bottom:14px" id="pdpMeta"></div>
+        <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+          <span class="price-now" style="font-size:26px" id="pdpPrice"></span>
+          <span class="price-old" id="pdpOld"></span>
+          <span id="pdpDisc" style="display:none;font-size:11px;font-weight:700;color:#f87171;background:rgba(239,68,68,.1);padding:2px 8px;border-radius:6px"></span>
+          <span style="font-size:13px;color:var(--ink-muted)" id="pdpUnit"></span>
+        </div>
+        <div style="margin-bottom:10px" id="pdpTags"></div>
+        <p style="color:#22c55e;font-size:13px;margin-bottom:18px" id="pdpStock"></p>
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:22px">
+          <span style="font-size:13.5px;font-weight:600">পরিমাণ:</span>
+          <div class="qty-ctrl"><button onclick="PDP.changeQty(-1)">−</button><span id="pdpQty">১</span><button onclick="PDP.changeQty(1)">+</button></div>
+        </div>
+        <div class="btn-row"><button class="btn btn-gold" style="flex:1" onclick="PDP.addToCart()">🛍️ কার্টে যুক্ত করুন</button><button class="btn btn-outline" style="flex:1" onclick="PDP.buyNow()">এখনই কিনুন</button></div>
+        <div class="card" style="padding:14px;display:flex;align-items:center;justify-content:space-between;margin:16px 0">
+          <div style="display:flex;align-items:center;gap:10px"><span style="font-size:22px">🌹</span><div><div style="color:var(--rose);font-size:13px;font-weight:600">Golapi Shop Online</div><div style="font-size:11px;color:var(--ink-muted)">১০০% অরিজিনাল পণ্যের নিশ্চয়তা</div></div></div>
+          <span class="badge b-green">✓ Verified</span>
+        </div>
+        <div class="pdp-tabs">
+          <button class="active" onclick="PDP.tab(this,'desc')">বিবরণ</button>
+          <button onclick="PDP.tab(this,'spec')">স্পেসিফিকেশন</button>
+          <button onclick="PDP.tab(this,'ship')">শিপিং ও রিটার্ন</button>
+        </div>
+        <div class="tab-pane active" id="tab-desc"><p id="pdpDesc" style="font-size:13.5px;color:var(--ink-soft);line-height:1.8"></p></div>
+        <div class="tab-pane" id="tab-spec"><table class="spec-table" id="pdpSpec"></table></div>
+        <div class="tab-pane" id="tab-ship"><p style="font-size:13.5px;color:var(--ink-soft);line-height:1.9">🚚 নোয়াখালী সদর ও বেগমগঞ্জে নিজস্ব ড্রাইভার।<br>⚡ এক্সপ্রেস: ৬০-৯০ মিনিট | 📅 আজই: ফ্রি<br>↩️ ৩ দিনের মধ্যে রিটার্ন</p></div>
+      </div>
+    </div>
+    <div style="margin-top:36px"><h2 class="tiro" style="font-size:19px;margin-bottom:14px">আপনার পছন্দ হতে পারে</h2><div class="scroll-row" id="relatedRow"></div></div>
+  </section>
+</div>
+
+<!-- ============ CHECKOUT ============ -->
+<div class="page" id="page-checkout">
+  <section class="sec" style="max-width:640px">
+    <h2 class="tiro" style="font-size:22px;margin-bottom:20px">চেকআউট</h2>
+    <div class="steps-row" id="ckSteps">
+      <div class="step-item active" data-s="1"><div class="num">১</div><span>ঠিকানা</span></div>
+      <div class="step-item" data-s="2"><div class="num">২</div><span>পেমেন্ট</span></div>
+      <div class="step-item" data-s="3"><div class="num">৩</div><span>রিভিউ</span></div>
+    </div>
+    <div id="ckStep1" class="card-box">
+      <h3 style="font-size:15px;margin-bottom:14px;color:#fff">ডেলিভারি ঠিকানা</h3>
+      <div class="field"><label>পূর্ণ নাম *</label><input type="text" id="ckName"></div>
+      <div class="field"><label>মোবাইল নম্বর *</label><input type="tel" id="ckPhone" placeholder="01XXXXXXXXX"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="field"><label>উপজেলা *</label><select id="ckDistrict" onchange="onUpazilaChange('ck')"><option value="">বেছে নিন</option><option value="noakhali_sadar">নোয়াখালী সদর</option><option value="begumganj">বেগমগঞ্জ</option></select></div>
+        <div class="field"><label>এলাকা *</label><select id="ckZone"><option value="">প্রথমে উপজেলা বেছে নিন</option></select></div>
+      </div>
+      <div class="field"><label>সম্পূর্ণ ঠিকানা *</label><textarea id="ckAddress" rows="2" placeholder="বাড়ি/রোড/এলাকা"></textarea></div>
+      <div class="field"><label>ডেলিভারি ইনস্ট্রাকশন (ঐচ্ছিক)</label><textarea id="ckInstructions" rows="2"></textarea></div>
+      <div class="field"><label>ডেলিভারি সময়</label>
+        <div class="radio-card selected" onclick="Checkout.selectSlot(this,'express')"><input type="radio" name="ckslot" checked><div><strong>⚡ এক্সপ্রেস (৬০-৯০ মিনিট)</strong><div class="sub">অতিরিক্ত ৳২০</div></div></div>
+        <div class="radio-card" onclick="Checkout.selectSlot(this,'today')"><input type="radio" name="ckslot"><div><strong>📅 আজই ডেলিভারি</strong><div class="sub">ফ্রি</div></div></div>
+      </div>
+      <button class="btn btn-gold btn-block" onclick="Checkout.goStep(2)">পরবর্তী →</button>
+    </div>
+    <div id="ckStep2" class="card-box" style="display:none">
+      <h3 style="font-size:15px;margin-bottom:14px;color:#fff">পেমেন্ট পদ্ধতি</h3>
+      <div class="radio-card selected" onclick="Checkout.selectPay(this,'cod')"><input type="radio" name="ckpay" checked><div><strong>💵 ক্যাশ অন ডেলিভারি (COD)</strong><div class="sub">পণ্য হাতে পেয়ে টাকা দিন</div></div></div>
+      <div class="radio-card" onclick="Checkout.selectPay(this,'bkash')"><input type="radio" name="ckpay"><div><strong>📱 bKash</strong><div class="sub">bKash অ্যাপ দিয়ে</div></div></div>
+      <div class="radio-card" onclick="Checkout.selectPay(this,'nagad')"><input type="radio" name="ckpay"><div><strong>📱 Nagad</strong><div class="sub">Nagad অ্যাপ দিয়ে</div></div></div>
+      <div id="ckPayInfo" style="display:none"></div>
+      <div class="btn-row"><button class="btn btn-outline" style="flex:1" onclick="Checkout.goStep(1)">← পেছনে</button><button class="btn btn-gold" style="flex:1" onclick="Checkout.goStep(3)">পরবর্তী →</button></div>
+    </div>
+    <div id="ckStep3" class="card-box" style="display:none">
+      <h3 style="font-size:15px;margin-bottom:14px;color:#fff">অর্ডার রিভিউ</h3>
+      <div id="ckSummary"></div>
+      <div style="border-top:1px solid var(--line);padding-top:12px;margin-top:10px">
+        <div class="row-between"><span>সাবটোটাল</span><span id="ckSub">৳০</span></div>
+        <div class="row-between"><span>ডেলিভারি চার্জ</span><span id="ckShip">৳০</span></div>
+        <div class="row-total row-between"><span>সর্বমোট</span><span id="ckTotal">৳০</span></div>
+      </div>
+      <label style="display:flex;gap:8px;font-size:12px;color:var(--ink-muted);margin:14px 0"><input type="checkbox" id="ckTerms" checked style="accent-color:var(--gold);margin-top:2px"> আমি শর্তাবলীতে সম্মত</label>
+      <div class="btn-row"><button class="btn btn-outline" style="flex:1" onclick="Checkout.goStep(2)">← পেছনে</button><button class="btn btn-rose" style="flex:1" onclick="Checkout.placeOrder()">✅ অর্ডার কনফার্ম করুন</button></div>
+    </div>
+  </section>
+</div>
+
+<!-- ============ ORDER SUCCESS ============ -->
+<div class="page" id="page-order-success">
+  <section class="sec" style="max-width:520px;text-align:center;padding-top:70px">
+    <div style="font-size:56px;margin-bottom:14px">🌹</div>
+    <h2 class="tiro" style="font-size:26px;margin-bottom:8px">অর্ডার সফল হয়েছে!</h2>
+    <p style="color:var(--ink-muted)">অর্ডার নম্বর: <strong style="color:var(--gold)" id="successOrderNo"></strong></p>
+    <p style="color:var(--ink-muted);margin-bottom:26px">আমরা শীঘ্রই যোগাযোগ করব। ধন্যবাদ Golapi Shop-কে বিশ্বাস করার জন্য।</p>
+    <div class="btn-row" style="justify-content:center"><button class="btn btn-outline" onclick="Router.go('myorders')">আমার অর্ডার</button><button class="btn btn-gold" onclick="Router.go('home')">শপিং চালিয়ে যান</button></div>
+  </section>
+</div>
+
+<!-- ============ MY ORDERS ============ -->
+<div class="page" id="page-myorders">
+  <section class="sec" style="max-width:640px">
+    <h2 class="tiro" style="font-size:22px;margin-bottom:18px">📦 আমার অর্ডার</h2>
+    <div id="myOrdersList"></div>
+  </section>
+</div>
+
+<!-- ============ CONTACT ============ -->
+<div class="page" id="page-contact">
+  <section class="sec" style="max-width:900px">
+    <h1 class="tiro" style="font-size:26px;text-align:center;margin-bottom:24px">যোগাযোগ করুন</h1>
+    <div class="grid-row" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">
+      <div class="card" style="padding:18px"><h3 style="font-size:14px;color:#fff;margin-bottom:6px">🔴 হটলাইন</h3><a href="tel:+8801612057371">+880 1612-057371</a></div>
+      <div class="card" style="padding:18px"><h3 style="font-size:14px;color:#fff;margin-bottom:6px">📍 সদর — ম্যানেজার রিমন</h3><a href="tel:+8801627010060">+880 1627-010060</a></div>
+      <div class="card" style="padding:18px"><h3 style="font-size:14px;color:#fff;margin-bottom:6px">📍 বেগমগঞ্জ — ম্যানেজার সৃজন</h3><a href="tel:+8801310006959">+880 1310-006959</a></div>
+      <div class="card" style="padding:18px"><h3 style="font-size:14px;color:#fff;margin-bottom:6px">📧 ইমেইল</h3><a href="mailto:golapishoponline.bd@gmail.com">golapishoponline.bd@gmail.com</a></div>
+    </div>
+  </section>
+</div>
+
+<!-- ============ OWNER (ADMIN) DASHBOARD ============ -->
+<div class="page" id="page-admin-dash">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 20px;background:var(--card);border-bottom:1px solid var(--line)">
+    <a href="#" onclick="Router.go('home')" style="font-weight:700;color:var(--gold);font-size:14px">🌹 Golapi Shop — <span style="color:#fff">Owner Dashboard</span></a>
+    <a href="#" onclick="Router.go('home')" style="font-size:12.5px;color:var(--ink-muted)">← সাইটে ফিরে যান</a>
+  </div>
+  <section class="sec">
+    <div class="dash-layout">
+      <aside class="dash-side">
+        <a class="active" onclick="AdminDash.tab(this,'overview')">📊 ওভারভিউ</a>
+        <a onclick="AdminDash.tab(this,'products')">📦 প্রোডাক্ট</a>
+        <a onclick="AdminDash.tab(this,'orders')">🧾 অর্ডার</a>
+        <a onclick="AdminDash.tab(this,'finance')">💰 ফাইন্যান্স</a>
+        <a onclick="AdminDash.tab(this,'settings')">⚙️ সেটিংস</a>
+        <a onclick="OwnerAuth.lock()" style="color:#f87171">🔒 লক করুন</a>
+      </aside>
+      <div>
+        <div id="adminOverviewPane">
+          <div class="stat-grid">
+            <div class="stat-card"><div class="lbl">মোট সেল</div><div class="val rose" id="aStatGmv">৳০</div></div>
+            <div class="stat-card"><div class="lbl">মোট অর্ডার</div><div class="val" id="aStatOrders">০</div></div>
+            <div class="stat-card"><div class="lbl">পেন্ডিং অর্ডার</div><div class="val" id="aStatPending">০</div></div>
+            <div class="stat-card"><div class="lbl">মোট প্রোডাক্ট</div><div class="val" id="aStatProducts">০</div></div>
+          </div>
+          <div class="card-box"><h3 style="font-size:14px;margin-bottom:12px;color:#fff">সাম্প্রতিক অর্ডার</h3>
+            <div class="table-scroll"><table class="data-table"><thead><tr><th>অর্ডার ID</th><th>আইটেম</th><th>মোট</th><th>স্ট্যাটাস</th></tr></thead><tbody id="aRecentOrders"></tbody></table></div>
+          </div>
+        </div>
+        <div id="adminProductsPane" style="display:none">
+          <div style="display:flex;justify-content:space-between;margin-bottom:16px"><h2 class="tiro" style="font-size:19px">প্রোডাক্ট ম্যানেজমেন্ট</h2><button class="btn btn-gold" style="padding:9px 16px;font-size:13px" onclick="ProductForm.openAdd()">+ নতুন প্রোডাক্ট</button></div>
+          <div class="table-scroll"><table class="data-table"><thead><tr><th>প্রোডাক্ট</th><th>শাখা</th><th>ক্যাটাগরি</th><th>মূল্য</th><th>স্টক</th><th>স্ট্যাটাস</th><th>একশন</th></tr></thead><tbody id="aProductsTable"></tbody></table></div>
+        </div>
+        <div id="adminOrdersPane" style="display:none">
+          <h2 class="tiro" style="font-size:19px;margin-bottom:16px">সব অর্ডার</h2>
+          <div class="table-scroll"><table class="data-table"><thead><tr><th>ID</th><th>শাখা</th><th>কাস্টমার</th><th>ফোন</th><th>মোট</th><th>ড্রাইভার</th><th>স্ট্যাটাস</th></tr></thead><tbody id="aOrdersTable"></tbody></table></div>
+        </div>
+        <div id="adminFinancePane" style="display:none">
+          <div class="stat-grid">
+            <div class="stat-card"><div class="lbl">মোট সেল</div><div class="val rose" id="fMonth">৳০</div></div>
+            <div class="stat-card"><div class="lbl">COD পেন্ডিং</div><div class="val" id="fCod">৳০</div></div>
+            <div class="stat-card"><div class="lbl">অনলাইন পেমেন্ট</div><div class="val" id="fOnline">৳০</div></div>
+          </div>
+        </div>
+        <div id="adminSettingsPane" style="display:none">
+          <div class="card-box"><h3 style="font-size:14px;margin-bottom:12px;color:#fff">🚴 ড্রাইভার ম্যানেজমেন্ট</h3>
+            <div style="display:flex;justify-content:flex-end;margin-bottom:10px"><button class="btn btn-outline" style="padding:7px 14px;font-size:12.5px" onclick="DriverManage.openAdd()">+ নতুন ড্রাইভার</button></div>
+            <div class="table-scroll"><table class="data-table"><thead><tr><th>নাম</th><th>শাখা</th><th>মোবাইল</th><th>স্ট্যাটাস</th></tr></thead><tbody id="driverManageTable"></tbody></table></div>
+          </div>
+          <div class="card-box"><h3 style="font-size:14px;margin-bottom:12px;color:#fff">🏢 জোন ম্যানেজার পিন</h3>
+            <div class="field"><label>নোয়াখালী সদর — পিন</label><input type="text" id="zmPinSadar" placeholder="যেমন 1111"></div>
+            <div class="field"><label>বেগমগঞ্জ — পিন</label><input type="text" id="zmPinBegumganj" placeholder="যেমন 2222"></div>
+            <button class="btn btn-gold" onclick="AdminDash.saveZmPins()">পিন সংরক্ষণ করুন</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ============ ZONE MANAGER ============ -->
+<div class="page" id="page-zone-manager">
+  <section class="sec">
+    <a href="#" onclick="Router.go('home')" style="font-size:12.5px;color:var(--ink-muted);display:inline-block;margin-bottom:16px">← সাইটে ফিরে যান</a>
+    <div id="zmLoginBox" style="max-width:420px;margin:0 auto">
+      <h2 class="tiro" style="font-size:20px;margin-bottom:6px">🏢 জোন ম্যানেজার লগইন</h2>
+      <p style="color:var(--ink-muted);font-size:13px;margin-bottom:18px">আপনার শাখার পিন দিয়ে লগইন করুন</p>
+      <div id="zmLoginMsg" class="form-msg"></div>
+      <div class="card-box">
+        <div class="field"><label>শাখা</label><select id="zmZoneSelect"><option value="noakhali_sadar">নোয়াখালী সদর</option><option value="begumganj">বেগমগঞ্জ</option></select></div>
+        <div class="field"><label>পিন</label><input type="password" id="zmPinInput"></div>
+        <button class="btn btn-gold btn-block" onclick="ZoneManagerDash.login()">লগইন করুন</button>
+      </div>
+    </div>
+    <div id="zmDashBox" style="display:none">
+      <div class="dash-layout">
+        <aside class="dash-side">
+          <div class="dash-side-head"><div style="font-weight:700;color:var(--gold);font-size:13.5px" id="zmZoneLabel"></div><div style="font-size:11.5px;color:var(--ink-muted)" id="zmManagerLabel"></div></div>
+          <a class="active" onclick="ZoneManagerDash.tab(this,'overview')">📊 ওভারভিউ</a>
+          <a onclick="ZoneManagerDash.tab(this,'products')">📦 প্রোডাক্ট</a>
+          <a onclick="ZoneManagerDash.tab(this,'orders')">🧾 অর্ডার</a>
+          <a onclick="ZoneManagerDash.tab(this,'drivers')">🚴 ড্রাইভার</a>
+          <a onclick="ZoneManagerDash.logout()" style="color:#f87171">🔒 লগআউট</a>
+        </aside>
+        <div>
+          <div id="zmOverviewPane"><div class="stat-grid">
+            <div class="stat-card"><div class="lbl">এই শাখার সেল</div><div class="val rose" id="zmStatSales">৳০</div></div>
+            <div class="stat-card"><div class="lbl">মোট অর্ডার</div><div class="val" id="zmStatOrders">০</div></div>
+            <div class="stat-card"><div class="lbl">পেন্ডিং</div><div class="val" id="zmStatPending">০</div></div>
+            <div class="stat-card"><div class="lbl">প্রোডাক্ট</div><div class="val" id="zmStatProducts">০</div></div>
+          </div></div>
+          <div id="zmProductsPane" style="display:none"><div style="display:flex;justify-content:space-between;margin-bottom:14px"><h3 style="font-size:15px;color:#fff">এই শাখার প্রোডাক্ট</h3><button class="btn btn-gold" style="padding:8px 14px;font-size:12.5px" onclick="ZoneManagerDash.openAddProduct()">+ নতুন প্রোডাক্ট</button></div>
+            <div class="table-scroll"><table class="data-table"><thead><tr><th>প্রোডাক্ট</th><th>ক্যাটাগরি</th><th>মূল্য</th><th>স্টক</th><th>স্ট্যাটাস</th><th>একশন</th></tr></thead><tbody id="zmProductsTable"></tbody></table></div></div>
+          <div id="zmOrdersPane" style="display:none"><h3 style="font-size:15px;color:#fff;margin-bottom:14px">এই শাখার অর্ডার</h3>
+            <div class="table-scroll"><table class="data-table"><thead><tr><th>ID</th><th>কাস্টমার</th><th>ফোন</th><th>মোট</th><th>ড্রাইভার</th><th>স্ট্যাটাস</th></tr></thead><tbody id="zmOrdersTable"></tbody></table></div></div>
+          <div id="zmDriversPane" style="display:none"><div style="display:flex;justify-content:space-between;margin-bottom:14px"><h3 style="font-size:15px;color:#fff">এই শাখার ড্রাইভার</h3><button class="btn btn-outline" style="padding:8px 14px;font-size:12.5px" onclick="DriverManage.openAdd(ZoneManagerDash.currentZone)">+ নতুন ড্রাইভার</button></div>
+            <div class="table-scroll"><table class="data-table"><thead><tr><th>নাম</th><th>মোবাইল</th><th>স্ট্যাটাস</th></tr></thead><tbody id="zmDriverManageTable"></tbody></table></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ============ DRIVER PORTAL ============ -->
+<div class="page" id="page-driver">
+  <section class="sec" style="max-width:560px">
+    <a href="#" onclick="Router.go('home')" style="font-size:12.5px;color:var(--ink-muted);display:inline-block;margin-bottom:16px">← সাইটে ফিরে যান</a>
+    <div id="driverLoginBox">
+      <h2 class="tiro" style="font-size:20px;margin-bottom:6px">🚴 ড্রাইভার লগইন</h2>
+      <p style="color:var(--ink-muted);font-size:13px;margin-bottom:18px">মোবাইল নম্বর ও পিন দিয়ে লগইন করুন</p>
+      <div id="driverLoginMsg" class="form-msg"></div>
+      <div class="card-box">
+        <div class="field"><label>মোবাইল নম্বর</label><input type="tel" id="driverPhone"></div>
+        <div class="field"><label>পিন</label><input type="password" id="driverPin"></div>
+        <button class="btn btn-gold btn-block" onclick="DriverPortal.login()">লগইন করুন</button>
+      </div>
+    </div>
+    <div id="driverDashBox" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px"><h2 class="tiro" style="font-size:19px">🚴 <span id="driverNameLabel"></span></h2><button class="btn btn-outline" style="padding:7px 14px;font-size:12px" onclick="DriverPortal.logout()">লগআউট</button></div>
+      <div class="stat-grid" style="grid-template-columns:repeat(3,1fr)">
+        <div class="stat-card"><div class="lbl">অ্যাসাইনড</div><div class="val" id="dStatAssigned">০</div></div>
+        <div class="stat-card"><div class="lbl">পথে আছে</div><div class="val rose" id="dStatTransit">০</div></div>
+        <div class="stat-card"><div class="lbl">আজ সম্পন্ন</div><div class="val" id="dStatDone">০</div></div>
+      </div>
+      <h3 style="font-size:14px;color:#fff;margin-bottom:10px">আপনার অর্ডারসমূহ</h3>
+      <div id="driverOrdersList"></div>
+    </div>
+  </section>
+</div>
+
+</main>
+
+<footer class="main" id="custFooter">
+  <div class="footer-grid">
+    <div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><div class="mark" style="width:36px;height:36px;font-size:16px">🌹</div><span class="word" style="font-size:14px">Golapi<span class="g">Shop</span>.online</span></div>
+      <p style="font-size:12.5px;color:var(--ink-muted)">নোয়াখালী সদর ও বেগমগঞ্জের মানুষের দৈনন্দিন প্রয়োজনীয় পণ্য ঘরে বসে পাওয়ার জন্য আমরা কাজ করি।</p>
+    </div>
+    <div><h5>দ্রুত লিংক</h5>
+      <a href="#" onclick="Router.go('custom-bazar')">📝 কাস্টম বাজার</a>
+      <a href="#" onclick="Router.go('medical')">🏥 ফ্রী স্বাস্থ্য সেবা</a>
+      <a href="#" onclick="Router.go('myorders')">📦 আমার অর্ডার</a>
+      <a href="#" onclick="Router.go('contact')">📞 যোগাযোগ</a>
+    </div>
+    <div><h5>যোগাযোগ</h5>
+      <div style="margin-bottom:10px"><span class="footer-label">🔴 হটলাইন</span><a href="tel:+8801612057371">+880 1612-057371</a></div>
+      <div style="margin-bottom:10px"><span class="footer-label">📍 সদর — রিমন</span><a href="tel:+8801627010060">+880 1627-010060</a></div>
+      <div style="margin-bottom:10px"><span class="footer-label">📍 বেগমগঞ্জ — সৃজন</span><a href="tel:+8801310006959">+880 1310-006959</a></div>
+      <div><span class="footer-label">ইমেইল</span><a href="mailto:golapishoponline.bd@gmail.com">golapishoponline.bd@gmail.com</a></div>
+    </div>
+    <div><h5>পেমেন্ট</h5>
+      <div class="pay-icons" style="margin-bottom:14px"><span>bKash</span><span>Nagad</span><span>COD</span></div>
+      <a href="https://facebook.com/golapishoponline" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:9px;background:#1877F2;color:#fff;font-size:12px;font-weight:600">📘 Facebook</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© ২০২৬ Golapi Shop Online — সর্বস্বত্ব সংরক্ষিত</span>
+    <span style="display:flex;gap:14px"><a href="#" onclick="Router.go('contact')">যোগাযোগ</a><a href="#" onclick="Router.go('admin-dash')" style="opacity:.35">শপ ম্যানেজমেন্ট</a><a href="#" onclick="Router.go('zone-manager')" style="opacity:.35">শাখা ব্যবস্থাপনা</a></span>
+  </div>
+</footer>
+
+<nav class="mobnav" id="custMobNav">
+  <a class="active" onclick="Router.go('home')"><span class="em">🏠</span>হোম</a>
+  <a onclick="Router.go('listing',{cat:'all'})"><span class="em">📂</span>ক্যাটাগরি</a>
+  <a onclick="Cart.open()"><span class="em">🛍️</span>কার্ট</a>
+  <a onclick="Router.go('myorders')"><span class="em">📦</span>অর্ডার</a>
+  <a onclick="Router.go('medical')"><span class="em">🏥</span>স্বাস্থ্য</a>
+</nav>
+
+<button id="chatBtn" onclick="ChatWidget.toggle()"><span id="chatIcon">💬</span></button>
+<div id="chatWin">
+  <div id="chatHead">
+    <div style="display:flex;align-items:center;gap:9px"><span style="font-size:20px">🌹</span><div><div style="font-weight:700;font-size:13.5px">Golapi সহায়ক</div><div style="font-size:11px;opacity:.85">প্রায় সাথে সাথেই উত্তর দেয়</div></div></div>
+    <button onclick="ChatWidget.toggle()" style="font-size:18px">✕</button>
+  </div>
+  <div id="chatBody"><div class="cw-msg cw-bot">হ্যালো! 🌹 আমি Golapi Shop-এর সহায়ক। প্রোডাক্ট, ডেলিভারি, পেমেন্ট বা অর্ডার নিয়ে যা জানতে চান জিজ্ঞেস করুন।</div></div>
+  <div id="chatQuick">
+    <button onclick="ChatWidget.quickAsk('ডেলিভারি কতদিনে পাব?')">ডেলিভারি</button>
+    <button onclick="ChatWidget.quickAsk('কোন কোন পেমেন্ট মেথড আছে?')">পেমেন্ট</button>
+    <button onclick="ChatWidget.quickAsk('ফ্রী স্বাস্থ্য সেবা কি?')">স্বাস্থ্য সেবা</button>
+  </div>
+  <div id="chatInputRow"><input type="text" id="chatInput" placeholder="আপনার প্রশ্ন লিখুন..." onkeydown="if(event.key==='Enter')ChatWidget.send()"><button onclick="ChatWidget.send()">➤</button></div>
+</div>
+
+<!-- ============ AUTH MODAL ============ -->
+<div class="modal" id="authModal">
+  <div class="modal-box" style="position:relative">
+    <button class="close" onclick="AuthUI.close()">✕</button>
+    <div style="display:flex;border-bottom:1px solid var(--line);margin-bottom:20px">
+      <button id="tabLogin" class="active" onclick="AuthUI.switchTab('login')" style="flex:1;padding:11px;font-weight:600;color:var(--gold);border-bottom:2px solid var(--gold)">লগইন</button>
+      <button id="tabRegister" onclick="AuthUI.switchTab('register')" style="flex:1;padding:11px;font-weight:600;color:var(--ink-muted)">রেজিস্ট্রেশন</button>
+    </div>
+    <div id="authMsg" class="form-msg"></div>
+    <form id="loginForm" onsubmit="event.preventDefault();AuthUI.login();">
+      <div class="field"><label>ইমেইল</label><input type="text" id="loginEmail"></div>
+      <div class="field"><label>পাসওয়ার্ড</label><input type="password" id="loginPass"></div>
+      <button type="submit" class="btn btn-gold btn-block">লগইন করুন</button>
+    </form>
+    <form id="registerForm" style="display:none" onsubmit="event.preventDefault();AuthUI.register();">
+      <div class="field"><label>পূর্ণ নাম *</label><input type="text" id="regName" required></div>
+      <div class="field"><label>ইমেইল *</label><input type="email" id="regEmail" required></div>
+      <div class="field"><label>মোবাইল নম্বর *</label><input type="tel" id="regPhone" placeholder="01XXXXXXXXX" required></div>
+      <div class="field"><label>পাসওয়ার্ড *</label><input type="password" id="regPass" required></div>
+      <button type="submit" class="btn btn-gold btn-block">রেজিস্ট্রেশন করুন</button>
+    </form>
+  </div>
+</div>
+
+<!-- ============ ADD/EDIT PRODUCT MODAL ============ -->
+<div class="modal" id="productModal">
+  <div class="modal-box" style="max-width:520px;position:relative">
+    <button class="close" onclick="ProductForm.close()">✕</button>
+    <h3 class="tiro" id="pfTitle" style="font-size:18px;margin-bottom:14px">নতুন প্রোডাক্ট যুক্ত করুন</h3>
+    <div id="pfMsg" class="form-msg"></div>
+    <div class="field"><label>প্রোডাক্টের নাম *</label><input type="text" id="pfName"></div>
+    <div class="field"><label>শাখা/জোন *</label>
+      <div style="display:flex;gap:16px;margin-top:4px">
+        <label class="filter-opt"><input type="checkbox" id="pfZoneSadar" checked> নোয়াখালী সদর</label>
+        <label class="filter-opt"><input type="checkbox" id="pfZoneBegumganj"> বেগমগঞ্জ</label>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="field"><label>ক্যাটাগরি *</label><select id="pfCategory">
+        <option value="medicine">ঔষধ</option><option value="grocery">মুদি বাজার</option><option value="confectionery">কনফেকশনারি</option>
+        <option value="stationery">স্টেশনারি</option><option value="gas">গ্যাস সিলিন্ডার</option><option value="mobile">মোবাইল এক্সেসরিস</option>
+        <option value="watch">ঘড়ি ও ব্যাটারি</option><option value="cosmetics">কসমেটিকস</option><option value="clothing">জামা-কাপড়</option><option value="furniture">ফার্নিচার</option>
+      </select></div>
+      <div class="field"><label>একক *</label><select id="pfUnit"><option>পিস</option><option>কেজি</option><option>৫০০ গ্রাম</option><option>লিটার</option><option>ডজন</option><option>প্যাকেট</option><option>পাতা</option><option>বক্স</option></select></div>
+    </div>
+    <div style="background:rgba(212,175,55,.06);border-radius:12px;padding:14px;margin-bottom:14px">
+      <div style="font-size:12.5px;font-weight:600;color:var(--gold);margin-bottom:10px">💰 দাম হিসাব</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px">
+        <div class="field" style="margin-bottom:0"><label>কেনা দাম (৳) *</label><input type="number" id="pfCostPrice" min="0" oninput="ProductForm.recalc()"></div>
+        <div class="field" style="margin-bottom:0"><label>অতিরিক্ত খরচ (৳)</label><input type="number" id="pfExtraCost" min="0" value="0" oninput="ProductForm.recalc()"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="field" style="margin-bottom:0"><label>ডেলিভারি চার্জ (%)</label><input type="number" id="pfDeliveryPercent" min="0" value="0" step="0.1" oninput="ProductForm.recalc()"></div>
+        <div class="field" style="margin-bottom:0"><label>লাভ (%) *</label><input type="number" id="pfProfitPercent" min="0" value="20" step="0.1" oninput="ProductForm.recalc()"></div>
+      </div>
+      <div style="font-size:11.5px;color:var(--ink-muted);background:rgba(0,0,0,.2);border-radius:8px;padding:9px 12px;margin-top:10px">হিসাব: <strong id="pfBreakdown" style="color:var(--gold)">৳০</strong></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="field"><label>নিয়মিত মূল্য (৳)</label><input type="number" id="pfPrice" min="0"></div>
+      <div class="field"><label>বিক্রয় মূল্য (৳) *</label><input type="number" id="pfSalePrice" min="0"></div>
+    </div>
+    <div class="field"><label>স্টক পরিমাণ *</label><input type="number" id="pfStock" min="0"></div>
+    <div class="field"><label>বিবরণ</label><textarea id="pfDescription" rows="3"></textarea></div>
+    <div style="display:flex;gap:18px;margin:8px 0 18px;flex-wrap:wrap">
+      <label class="filter-opt"><input type="checkbox" id="pfCod" checked> COD সুবিধা</label>
+      <label class="filter-opt"><input type="checkbox" id="pfFlash"> ফ্ল্যাশ সেল</label>
+      <label class="filter-opt"><input type="checkbox" id="pfFeatured"> ফিচার্ড</label>
+    </div>
+    <button class="btn btn-gold btn-block" id="pfSubmitBtn" onclick="ProductForm.submit()">প্রোডাক্ট সংরক্ষণ করুন</button>
+  </div>
+</div>
+
+<!-- ============ ADD DRIVER MODAL ============ -->
+<div class="modal" id="driverModal">
+  <div class="modal-box" style="position:relative">
+    <button class="close" onclick="DriverManage.close()">✕</button>
+    <h3 class="tiro" style="font-size:18px;margin-bottom:14px">নতুন ড্রাইভার যুক্ত করুন</h3>
+    <div id="dfMsg" class="form-msg"></div>
+    <div class="field"><label>ড্রাইভারের নাম *</label><input type="text" id="dfName"></div>
+    <div class="field"><label>শাখা *</label><select id="dfZone"><option value="noakhali_sadar">নোয়াখালী সদর</option><option value="begumganj">বেগমগঞ্জ</option></select></div>
+    <div class="field"><label>মোবাইল নম্বর *</label><input type="tel" id="dfPhone"></div>
+    <div class="field"><label>পিন (৪ ডিজিট) *</label><input type="password" id="dfPin" maxlength="4"></div>
+    <button class="btn btn-gold btn-block" onclick="DriverManage.submit()">ড্রাইভার যুক্ত করুন</button>
+  </div>
+</div>
+
+<!-- ============ OWNER PIN GATE ============ -->
+<div class="modal" id="ownerGateModal">
+  <div class="modal-box" style="position:relative;text-align:center">
+    <button class="close" onclick="OwnerAuth.cancel()">✕</button>
+    <h3 class="tiro" style="font-size:18px;margin-bottom:6px">🔒 Owner Dashboard</h3>
+    <p style="color:var(--ink-muted);font-size:13px;margin-bottom:16px">পিন দিয়ে আনলক করুন</p>
+    <div id="ownerGateMsg" class="form-msg"></div>
+    <input type="password" id="ownerPinInput" maxlength="4" inputmode="numeric" style="font-size:22px;letter-spacing:10px;text-align:center;width:100%;background:rgba(255,255,255,.04);border:1px solid var(--line-l);border-radius:11px;padding:13px;color:#fff;margin-bottom:14px">
+    <button class="btn btn-gold btn-block" onclick="OwnerAuth.unlock()">আনলক করুন</button>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script src="./js/utils.js"></script>
+<script src="./js/data.js"></script>
+<script src="./js/router.js"></script>
+<script src="./js/auth.js"></script>
+<script src="./js/widgets.js"></script>
+<script src="./js/admin.js"></script>
+<script src="./js/pages.js"></script>
+<script src="./js/app.js"></script>
 </body>
 </html>
