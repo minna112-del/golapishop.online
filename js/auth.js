@@ -1,218 +1,50 @@
-const OwnerAuth = {
-  pendingPage:null,
-  attempts:0,
-  lockedUntil:0,
-  isUnlocked(){ return sessionStorage.getItem('golapi_owner_unlocked')==='1' || localStorage.getItem('golapi_owner_remember')==='1'; },
-  requestAccess(){
-    this.pendingPage = 'admin-dash';
-    document.getElementById('ownerPinInput').value='';
-    document.getElementById('ownerGateMsg').className='form-msg';
-    document.getElementById('ownerGateOverlay').classList.add('show');
-    setTimeout(()=>document.getElementById('ownerPinInput').focus(),100);
-  },
-  cancel(){
-    document.getElementById('ownerGateOverlay').classList.remove('show');
-    this.pendingPage=null;
-  },
-  async unlock(){
-    const entered = document.getElementById('ownerPinInput').value.trim();
-    const msgEl = document.getElementById('ownerGateMsg');
-
-    if(Date.now() < this.lockedUntil){
-      const remainingMin = Math.ceil((this.lockedUntil - Date.now())/60000);
-      msgEl.textContent = `🔒 অনেকবার ভুল পিন — আর ${remainingMin} মিনিট অপেক্ষা করুন`;
-      msgEl.className='form-msg err';
-      return;
-    }
-    if(!FB){ msgEl.textContent='Firebase কানেক্ট নেই'; msgEl.className='form-msg err'; return; }
-
-    try{
-      const snap = await FB.getDoc(FB.doc(FB.db,'setting','owner_pin'));
-      const storedPin = snap.exists() ? snap.data().pin : null;
-
-      if(!storedPin){
-        msgEl.textContent = '⚠ এখনো কোনো পিন সেট করা হয়নি — Firebase Console > Firestore > settings/owner_pin ডকুমেন্টে pin ফিল্ড বসাও';
-        msgEl.className='form-msg err';
-        return;
-      }
-
-      if(entered !== storedPin){
-        this.attempts++;
-        document.getElementById('ownerPinInput').value='';
-        if(this.attempts >= 3){
-          this.lockedUntil = Date.now() + 5*60*1000;
-          msgEl.innerHTML = '🔒 ৩ বার ভুল পিন — ৫ মিনিট অপেক্ষা করুন।<br><span style="font-size:11px;">পিন ভুলে গেলে Firebase Console &gt; Firestore &gt; setting/owner_pin ডকুমেন্ট থেকে রিসেট করা যাবে।</span>';
-          this.attempts = 0;
-        }else{
-          msgEl.textContent = `❌ পিন সঠিক নয় (${3-this.attempts} বার চেষ্টা বাকি)`;
-        }
-        msgEl.className='form-msg err';
-        return;
-      }
-
-      this.attempts = 0;
-      sessionStorage.setItem('golapi_owner_unlocked','1');
-      localStorage.setItem('golapi_owner_remember','1'); // remembers on this device/browser
-      document.getElementById('ownerGateOverlay').classList.remove('show');
-      Router.go('admin-dash');
-    }catch(e){
-      msgEl.textContent = 'যাচাই করা যাচ্ছে না: '+e.message;
-      msgEl.className='form-msg err';
-    }
-  },
-  lock(){
-    sessionStorage.removeItem('golapi_owner_unlocked');
-    localStorage.removeItem('golapi_owner_remember');
-    toast('🔒 Owner Dashboard লক করা হয়েছে');
-    Router.go('home');
-  }
-};
-
-
-
+/* auth.js — Firebase Auth + login/register modal */
+/* ---------- Auth ---------- */
 const Auth = {
   currentUser:null,
   init(){
-    FB.onAuthStateChanged(FB.auth, (user)=>{
+    FB.onAuthStateChanged(FB.auth, user=>{
       this.currentUser = user;
-      document.getElementById('accountLabel').textContent = user ? (user.displayName||'অ্যাকাউন্ট').split(' ')[0] : 'লগইন';
-      if(user) Wishlist.loadFromFirestore();
+      document.getElementById('accLabel').textContent = user ? (user.displayName||'অ্যাকাউন্ট').split(' ')[0] : 'লগইন';
     });
   }
 };
-
 const AuthUI = {
-  open(){ document.getElementById('authOverlay').classList.add('show'); },
-  close(){ document.getElementById('authOverlay').classList.remove('show'); this.clearMsg(); },
+  open(){ document.getElementById('authModal').classList.add('show'); },
+  close(){ document.getElementById('authModal').classList.remove('show'); this.clearMsg(); },
   switchTab(tab){
-    document.getElementById('tabLogin').classList.toggle('active', tab==='login');
-    document.getElementById('tabRegister').classList.toggle('active', tab==='register');
+    document.getElementById('tabLogin').style.color = tab==='login'?'var(--gold)':'var(--ink-muted)';
+    document.getElementById('tabLogin').style.borderColor = tab==='login'?'var(--gold)':'transparent';
+    document.getElementById('tabRegister').style.color = tab==='register'?'var(--gold)':'var(--ink-muted)';
+    document.getElementById('tabRegister').style.borderColor = tab==='register'?'var(--gold)':'transparent';
     document.getElementById('loginForm').style.display = tab==='login'?'block':'none';
     document.getElementById('registerForm').style.display = tab==='register'?'block':'none';
     this.clearMsg();
   },
-  validateRegPhoneLive(input){
-    const phoneRegex = /^(?:\+880|880|0)1[3-9]\d{8}$/;
-    const errEl = document.getElementById('regPhoneError');
-    const val = input.value.trim().replace(/[\s-]/g,'');
-    if(val.length === 0){ errEl.style.display='none'; input.style.borderColor=''; return; }
-    if(!phoneRegex.test(val)){
-      errEl.textContent = 'সঠিক বাংলাদেশি নম্বর দিন (যেমন: 01712345678)';
-      errEl.style.display='block';
-      input.style.borderColor = '#C0392B';
-    }else{
-      errEl.style.display='none';
-      input.style.borderColor = 'var(--green)';
-    }
-  },
-  showMsg(msg, type){
-    const el = document.getElementById('authFormMsg');
-    el.textContent = msg; el.className = 'form-msg '+type;
-  },
-  clearMsg(){ document.getElementById('authFormMsg').className='form-msg'; },
+  showMsg(msg,type){ const el=document.getElementById('authMsg'); el.textContent=msg; el.className='form-msg '+type; },
+  clearMsg(){ document.getElementById('authMsg').className='form-msg'; },
   async login(){
-    const email = document.getElementById('loginEmail').value.trim();
-    const pass = document.getElementById('loginPass').value;
+    const email=document.getElementById('loginEmail').value.trim();
+    const pass=document.getElementById('loginPass').value;
     if(!email||!pass){ this.showMsg('ইমেইল ও পাসওয়ার্ড দিন','err'); return; }
-    if(!FB){ this.showMsg('Firebase কনফিগার করা হয়নি এখনো','err'); return; }
-    try{
-      await FB.signInWithEmailAndPassword(FB.auth, email, pass);
-      this.showMsg('✓ লগইন সফল হয়েছে','ok');
-      setTimeout(()=>this.close(),800);
-    }catch(e){ this.showMsg('লগইন ব্যর্থ: ' + e.message, 'err'); }
+    if(!FB){ this.showMsg('সংযোগ সমস্যা','err'); return; }
+    try{ await FB.signInWithEmailAndPassword(FB.auth,email,pass); this.showMsg('✓ লগইন সফল','ok'); setTimeout(()=>this.close(),700); }
+    catch(e){ this.showMsg('লগইন ব্যর্থ: '+e.message,'err'); }
   },
   async register(){
-    const name = document.getElementById('regName').value.trim();
-    const email = document.getElementById('regEmail').value.trim();
-    const phone = document.getElementById('regPhone').value.trim();
-    const nid = document.getElementById('regNid').value.trim();
-    const pass = document.getElementById('regPass').value;
-    if(!name||!email||!phone||!nid||!pass){ this.showMsg('সব তথ্য পূরণ করুন','err'); return; }
-
-    const phoneRegex = /^(?:\+880|880|0)1[3-9]\d{8}$/;
-    if(!phoneRegex.test(phone.replace(/[\s-]/g,''))){
-      this.showMsg('সঠিক বাংলাদেশি মোবাইল নম্বর দিন (যেমন: 01712345678)','err'); return;
-    }
-    // NID সাধারণত ১০ (পুরনো), ১৩, বা ১৭ (নতুন স্মার্ট কার্ড) ডিজিটের হয়
-    const nidDigitsOnly = nid.replace(/\D/g,'');
-    if(![10,13,17].includes(nidDigitsOnly.length)){
-      this.showMsg('সঠিক NID নম্বর দিন (১০, ১৩, বা ১৭ ডিজিট)','err'); return;
-    }
-
-    if(!FB){ this.showMsg('Firebase কনফিগার করা হয়নি এখনো','err'); return; }
+    const name=document.getElementById('regName').value.trim();
+    const email=document.getElementById('regEmail').value.trim();
+    const phone=document.getElementById('regPhone').value.trim();
+    const pass=document.getElementById('regPass').value;
+    if(!name||!email||!phone||!pass){ this.showMsg('সব তথ্য পূরণ করুন','err'); return; }
+    const phoneRe=/^(?:\+880|880|0)1[3-9]\d{8}$/;
+    if(!phoneRe.test(phone.replace(/[\s-]/g,''))){ this.showMsg('সঠিক মোবাইল নম্বর দিন','err'); return; }
+    if(!FB){ this.showMsg('সংযোগ সমস্যা','err'); return; }
     try{
-      const cred = await FB.createUserWithEmailAndPassword(FB.auth, email, pass);
-      await FB.updateProfile(cred.user, {displayName:name});
-      await FB.setDoc(FB.doc(FB.db,'users',cred.user.uid), {
-        name, email, phone, nid: nidDigitsOnly, role:'customer', createdAt: FB.serverTimestamp()
-      });
-      this.showMsg('✓ রেজিস্ট্রেশন সফল হয়েছে','ok');
-      setTimeout(()=>this.close(),800);
-    }catch(e){ this.showMsg('রেজিস্ট্রেশন ব্যর্থ: ' + e.message, 'err'); }
-  },
-  async googleLogin(){
-    if(!FB){ this.showMsg('Firebase কনফিগার করা হয়নি এখনো','err'); return; }
-    try{
-      const provider = new FB.GoogleAuthProvider();
-      const result = await FB.signInWithPopup(FB.auth, provider);
-      this.showMsg('✓ লগইন সফল হয়েছে','ok');
-
-      // Google দিয়ে প্রথমবার লগইন করলে phone/NID থাকে না — সেটা আছে কিনা চেক করি
-      const userDoc = await FB.getDoc(FB.doc(FB.db,'users',result.user.uid));
-      const hasCompleteProfile = userDoc.exists() && userDoc.data().phone && userDoc.data().nid;
-
-      if(!hasCompleteProfile){
-        // নতুন ইউজার ডকুমেন্ট তৈরি করি (না থাকলে) যাতে নাম/ইমেইল অন্তত সেভ থাকে
-        if(!userDoc.exists()){
-          await FB.setDoc(FB.doc(FB.db,'users',result.user.uid), {
-            name: result.user.displayName||'', email: result.user.email||'',
-            role:'customer', createdAt: FB.serverTimestamp()
-          });
-        }
-        setTimeout(()=>{ this.close(); CompleteProfile.open(); }, 600);
-      }else{
-        setTimeout(()=>this.close(),800);
-      }
-    }catch(e){ this.showMsg('Google লগইন ব্যর্থ: ' + e.message, 'err'); }
+      const cred = await FB.createUserWithEmailAndPassword(FB.auth,email,pass);
+      await FB.updateProfile(cred.user,{displayName:name});
+      await FB.setDoc(FB.doc(FB.db,'users',cred.user.uid),{name,email,phone,role:'customer',createdAt:FB.serverTimestamp()});
+      this.showMsg('✓ রেজিস্ট্রেশন সফল','ok'); setTimeout(()=>this.close(),700);
+    }catch(e){ this.showMsg('রেজিস্ট্রেশন ব্যর্থ: '+e.message,'err'); }
   }
 };
-
-/* ---------- Complete Profile (for Google sign-in users missing phone/NID) ---------- */
-const CompleteProfile = {
-  open(){
-    document.getElementById('cpPhone').value='';
-    document.getElementById('cpNid').value='';
-    document.getElementById('completeProfileMsg').className='form-msg';
-    document.getElementById('completeProfileOverlay').classList.add('show');
-  },
-  close(){ document.getElementById('completeProfileOverlay').classList.remove('show'); },
-  async submit(){
-    const msgEl = document.getElementById('completeProfileMsg');
-    const phone = document.getElementById('cpPhone').value.trim();
-    const nid = document.getElementById('cpNid').value.trim();
-
-    if(!phone || !nid){ msgEl.textContent='সব তথ্য পূরণ করুন'; msgEl.className='form-msg err'; return; }
-
-    const phoneRegex = /^(?:\+880|880|0)1[3-9]\d{8}$/;
-    if(!phoneRegex.test(phone.replace(/[\s-]/g,''))){
-      msgEl.textContent='সঠিক বাংলাদেশি মোবাইল নম্বর দিন (যেমন: 01712345678)'; msgEl.className='form-msg err'; return;
-    }
-    const nidDigitsOnly = nid.replace(/\D/g,'');
-    if(![10,13,17].includes(nidDigitsOnly.length)){
-      msgEl.textContent='সঠিক NID নম্বর দিন (১০, ১৩, বা ১৭ ডিজিট)'; msgEl.className='form-msg err'; return;
-    }
-    if(!FB || !Auth.currentUser){ msgEl.textContent='লগইন সমস্যা — আবার চেষ্টা করুন'; msgEl.className='form-msg err'; return; }
-
-    try{
-      await FB.setDoc(FB.doc(FB.db,'users',Auth.currentUser.uid), { phone, nid: nidDigitsOnly }, { merge:true });
-      msgEl.textContent='✓ প্রোফাইল সম্পূর্ণ হয়েছে'; msgEl.className='form-msg ok';
-      setTimeout(()=>this.close(),800);
-    }catch(e){ msgEl.textContent='সমস্যা হয়েছে: '+e.message; msgEl.className='form-msg err'; }
-  }
-};
-
-/* ---------- Owner Dashboard (single business) ---------- */
-/* ---------- Zone Manager Portal ----------
-   A zone manager logs in with their branch's PIN (set by the owner in Settings)
-   and gets a scoped-down version of the Owner Dashboard: only their branch's
-   products, orders, and drivers. They cannot see or touch the other branch. */
