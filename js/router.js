@@ -56,6 +56,8 @@ const Router = {
     if(page==='home') Home.render();
     if(page==='medical') Medical.render();
     if(page==='custom-bazar') CustomBazar.init();
+    if(page==='account') AccountPage.render();
+    if(page==='account-addresses') AccountPage.renderAddresses();
 
     const staff = ['admin-dash','zone-manager','driver'].includes(page);
     document.getElementById('chatBtn').style.display = staff?'none':'flex';
