@@ -81,8 +81,10 @@ main{padding-bottom:70px}
 @media(max-width:900px){.hero-grid{grid-template-columns:1fr}}
 .eyebrow{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:99px;background:rgba(212,175,55,.06);border:1px solid var(--gold-line);font-size:13px;color:var(--gold);margin-bottom:24px}
 .dot{width:8px;height:8px;background:#22c55e;border-radius:50%;animation:pulseRing 2s infinite}
-h1.hero-h{font-family:'Tiro Bangla';font-size:clamp(30px,5vw,58px);line-height:1.15;margin-bottom:20px;
-  background:linear-gradient(135deg,var(--gold),var(--gold-light),var(--rose));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+h1.hero-h{font-family:'Tiro Bangla';font-size:clamp(28px,4.6vw,52px);line-height:1.55;margin-bottom:20px;padding:6px 0;
+  background:linear-gradient(135deg,var(--gold),var(--gold-light),var(--rose));-webkit-background-clip:text;-webkit-text-fill-color:transparent;overflow:visible}
+/* Bangla matra/kar need generous line-height or top/bottom get visually clipped, especially with gradient-clip text */
+h1,h2,h3,.tiro{line-height:1.5}
 .hero-p{color:var(--ink-soft);font-size:16px;max-width:520px;margin-bottom:28px}
 .btn-row{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:26px}
 .badges{display:flex;flex-wrap:wrap;gap:10px}
