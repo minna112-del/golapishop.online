@@ -27,11 +27,10 @@ setInterval(()=>{
    for now — full coverage needs a proper translation layer across all dynamic content. */
 let currentLang = localStorage.getItem('golapi_lang') || 'bn';
 function applyLang(){
-  document.querySelectorAll('[data-bn][data-en]').forEach(el=>{
-    const text = el.dataset[currentLang];
-    if(el.children.length===0 || /^[📝🏥💊🛒🔥💄🏠📂🛍️📦]/.test(text)) el.innerHTML = text;
-    else el.textContent = text;
-  });
+  // data-bn/data-en values are our own trusted markup (may contain <br>), so always use
+  // innerHTML — using textContent for elements that already contain a <br> child caused
+  // the literal text "<br>" to show up instead of a line break.
+  document.querySelectorAll('[data-bn][data-en]').forEach(el=>{ el.innerHTML = el.dataset[currentLang]; });
   document.documentElement.lang = currentLang;
   const label = document.getElementById('langBtnLabel');
   if(label) label.textContent = currentLang==='bn' ? 'EN' : 'বাং';
