@@ -52,7 +52,6 @@ const HealthService = {
     chat.innerHTML += `<div class="cw-msg cw-user">${txt}</div>`;
     inp.value = '';
     chat.scrollTop = chat.scrollHeight;
-
     setTimeout(() => {
       chat.innerHTML += `<div class="cw-msg cw-bot">এই সমস্যায় বিশ্রাম নিন, পানি বেশি খান। প্রয়োজনে ডাক্তার দেখান। আরও বিস্তারিত বলুন।</div>`;
       chat.scrollTop = chat.scrollHeight;
