@@ -1,58 +1,43 @@
-// ==================== ROUTER.JS ====================
 const Router = {
-  currentPage: 'home',
-  params: {},
+    currentPage: 'home',
+    params: {},
 
-  routes: [
-    { path: 'home', title: 'Golapi Shop Online', load: () => Home.render() },
-    { path: 'listing', title: 'সব পণ্য', load: () => Listing.render() },
-    { path: 'product', title: 'পণ্য বিস্তারিত', load: () => PDP.load(Router.params.id) },
-    { path: 'checkout', title: 'চেকআউট', load: () => Checkout.init() },
-    { path: 'custom-bazar', title: 'কাস্টম বাজারের লিস্ট', load: () => CustomBazar.init() },
-    { path: 'myorders', title: 'আমার অর্ডার', load: () => MyOrders.render() },
-    { path: 'health', title: 'Golapi Free Health Service', load: () => HealthService.init() },
-    { path: 'admin-dash', title: 'অ্যাডমিন ড্যাশবোর্ড', load: () => AdminDash.render() },
-    { path: 'driver', title: 'ড্রাইভার পোর্টাল', load: () => DriverPortal.render() },
-    { path: 'zone-manager', title: 'জোন ম্যানেজার ড্যাশবোর্ড', load: () => ZoneManagerDash.render() }
-  ],
+    routes: [
+        { path: 'home', title: 'হোম', load: () => Home && Home.render && Home.render() },
+        { path: 'listing', title: 'পণ্য', load: () => Listing && Listing.render && Listing.render() },
+        { path: 'checkout', title: 'চেকআউট', load: () => Checkout && Checkout.init && Checkout.init() },
+        { path: 'custom-bazar', title: 'কাস্টম বাজার', load: () => CustomBazar && CustomBazar.init && CustomBazar.init() },
+        { path: 'myorders', title: 'আমার অর্ডার', load: () => MyOrders && MyOrders.render && MyOrders.render() },
+        { path: 'health', title: 'গোলাপি স্বাস্থ্য সেবা', load: () => HealthService && HealthService.init && HealthService.init() },
+        { path: 'admin-dash', title: 'অ্যাডমিন', load: () => AdminDash && AdminDash.render && AdminDash.render() },
+        { path: 'driver', title: 'ড্রাইভার', load: () => DriverPortal && DriverPortal.render && DriverPortal.render() },
+        { path: 'zone-manager', title: 'জোন ম্যানেজার', load: () => ZoneManagerDash && ZoneManagerDash.render && ZoneManagerDash.render() }
+    ],
 
-  go(page, params = {}, opts = {}) {
-    this.currentPage = page;
-    this.params = params || {};
+    go(page, params = {}) {
+        this.currentPage = page;
+        this.params = params;
 
-    // Hide all pages
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        
+        const target = document.getElementById('page-' + page);
+        if (target) target.classList.add('active');
 
-    // Show target page
-    const targetPage = document.getElementById('page-' + page);
-    if (targetPage) {
-      targetPage.classList.add('active');
-    } else {
-      console.warn(`Page not found: ${page}`);
+        window.scrollTo(0, 0);
+
+        const route = this.routes.find(r => r.path === page);
+        if (route && typeof route.load === 'function') {
+            route.load();
+        }
+
+        window.location.hash = page;
+    },
+
+    init() {
+        window.go = (p, pa) => this.go(p, pa);
+        const hash = location.hash.replace('#', '') || 'home';
+        this.go(hash);
     }
+};
 
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-
-    // Load the page's logic
-    const route = this.routes.find(r => r.path === page);
-    if (route && typeof route.load === 'function') {
-      try {
-        route.load();
-      } catch (e) {
-        console.error(`Error loading page ${page}:`, e);
-      }
-    }
-
-    // Update URL hash
-    if (!opts.skipHash) {
-      window.location.hash = page;
-    }
-
-    // Staff pages-এ চ্যাট হাইড করুন
-    const staffPages = ['admin-dash', 'driver', 'zone-manager'];
-    ChatWidget.setVisible(!staffPages.includes(page));
-  },
-
-  handleInitialHash() {
-    let hash = (location.hash || '').replace('#', '').trim();
-    if (!hash
+Router.init();
