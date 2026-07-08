@@ -112,16 +112,56 @@ const DriverPortal = {
     listEl.innerHTML = mine.map(o=>{
       const s = ORDER_STATUS[o.status]||ORDER_STATUS.assigned;
       let nextBtn='';
-      if(o.status==='assigned') nextBtn=`<button class="btn btn-gold btn-block" onclick="DriverPortal.advance('${o.id}','picked_up')">✓ পিকআপ সম্পন্ন</button>`;
-      else if(o.status==='picked_up') nextBtn=`<button class="btn btn-gold btn-block" onclick="DriverPortal.advance('${o.id}','in_transit')">🚴 রওনা দিন</button>`;
+      if(o.status==='assigned') nextBtn=`<button class="btn btn-gold btn-block" onclick="DriverPortal.advance('${o.id}','packed')">📦 প্যাকিং সম্পন্ন</button>`;
+      else if(o.status==='packed') nextBtn=`<button class="btn btn-gold btn-block" onclick="DriverPortal.advance('${o.id}','picked_up')">✓ পিকআপ সম্পন্ন</button>`;
+      else if(o.status==='picked_up') nextBtn=`<button class="btn btn-gold btn-block" onclick="DriverPortal.startTransit('${o.id}')">🚴 রওনা দিন (লাইভ লোকেশন শুরু)</button>`;
       else if(o.status==='in_transit') nextBtn=`<button class="btn btn-gold btn-block" onclick="DriverPortal.advance('${o.id}','delivered')">✅ ডেলিভারি সম্পন্ন</button>`;
+      const billBox = o.orderType==='custom-bazar' && o.status!=='delivered' ? `
+        <div style="margin:8px 0;padding:10px;background:rgba(212,175,55,.05);border:1px solid var(--gold-line);border-radius:10px">
+          <div style="font-size:11.5px;color:var(--gold);font-weight:600;margin-bottom:6px">🧾 বিলের স্পষ্ট ছবি আপলোড করুন</div>
+          <input type="number" placeholder="মোট বিলের পরিমাণ (৳)" id="billAmt-${o.id}" style="width:100%;margin-bottom:6px;padding:8px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid var(--line-l);color:#fff;font-size:12.5px">
+          <input type="file" accept="image/*" id="billImg-${o.id}" style="width:100%;font-size:11.5px;color:var(--ink-muted)">
+          <button class="btn btn-outline btn-block" style="margin-top:6px;font-size:12px" onclick="DriverPortal.uploadBill('${o.id}')">আপলোড করুন</button>
+          ${o.billPhotoUrl?`<div style="font-size:11px;color:#22c55e;margin-top:4px">✓ বিল আপলোড হয়েছে</div>`:''}
+        </div>` : '';
+      const chatBtn = `<button class="btn btn-outline btn-block" style="margin-top:6px;font-size:12px" onclick="OrderChat.open('${o.id}','driver')">💬 কাস্টমারের সাথে চ্যাট</button>`;
       return `<div class="card-box"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><strong>${o.orderNumber||o.id}</strong><span class="status-pill ${s.cls}">${s.label}</span></div>
         <div style="font-size:12.5px;margin-bottom:4px">👤 ${o.customerName} — <a href="tel:${o.customerPhone}">${o.customerPhone}</a></div>
-        <div style="font-size:12.5px;color:var(--ink-muted);margin-bottom:8px">📍 ${o.zone||''}, ${o.district||''} — ${o.address||''}</div>
-        <div style="font-size:13px;font-weight:600;margin-bottom:8px">মোট: ${money(o.subtotal||0)}</div>${nextBtn}</div>`;
+        <div style="font-size:12.5px;color:var(--ink-muted);margin-bottom:8px">📍 ${o.village?o.village+', ':''}${o.zone||''}, ${o.district||''} — ${o.address||''}</div>
+        ${o.instructions?`<div style="font-size:12px;background:rgba(255,255,255,.03);padding:8px;border-radius:8px;margin-bottom:8px;color:var(--ink-soft)">💬 ${o.instructions}</div>`:''}
+        <div style="font-size:13px;font-weight:600;margin-bottom:8px">মোট: ${money(o.subtotal||0)}</div>${billBox}${nextBtn}${chatBtn}</div>`;
     }).join('');
   },
+  liveWatchId:null,
   async advance(orderId,status){ const ok=await OrdersService.updateStatus(orderId,status); if(ok){ toast('✓ স্ট্যাটাস আপডেট হয়েছে','success'); this.render(); } }
+    ,
+  /* "রওনা দিন" চাপলে ব্রাউজারের GPS থেকে প্রতি ৩০ সেকেন্ডে ড্রাইভারের লোকেশন Firestore-এ
+     আপডেট হয় (driverLat/driverLng) — কাস্টমার MyOrders পেজ থেকে সরাসরি Google Maps-এ
+     এই লোকেশন দেখতে পারে (orderTrackHTML দেখুন)। */
+  startTransit(orderId){
+    if(!navigator.geolocation){ toast('এই ব্রাউজারে লোকেশন সাপোর্ট নেই','error'); this.advance(orderId,'in_transit'); return; }
+    if(this.liveWatchId) navigator.geolocation.clearWatch(this.liveWatchId);
+    this.liveWatchId = navigator.geolocation.watchPosition(pos=>{
+      if(FB) FB.updateDoc(FB.doc(FB.db,'orders',orderId),{driverLat:pos.coords.latitude, driverLng:pos.coords.longitude}).catch(()=>{});
+    }, ()=>{}, {enableHighAccuracy:true, maximumAge:15000});
+    this.advance(orderId,'in_transit');
+  },
+  async uploadBill(orderId){
+    const amtEl = document.getElementById('billAmt-'+orderId);
+    const fileEl = document.getElementById('billImg-'+orderId);
+    const amt = Number(amtEl?.value||0);
+    const file = fileEl?.files?.[0];
+    if(!amt || !file){ toast('বিলের পরিমাণ ও ছবি দুটোই দিন','error'); return; }
+    if(!FB){ toast('সংযোগ সমস্যা','error'); return; }
+    try{
+      const fileRef = FB.storageRef(FB.storage, `bills/${orderId}_${Date.now()}_${file.name}`);
+      await FB.uploadBytes(fileRef, file);
+      const url = await FB.getDownloadURL(fileRef);
+      await FB.updateDoc(FB.doc(FB.db,'orders',orderId), {billPhotoUrl:url, billAmount:amt});
+      toast('✓ বিল আপলোড হয়েছে','success');
+      this.render();
+    }catch(e){ toast('আপলোড ব্যর্থ: '+e.message,'error'); }
+  }
 };
 
 const ZoneManagerDash = {
