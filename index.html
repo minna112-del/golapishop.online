@@ -54,20 +54,21 @@
       <button onclick="submitSearch()">🔍</button>
     </div>
     <div class="header-actions">
+      <button class="icon-btn" onclick="toggleLang()" id="langBtn" title="Change language / ভাষা পরিবর্তন">🌐 <span id="langBtnLabel">EN</span></button>
       <button class="icon-btn" onclick="AuthUI.open()"><span>👤</span><span id="accLabel" class="hide-sm">লগইন</span></button>
       <button class="icon-btn" onclick="Cart.open()" style="position:relative"><span>🛍️</span><span class="hide-sm">কার্ট</span><span class="cart-badge" id="cartBadge" style="display:none">0</span></button>
     </div>
   </div>
   <nav class="catnav">
     <div class="inner">
-      <a href="#" onclick="Router.go('custom-bazar')" class="flash">📝 কাস্টম বাজার</a>
-      <a href="#" onclick="Router.go('medical')" class="medical">🏥 ফ্রী স্বাস্থ্য সেবা</a>
-      <a href="#" onclick="Router.go('listing',{cat:'all'})">সব ক্যাটাগরি ▾</a>
-      <a href="#" onclick="Router.go('listing',{cat:'medicine'})">💊 ঔষধ</a>
-      <a href="#" onclick="Router.go('listing',{cat:'grocery'})">🛒 মুদি বাজার</a>
-      <a href="#" onclick="Router.go('listing',{cat:'gas'})">🔥 গ্যাস সিলিন্ডার</a>
-      <a href="#" onclick="Router.go('listing',{cat:'cosmetics'})">💄 কসমেটিকস</a>
-      <a href="#" onclick="Router.go('listing',{cat:'flash'})">🔥 ফ্ল্যাশ সেল</a>
+      <a href="#" onclick="Router.go('custom-bazar')" class="flash" data-bn="📝 কাস্টম বাজার" data-en="📝 Custom Bazar">📝 কাস্টম বাজার</a>
+      <a href="#" onclick="Router.go('medical')" class="medical" data-bn="🏥 ফ্রী স্বাস্থ্য সেবা" data-en="🏥 Free Health Care">🏥 ফ্রী স্বাস্থ্য সেবা</a>
+      <a href="#" onclick="Router.go('listing',{cat:'all'})" data-bn="সব ক্যাটাগরি ▾" data-en="All Categories ▾">সব ক্যাটাগরি ▾</a>
+      <a href="#" onclick="Router.go('listing',{cat:'medicine'})" data-bn="💊 ঔষধ" data-en="💊 Medicine">💊 ঔষধ</a>
+      <a href="#" onclick="Router.go('listing',{cat:'grocery'})" data-bn="🛒 মুদি বাজার" data-en="🛒 Grocery">🛒 মুদি বাজার</a>
+      <a href="#" onclick="Router.go('listing',{cat:'gas'})" data-bn="🔥 গ্যাস সিলিন্ডার" data-en="🔥 Gas Cylinder">🔥 গ্যাস সিলিন্ডার</a>
+      <a href="#" onclick="Router.go('listing',{cat:'cosmetics'})" data-bn="💄 কসমেটিকস" data-en="💄 Cosmetics">💄 কসমেটিকস</a>
+      <a href="#" onclick="Router.go('listing',{cat:'flash'})" data-bn="🔥 ফ্ল্যাশ সেল" data-en="🔥 Flash Sale">🔥 ফ্ল্যাশ সেল</a>
     </div>
   </nav>
 </header>
@@ -97,11 +98,11 @@
       <div class="hero-grid">
         <div>
           <div class="eyebrow anim-fadeUp"><span class="dot"></span> ১০০% ক্যাশ অন ডেলিভারি — নোয়াখালী জেলা</div>
-          <h1 class="hero-h anim-fadeUp d1">আপনার দায়িত্ব লিস্ট করা,<br>আমাদের দায়িত্ব বাজার করে দেওয়া</h1>
-          <p class="hero-p anim-fadeUp d2">সাপ্তাহিক মুদি, মাসিক বাজার, বিয়ের বাজার, রমজান বা কুরবানির বাজার — যেকোনো লিস্ট লিখে দিন। আমাদের ড্রাইভার বাজার করে পৌঁছে দেবে আপনার কিচেনে। সম্পূর্ণ ক্যাশ অন ডেলিভারি!</p>
+          <h1 class="hero-h anim-fadeUp d1" data-bn="বাজারের ঝামেলা শেষ,<br>এখন সবই আপনার দরজায়।" data-en="No more market hassle —<br>everything now at your doorstep.">বাজারের ঝামেলা শেষ,<br>এখন সবই আপনার দরজায়।</h1>
+          <p class="hero-p anim-fadeUp d2" data-bn="মুদি, সবজি, গ্যাস ও নিত্যপ্রয়োজনীয় সবকিছু — সহজ অর্ডার, দ্রুত ডেলিভারি, পণ্য হাতে পেয়ে তারপর মূল্য পরিশোধ করুন।" data-en="Groceries, vegetables, gas and daily essentials — easy ordering, fast delivery, pay only after you receive your items.">মুদি, সবজি, গ্যাস ও নিত্যপ্রয়োজনীয় সবকিছু — সহজ অর্ডার, দ্রুত ডেলিভারি, পণ্য হাতে পেয়ে তারপর মূল্য পরিশোধ করুন।</p>
           <div class="btn-row anim-fadeUp d3">
-            <button class="btn btn-rose" onclick="Router.go('custom-bazar')">📝 বাজারের লিস্ট লিখুন</button>
-            <button class="btn btn-outline" onclick="Router.go('listing',{cat:'all'})">প্রোডাক্ট কিনুন</button>
+            <button class="btn btn-rose" onclick="Router.go('custom-bazar')" data-bn="📝 বাজারের লিস্ট লিখুন" data-en="📝 Write Your Grocery List">📝 বাজারের লিস্ট লিখুন</button>
+            <button class="btn btn-outline" onclick="Router.go('listing',{cat:'all'})" data-bn="প্রোডাক্ট কিনুন" data-en="Shop Products">প্রোডাক্ট কিনুন</button>
           </div>
           <div class="badges anim-fadeUp d4">
             <span class="badge b-green">✓ ক্যাশ অন ডেলিভারি</span>
@@ -207,15 +208,21 @@
       <div class="field"><label>সম্পূর্ণ ঠিকানা *</label><textarea id="cbAddress" rows="2" placeholder="বাড়ি/রোড/এলাকা"></textarea></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
         <div class="field"><label>উপজেলা *</label><select id="cbDistrict" onchange="onUpazilaChange('cb')"><option value="">বেছে নিন</option><option value="noakhali_sadar">নোয়াখালী সদর</option><option value="begumganj">বেগমগঞ্জ</option></select></div>
-        <div class="field"><label>এলাকা *</label><select id="cbZone"><option value="">প্রথমে উপজেলা বেছে নিন</option></select></div>
+        <div class="field"><label>ইউনিয়ন *</label><select id="cbZone"><option value="">প্রথমে উপজেলা বেছে নিন</option></select></div>
       </div>
+      <div class="field"><label>গ্রাম / এলাকার নাম *</label><input type="text" id="cbVillage" placeholder="যেমন: পশ্চিম নাজিরপুর, ৩নং ওয়ার্ড"></div>
       <div class="field"><label>বাজারের ধরন *</label>
         <select id="cbType"><option value="weekly">সাপ্তাহিক মুদি বাজার</option><option value="monthly">মাসিক মুদি বাজার</option><option value="wedding">বিয়ের বাজার</option><option value="ramadan">রমজানের বাজার</option><option value="qurbani">কুরবানির বাজার</option><option value="other">অন্যান্য</option></select>
       </div>
       <div class="field"><label>বাজারের লিস্ট * <span style="color:var(--ink-dim)">(প্রতিটা আইটেম আলাদা লাইনে, পরিমাণ সহ)</span></label>
         <textarea id="cbList" rows="7" placeholder="চাল মিনিকেট — ৫ কেজি&#10;মসুর ডাল — ২ কেজি&#10;সয়াবিন তেল — ২ লিটার&#10;পেঁয়াজ — ৩ কেজি..."></textarea>
       </div>
+      <div class="field"><label>ডেলিভারি ইনস্ট্রাকশন * <span style="color:var(--ink-dim);font-weight:400">(বাধ্যতামূলক)</span></label><textarea id="cbInstructions" rows="2" placeholder="যেমন: বাড়ির সামনে সবুজ গেট, কল করে আসবেন"></textarea></div>
       <div class="field"><label>বিশেষ নির্দেশনা (ঐচ্ছিক)</label><textarea id="cbNotes" rows="2" placeholder="যেমন: সবচেয়ে ভালো মানের চাল নিবেন"></textarea></div>
+      <div class="card" style="padding:14px;margin-bottom:16px;border-color:var(--gold-line);background:rgba(212,175,55,.05)">
+        <strong style="font-size:12.5px;color:var(--gold)">🧾 বিল পেমেন্ট নিয়ম</strong>
+        <p style="font-size:12px;color:var(--ink-soft);margin-top:4px;line-height:1.7">ড্রাইভার বাজার করার পর মোট বিলের পরিমাণ জানিয়ে বিলের স্পষ্ট ছবি অ্যাপে আপলোড করবে — আপনি সেটা দেখে টাকা রেডি রাখতে পারবেন। ডেলিভারির সময় ক্যাশে পরিশোধ করুন। ড্রাইভারের সাথে সরাসরি চ্যাটও করতে পারবেন অর্ডার পেজ থেকে।</p>
+      </div>
       <div style="background:rgba(212,175,55,.06);border:1px solid var(--gold-line);border-radius:12px;padding:14px;margin-bottom:16px">
         <strong style="color:var(--gold);font-size:13px">⚠️ গুরুত্বপূর্ণ:</strong>
         <p style="font-size:12.5px;color:var(--ink-soft);line-height:1.7;margin-top:4px">অর্ডার কনফার্ম করতে <strong style="color:#fff">১০০ টাকা বিকাশ পে বাধ্যতামূলক</strong>। বিকাশ নম্বর: <strong id="cbBkashNum" style="color:var(--gold)">উপজেলা বেছে নিলে দেখাবে</strong><br>বাকি টাকা সম্পূর্ণ ক্যাশ অন ডেলিভারি।</p>
@@ -305,14 +312,12 @@
       <div class="field"><label>মোবাইল নম্বর *</label><input type="tel" id="ckPhone" placeholder="01XXXXXXXXX"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
         <div class="field"><label>উপজেলা *</label><select id="ckDistrict" onchange="onUpazilaChange('ck')"><option value="">বেছে নিন</option><option value="noakhali_sadar">নোয়াখালী সদর</option><option value="begumganj">বেগমগঞ্জ</option></select></div>
-        <div class="field"><label>এলাকা *</label><select id="ckZone"><option value="">প্রথমে উপজেলা বেছে নিন</option></select></div>
+        <div class="field"><label>ইউনিয়ন *</label><select id="ckZone"><option value="">প্রথমে উপজেলা বেছে নিন</option></select></div>
       </div>
-      <div class="field"><label>সম্পূর্ণ ঠিকানা *</label><textarea id="ckAddress" rows="2" placeholder="বাড়ি/রোড/এলাকা"></textarea></div>
-      <div class="field"><label>ডেলিভারি ইনস্ট্রাকশন (ঐচ্ছিক)</label><textarea id="ckInstructions" rows="2"></textarea></div>
-      <div class="field"><label>ডেলিভারি সময়</label>
-        <div class="radio-card selected" onclick="Checkout.selectSlot(this,'express')"><input type="radio" name="ckslot" checked><div><strong>⚡ এক্সপ্রেস (৬০-৯০ মিনিট)</strong><div class="sub">অতিরিক্ত ৳২০</div></div></div>
-        <div class="radio-card" onclick="Checkout.selectSlot(this,'today')"><input type="radio" name="ckslot"><div><strong>📅 আজই ডেলিভারি</strong><div class="sub">ফ্রি</div></div></div>
-      </div>
+      <div class="field"><label>গ্রাম / এলাকার নাম *</label><input type="text" id="ckVillage" placeholder="যেমন: পশ্চিম নাজিরপুর, ৩নং ওয়ার্ড"></div>
+      <div class="field"><label>সম্পূর্ণ ঠিকানা (বাড়ি/রোড নম্বর) *</label><textarea id="ckAddress" rows="2" placeholder="বাড়ি নম্বর, রোড নম্বর, ল্যান্ডমার্ক"></textarea></div>
+      <div class="field"><label>ডেলিভারি ইনস্ট্রাকশন * <span style="color:var(--ink-dim);font-weight:400">(বাধ্যতামূলক)</span></label><textarea id="ckInstructions" rows="2" placeholder="যেমন: বাড়ির সামনে সবুজ গেট, মসজিদের পাশের গলি, কল করে আসবেন"></textarea></div>
+      <div class="card" style="padding:14px;margin-bottom:14px;border-color:var(--gold-line);background:rgba(212,175,55,.05)"><strong style="font-size:13px;color:var(--gold)">⚡ দ্রুত ডেলিভারি</strong><div class="sub" style="margin-top:2px">প্যাকিং → পিকআপ → লাইভ ট্র্যাক — প্রতিটা ধাপ "আমার অর্ডার" পেজে দেখতে পাবেন।</div></div>
       <button class="btn btn-gold btn-block" onclick="Checkout.goStep(2)">পরবর্তী →</button>
     </div>
     <div id="ckStep2" class="card-box" style="display:none">
@@ -530,11 +535,11 @@
 </footer>
 
 <nav class="mobnav" id="custMobNav">
-  <a class="active" onclick="Router.go('home')"><span class="em">🏠</span>হোম</a>
-  <a onclick="Router.go('listing',{cat:'all'})"><span class="em">📂</span>ক্যাটাগরি</a>
-  <a onclick="Cart.open()"><span class="em">🛍️</span>কার্ট</a>
-  <a onclick="Router.go('myorders')"><span class="em">📦</span>অর্ডার</a>
-  <a onclick="Router.go('medical')"><span class="em">🏥</span>স্বাস্থ্য</a>
+  <a class="active" onclick="Router.go('home')"><span class="em">🏠</span><span data-bn="হোম" data-en="Home">হোম</span></a>
+  <a onclick="Router.go('listing',{cat:'all'})"><span class="em">📂</span><span data-bn="ক্যাটাগরি" data-en="Category">ক্যাটাগরি</span></a>
+  <a onclick="Cart.open()"><span class="em">🛍️</span><span data-bn="কার্ট" data-en="Cart">কার্ট</span></a>
+  <a onclick="Router.go('myorders')"><span class="em">📦</span><span data-bn="অর্ডার" data-en="Orders">অর্ডার</span></a>
+  <a onclick="Router.go('medical')"><span class="em">🏥</span><span data-bn="স্বাস্থ্য" data-en="Health">স্বাস্থ্য</span></a>
 </nav>
 
 <button id="chatBtn" onclick="ChatWidget.toggle()"><span id="chatIcon">💬</span></button>
@@ -647,6 +652,21 @@
     <div id="ownerGateMsg" class="form-msg"></div>
     <input type="password" id="ownerPinInput" maxlength="4" inputmode="numeric" style="font-size:22px;letter-spacing:10px;text-align:center;width:100%;background:rgba(255,255,255,.04);border:1px solid var(--line-l);border-radius:11px;padding:13px;color:#fff;margin-bottom:14px">
     <button class="btn btn-gold btn-block" onclick="OwnerAuth.unlock()">আনলক করুন</button>
+  </div>
+</div>
+
+<!-- ============ ORDER CHAT (customer <-> driver) ============ -->
+<div class="modal" id="chatOrderModal">
+  <div class="modal-box" style="position:relative;padding:0;max-width:380px;display:flex;flex-direction:column;max-height:80vh">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:linear-gradient(120deg,var(--pink),var(--pink-dark));border-radius:20px 20px 0 0">
+      <strong style="color:#fff;font-size:14px">💬 অর্ডার চ্যাট</strong>
+      <button onclick="OrderChat.close()" style="color:#fff;font-size:18px">✕</button>
+    </div>
+    <div id="chatOrderBody" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px;min-height:200px;max-height:340px"></div>
+    <div style="display:flex;gap:8px;padding:12px 14px;border-top:1px solid var(--line)">
+      <input type="text" id="chatOrderInput" placeholder="মেসেজ লিখুন..." style="flex:1;background:rgba(255,255,255,.04);border:1px solid var(--line-l);border-radius:20px;padding:10px 15px;color:#fff;font-size:13px" onkeydown="if(event.key==='Enter')OrderChat.send()">
+      <button onclick="OrderChat.send()" style="width:38px;height:38px;border-radius:50%;background:var(--gold);color:var(--bg)">➤</button>
+    </div>
   </div>
 </div>
 
