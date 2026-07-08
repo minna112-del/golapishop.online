@@ -377,14 +377,30 @@ function orderTrackHTML(o){
   }).join('');
   const liveBtn = (o.status==='in_transit' && o.driverLat && o.driverLng)
     ? `<a href="https://www.google.com/maps?q=${o.driverLat},${o.driverLng}" target="_blank" rel="noopener" class="btn btn-outline btn-block" style="margin-top:8px;font-size:12.5px">📍 ড্রাইভারের লাইভ লোকেশন দেখুন</a>` : '';
-  const billBox = (o.orderType==='custom-bazar' && o.billPhotoUrl)
-    ? `<div style="margin-top:10px"><img src="${o.billPhotoUrl}" style="width:100%;border-radius:10px;border:1px solid var(--line)"><div style="font-size:12.5px;color:var(--ink-soft);margin-top:4px">বিলের পরিমাণ: <strong style="color:var(--gold)">${money(o.billAmount||0)}</strong> — টাকা রেডি রাখুন</div></div>` : '';
+  const billBox = (o.orderType==='custom-bazar' && (o.billPhotos?.length || o.bazarItems?.length))
+    ? `<div style="margin-top:10px">
+        ${o.bazarItems?.length ? `<div style="background:rgba(255,255,255,.02);border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px">
+          ${o.bazarItems.map(it=>`<div class="row-between" style="font-size:12px"><span>${it.text}</span><span>${money(it.price)}</span></div>`).join('')}
+          <div class="row-between" style="font-weight:700;color:#fff;border-top:1px solid var(--line);margin-top:6px;padding-top:6px"><span>মোট বিল</span><span style="color:var(--gold)">${money(o.billAmount||0)}</span></div>
+        </div>` : ''}
+        ${(o.billPhotos||[]).map(url=>`<img src="${url}" style="width:100%;border-radius:10px;border:1px solid var(--line);margin-bottom:6px">`).join('')}
+        <div style="font-size:11.5px;color:var(--ink-muted)">ড্রাইভার ডেলিভারির সময় আসল দোকানের মেমো/রশিদও সাথে নিয়ে আসবে — টাকা রেডি রাখুন।</div>
+      </div>` : '';
   const chatBtn = `<button class="btn btn-outline btn-block" style="margin-top:8px;font-size:12.5px" onclick="OrderChat.open('${o.id}','customer')">💬 ড্রাইভারের সাথে চ্যাট করুন</button>`;
   return `<div style="margin-top:10px;border-top:1px solid var(--line);padding-top:10px">${rows}${liveBtn}${billBox}${chatBtn}</div>`;
 }
 
 /* ---------- My Orders ---------- */
 const MyOrders = {
+  cache: [], tab: 'active',
+  switchTab(tab){
+    this.tab = tab;
+    document.getElementById('ordersTabActive').style.color = tab==='active' ? 'var(--gold)' : 'var(--ink-muted)';
+    document.getElementById('ordersTabActive').style.borderColor = tab==='active' ? 'var(--gold)' : 'transparent';
+    document.getElementById('ordersTabPast').style.color = tab==='past' ? 'var(--gold)' : 'var(--ink-muted)';
+    document.getElementById('ordersTabPast').style.borderColor = tab==='past' ? 'var(--gold)' : 'transparent';
+    this.renderList();
+  },
   async render(){
     const list = document.getElementById('myOrdersList');
     list.innerHTML = `<p style="color:var(--ink-muted);padding:16px">লোড হচ্ছে...</p>`;
@@ -395,14 +411,30 @@ const MyOrders = {
       const snap = await FB.getDocs(FB.query(FB.collection(FB.db,'orders'), FB.where('userId','==',user.uid)));
       const orders=[]; snap.forEach(d=>orders.push({id:d.id,...d.data()}));
       orders.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
-      if(!orders.length){ list.innerHTML = `<div class="empty-state"><div class="em">📦</div><h3>এখনো কোনো অর্ডার নেই</h3><button class="btn btn-gold" onclick="Router.go('listing',{cat:'all'})">শপিং শুরু করুন</button></div>`; return; }
-      list.innerHTML = orders.map(o=>{
-        const s = ORDER_STATUS[o.status]||ORDER_STATUS.pending;
-        return `<div class="card-box"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><strong>${o.orderNumber||o.id}</strong><span class="status-pill ${s.cls}">${s.label}</span></div>
-        <div style="font-size:13px;color:var(--ink-muted)">মোট: ${money(o.subtotal||0)}</div>
-        ${orderTrackHTML(o)}
-        </div>`;
-      }).join('');
+      this.cache = orders;
+      this.renderList();
     }catch(e){ list.innerHTML = `<p style="color:var(--ink-muted);padding:16px">লোড করা যায়নি</p>`; devWarn(e.message); }
+  },
+  renderList(){
+    const list = document.getElementById('myOrdersList');
+    const isPast = o => o.status==='delivered' || o.status==='cancelled';
+    const orders = this.cache.filter(o => this.tab==='active' ? !isPast(o) : isPast(o));
+    if(!orders.length){
+      list.innerHTML = this.tab==='active'
+        ? `<div class="empty-state"><div class="em">📦</div><h3>এখনো কোনো চলমান অর্ডার নেই</h3><button class="btn btn-gold" onclick="Router.go('listing',{cat:'all'})">শপিং শুরু করুন</button></div>`
+        : `<div class="empty-state"><div class="em">🗂️</div><h3>আগের কোনো অর্ডার নেই</h3></div>`;
+      return;
+    }
+    list.innerHTML = orders.map(o=>{
+      const s = ORDER_STATUS[o.status]||ORDER_STATUS.pending;
+      const editBtn = (this.tab==='active' && OrderEdit.isEditable(o.status))
+        ? `<button class="btn btn-outline" style="font-size:11.5px;padding:6px 12px;margin-top:8px" onclick='OrderEdit.open("${o.id}", ${JSON.stringify({village:o.village||'',address:o.address||'',instructions:o.instructions||''})})'>✏️ ঠিকানা/ইনস্ট্রাকশন এডিট করুন</button>`
+        : (this.tab==='active' ? `<div style="font-size:11px;color:var(--ink-dim);margin-top:8px">ড্রাইভার পিকআপ শুরু করায় এখন এডিট করা যাবে না</div>` : '');
+      return `<div class="card-box"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><strong>${o.orderNumber||o.id}</strong><span class="status-pill ${s.cls}">${s.label}</span></div>
+      <div style="font-size:13px;color:var(--ink-muted)">মোট: ${money(o.subtotal||0)}</div>
+      ${editBtn}
+      ${this.tab==='active' ? orderTrackHTML(o) : ''}
+      </div>`;
+    }).join('');
   }
 };
