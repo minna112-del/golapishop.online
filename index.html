@@ -4,8 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Golapi Shop Online — নোয়াখালী সদর ও বেগমগঞ্জের অনলাইন শপ</title>
-<meta name="description" content="Golapi Shop Online — নোয়াখালী সদর ও বেগমগঞ্জের নিজস্ব অনলাইন শপ। ঔষধ, মুদি, গ্যাস, মোবাইল, কসমেটিকস — bKash, Nagad ও COD পেমেন্ট।">
-<link rel="icon" href="logo.jpeg">
+<meta name="description" content="Golapi Shop Online — নোয়াখালী সদর ও বেগমগঞ্জের নিজস্ব অনলাইন শপ।">
 <link rel="stylesheet" href="css/style.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,33 +13,26 @@
 </head>
 <body>
 
-<!-- Top Bar + Header + Nav (আপনার দেওয়া ডার্ক থিম অনুযায়ী) -->
-<!-- ... (আপনার পূর্বের index.html-এর হেডার অংশ রাখুন) ... -->
-
-<!-- নেভিগেশনে Health লিংক যোগ করুন -->
-<a href="#" onclick="go('health')" class="nav-link px-3 py-1.5 text-xs font-medium whitespace-nowrap">🩺 হেলথ সার্ভিস</a>
+<!-- Top Bar + Header (আপনার ডার্ক থিম অনুযায়ী রাখুন) -->
+<!-- ... আপনার আগের হেডার কোড ... -->
 
 <main id="appRoot">
 
-  <!-- HOME, LISTING, PRODUCT, CHECKOUT, CUSTOM-BAZAR, MYORDERS, ADMIN, DRIVER, ZONE-MANAGER পেজগুলো আপনার পূর্বের কোড অনুযায়ী রাখুন -->
+  <!-- অন্যান্য পেজ (home, listing, product, checkout ইত্যাদি) আপনার আগের কোড অনুযায়ী রাখুন -->
 
-  <!-- ===================== PAGE: HEALTH SERVICE ===================== -->
+  <!-- HEALTH SERVICE PAGE -->
   <div class="page" id="page-health">
     <section class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
       <div class="breadcrumb"><a href="#" onclick="go('home')">হোম</a> &gt; 🩺 গোলাপি ফ্রি স্বাস্থ্য সেবা</div>
       
-      <div class="hero-bg relative rounded-3xl overflow-hidden mb-12 text-center">
-        <div class="p-8 sm:p-16 relative z-10">
-          <h1 class="font-tiro text-4xl sm:text-5xl mb-4 text-white">🌹 গোলাপি ফ্রি স্বাস্থ্য সেবা</h1>
-          <p class="max-w-xl mx-auto text-slate-300 text-lg">নোয়াখালীর অভিজ্ঞ ডাক্তারদের সাথে ফ্রি পরামর্শ, AI প্রাথমিক চিকিৎসা এবং ভিডিও কল সুবিধা।</p>
-        </div>
+      <div class="hero-bg relative rounded-3xl overflow-hidden mb-12 text-center p-8 sm:p-16">
+        <h1 class="font-tiro text-4xl sm:text-5xl mb-4 text-white">🌹 গোলাপি ফ্রি স্বাস্থ্য সেবা</h1>
+        <p class="max-w-xl mx-auto text-slate-300 text-lg">নোয়াখালীর অভিজ্ঞ ডাক্তারদের সাথে ফ্রি পরামর্শ, AI প্রাথমিক চিকিৎসা এবং ভিডিও কল সুবিধা।</p>
       </div>
 
-      <!-- ডাক্তার লিস্ট -->
       <h2 class="text-2xl font-semibold mb-6 text-white">🩺 নোয়াখালীর ডাক্তার লিস্ট</h2>
       <div id="doctorList" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
 
-      <!-- সিডিউল ও বুকিং -->
       <div class="mt-16 grid md:grid-cols-2 gap-8">
         <div>
           <h3 class="text-xl mb-4">📅 ভিজিট সিডিউল</h3>
@@ -54,7 +46,6 @@
         </div>
       </div>
 
-      <!-- AI পরামর্শ -->
       <div class="mt-16">
         <h2 class="text-2xl mb-6">🤖 AI প্রাথমিক পরামর্শ</h2>
         <div id="aiHealthChat" class="glass p-6 rounded-2xl min-h-[200px]"></div>
@@ -64,17 +55,9 @@
 
 </main>
 
-<!-- Footer + Scripts -->
-<script src="js/firebase-init.js"></script>
-<script src="js/data.js"></script>
-<script src="js/utils.js"></script>
-<script src="js/store.js"></script>
 <script src="js/router.js"></script>
 <script src="js/health.js"></script>
 <script src="js/app.js"></script>
-<script src="js/auth.js"></script>
-<script src="js/widgets.js"></script>
-<script src="js/admin.js"></script>
-<!-- অন্যান্য JS ফাইল -->
+<!-- অন্যান্য স্ক্রিপ্ট -->
 </body>
 </html>
