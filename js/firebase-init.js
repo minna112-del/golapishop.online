@@ -2,19 +2,15 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
   import { getAnalytics, isSupported as analyticsIsSupported } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
   import {
     getAuth, onAuthStateChanged, createUserWithEmailAndPassword,
-    signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup,
-    updateProfile
+    signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, updateProfile
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
   import {
     getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc,
     updateDoc, deleteDoc, query, where, orderBy, limit, onSnapshot,
     serverTimestamp, increment, runTransaction
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-  import {
-    getStorage, ref as storageRef, uploadBytes, getDownloadURL
-  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+  import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
-  // ====== FIREBASE CONFIG — Golapi Shop Online project ======
   const firebaseConfig = {
     apiKey: "AIzaSyBdtIlcoPFFqzkI6X9KOIH-f4QAyEfH4o8",
     authDomain: "golapishoponline.firebaseapp.com",
@@ -26,12 +22,11 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
   };
 
   const app = initializeApp(firebaseConfig);
-  analyticsIsSupported().then(supported => { if(supported) getAnalytics(app); }).catch(()=>{});
+  analyticsIsSupported().then(ok => { if (ok) getAnalytics(app); }).catch(()=>{});
   const auth = getAuth(app);
   const db = getFirestore(app);
   const storage = getStorage(app);
 
-  // Expose globally for the rest of the page's vanilla JS to use
   window.__fb = {
     auth, db, storage, GoogleAuthProvider,
     onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword,
