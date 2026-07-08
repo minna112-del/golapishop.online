@@ -55,7 +55,7 @@
     </div>
     <div class="header-actions">
       <button class="icon-btn" onclick="toggleLang()" id="langBtn" title="Change language / ভাষা পরিবর্তন">🌐 <span id="langBtnLabel">EN</span></button>
-      <button class="icon-btn" onclick="AuthUI.open()"><span>👤</span><span id="accLabel" class="hide-sm">লগইন</span></button>
+      <button class="icon-btn" onclick="AccountPage.openOrLogin()"><span>👤</span><span id="accLabel" class="hide-sm">লগইন</span></button>
       <button class="icon-btn" onclick="Cart.open()" style="position:relative"><span>🛍️</span><span class="hide-sm">কার্ট</span><span class="cart-badge" id="cartBadge" style="display:none">0</span></button>
     </div>
   </div>
@@ -356,8 +356,90 @@
 <!-- ============ MY ORDERS ============ -->
 <div class="page" id="page-myorders">
   <section class="sec" style="max-width:640px">
-    <h2 class="tiro" style="font-size:22px;margin-bottom:18px">📦 আমার অর্ডার</h2>
+    <h2 class="tiro" style="font-size:22px;margin-bottom:14px">📦 আমার অর্ডার</h2>
+    <div style="display:flex;gap:8px;margin-bottom:16px;border-bottom:1px solid var(--line)">
+      <button id="ordersTabActive" class="active" onclick="MyOrders.switchTab('active')" style="flex:1;padding:10px;font-weight:600;font-size:13px;color:var(--gold);border-bottom:2px solid var(--gold)">নতুন অর্ডার</button>
+      <button id="ordersTabPast" onclick="MyOrders.switchTab('past')" style="flex:1;padding:10px;font-weight:600;font-size:13px;color:var(--ink-muted)">আগের অর্ডার</button>
+    </div>
     <div id="myOrdersList"></div>
+  </section>
+</div>
+
+<!-- ============ ACCOUNT / PROFILE (Temu-style settings) ============ -->
+<div class="page" id="page-account">
+  <section class="sec" style="max-width:640px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:22px">
+      <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--rose));display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--bg);font-weight:700" id="accAvatar">👤</div>
+      <div><div style="font-weight:700;color:#fff;font-size:15px" id="accName">অতিথি</div><div style="font-size:12px;color:var(--ink-muted)" id="accEmail"></div></div>
+    </div>
+
+    <div class="card" style="padding:16px;margin-bottom:18px;border-color:rgba(34,197,94,.2);background:rgba(34,197,94,.04)">
+      <strong style="color:#22c55e;font-size:13.5px">🛡️ আপনার অ্যাকাউন্ট সুরক্ষিত</strong>
+      <p style="font-size:12px;color:var(--ink-muted);margin-top:4px">Golapi Shop আপনার ব্যক্তিগত তথ্য গোপনীয় ও নিরাপদ রাখে।</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
+        <button class="btn btn-outline" style="font-size:12px;padding:10px" onclick="toast('পাসওয়ার্ড পরিবর্তনের জন্য লগইন মডালে যান')">🛡️ অ্যাকাউন্ট নিরাপত্তা</button>
+        <button class="btn btn-outline" style="font-size:12px;padding:10px" onclick="Router.go('privacy-info')">🔒 প্রাইভেসি</button>
+      </div>
+    </div>
+
+    <div class="card-box">
+      <a href="#" onclick="Router.go('myorders')" style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line);color:var(--ink)">📦 আপনার অর্ডার <span>›</span></a>
+      <a href="#" onclick="Router.go('account-addresses')" style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line);color:var(--ink)">📍 ঠিকানা সমূহ <span>›</span></a>
+      <a href="#" onclick="ChatWidget.toggle()" style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;color:var(--ink)">💬 মেসেজ / সাপোর্ট <span>›</span></a>
+    </div>
+
+    <div class="card-box">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)"><span>পেমেন্ট মেথড</span><span style="color:var(--ink-muted);font-size:12.5px">bKash · Nagad · COD</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)"><span>দেশ ও অঞ্চল</span><span style="color:var(--ink-muted);font-size:12.5px">Bangladesh</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)"><span>ভাষা / Language</span><a href="#" onclick="toggleLang()" style="color:var(--gold);font-size:12.5px">পরিবর্তন করুন ›</a></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)"><span>মুদ্রা</span><span style="color:var(--ink-muted);font-size:12.5px">BDT (৳)</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0"><span>নোটিফিকেশন</span><button class="btn btn-outline" style="padding:5px 12px;font-size:11.5px" onclick="AccountPage.requestNotifications()">চালু করুন</button></div>
+    </div>
+
+    <div class="card-box">
+      <a href="#" onclick="Router.go('about-app')" style="display:block;padding:12px 0;border-bottom:1px solid var(--line);color:var(--ink)">এই অ্যাপ সম্পর্কে</a>
+      <a href="#" onclick="Router.go('terms')" style="display:block;padding:12px 0;border-bottom:1px solid var(--line);color:var(--ink)">শর্তাবলী ও নীতিমালা</a>
+      <a href="#" onclick="if(navigator.share){navigator.share({title:'Golapi Shop Online',url:location.href})}else{toast('লিংক কপি করুন: '+location.href)}" style="display:block;padding:12px 0;color:var(--ink)">এই অ্যাপ শেয়ার করুন</a>
+    </div>
+
+    <div class="card-box">
+      <a href="#" onclick="AuthUI.open()" style="display:block;padding:12px 0;border-bottom:1px solid var(--line);color:var(--ink)">অ্যাকাউন্ট পরিবর্তন করুন</a>
+      <a href="#" onclick="AccountPage.signOut()" style="display:block;padding:12px 0;color:#f87171;font-weight:600">লগআউট করুন</a>
+    </div>
+  </section>
+</div>
+
+<!-- ============ SAVED ADDRESSES ============ -->
+<div class="page" id="page-account-addresses">
+  <section class="sec" style="max-width:640px">
+    <div class="crumb"><a href="#" onclick="Router.go('account')">প্রোফাইল</a> &gt; ঠিকানা সমূহ</div>
+    <h2 class="tiro" style="font-size:20px;margin-bottom:14px">📍 সংরক্ষিত ঠিকানা</h2>
+    <div id="addressList"></div>
+    <button class="btn btn-gold btn-block" style="margin-top:10px" onclick="AccountPage.openAddAddress()">+ নতুন ঠিকানা যোগ করুন</button>
+  </section>
+</div>
+
+<!-- ============ ABOUT / TERMS (static info) ============ -->
+<div class="page" id="page-about-app">
+  <section class="sec" style="max-width:600px">
+    <div class="crumb"><a href="#" onclick="Router.go('account')">প্রোফাইল</a> &gt; অ্যাপ সম্পর্কে</div>
+    <h2 class="tiro" style="font-size:20px;margin-bottom:10px">Golapi Shop Online</h2>
+    <p style="color:var(--ink-soft);font-size:13.5px;line-height:1.8">নোয়াখালী সদর ও বেগমগঞ্জের নিজস্ব অনলাইন শপ। মুদি, ঔষধ, গ্যাস সিলিন্ডার, মোবাইল এক্সেসরিস সহ নিত্যপ্রয়োজনীয় সবকিছুর হোম ডেলিভারি — নিজস্ব লোকাল ড্রাইভার টিম দিয়ে। কাস্টম বাজার সেবায় আপনার লিস্ট অনুযায়ী ড্রাইভার বাজার করে দেয়।</p>
+    <p style="color:var(--ink-muted);font-size:12px;margin-top:14px">সংস্করণ ১.০ · হটলাইন: +880 1612-057371</p>
+  </section>
+</div>
+<div class="page" id="page-privacy-info">
+  <section class="sec" style="max-width:600px">
+    <div class="crumb"><a href="#" onclick="Router.go('account')">প্রোফাইল</a> &gt; প্রাইভেসি</div>
+    <h2 class="tiro" style="font-size:20px;margin-bottom:10px">🔒 প্রাইভেসি</h2>
+    <p style="color:var(--ink-soft);font-size:13.5px;line-height:1.8">আপনার নাম, ফোন নম্বর ও ঠিকানা শুধুমাত্র অর্ডার ডেলিভারির উদ্দেশ্যে সংরক্ষিত হয় ও সংশ্লিষ্ট ড্রাইভার/জোন ম্যানেজারের সাথে শেয়ার করা হয়। তৃতীয় পক্ষের কাছে কখনো বিক্রি করা হয় না।</p>
+  </section>
+</div>
+<div class="page" id="page-terms">
+  <section class="sec" style="max-width:600px">
+    <div class="crumb"><a href="#" onclick="Router.go('account')">প্রোফাইল</a> &gt; শর্তাবলী</div>
+    <h2 class="tiro" style="font-size:20px;margin-bottom:10px">শর্তাবলী ও নীতিমালা</h2>
+    <p style="color:var(--ink-soft);font-size:13.5px;line-height:1.8">অর্ডার কনফার্মেশনের পর ড্রাইভার পিকআপ শুরুর আগ পর্যন্ত ঠিকানা/ইনস্ট্রাকশন সম্পাদনা করা যাবে। কাস্টম বাজার অর্ডারে প্রকৃত বাজার মূল্য অনুযায়ী চূড়ান্ত বিল নির্ধারিত হয়। সম্পূর্ণ ক্যাশ অন ডেলিভারি, শুধু কাস্টম বাজারে ১০০ টাকা অগ্রিম বাধ্যতামূলক।</p>
   </section>
 </div>
 
@@ -667,6 +749,34 @@
       <input type="text" id="chatOrderInput" placeholder="মেসেজ লিখুন..." style="flex:1;background:rgba(255,255,255,.04);border:1px solid var(--line-l);border-radius:20px;padding:10px 15px;color:#fff;font-size:13px" onkeydown="if(event.key==='Enter')OrderChat.send()">
       <button onclick="OrderChat.send()" style="width:38px;height:38px;border-radius:50%;background:var(--gold);color:var(--bg)">➤</button>
     </div>
+  </div>
+</div>
+
+<!-- ============ EDIT ORDER (address/instructions — allowed until picked_up) ============ -->
+<div class="modal" id="editOrderModal">
+  <div class="modal-box" style="position:relative">
+    <button class="close" onclick="OrderEdit.close()">✕</button>
+    <h3 class="tiro" style="font-size:17px;margin-bottom:14px">অর্ডার তথ্য সম্পাদনা</h3>
+    <div id="editOrderMsg" class="form-msg"></div>
+    <div class="field"><label>গ্রাম / এলাকার নাম</label><input type="text" id="eoVillage"></div>
+    <div class="field"><label>সম্পূর্ণ ঠিকানা</label><textarea id="eoAddress" rows="2"></textarea></div>
+    <div class="field"><label>ডেলিভারি ইনস্ট্রাকশন</label><textarea id="eoInstructions" rows="2"></textarea></div>
+    <button class="btn btn-gold btn-block" onclick="OrderEdit.save()">পরিবর্তন সংরক্ষণ করুন</button>
+  </div>
+</div>
+
+<!-- ============ ADD ADDRESS ============ -->
+<div class="modal" id="addressModal">
+  <div class="modal-box" style="position:relative">
+    <button class="close" onclick="AccountPage.closeAddAddress()">✕</button>
+    <h3 class="tiro" style="font-size:17px;margin-bottom:14px">নতুন ঠিকানা</h3>
+    <div id="addressMsg" class="form-msg"></div>
+    <div class="field"><label>লেবেল (যেমন: বাসা, অফিস)</label><input type="text" id="addrLabel" placeholder="বাসা"></div>
+    <div class="field"><label>উপজেলা</label><select id="addrDistrict" onchange="onUpazilaChange('addr')"><option value="">বেছে নিন</option><option value="noakhali_sadar">নোয়াখালী সদর</option><option value="begumganj">বেগমগঞ্জ</option></select></div>
+    <div class="field"><label>ইউনিয়ন</label><select id="addrZone"><option value="">প্রথমে উপজেলা বেছে নিন</option></select></div>
+    <div class="field"><label>গ্রাম / এলাকা</label><input type="text" id="addrVillage"></div>
+    <div class="field"><label>সম্পূর্ণ ঠিকানা</label><textarea id="addrFull" rows="2"></textarea></div>
+    <button class="btn btn-gold btn-block" onclick="AccountPage.saveAddress()">সংরক্ষণ করুন</button>
   </div>
 </div>
 
