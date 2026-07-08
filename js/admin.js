@@ -111,25 +111,24 @@ const DriverPortal = {
     if(!mine.length){ listEl.innerHTML=`<div class="empty-state"><div class="em">📦</div><h3>কোনো অর্ডার অ্যাসাইন করা নেই</h3></div>`; return; }
     listEl.innerHTML = mine.map(o=>{
       const s = ORDER_STATUS[o.status]||ORDER_STATUS.assigned;
+      const isCustomBazar = o.orderType==='custom-bazar';
       let nextBtn='';
-      if(o.status==='assigned') nextBtn=`<button class="btn btn-gold btn-block" onclick="DriverPortal.advance('${o.id}','packed')">📦 প্যাকিং সম্পন্ন</button>`;
+      let bazarBox='';
+      if(isCustomBazar && o.status==='assigned'){
+        // Custom bazar = "shop & deliver": driver prices each item live, uploads shop memo(s),
+        // and that single action IS the pickup-complete step (matches the real workflow —
+        // there's no single store to "pick up" from, the driver visits multiple shops).
+        bazarBox = bazarShopHTML(o);
+      } else if(o.status==='assigned') nextBtn=`<button class="btn btn-gold btn-block" onclick="DriverPortal.advance('${o.id}','packed')">📦 প্যাকিং সম্পন্ন</button>`;
       else if(o.status==='packed') nextBtn=`<button class="btn btn-gold btn-block" onclick="DriverPortal.advance('${o.id}','picked_up')">✓ পিকআপ সম্পন্ন</button>`;
       else if(o.status==='picked_up') nextBtn=`<button class="btn btn-gold btn-block" onclick="DriverPortal.startTransit('${o.id}')">🚴 রওনা দিন (লাইভ লোকেশন শুরু)</button>`;
       else if(o.status==='in_transit') nextBtn=`<button class="btn btn-gold btn-block" onclick="DriverPortal.advance('${o.id}','delivered')">✅ ডেলিভারি সম্পন্ন</button>`;
-      const billBox = o.orderType==='custom-bazar' && o.status!=='delivered' ? `
-        <div style="margin:8px 0;padding:10px;background:rgba(212,175,55,.05);border:1px solid var(--gold-line);border-radius:10px">
-          <div style="font-size:11.5px;color:var(--gold);font-weight:600;margin-bottom:6px">🧾 বিলের স্পষ্ট ছবি আপলোড করুন</div>
-          <input type="number" placeholder="মোট বিলের পরিমাণ (৳)" id="billAmt-${o.id}" style="width:100%;margin-bottom:6px;padding:8px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid var(--line-l);color:#fff;font-size:12.5px">
-          <input type="file" accept="image/*" id="billImg-${o.id}" style="width:100%;font-size:11.5px;color:var(--ink-muted)">
-          <button class="btn btn-outline btn-block" style="margin-top:6px;font-size:12px" onclick="DriverPortal.uploadBill('${o.id}')">আপলোড করুন</button>
-          ${o.billPhotoUrl?`<div style="font-size:11px;color:#22c55e;margin-top:4px">✓ বিল আপলোড হয়েছে</div>`:''}
-        </div>` : '';
       const chatBtn = `<button class="btn btn-outline btn-block" style="margin-top:6px;font-size:12px" onclick="OrderChat.open('${o.id}','driver')">💬 কাস্টমারের সাথে চ্যাট</button>`;
       return `<div class="card-box"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><strong>${o.orderNumber||o.id}</strong><span class="status-pill ${s.cls}">${s.label}</span></div>
         <div style="font-size:12.5px;margin-bottom:4px">👤 ${o.customerName} — <a href="tel:${o.customerPhone}">${o.customerPhone}</a></div>
         <div style="font-size:12.5px;color:var(--ink-muted);margin-bottom:8px">📍 ${o.village?o.village+', ':''}${o.zone||''}, ${o.district||''} — ${o.address||''}</div>
         ${o.instructions?`<div style="font-size:12px;background:rgba(255,255,255,.03);padding:8px;border-radius:8px;margin-bottom:8px;color:var(--ink-soft)">💬 ${o.instructions}</div>`:''}
-        <div style="font-size:13px;font-weight:600;margin-bottom:8px">মোট: ${money(o.subtotal||0)}</div>${billBox}${nextBtn}${chatBtn}</div>`;
+        <div style="font-size:13px;font-weight:600;margin-bottom:8px">মোট: ${money(o.subtotal||o.billAmount||0)}</div>${bazarBox}${nextBtn}${chatBtn}</div>`;
     }).join('');
   },
   liveWatchId:null,
@@ -145,21 +144,62 @@ const DriverPortal = {
       if(FB) FB.updateDoc(FB.doc(FB.db,'orders',orderId),{driverLat:pos.coords.latitude, driverLng:pos.coords.longitude}).catch(()=>{});
     }, ()=>{}, {enableHighAccuracy:true, maximumAge:15000});
     this.advance(orderId,'in_transit');
+  }
+};
+
+/* ---------- Custom Bazar "Shop & Deliver" (Uber-Eats style itemized shopping) ----------
+   কাস্টম বাজার অর্ডার একটা দোকান থেকে আসে না — ড্রাইভার একাধিক দোকান ঘুরে জিনিস কেনে।
+   তাই এখানে "পিকআপ" মানে "বাজার সম্পন্ন করে মেমো আপলোড করা"। প্রতিটা আইটেমের পাশে
+   দাম বসিয়ে মোট বিল অটো ক্যালকুলেট হয় — কাস্টমার এই itemized তালিকা দেখেই যাচাই
+   করতে পারবে, প্রতারিত হওয়ার সুযোগ কমে যায়। */
+function bazarShopHTML(o){
+  const lines = (o.bazarList||'').split('\n').map(l=>l.trim()).filter(Boolean);
+  const rows = lines.map((line,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)">
+    <span class="bazar-line-text" style="font-size:12px;color:var(--ink-soft);flex:1">${line}</span>
+    <input type="number" placeholder="৳" data-bazar-line="${o.id}:${i}" oninput="BazarShop.recalc('${o.id}', ${lines.length})" style="width:70px;padding:6px;border-radius:6px;background:rgba(255,255,255,.04);border:1px solid var(--line-l);color:#fff;font-size:12px;text-align:right">
+  </div>`).join('');
+  return `<div style="margin:8px 0;padding:10px;background:rgba(212,175,55,.05);border:1px solid var(--gold-line);border-radius:10px">
+    <div style="font-size:11.5px;color:var(--gold);font-weight:600;margin-bottom:8px">🛒 আইটেম অনুযায়ী দাম লিখুন (Shop &amp; Deliver)</div>
+    ${rows}
+    <div style="display:flex;justify-content:space-between;margin-top:8px;font-weight:700;color:#fff;font-size:13px">মোট বিল <span id="bazarTotal-${o.id}">৳0</span></div>
+    <div style="font-size:11px;color:var(--ink-muted);margin:8px 0 4px">দোকানের মেমো/রশিদের ছবি (একাধিক দোকান হলে একাধিক ছবি) *</div>
+    <input type="file" accept="image/*" multiple id="bazarPhotos-${o.id}" style="width:100%;font-size:11.5px;color:var(--ink-muted)">
+    <button class="btn btn-gold btn-block" style="margin-top:8px;font-size:12.5px" onclick="BazarShop.submit('${o.id}', ${lines.length})">✅ বাজার সম্পন্ন, বিল আপলোড করুন</button>
+  </div>`;
+}
+const BazarShop = {
+  recalc(orderId, count){
+    let total=0;
+    for(let i=0;i<count;i++){ const el=document.querySelector(`[data-bazar-line="${orderId}:${i}"]`); total += Number(el?.value||0); }
+    const totalEl = document.getElementById('bazarTotal-'+orderId); if(totalEl) totalEl.textContent = money(total);
   },
-  async uploadBill(orderId){
-    const amtEl = document.getElementById('billAmt-'+orderId);
-    const fileEl = document.getElementById('billImg-'+orderId);
-    const amt = Number(amtEl?.value||0);
-    const file = fileEl?.files?.[0];
-    if(!amt || !file){ toast('বিলের পরিমাণ ও ছবি দুটোই দিন','error'); return; }
+  async submit(orderId, count){
+    const items=[]; let total=0;
+    for(let i=0;i<count;i++){
+      const el=document.querySelector(`[data-bazar-line="${orderId}:${i}"]`);
+      const price=Number(el?.value||0);
+      const text = el?.closest('div')?.querySelector('.bazar-line-text')?.textContent || '';
+      items.push({text, price});
+      total += price;
+    }
+    if(!total){ toast('প্রতিটা আইটেমের দাম লিখুন','error'); return; }
+    const fileInput = document.getElementById('bazarPhotos-'+orderId);
+    const files = fileInput?.files;
+    if(!files || !files.length){ toast('অন্তত একটা মেমোর ছবি আপলোড করুন','error'); return; }
     if(!FB){ toast('সংযোগ সমস্যা','error'); return; }
     try{
-      const fileRef = FB.storageRef(FB.storage, `bills/${orderId}_${Date.now()}_${file.name}`);
-      await FB.uploadBytes(fileRef, file);
-      const url = await FB.getDownloadURL(fileRef);
-      await FB.updateDoc(FB.doc(FB.db,'orders',orderId), {billPhotoUrl:url, billAmount:amt});
-      toast('✓ বিল আপলোড হয়েছে','success');
-      this.render();
+      const urls=[];
+      for(const file of files){
+        const fileRef = FB.storageRef(FB.storage, `bills/${orderId}_${Date.now()}_${file.name}`);
+        await FB.uploadBytes(fileRef, file);
+        urls.push(await FB.getDownloadURL(fileRef));
+      }
+      await FB.updateDoc(FB.doc(FB.db,'orders',orderId), {
+        bazarItems: items, billAmount: total, billPhotos: urls,
+        subtotal: total, status: 'picked_up'
+      });
+      toast('✓ বাজার সম্পন্ন! বিল আপলোড হয়েছে','success');
+      DriverPortal.render();
     }catch(e){ toast('আপলোড ব্যর্থ: '+e.message,'error'); }
   }
 };
