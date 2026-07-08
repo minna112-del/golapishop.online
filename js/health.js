@@ -1,13 +1,19 @@
 const HealthService = {
   init() {
-    console.log('Health page loaded');
-    document.getElementById('doctorList').innerHTML = `
-      <div class="medical-card p-6">ডাঃ রহিম উদ্দিন - মেডিসিন বিশেষজ্ঞ</div>
-      <div class="medical-card p-6">ডাঃ করিনা আক্তার - গাইনি</div>
+    console.log("Health page loaded successfully");
+
+    const doctorHTML = `
+      <div style="background:#1f1f1f;padding:20px;margin:10px 0;border-radius:12px;">
+        <h3>ডাঃ রহিম উদ্দিন</h3>
+        <p>মেডিসিন বিশেষজ্ঞ</p>
+        <p>সকাল ৯টা - দুপুর ২টা</p>
+      </div>
+      <div style="background:#1f1f1f;padding:20px;margin:10px 0;border-radius:12px;">
+        <h3>ডাঃ করিনা আক্তার</h3>
+        <p>গাইনি ও প্রসূতি</p>
+        <p>বিকাল ৪টা - রাত ৮টা</p>
+      </div>
     `;
-    document.getElementById('aiHealthChat').innerHTML = `<p style="color:#aaa">AI চ্যাট রেডি। আপনার সমস্যা বলুন।</p>`;
-  },
-  bookAppointment() {
-    toast('✅ অ্যাপয়েন্টমেন্ট রিকোয়েস্ট পাঠানো হয়েছে।');
+    document.getElementById('doctorList').innerHTML = doctorHTML;
   }
 };
