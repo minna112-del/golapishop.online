@@ -21,15 +21,9 @@ setInterval(()=>{
   document.getElementById('t-s').textContent = bn(String(s).padStart(2,'0'));
 },1000);
 
-/* ---------- Bangla / English toggle ----------
-   Lightweight i18n for the highest-visibility strings (nav, hero, mobile nav) via
-   data-bn/data-en attributes. Deeper screens (dashboards, product data) stay Bangla-only
-   for now — full coverage needs a proper translation layer across all dynamic content. */
+/* ---------- Bangla / English toggle ---------- */
 let currentLang = localStorage.getItem('golapi_lang') || 'bn';
 function applyLang(){
-  // data-bn/data-en values are our own trusted markup (may contain <br>), so always use
-  // innerHTML — using textContent for elements that already contain a <br> child caused
-  // the literal text "<br>" to show up instead of a line break.
   document.querySelectorAll('[data-bn][data-en]').forEach(el=>{ el.innerHTML = el.dataset[currentLang]; });
   document.documentElement.lang = currentLang;
   const label = document.getElementById('langBtnLabel');
@@ -47,3 +41,13 @@ Router.go('home', {}, {skipHash:true});
 if('serviceWorker' in navigator){
   window.addEventListener('load', ()=>{ navigator.serviceWorker.register('/firebase-messaging-sw.js').catch(e=>devWarn('SW failed', e.message)); });
 }
+
+/* ---------- TWA Role Routing ----------
+   Driver APK    → https://www.golapishop.online/?role=driver
+   Zone Manager  → https://www.golapishop.online/?role=zone-manager
+*/
+(function(){
+  const role = new URLSearchParams(window.location.search).get('role');
+  if(role === 'driver')            setTimeout(()=>Router.go('driver'), 300);
+  else if(role === 'zone-manager') setTimeout(()=>Router.go('zone-manager'), 300);
+})();
