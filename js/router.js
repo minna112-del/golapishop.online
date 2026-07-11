@@ -1,5 +1,4 @@
 /* router.js — Owner PIN gate + page router */
-/* ---------- Router ---------- */
 const OwnerAuth = {
   pendingPage:null, attempts:0, lockedUntil:0,
   isUnlocked(){ return sessionStorage.getItem('golapi_owner_unlocked')==='1' || localStorage.getItem('golapi_owner_remember')==='1'; },
@@ -13,9 +12,7 @@ const OwnerAuth = {
   async unlock(){
     const entered = document.getElementById('ownerPinInput').value.trim();
     const msgEl = document.getElementById('ownerGateMsg');
-    if(Date.now() < this.lockedUntil){
-      msgEl.textContent = `🔒 আর ${Math.ceil((this.lockedUntil-Date.now())/60000)} মিনিট অপেক্ষা করুন`; msgEl.className='form-msg err'; return;
-    }
+    if(Date.now() < this.lockedUntil){ msgEl.textContent = `🔒 আর ${Math.ceil((this.lockedUntil-Date.now())/60000)} মিনিট অপেক্ষা করুন`; msgEl.className='form-msg err'; return; }
     if(!FB){ msgEl.textContent='সংযোগ সমস্যা'; msgEl.className='form-msg err'; return; }
     try{
       const snap = await FB.getDoc(FB.doc(FB.db,'setting','owner_pin'));
@@ -42,7 +39,8 @@ const Router = {
     if(page==='admin-dash' && !OwnerAuth.isUnlocked()){ OwnerAuth.requestAccess(); return; }
     this.current = page; this.params = params;
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-    document.getElementById('page-'+page)?.classList.add('active');
+    const el=document.getElementById('page-'+page);
+    if(el) el.classList.add('active');
     window.scrollTo({top:0,behavior:'smooth'});
     const navMap = {home:0, listing:1, checkout:2, myorders:3, product:1};
     document.querySelectorAll('#custMobNav a').forEach((a,i)=>a.classList.toggle('active', i===(navMap[page]??-1)));
@@ -58,11 +56,14 @@ const Router = {
     if(page==='custom-bazar') CustomBazar.init();
     if(page==='account') AccountPage.render();
     if(page==='account-addresses') AccountPage.renderAddresses();
-
+    if(page==='faq') FAQ.render();
+    if(page==='reviews') Reviews.render();
     const staff = ['admin-dash','zone-manager','driver'].includes(page);
-    document.getElementById('chatBtn').style.display = staff?'none':'flex';
-    document.getElementById('chatWin').classList.remove('show');
-    ['custTopbar','custHeader','custMobNav','custFooter'].forEach(id=>{ document.getElementById(id).style.display = staff?'none':''; });
+    const chatBtn = document.getElementById('chatBtn');
+    if(chatBtn) chatBtn.style.display = staff?'none':'flex';
+    const chatWin = document.getElementById('chatWin');
+    if(chatWin) chatWin.classList.remove('show');
+    ['custTopbar','custHeader','custMobNav','custFooter'].forEach(id=>{ const e=document.getElementById(id); if(e) e.style.display = staff?'none':''; });
     document.body.style.paddingBottom = staff?'0':'';
   }
 };
