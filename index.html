@@ -499,6 +499,7 @@
     </a>
     <div style="display:flex;gap:10px;align-items:center">
       <span id="adminLastUpdated" style="font-size:11px;color:var(--ink-muted)"></span>
+      <span id="adminNotifBell" data-count="0" style="display:none;padding:6px 12px;border-radius:8px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:#f87171;font-size:12px;cursor:pointer" onclick="this.style.display='none';this.dataset.count=0">🔔</span>
       <button onclick="AdminDash.refresh()" style="padding:6px 12px;border-radius:8px;background:rgba(212,175,55,.1);border:1px solid var(--gold-line);color:var(--gold);font-size:12px">↻ রিফ্রেশ</button>
       <button onclick="OwnerAuth.lock()" style="padding:6px 12px;border-radius:8px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:#f87171;font-size:12px">🔒 লক</button>
     </div>
@@ -575,7 +576,12 @@
           <div id="lowStockBanner" style="display:none;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#f87171"></div>
           <div class="table-scroll">
             <table class="data-table">
-              <thead><tr><th>ছবি</th><th>প্রোডাক্ট</th><th>শাখা</th><th>মূল্য</th><th>স্টক</th><th>স্ট্যাটাস</th><th>একশন</th></tr></thead>
+              <div id="productBulkBar" style="display:none;background:rgba(212,175,55,.08);border:1px solid var(--gold-line);border-radius:10px;padding:10px 14px;margin-bottom:10px;align-items:center;gap:12px;flex-wrap:wrap">
+            <span id="productBulkCount" style="font-size:13px;color:var(--gold);font-weight:600"></span>
+            <button onclick="AdminDash.bulkUpdatePrice()" style="padding:6px 12px;border-radius:8px;background:rgba(212,175,55,.1);border:1px solid var(--gold-line);color:var(--gold);font-size:12.5px">💰 মূল্য আপডেট (%)</button>
+            <button onclick="AdminDash.bulkDeleteProducts()" style="padding:6px 12px;border-radius:8px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:#f87171;font-size:12.5px">🗑️ মুছে ফেলুন</button>
+          </div>
+          <thead><tr><th><input type="checkbox" onchange="document.querySelectorAll('.prodCheck').forEach(c=>c.checked=this.checked);this.checked?AdminDash.selectedProducts=new Set(AdminDash._allOrders.map(()=>'')):AdminDash.selectedProducts.clear()"></th><th>ছবি</th><th>প্রোডাক্ট</th><th>শাখা</th><th>মূল্য</th><th>স্টক</th><th>স্ট্যাটাস</th><th>একশন</th></tr></thead>
               <tbody id="aProductsTable"></tbody>
             </table>
           </div>
@@ -629,7 +635,16 @@
 
         <!-- ANALYTICS -->
         <div id="adminAnalyticsPane" style="display:none">
-          <h2 class="tiro" style="font-size:19px;margin-bottom:16px">অ্যানালিটিক্স</h2>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+            <h2 class="tiro" style="font-size:19px">অ্যানালিটিক্স</h2>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <input type="date" id="anDateFrom" onchange="AdminDash.renderAnalyticsWithDateRange()" style="padding:6px 10px;border-radius:9px;background:rgba(255,255,255,.04);border:1px solid var(--line);color:#fff;font-size:12px">
+              <span style="color:var(--ink-muted);font-size:12px">থেকে</span>
+              <input type="date" id="anDateTo" onchange="AdminDash.renderAnalyticsWithDateRange()" style="padding:6px 10px;border-radius:9px;background:rgba(255,255,255,.04);border:1px solid var(--line);color:#fff;font-size:12px">
+              <button onclick="document.getElementById('anDateFrom').value='';document.getElementById('anDateTo').value='';AdminDash.renderAnalytics(AdminDash._allOrders)" style="padding:6px 10px;border-radius:9px;background:rgba(255,255,255,.04);border:1px solid var(--line);color:var(--ink-muted);font-size:12px">রিসেট</button>
+            </div>
+          </div>
+          <div id="anTrend" style="font-size:12.5px;color:var(--ink-muted);margin-bottom:12px"></div>
           <div class="stat-grid" style="margin-bottom:16px">
             <div class="stat-card"><div class="lbl">আজ</div><div class="val rose" id="anToday">৳০</div></div>
             <div class="stat-card"><div class="lbl">এই সপ্তাহ</div><div class="val" id="anWeek">৳০</div></div>
@@ -676,6 +691,26 @@
             <h3 style="font-size:14px;margin-bottom:12px;color:#fff">🚴 ড্রাইভার ম্যানেজমেন্ট</h3>
             <div style="display:flex;justify-content:flex-end;margin-bottom:10px"><button class="btn btn-outline" style="padding:7px 14px;font-size:12.5px" onclick="DriverManage.openAdd()">+ নতুন ড্রাইভার</button></div>
             <div class="table-scroll"><table class="data-table"><thead><tr><th>নাম</th><th>শাখা</th><th>মোবাইল</th><th>স্ট্যাটাস</th></tr></thead><tbody id="driverManageTable"></tbody></table></div>
+          </div>
+          <!-- Driver Performance -->
+          <div class="card-box" style="margin-bottom:16px">
+            <h3 style="font-size:14px;margin-bottom:12px;color:#fff">📊 ড্রাইভার পারফরম্যান্স</h3>
+            <div class="table-scroll"><table class="data-table">
+              <thead><tr><th>ড্রাইভার</th><th>মোট</th><th>ডেলিভারড</th><th>সাফল্যের হার</th><th>আয়</th></tr></thead>
+              <tbody id="driverPerformanceTable"></tbody>
+            </table></div>
+          </div>
+          <!-- Store Settings -->
+          <div class="card-box" style="margin-bottom:16px">
+            <h3 style="font-size:14px;margin-bottom:12px;color:#fff">🏪 স্টোর সেটিংস</h3>
+            <div class="field"><label>ঘোষণা (Topbar-এ দেখাবে)</label><input type="text" id="ss_storeAnnouncement" placeholder="যেমন: ঈদ অফার চলছে!"></div>
+            <div class="field"><label>স্টোর সময়</label><input type="text" id="ss_storeHours" placeholder="যেমন: সকাল ৮টা — রাত ১০টা"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+              <div class="field"><label>ন্যূনতম ডেলিভারি (৳)</label><input type="number" id="ss_deliveryMin" min="0"></div>
+              <div class="field"><label>সর্বোচ্চ ডেলিভারি (৳)</label><input type="number" id="ss_deliveryMax" min="0"></div>
+              <div class="field"><label>এক্সপ্রেস চার্জ (৳)</label><input type="number" id="ss_expressCharge" min="0"></div>
+            </div>
+            <button class="btn btn-gold" onclick="AdminDash.saveStoreSettings()">সংরক্ষণ করুন</button>
           </div>
           <div class="card-box">
             <h3 style="font-size:14px;margin-bottom:12px;color:#fff">🏢 জোন ম্যানেজার পিন</h3>
@@ -1095,6 +1130,15 @@
       <div id="odDriver" style="font-size:13px;color:#fff"></div>
     </div>
 
+    <!-- Internal note -->
+    <div class="card-box" style="margin-bottom:12px">
+      <div style="font-size:12px;font-weight:600;color:var(--gold);margin-bottom:6px">📝 অভ্যন্তরীণ নোট (শুধু Admin দেখতে পাবে)</div>
+      <textarea id="odNoteInput" rows="2" placeholder="অর্ডার সম্পর্কে নোট লিখুন..." style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px;padding:9px 12px;color:#fff;font-size:13px;font-family:inherit;resize:vertical"></textarea>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+        <span id="odNoteStatus" style="font-size:11.5px;color:#22c55e"></span>
+        <button onclick="AdminDash.saveOrderNote(OrderDetail.current?.id)" style="padding:5px 12px;border-radius:8px;background:rgba(212,175,55,.1);border:1px solid var(--gold-line);color:var(--gold);font-size:12px">সংরক্ষণ করুন</button>
+      </div>
+    </div>
     <!-- Actions -->
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-gold" style="flex:1;padding:10px" onclick="OrderDetail.print()">🖨️ প্রিন্ট / Invoice</button>
@@ -1125,9 +1169,9 @@ ChatWidget.toggle = function(){
   else if(icon && !this.isOpen){ icon.innerHTML = '<img src="chat_logo.jpeg" id="chatLogoImg" alt="chat" style="width:32px;height:32px;object-fit:cover;border-radius:50%;display:block">'; }
 };
 </script>
-  <script type="module" src="js/admin/services.js"></script>
-  <script type="module" src="js/admin/driver.js"></script>
-  <script type="module" src="js/admin/zone-manager.js"></script>
-  <script type="module" src="js/admin/admin.js"></script>
+  <script src="js/admin/services.js"></script>
+  <script src="js/admin/driver.js"></script>
+  <script src="js/admin/zone-manager.js"></script>
+  <script src="js/admin/admin.js"></script>
 </body>
 </html>
