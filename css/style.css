@@ -326,3 +326,54 @@ footer a:hover{color:var(--gold)}
 
 .skip-link{position:absolute;top:-40px;left:0;background:var(--pink);color:#fff;padding:8px 16px;z-index:9999;border-radius:0 0 8px 0;font-weight:600;transition:.2s}
 .skip-link:focus{top:0}
+
+/* ---------- Mobile responsiveness fixes ---------- */
+@media(max-width:480px){
+  /* Input font 16px — iOS zoom prevent করে */
+  input,select,textarea{font-size:16px!important}
+
+  /* Header compact */
+  .header-row{padding:0 10px;gap:8px;height:56px}
+  .logo .word{font-size:13px}
+  .search-wrap{max-width:none}
+
+  /* Hero */
+  .hero{min-height:auto}
+  .hero-inner{padding:40px 14px}
+  h1.hero-h{font-size:clamp(22px,6vw,36px)}
+
+  /* Product grid */
+  .grid-row{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+  .pcard{flex:0 0 148px}
+
+  /* Checkout grid — single column on small screen */
+  #ckStep1 [style*="grid-template-columns:1fr 1fr"]{
+    display:flex!important;flex-direction:column!important;gap:0!important
+  }
+
+  /* Modal full screen */
+  .modal{padding:0;align-items:flex-end}
+  .modal-box{max-width:100%!important;border-radius:20px 20px 0 0;max-height:95vh}
+
+  /* Product form grid */
+  #productModal [style*="grid-template-columns:1fr 1fr"]{
+    display:flex!important;flex-direction:column!important;gap:0!important
+  }
+  #productModal [style*="grid-template-columns:1fr 1fr;gap:12px"]{
+    display:flex!important;flex-direction:column!important
+  }
+
+  /* Dashboard */
+  .stat-grid{grid-template-columns:1fr 1fr}
+  .data-table{font-size:11px}
+
+  /* Footer */
+  .footer-grid{grid-template-columns:1fr!important}
+  .footer-bottom{flex-direction:column;text-align:center}
+
+  /* Section padding */
+  section.sec{padding:28px 14px}
+
+  /* Cart drawer */
+  .drawer{max-width:100%}
+}
