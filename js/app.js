@@ -14,11 +14,15 @@ let currentLang=localStorage.getItem('golapi_lang')||'bn';
 function applyLang(){document.querySelectorAll('[data-bn][data-en]').forEach(el=>{el.innerHTML=el.dataset[currentLang];});document.documentElement.lang=currentLang;const l=document.getElementById('langBtnLabel');if(l)l.textContent=currentLang==='bn'?'EN':'বাং';}
 function toggleLang(){currentLang=currentLang==='bn'?'en':'bn';localStorage.setItem('golapi_lang',currentLang);applyLang();}
 applyLang();
+function isEmergencyHours(){const h=new Date().getHours();return h>=0&&h<6;}
+function updateEmergencyBanner(){const b=document.getElementById('emergencyBanner');if(!b)return;if(isEmergencyHours()){b.style.display='flex';}else{b.style.display='none';}}
 function initApp(){
   Router.go('home',{},{skipHash:true});
   if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/firebase-messaging-sw.js').catch(e=>devWarn(e)));
   const role=new URLSearchParams(window.location.search).get('role');
   if(role==='driver')setTimeout(()=>Router.go('driver'),300);
   else if(role==='zone-manager')setTimeout(()=>Router.go('zone-manager'),300);
+  updateEmergencyBanner();
+  setInterval(updateEmergencyBanner,60000);
 }
-document.addEventListener('pages-ready',initApp);
+document.addEventListener('DOMContentLoaded',initApp);
