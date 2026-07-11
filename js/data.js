@@ -1,7 +1,6 @@
 /* data.js — product store, Firestore sync, product card render */
-/* ---------- Demo fallback products (used until Firestore has data) ---------- */
 function sampleProduct(i){
-  const names=['গোলাপি সিল্ক শাড়ি','স্মার্ট ওয়াচ প্রো','ব্লুটুথ হেডফোন','চামড়ার হ্যান্ডব্যাগ','রোজ গোল্ড লিপস্টিক','কটন পাঞ্জাবি','LED ডেস্ক ল্যাম্প','অরগানিক হেয়ার অয়েল','দেশি চাল (মিনিকেট)','খোলা দুধ','সয়াবিন তেল','মসুর ডাল','প্যারাসিটামল ৫০০মিগ্রা','যমুনা গ্যাস ১২ কেজি','টাইপ-সি চার্জার','খাতা (রুলড)'];
+  const names=['গোলাপি সিল্ক শাড়ি','স্মার্ট ওয়াচ প্রো','ব্লুটুথ হেডফোন','চামড়ার হ্যান্ডব্যাগ','রোজ গোল্ড লিপস্টিক','কটন পাঞ্জাবি','LED ডেস্ক ল্যাম্প','অর্গানিক হেয়ার অয়েল','দেশি চাল (মিনিকেট)','খোলা দুধ','সয়াবিন তেল','মসুর ডাল','প্যারাসিটামল ৫০০মিগ্রা','যমুনা গ্যাস ১২ কেজি','টাইপ-সি চার্জার','খাতা (রুলড)'];
   const units={medicine:['পাতা','বক্স'],grocery:['কেজি','লিটার','ডজন'],confectionery:['পিস','প্যাকেট'],stationery:['পিস','প্যাকেট'],gas:['পিস'],mobile:['পিস'],watch:['পিস'],cosmetics:['পিস','১০০ মিলি'],clothing:['পিস'],furniture:['পিস']};
   const cat = CATEGORIES[i%CATEGORIES.length].id;
   const u = units[cat]||['পিস'];
@@ -12,12 +11,12 @@ function sampleProduct(i){
     id:'demo'+i, name:names[i%names.length]+' #'+(i+1), category:cat, zone: i%2===0?'noakhali_sadar':'begumganj',
     unit:u[i%u.length], price: hasDisc?Math.round(base*1.25):base, salePrice: base,
     rating:(3.5+(i%15)/10).toFixed(1), reviews:10+(i*7)%300, sold:20+(i*13)%900, cod:i%4!==0,
-    img:`https://picsum.photos/seed/golapi${i}/400/400`, isFlash:i%5===0, isFeatured:i%4===0, fastDelivery:i%3===0, stock:5+(i*3)%50
+    img:`https://picsum.photos/seed/golapi${i}/400/400`, isFlash:i%5===0, isFeatured:i%4===0, fastDelivery:i%3===0, stock:5+(i*3)%50,
+    costPrice:Math.round(base*0.7), extraCost:0, deliveryPercent:0, profitPercent:20
   };
 }
 let ALL_PRODUCTS = Array.from({length:36},(_,i)=>sampleProduct(i));
 
-/* De-dupe products added to both zones under the same groupId so customers see one card with combined stock. */
 function zoneProducts(){
   const seenG=new Set(), seenK=new Set(), merged=[];
   for(const p of ALL_PRODUCTS){
@@ -54,7 +53,7 @@ const ProductStore = {
     if(!FB || this.unsubscribe) return;
     try{
       this.unsubscribe = FB.onSnapshot(FB.collection(FB.db,'products'), snap=>{
-        if(snap.empty){ this.loaded = true; return; } // keep demo fallback if store is genuinely empty
+        if(snap.empty){ this.loaded = true; return; }
         const real=[];
         snap.forEach(d=>real.push(this.mapDoc(d.id, d.data())));
         ALL_PRODUCTS = real.filter(p=>p.status==='active');
@@ -87,10 +86,10 @@ function pcardHTML(p){
     <div class="imgwrap"><img src="${p.img}" alt="${p.name}" loading="lazy">
       ${discount?`<span class="pbadge">-${bn(discount)}%</span>`:''}
       ${p.isFeatured?`<span class="pbadge gold" style="left:auto;right:8px;top:${discount?'40px':'8px'}">★</span>`:''}
-      <button class="wish" onclick="event.stopPropagation();toast('❤️ উইশলিস্টে যুক্ত হয়েছে')">🤍</button>
+      <button class="wish" onclick="event.stopPropagation();Wishlist.toggle('${p.id}')">🤍</button>
     </div>
     <div class="pbody">
-      ${p.fastDelivery?'<span class="fast-tag">⚡ ৬০ মিনিট</span>':''}${p.cod?'<span class="cod-tag">✓ COD</span>':''}
+      ${p.fastDelivery?'<span class="fast-tag">⚡ ৩০ মিনিট</span>':''}${p.cod?'<span class="cod-tag">✓ COD</span>':''}
       <div class="pname">${p.name}</div>
       <div class="prating"><span class="st">★</span> ${p.rating} (${bn(p.reviews)}) · ${bn(p.sold)} বিক্রি</div>
       <div><span class="price-now">${money(p.salePrice)}</span>${discount?`<span class="price-old">${money(p.price)}</span>`:''}<span class="unit-tag"> / ${p.unit}</span></div>
