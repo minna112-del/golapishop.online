@@ -1,4 +1,8 @@
-/* page-loader.js — সব page HTML dynamically load করে DOM-এ inject করে */
+cat > /mnt/user-data/outputs/page-loader.js << 'EOF'
+/* page-loader.js — Synchronous page loading
+   অন্য সব script-এর আগে load হয়
+   XHR synchronous দিয়ে pages inject করে
+   তারপর router.js, app.js চলে — তখন সব DOM ready */
 (function(){
   const pages = [
     'pages/home.html',
@@ -16,26 +20,25 @@
   ];
 
   const root = document.getElementById('appRoot');
-  const loader = document.getElementById('pageLoadingIndicator');
+  if(!root){ console.error('appRoot not found'); return; }
 
-  Promise.all(pages.map(url =>
-    fetch(url).then(r => {
-      if(!r.ok) throw new Error(`Failed: ${url}`);
-      return r.text();
-    })
-  )).then(htmls => {
-    // Remove loading indicator
-    if(loader) loader.remove();
-    // Inject all pages
-    htmls.forEach(html => {
-      const div = document.createElement('div');
-      div.innerHTML = html;
-      while(div.firstChild) root.appendChild(div.firstChild);
-    });
-    // Fire ready event — app.js এটা listen করে init করবে
-    document.dispatchEvent(new Event('pages-ready'));
-  }).catch(err => {
-    console.error('Page load error:', err);
-    if(loader) loader.innerHTML = '⚠️ লোড সমস্যা। পেজ রিফ্রেশ করুন।';
+  pages.forEach(function(url){
+    try{
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', url, false); // false = synchronous — blocks until done
+      xhr.send(null);
+      if(xhr.status === 200){
+        var tmp = document.createElement('div');
+        tmp.innerHTML = xhr.responseText;
+        while(tmp.firstChild) root.appendChild(tmp.firstChild);
+      } else {
+        console.warn('Page not loaded:', url, xhr.status);
+      }
+    }catch(e){
+      console.error('Error loading page:', url, e);
+    }
   });
 })();
+EOF
+
+echo "✅ page-loader.js (synchronous): $(wc -l < /mnt/user-data/outputs/page-loader.js) lines"
