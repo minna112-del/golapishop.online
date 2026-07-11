@@ -1,4 +1,6 @@
-/* app.js — bootstrap: firebase-ready hook, flash timer, init, service worker */
+# app.js — simple, no pages-ready needed (synchronous loader handles it)
+cat > /mnt/user-data/outputs/app.js << 'EOF'
+/* app.js — bootstrap */
 let FB = null;
 window.addEventListener('firebase-ready', ()=>{
   FB = window.__fb;
@@ -6,7 +8,7 @@ window.addEventListener('firebase-ready', ()=>{
   ProductStore.startLiveSync();
 });
 
-/* ---------- Flash timer ---------- */
+/* Flash timer */
 function getFlashDeadlineSeconds(){
   const now=new Date(); const dl=new Date(); dl.setHours(20,0,0,0);
   if(now>=dl) dl.setDate(dl.getDate()+1);
@@ -19,12 +21,12 @@ setInterval(()=>{
   const hEl=document.getElementById('t-h');
   const mEl=document.getElementById('t-m');
   const sEl=document.getElementById('t-s');
-  if(hEl) hEl.textContent = bn(String(h).padStart(2,'0'));
-  if(mEl) mEl.textContent = bn(String(m).padStart(2,'0'));
-  if(sEl) sEl.textContent = bn(String(s).padStart(2,'0'));
+  if(hEl) hEl.textContent=bn(String(h).padStart(2,'0'));
+  if(mEl) mEl.textContent=bn(String(m).padStart(2,'0'));
+  if(sEl) sEl.textContent=bn(String(s).padStart(2,'0'));
 },1000);
 
-/* ---------- Bangla / English toggle ---------- */
+/* Lang toggle */
 let currentLang = localStorage.getItem('golapi_lang') || 'bn';
 function applyLang(){
   document.querySelectorAll('[data-bn][data-en]').forEach(el=>{ el.innerHTML = el.dataset[currentLang]; });
@@ -39,30 +41,21 @@ function toggleLang(){
 }
 applyLang();
 
-/* ---------- Init — pages-ready এর পরে --------- */
-function initApp(){
-  Router.go('home', {}, {skipHash:true});
-  if('serviceWorker' in navigator){
-    window.addEventListener('load', ()=>{ navigator.serviceWorker.register('/firebase-messaging-sw.js').catch(e=>devWarn('SW failed', e.message)); });
-  }
+/* Init — page-loader.js synchronous হওয়ায় এখানে আসার সময় সব DOM ready */
+Router.go('home', {}, {skipHash:true});
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('/firebase-messaging-sw.js')
+      .catch(e=>devWarn('SW failed', e.message));
+  });
 }
 
-// Dynamic page loading-এর সাথে compatible
-if(document.getElementById('page-home')){
-  // Pages already in DOM (direct index.html without loader)
-  initApp();
-} else {
-  // Wait for page-loader.js to inject pages
-  document.addEventListener('pages-ready', initApp);
-}
-
-/* ---------- TWA Role Routing ---------- */
+/* TWA Role Routing */
 (function(){
   const role = new URLSearchParams(window.location.search).get('role');
-  function doRoute(){
-    if(role === 'driver')            Router.go('driver');
-    else if(role === 'zone-manager') Router.go('zone-manager');
-  }
-  if(document.getElementById('page-driver')) doRoute();
-  else document.addEventListener('pages-ready', doRoute);
+  if(role === 'driver')            setTimeout(()=>Router.go('driver'), 300);
+  else if(role === 'zone-manager') setTimeout(()=>Router.go('zone-manager'), 300);
 })();
+EOF
+
+echo "✅ app.js: $(wc -l < /mnt/user-data/outputs/app.js) lines"
