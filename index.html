@@ -46,7 +46,7 @@
 <header class="main" id="custHeader">
   <div class="header-row">
     <a href="#" onclick="Router.go('home')" class="logo">
-      <div class="mark">🌹</div>
+      <div class="mark"><img src="head_logo.jpeg" alt="Golapi Shop" style="width:100%;height:100%;object-fit:cover;border-radius:12px"></div>
       <div><div class="word">Golapi<span class="g">Shop</span><span class="r">.online</span></div><div class="tag">নোয়াখালীর বিশ্বস্ত অনলাইন শপ</div></div>
     </a>
     <div class="search-wrap" id="searchWrapDesktop">
@@ -113,7 +113,7 @@
         </div>
         <div class="hero-side anim-fadeUp d4">
           <div class="hero-card" onclick="Router.go('custom-bazar')"><h3>📝 কাস্টম বাজার লিস্ট</h3><p>নিজের মতো লিস্ট লিখুন, বাজার করে দেবো আমরা</p></div>
-          <div class="hero-card emerald" onclick="Router.go('medical')"><h3>🏥 গোলাপী ফ্রী স্বাস্থ্য সেবা</h3><p>ডাক্তারের পরামর্শ ও এপয়েন্টমেন্ট সম্পূর্ণ ফ্রী</p></div>
+          <div class="hero-card emerald" onclick="Router.go('medical')"><h3><img src="dr_logo.jpeg" alt="স্বাস্থ্য সেবা" style="width:24px;height:24px;object-fit:cover;border-radius:50%;vertical-align:middle;margin-right:6px"> গোলাপী ফ্রী স্বাস্থ্য সেবা</h3><p>ডাক্তারের পরামর্শ ও এপয়েন্টমেন্ট সম্পূর্ণ ফ্রী</p></div>
           <div class="hero-card rose"><h3>🔥 ফ্ল্যাশ সেল</h3><p>প্রতিদিন রাত ৮টা — ৭০% পর্যন্ত ছাড়</p></div>
         </div>
       </div>
@@ -316,6 +316,7 @@
       </div>
       <div class="field"><label>গ্রাম / এলাকার নাম *</label><input type="text" id="ckVillage" placeholder="যেমন: পশ্চিম নাজিরপুর, ৩নং ওয়ার্ড"></div>
       <div class="field"><label>সম্পূর্ণ ঠিকানা (বাড়ি/রোড নম্বর) *</label><textarea id="ckAddress" rows="2" placeholder="বাড়ি নম্বর, রোড নম্বর, ল্যান্ডমার্ক"></textarea></div>
+      <div class="field"><label>জাতীয় পরিচয়পত্র নম্বর (NID) *</label><input type="text" id="ckNid" placeholder="১০ বা ১৩ সংখ্যার NID নম্বর" inputmode="numeric"></div>
       <div class="field"><label>ডেলিভারি ইনস্ট্রাকশন * <span style="color:var(--ink-dim);font-weight:400">(বাধ্যতামূলক)</span></label><textarea id="ckInstructions" rows="2" placeholder="যেমন: বাড়ির সামনে সবুজ গেট, মসজিদের পাশের গলি, কল করে আসবেন"></textarea></div>
       <div class="card" style="padding:14px;margin-bottom:14px;border-color:var(--gold-line);background:rgba(212,175,55,.05)"><strong style="font-size:13px;color:var(--gold)">⚡ দ্রুত ডেলিভারি</strong><div class="sub" style="margin-top:2px">প্যাকিং → পিকআপ → লাইভ ট্র্যাক — প্রতিটা ধাপ "আমার অর্ডার" পেজে দেখতে পাবেন।</div></div>
       <button class="btn btn-gold btn-block" onclick="Checkout.goStep(2)">পরবর্তী →</button>
@@ -590,7 +591,7 @@
 <footer class="main" id="custFooter">
   <div class="footer-grid">
     <div>
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><div class="mark" style="width:36px;height:36px;font-size:16px">🌹</div><span class="word" style="font-size:14px">Golapi<span class="g">Shop</span>.online</span></div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><div class="mark" style="width:36px;height:36px"><img src="head_logo.jpeg" alt="Golapi" style="width:100%;height:100%;object-fit:cover;border-radius:10px"></div><span class="word" style="font-size:14px">Golapi<span class="g">Shop</span>.online</span></div>
       <p style="font-size:12.5px;color:var(--ink-muted)">নোয়াখালী সদর ও বেগমগঞ্জের মানুষের দৈনন্দিন প্রয়োজনীয় পণ্য ঘরে বসে পাওয়ার জন্য আমরা কাজ করি।</p>
     </div>
     <div><h5>দ্রুত লিংক</h5>
@@ -624,7 +625,7 @@
   <a onclick="Router.go('medical')"><span class="em">🏥</span><span data-bn="স্বাস্থ্য" data-en="Health">স্বাস্থ্য</span></a>
 </nav>
 
-<button id="chatBtn" onclick="ChatWidget.toggle()"><span id="chatIcon">💬</span></button>
+<button id="chatBtn" onclick="ChatWidget.toggle()"><span id="chatIcon"><img src="chat_logo.jpeg" id="chatLogoImg" alt="chat" style="width:32px;height:32px;object-fit:cover;border-radius:50%;display:block"></span></button>
 <div id="chatWin">
   <div id="chatHead">
     <div style="display:flex;align-items:center;gap:9px"><span style="font-size:20px">🌹</span><div><div style="font-weight:700;font-size:13.5px">Golapi সহায়ক</div><div style="font-size:11px;opacity:.85">প্রায় সাথে সাথেই উত্তর দেয়</div></div></div>
@@ -701,7 +702,16 @@
       <div class="field"><label>বিক্রয় মূল্য (৳) *</label><input type="number" id="pfSalePrice" min="0"></div>
     </div>
     <div class="field"><label>স্টক পরিমাণ *</label><input type="number" id="pfStock" min="0"></div>
-    <div class="field"><label>বিবরণ</label><textarea id="pfDescription" rows="3"></textarea></div>
+    <div class="field">
+      <label>প্রোডাক্টের ছবি</label>
+      <input type="file" id="pfImgFile" accept="image/*" onchange="ProductForm.onImageSelect(this)" style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--line-l);border-radius:11px;padding:11px 15px;color:var(--ink);font-size:14px">
+      <div id="pfImgPreview" style="margin-top:8px;display:none"><img id="pfImgThumb" style="width:80px;height:80px;object-fit:cover;border-radius:10px;border:1px solid var(--line)"></div>
+    </div>
+    <div class="field">
+      <label>বিবরণ <span id="pfDescAiBtn" style="display:none;margin-left:8px;font-size:11px;color:var(--gold);cursor:pointer;background:rgba(212,175,55,.1);padding:3px 8px;border-radius:6px;border:1px solid var(--gold-line)" onclick="ProductForm.generateDesc()">✨ AI দিয়ে লিখুন</span></label>
+      <div id="pfDescLoading" style="display:none;font-size:12px;color:var(--ink-muted);margin-bottom:6px">⏳ বিবরণ তৈরি হচ্ছে...</div>
+      <textarea id="pfDescription" rows="3"></textarea>
+    </div>
     <div style="display:flex;gap:18px;margin:8px 0 18px;flex-wrap:wrap">
       <label class="filter-opt"><input type="checkbox" id="pfCod" checked> COD সুবিধা</label>
       <label class="filter-opt"><input type="checkbox" id="pfFlash"> ফ্ল্যাশ সেল</label>
@@ -790,5 +800,17 @@
 <script src="./js/admin.js"></script>
 <script src="./js/pages.js"></script>
 <script src="./js/app.js"></script>
+<script>
+// Chat toggle — logo দেখাও বা ✕ দেখাও
+const _origToggle = ChatWidget.toggle.bind(ChatWidget);
+ChatWidget.toggle = function(){
+  _origToggle();
+  const img = document.getElementById('chatLogoImg');
+  const icon = document.getElementById('chatIcon');
+  if(img) img.style.display = this.isOpen ? 'none' : 'block';
+  if(icon && this.isOpen) icon.textContent = '✕';
+  else if(icon && !this.isOpen){ icon.innerHTML = '<img src="chat_logo.jpeg" id="chatLogoImg" alt="chat" style="width:32px;height:32px;object-fit:cover;border-radius:50%;display:block">'; }
+};
+</script>
 </body>
 </html>
