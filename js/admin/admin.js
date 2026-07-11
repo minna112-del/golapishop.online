@@ -1,4 +1,287 @@
-/* admin.js — AdminDash, ProductForm, OrderDetail */
+/* admin.js — OrdersService, DriverManage, DriverPortal, ZoneManagerDash, AdminDash, ProductForm */
+/* ---------- Order/Driver/ZoneManager/Admin services ---------- */
+const OrdersService = {
+  cache:[],
+  async loadAll(){
+    if(!FB) return [];
+    try{
+      const snap = await FB.getDocs(FB.collection(FB.db,'orders'));
+      const orders=[]; snap.forEach(d=>orders.push({id:d.id,...d.data()}));
+      orders.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+      this.cache=orders; return orders;
+    }catch(e){ devWarn(e.message); return []; }
+  },
+  async assignDriver(orderId,driverId,driverName){
+    if(!FB) return false;
+    try{ await FB.updateDoc(FB.doc(FB.db,'orders',orderId),{driverId,driverName,status:'assigned',assignedAt:FB.serverTimestamp()}); return true; }
+    catch(e){ toast('ড্রাইভার অ্যাসাইন ব্যর্থ: '+e.message,'error'); return false; }
+  },
+  async updateStatus(orderId,status){
+    if(!FB) return false;
+    try{ await FB.updateDoc(FB.doc(FB.db,'orders',orderId),{status}); return true; }
+    catch(e){ toast('স্ট্যাটাস আপডেট ব্যর্থ','error'); return false; }
+  }
+};
+
+const DriverManage = {
+  drivers:[], presetZone:null,
+  async loadDrivers(){
+    if(!FB) return [];
+    try{ const snap=await FB.getDocs(FB.collection(FB.db,'drivers')); const list=[]; snap.forEach(d=>list.push({id:d.id,...d.data()})); this.drivers=list; return list; }
+    catch(e){ devWarn(e.message); return []; }
+  },
+  async renderTable(zoneFilter=null){
+    await this.loadDrivers();
+    const tbody = document.getElementById(zoneFilter?'zmDriverManageTable':'driverManageTable');
+    if(!tbody) return;
+    const list = zoneFilter? this.drivers.filter(d=>d.branchZone===zoneFilter) : this.drivers;
+    if(!list.length){ tbody.innerHTML=`<tr><td colspan="4" style="text-align:center;color:var(--ink-muted);padding:20px">এখনো কোনো ড্রাইভার নেই</td></tr>`; return; }
+    tbody.innerHTML = list.map(d=> zoneFilter
+      ? `<tr><td>${d.name}</td><td>${d.phone}</td><td><span class="status-pill delivered">সক্রিয়</span></td></tr>`
+      : `<tr><td>${d.name}</td><td>${AREA_LABELS[d.branchZone]||'—'}</td><td>${d.phone}</td><td><span class="status-pill delivered">সক্রিয়</span></td></tr>`
+    ).join('');
+  },
+  openAdd(presetZone=null){
+    this.presetZone=presetZone;
+    document.getElementById('dfName').value=''; document.getElementById('dfPhone').value=''; document.getElementById('dfPin').value='';
+    const sel=document.getElementById('dfZone');
+    if(presetZone){ sel.value=presetZone; sel.disabled=true; } else sel.disabled=false;
+    document.getElementById('dfMsg').className='form-msg';
+    document.getElementById('driverModal').classList.add('show');
+  },
+  close(){ document.getElementById('driverModal').classList.remove('show'); },
+  async submit(){
+    const name=document.getElementById('dfName').value.trim();
+    const branchZone=document.getElementById('dfZone').value;
+    const phone=document.getElementById('dfPhone').value.trim();
+    const pin=document.getElementById('dfPin').value.trim();
+    const msgEl=document.getElementById('dfMsg');
+    if(!name||!phone||pin.length!==4){ msgEl.textContent='সব তথ্য সঠিকভাবে দিন (পিন ৪ ডিজিট)'; msgEl.className='form-msg err'; return; }
+    if(!FB){ msgEl.textContent='সংযোগ সমস্যা'; msgEl.className='form-msg err'; return; }
+    try{
+      await FB.addDoc(FB.collection(FB.db,'drivers'),{name,phone,pin,branchZone,active:true,createdAt:FB.serverTimestamp()});
+      msgEl.textContent='✓ ড্রাইভার যুক্ত হয়েছে'; msgEl.className='form-msg ok';
+      await this.renderTable(this.presetZone);
+      if(ZoneManagerDash.currentZone) await ZoneManagerDash.render(); else AdminDash.render();
+      setTimeout(()=>this.close(),800);
+    }catch(e){ msgEl.textContent='সমস্যা: '+e.message; msgEl.className='form-msg err'; }
+  }
+};
+
+const DriverPortal = {
+  currentDriver:null,
+  async login(){
+    const phone=document.getElementById('driverPhone').value.trim();
+    const pin=document.getElementById('driverPin').value.trim();
+    const msgEl=document.getElementById('driverLoginMsg');
+    if(!phone||!pin){ msgEl.textContent='মোবাইল ও পিন দিন'; msgEl.className='form-msg err'; return; }
+    if(!FB){ msgEl.textContent='সংযোগ সমস্যা'; msgEl.className='form-msg err'; return; }
+    try{
+      const snap = await FB.getDocs(FB.collection(FB.db,'drivers'));
+      let found=null; snap.forEach(d=>{ const data=d.data(); if(data.phone===phone && String(data.pin)===pin) found={id:d.id,...data}; });
+      if(!found){ msgEl.textContent='মোবাইল বা পিন সঠিক নয়'; msgEl.className='form-msg err'; return; }
+      this.currentDriver=found;
+      localStorage.setItem('golapi_driver_session', JSON.stringify({id:found.id,name:found.name,branchZone:found.branchZone}));
+      document.getElementById('driverLoginBox').style.display='none';
+      document.getElementById('driverDashBox').style.display='block';
+      document.getElementById('driverNameLabel').textContent=found.name;
+      await this.render();
+    }catch(e){ msgEl.textContent='লগইন সমস্যা: '+e.message; msgEl.className='form-msg err'; }
+  },
+  logout(){
+    this.currentDriver=null; localStorage.removeItem('golapi_driver_session');
+    document.getElementById('driverLoginBox').style.display='block';
+    document.getElementById('driverDashBox').style.display='none';
+  },
+  async render(){
+    const saved=localStorage.getItem('golapi_driver_session');
+    if(saved && !this.currentDriver) this.currentDriver=JSON.parse(saved);
+    if(!this.currentDriver){ document.getElementById('driverLoginBox').style.display='block'; document.getElementById('driverDashBox').style.display='none'; return; }
+    document.getElementById('driverLoginBox').style.display='none';
+    document.getElementById('driverDashBox').style.display='block';
+    document.getElementById('driverNameLabel').textContent=this.currentDriver.name;
+    const all = await OrdersService.loadAll();
+    const mine = all.filter(o=>o.driverId===this.currentDriver.id && o.status!=='delivered' && o.status!=='cancelled');
+    const transit = mine.filter(o=>o.status==='in_transit'||o.status==='picked_up').length;
+    const done = all.filter(o=>o.driverId===this.currentDriver.id && o.status==='delivered').length;
+    document.getElementById('dStatAssigned').textContent=bn(mine.length);
+    document.getElementById('dStatTransit').textContent=bn(transit);
+    document.getElementById('dStatDone').textContent=bn(done);
+    const listEl=document.getElementById('driverOrdersList');
+    if(!mine.length){ listEl.innerHTML=`<div class="empty-state"><div class="em">📦</div><h3>কোনো অর্ডার অ্যাসাইন করা নেই</h3></div>`; return; }
+    listEl.innerHTML = mine.map(o=>{
+      const s = ORDER_STATUS[o.status]||ORDER_STATUS.assigned;
+      const isCustomBazar = o.orderType==='custom-bazar';
+      let nextBtn='';
+      let bazarBox='';
+      if(isCustomBazar && o.status==='assigned'){
+        // Custom bazar = "shop & deliver": driver prices each item live, uploads shop memo(s),
+        // and that single action IS the pickup-complete step (matches the real workflow —
+        // there's no single store to "pick up" from, the driver visits multiple shops).
+        bazarBox = bazarShopHTML(o);
+      } else if(o.status==='assigned') nextBtn=`<button class="btn btn-gold btn-block" onclick="DriverPortal.advance('${o.id}','packed')">📦 প্যাকিং সম্পন্ন</button>`;
+      else if(o.status==='packed') nextBtn=`<button class="btn btn-gold btn-block" onclick="DriverPortal.advance('${o.id}','picked_up')">✓ পিকআপ সম্পন্ন</button>`;
+      else if(o.status==='picked_up') nextBtn=`<button class="btn btn-gold btn-block" onclick="DriverPortal.startTransit('${o.id}')">🚴 রওনা দিন (লাইভ লোকেশন শুরু)</button>`;
+      else if(o.status==='in_transit') nextBtn=`<button class="btn btn-gold btn-block" onclick="DriverPortal.advance('${o.id}','delivered')">✅ ডেলিভারি সম্পন্ন</button>`;
+      const chatBtn = `<button class="btn btn-outline btn-block" style="margin-top:6px;font-size:12px" onclick="OrderChat.open('${o.id}','driver')">💬 কাস্টমারের সাথে চ্যাট</button>`;
+      return `<div class="card-box"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><strong>${o.orderNumber||o.id}</strong><span class="status-pill ${s.cls}">${s.label}</span></div>
+        <div style="font-size:12.5px;margin-bottom:4px">👤 ${o.customerName} — <a href="tel:${o.customerPhone}">${o.customerPhone}</a></div>
+        <div style="font-size:12.5px;color:var(--ink-muted);margin-bottom:8px">📍 ${o.village?o.village+', ':''}${o.zone||''}, ${o.district||''} — ${o.address||''}</div>
+        ${o.instructions?`<div style="font-size:12px;background:rgba(255,255,255,.03);padding:8px;border-radius:8px;margin-bottom:8px;color:var(--ink-soft)">💬 ${o.instructions}</div>`:''}
+        <div style="font-size:13px;font-weight:600;margin-bottom:8px">মোট: ${money(o.subtotal||o.billAmount||0)}</div>${bazarBox}${nextBtn}${chatBtn}</div>`;
+    }).join('');
+  },
+  liveWatchId:null,
+  async advance(orderId,status){ const ok=await OrdersService.updateStatus(orderId,status); if(ok){ toast('✓ স্ট্যাটাস আপডেট হয়েছে','success'); this.render(); } }
+    ,
+  /* "রওনা দিন" চাপলে ব্রাউজারের GPS থেকে প্রতি ৩০ সেকেন্ডে ড্রাইভারের লোকেশন Firestore-এ
+     আপডেট হয় (driverLat/driverLng) — কাস্টমার MyOrders পেজ থেকে সরাসরি Google Maps-এ
+     এই লোকেশন দেখতে পারে (orderTrackHTML দেখুন)। */
+  startTransit(orderId){
+    if(!navigator.geolocation){ toast('এই ব্রাউজারে লোকেশন সাপোর্ট নেই','error'); this.advance(orderId,'in_transit'); return; }
+    if(this.liveWatchId) navigator.geolocation.clearWatch(this.liveWatchId);
+    this.liveWatchId = navigator.geolocation.watchPosition(pos=>{
+      if(FB) FB.updateDoc(FB.doc(FB.db,'orders',orderId),{driverLat:pos.coords.latitude, driverLng:pos.coords.longitude}).catch(()=>{});
+    }, ()=>{}, {enableHighAccuracy:true, maximumAge:15000});
+    this.advance(orderId,'in_transit');
+  }
+};
+
+/* ---------- Custom Bazar "Shop & Deliver" (Uber-Eats style itemized shopping) ----------
+   কাস্টম বাজার অর্ডার একটা দোকান থেকে আসে না — ড্রাইভার একাধিক দোকান ঘুরে জিনিস কেনে।
+   তাই এখানে "পিকআপ" মানে "বাজার সম্পন্ন করে মেমো আপলোড করা"। প্রতিটা আইটেমের পাশে
+   দাম বসিয়ে মোট বিল অটো ক্যালকুলেট হয় — কাস্টমার এই itemized তালিকা দেখেই যাচাই
+   করতে পারবে, প্রতারিত হওয়ার সুযোগ কমে যায়। */
+function bazarShopHTML(o){
+  const lines = (o.bazarList||'').split('\n').map(l=>l.trim()).filter(Boolean);
+  const rows = lines.map((line,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)">
+    <span class="bazar-line-text" style="font-size:12px;color:var(--ink-soft);flex:1">${line}</span>
+    <input type="number" placeholder="৳" data-bazar-line="${o.id}:${i}" oninput="BazarShop.recalc('${o.id}', ${lines.length})" style="width:70px;padding:6px;border-radius:6px;background:rgba(255,255,255,.04);border:1px solid var(--line-l);color:#fff;font-size:12px;text-align:right">
+  </div>`).join('');
+  return `<div style="margin:8px 0;padding:10px;background:rgba(212,175,55,.05);border:1px solid var(--gold-line);border-radius:10px">
+    <div style="font-size:11.5px;color:var(--gold);font-weight:600;margin-bottom:8px">🛒 আইটেম অনুযায়ী দাম লিখুন (Shop &amp; Deliver)</div>
+    ${rows}
+    <div style="display:flex;justify-content:space-between;margin-top:8px;font-weight:700;color:#fff;font-size:13px">মোট বিল <span id="bazarTotal-${o.id}">৳0</span></div>
+    <div style="font-size:11px;color:var(--ink-muted);margin:8px 0 4px">দোকানের মেমো/রশিদের ছবি (একাধিক দোকান হলে একাধিক ছবি) *</div>
+    <input type="file" accept="image/*" multiple id="bazarPhotos-${o.id}" style="width:100%;font-size:11.5px;color:var(--ink-muted)">
+    <button class="btn btn-gold btn-block" style="margin-top:8px;font-size:12.5px" onclick="BazarShop.submit('${o.id}', ${lines.length})">✅ বাজার সম্পন্ন, বিল আপলোড করুন</button>
+  </div>`;
+}
+const BazarShop = {
+  recalc(orderId, count){
+    let total=0;
+    for(let i=0;i<count;i++){ const el=document.querySelector(`[data-bazar-line="${orderId}:${i}"]`); total += Number(el?.value||0); }
+    const totalEl = document.getElementById('bazarTotal-'+orderId); if(totalEl) totalEl.textContent = money(total);
+  },
+  async submit(orderId, count){
+    const items=[]; let total=0;
+    for(let i=0;i<count;i++){
+      const el=document.querySelector(`[data-bazar-line="${orderId}:${i}"]`);
+      const price=Number(el?.value||0);
+      const text = el?.closest('div')?.querySelector('.bazar-line-text')?.textContent || '';
+      items.push({text, price});
+      total += price;
+    }
+    if(!total){ toast('প্রতিটা আইটেমের দাম লিখুন','error'); return; }
+    const fileInput = document.getElementById('bazarPhotos-'+orderId);
+    const files = fileInput?.files;
+    if(!files || !files.length){ toast('অন্তত একটা মেমোর ছবি আপলোড করুন','error'); return; }
+    if(!FB){ toast('সংযোগ সমস্যা','error'); return; }
+    try{
+      const urls=[];
+      for(const file of files){
+        const fileRef = FB.storageRef(FB.storage, `bills/${orderId}_${Date.now()}_${file.name}`);
+        await FB.uploadBytes(fileRef, file);
+        urls.push(await FB.getDownloadURL(fileRef));
+      }
+      await FB.updateDoc(FB.doc(FB.db,'orders',orderId), {
+        bazarItems: items, billAmount: total, billPhotos: urls,
+        subtotal: total, status: 'picked_up'
+      });
+      toast('✓ বাজার সম্পন্ন! বিল আপলোড হয়েছে','success');
+      DriverPortal.render();
+    }catch(e){ toast('আপলোড ব্যর্থ: '+e.message,'error'); }
+  }
+};
+
+const ZoneManagerDash = {
+  currentZone:null,
+  applyHeader(zone){
+    const info = BRANCH_INFO[zone];
+    document.getElementById('zmZoneLabel').textContent = info.label;
+    document.getElementById('zmManagerLabel').textContent = 'ম্যানেজার: '+info.managerName;
+  },
+  async login(){
+    const zone=document.getElementById('zmZoneSelect').value;
+    const pin=document.getElementById('zmPinInput').value.trim();
+    const msgEl=document.getElementById('zmLoginMsg');
+    if(!pin){ msgEl.textContent='পিন দিন'; msgEl.className='form-msg err'; return; }
+    if(!FB){ msgEl.textContent='সংযোগ সমস্যা'; msgEl.className='form-msg err'; return; }
+    try{
+      const snap = await FB.getDoc(FB.doc(FB.db,'setting','zone_manager_pins'));
+      const pins = snap.exists()? snap.data() : {};
+      if(!pins[zone] || pins[zone]!==pin){ msgEl.textContent='পিন সঠিক নয়'; msgEl.className='form-msg err'; return; }
+      this.currentZone=zone; localStorage.setItem('golapi_zm_session',zone);
+      document.getElementById('zmLoginBox').style.display='none';
+      document.getElementById('zmDashBox').style.display='block';
+      this.applyHeader(zone); await this.render();
+    }catch(e){ msgEl.textContent='লগইন সমস্যা: '+e.message; msgEl.className='form-msg err'; }
+  },
+  logout(){ this.currentZone=null; localStorage.removeItem('golapi_zm_session'); document.getElementById('zmLoginBox').style.display='block'; document.getElementById('zmDashBox').style.display='none'; },
+  async render(){
+    const saved=localStorage.getItem('golapi_zm_session');
+    if(saved && !this.currentZone) this.currentZone=saved;
+    if(!this.currentZone){ document.getElementById('zmLoginBox').style.display='block'; document.getElementById('zmDashBox').style.display='none'; return; }
+    document.getElementById('zmLoginBox').style.display='none';
+    document.getElementById('zmDashBox').style.display='block';
+    this.applyHeader(this.currentZone);
+    const orders = (await OrdersService.loadAll()).filter(o=>o.branchZone===this.currentZone);
+    const products = ALL_PRODUCTS.filter(p=>p.zone===this.currentZone);
+    await DriverManage.loadDrivers();
+    const sales = orders.filter(o=>o.status!=='cancelled').reduce((s,o)=>s+(o.subtotal||0),0);
+    const pending = orders.filter(o=>o.status==='pending'||o.status==='confirmed').length;
+    document.getElementById('zmStatSales').textContent=money(sales);
+    document.getElementById('zmStatOrders').textContent=bn(orders.length);
+    document.getElementById('zmStatPending').textContent=bn(pending);
+    document.getElementById('zmStatProducts').textContent=bn(products.length);
+    this.renderProducts(products); this.renderOrders(orders); DriverManage.renderTable(this.currentZone);
+  },
+  renderProducts(list){
+    const tbody=document.getElementById('zmProductsTable');
+    if(!list.length){ tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--ink-muted);padding:24px">এই শাখায় কোনো প্রোডাক্ট নেই</td></tr>`; return; }
+    tbody.innerHTML = list.map(p=>`<tr><td>${p.name}</td><td>${CATEGORIES.find(c=>c.id===p.category)?.label||p.category}</td><td>${money(p.salePrice)}</td><td>${bn(p.stock)}</td><td><span class="status-pill ${p.stock>0?'delivered':'cancelled'}">${p.stock>0?'লাইভ':'স্টক আউট'}</span></td><td><a href="#" onclick="event.preventDefault();ProductForm.openEdit('${p.id}')">এডিট</a></td></tr>`).join('');
+  },
+  renderOrders(orders){
+    const tbody=document.getElementById('zmOrdersTable');
+    if(!orders.length){ tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--ink-muted);padding:24px">কোনো অর্ডার নেই</td></tr>`; return; }
+    const zoneDrivers = DriverManage.drivers.filter(d=>d.branchZone===this.currentZone);
+    tbody.innerHTML = orders.map(o=>{
+      const s=ORDER_STATUS[o.status]||ORDER_STATUS.pending;
+      const opts = zoneDrivers.map(d=>`<option value="${d.id}" ${o.driverId===d.id?'selected':''}>${d.name}</option>`).join('');
+      return `<tr><td>${o.orderNumber||o.id}</td><td>${o.customerName||''}</td><td>${o.customerPhone||''}</td><td>${money(o.subtotal||0)}</td>
+      <td><select onchange="ZoneManagerDash.assignDriver('${o.id}',this.value)" style="padding:4px;border-radius:6px;background:var(--bg2);border:1px solid var(--line);color:#fff"><option value="">বেছে নিন</option>${opts}</select></td>
+      <td><span class="status-pill ${s.cls}">${s.label}</span></td></tr>`;
+    }).join('');
+  },
+  async assignDriver(orderId,driverId){
+    if(!driverId) return;
+    const d = DriverManage.drivers.find(x=>x.id===driverId); if(!d) return;
+    const ok = await OrdersService.assignDriver(orderId,driverId,d.name);
+    if(ok){ toast(`✓ ${d.name}-কে অ্যাসাইন করা হয়েছে`,'success'); this.render(); }
+  },
+  tab(btn,name){
+    ['overview','products','orders','drivers'].forEach(t=>{ document.getElementById('zm'+t.charAt(0).toUpperCase()+t.slice(1)+'Pane').style.display = t===name?'block':'none'; });
+    document.querySelectorAll('#page-zone-manager .dash-side a').forEach(a=>a.classList.remove('active'));
+    if(btn) btn.classList.add('active');
+  },
+  openAddProduct(){
+    ProductForm.openAdd();
+    const isSadar = this.currentZone==='noakhali_sadar';
+    document.getElementById('pfZoneSadar').checked=isSadar; document.getElementById('pfZoneBegumganj').checked=!isSadar;
+    document.getElementById('pfZoneSadar').disabled=true; document.getElementById('pfZoneBegumganj').disabled=true;
+  }
+};
+
 // ============================================================
 // ENHANCED AdminDash — Complete replacement
 // ============================================================
@@ -47,6 +330,9 @@ const AdminDash = {
     this.renderCustomers(orders);
     DriverManage.renderTable();
     this.loadZmPins();
+    this.renderDriverPerformance(orders);
+    this.loadStoreSettings();
+    this.startRealtimeListener();
   },
 
   async refresh(){ await this.render(); toast('✓ আপডেট হয়েছে','success'); },
@@ -122,7 +408,7 @@ const AdminDash = {
     const list = search ? ALL_PRODUCTS.filter(p=>p.name.toLowerCase().includes(search)) : ALL_PRODUCTS;
     if(!list.length){ tbody.innerHTML=`<tr><td colspan="7" style="text-align:center;color:var(--ink-muted);padding:20px">কোনো প্রোডাক্ট নেই</td></tr>`; return; }
     tbody.innerHTML = list.map(p=>`<tr style="${p.stock===0?'opacity:.6':''}">
-      <td><div style="width:38px;height:38px;border-radius:8px;overflow:hidden;background:var(--elevated)"><img src="${p.img}" style="width:100%;height:100%;object-fit:cover" loading="lazy"></div></td>
+      <td><div style="width:38px;height:38px;border-radius:8px;overflow:hidden;background:var(--elevated)"><img src="${p.imageUrl||p.img||''}" style="width:100%;height:100%;object-fit:cover" loading="lazy"></div></td>
       <td><div style="font-size:12.5px;color:#fff;max-width:160px">${p.name}</div><div style="font-size:10.5px;color:var(--ink-muted)">${CATEGORIES.find(c=>c.id===p.category)?.label||''}</div></td>
       <td>${AREA_LABELS[p.zone]||'—'}</td>
       <td><div style="color:var(--gold);font-weight:600">${money(p.salePrice)}</div>${p.price>p.salePrice?`<div style="font-size:10px;color:var(--ink-dim);text-decoration:line-through">${money(p.price)}</div>`:''}</td>
@@ -200,7 +486,16 @@ const AdminDash = {
     document.getElementById('selectAllOrders').checked = false;
   },
 
-  filterOrders(){ this.renderOrdersTable(this._allOrders); },
+  filterOrders(){
+    const search = document.getElementById('orderSearch')?.value.toLowerCase()||'';
+    let list = this._allOrders;
+    if(search) list = list.filter(o=>
+      (o.orderNumber||'').toLowerCase().includes(search) ||
+      (o.customerName||'').toLowerCase().includes(search) ||
+      (o.customerPhone||'').includes(search)
+    );
+    this.renderOrdersTable(list);
+  },
 
   onCheckChange(){
     const checked = document.querySelectorAll('.orderCheck:checked');
@@ -328,7 +623,7 @@ const AdminDash = {
         const p = ALL_PRODUCTS.find(x=>x.id===id);
         return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)">
           <span style="width:20px;text-align:center;font-weight:700;color:var(--gold);font-size:13px">${i+1}</span>
-          <div style="width:32px;height:32px;border-radius:6px;overflow:hidden"><img src="${p?.img||''}" style="width:100%;height:100%;object-fit:cover"></div>
+          <div style="width:32px;height:32px;border-radius:6px;overflow:hidden"><img src="${p?.imageUrl||p?.img||''}" style="width:100%;height:100%;object-fit:cover"></div>
           <div style="flex:1;min-width:0"><div style="font-size:12.5px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p?.name||id}</div></div>
           <span style="font-size:12px;color:var(--ink-muted)">${qty} বিক্রি</span>
         </div>`;
@@ -411,6 +706,7 @@ const AdminDash = {
     }catch(e){ toast('সমস্যা: '+e.message,'error'); }
   }
 };
+
 
 /* ---------- Product Form (Add/Edit) ---------- */
 const ProductForm = {
@@ -574,7 +870,7 @@ const OrderDetail = {
       const p = ALL_PRODUCTS.find(x=>x.id===item.productId);
       return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line)">
         <div style="width:36px;height:36px;border-radius:7px;overflow:hidden;background:var(--elevated);flex-shrink:0">
-          <img src="${p?.img||''}" style="width:100%;height:100%;object-fit:cover">
+          <img src="${p?.imageUrl||p?.img||''}" style="width:100%;height:100%;object-fit:cover">
         </div>
         <div style="flex:1;min-width:0">
           <div style="font-size:12.5px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p?.name||item.productId}</div>
@@ -593,6 +889,11 @@ const OrderDetail = {
     const dEl = document.getElementById('odDriver');
     if(order.driverName){ dbox.style.display='block'; dEl.textContent = `${order.driverName} — ${order.customerPhone||''}`; }
     else { dbox.style.display='none'; }
+    // Load existing note
+    const noteInput = document.getElementById('odNoteInput');
+    const noteStatus = document.getElementById('odNoteStatus');
+    if(noteInput){ noteInput.value = order.adminNote||''; }
+    if(noteStatus){ noteStatus.textContent = order.adminNote?'✓ নোট আছে':''; }
     document.getElementById('orderDetailModal').classList.add('show');
   },
   close(){ document.getElementById('orderDetailModal').classList.remove('show'); },
@@ -765,7 +1066,7 @@ const ZoneManagerDash = {
     const search = document.getElementById('zmProductSearch')?.value.toLowerCase()||'';
     const filtered = search ? list.filter(p=>p.name.toLowerCase().includes(search)) : list;
     tbody.innerHTML = filtered.map(p=>`<tr>
-      <td><div style="width:34px;height:34px;border-radius:7px;overflow:hidden;background:var(--elevated)"><img src="${p.img}" style="width:100%;height:100%;object-fit:cover" loading="lazy"></div></td>
+      <td><div style="width:34px;height:34px;border-radius:7px;overflow:hidden;background:var(--elevated)"><img src="${p.imageUrl||p.img||''}" style="width:100%;height:100%;object-fit:cover" loading="lazy"></div></td>
       <td><div style="font-size:12px;color:#fff">${p.name}</div><div style="font-size:10px;color:var(--ink-muted)">${CATEGORIES.find(c=>c.id===p.category)?.label||''}</div></td>
       <td style="color:var(--gold)">${money(p.salePrice)}</td>
       <td><input type="number" value="${p.stock}" min="0" onchange="ZoneManagerDash.quickStock('${p.id}',this.value)" style="width:55px;padding:3px 5px;border-radius:6px;background:var(--bg2);border:1px solid ${p.stock<=5?'rgba(239,68,68,.4)':'var(--line)'};color:${p.stock===0?'#f87171':p.stock<=5?'#fbbf24':'#fff'};font-size:12px;text-align:center"></td>
@@ -889,4 +1190,193 @@ AdminDash.showCustomerOrders = function(phone){
 // Admin: Open order detail from orders table
 AdminDash.openOrderDetail = function(orderId){
   const o = this._allOrders.find(x=>x.id===orderId); if(o) OrderDetail.open(o);
+};
+
+// ============================================================
+// ADMIN COMPLETE — All remaining features
+// ============================================================
+
+// ─── 1. Real-time new order listener ───
+AdminDash.startRealtimeListener = function(){
+  if(!FB || this._listener) return;
+  let initialized = false;
+  this._listener = FB.onSnapshot(
+    FB.query(FB.collection(FB.db,'orders'), FB.orderBy('createdAt','desc'), FB.limit(1)),
+    (snap) => {
+      if(!initialized){ initialized=true; return; }
+      snap.docChanges().forEach(change=>{
+        if(change.type==='added'){
+          const o = {id:change.doc.id,...change.doc.data()};
+          AdminDash.showNewOrderAlert(o);
+          AdminDash.render();
+        }
+      });
+    }
+  );
+};
+
+AdminDash.showNewOrderAlert = function(order){
+  // Bell badge
+  const bell = document.getElementById('adminNotifBell');
+  if(bell){
+    const count = parseInt(bell.dataset.count||0)+1;
+    bell.dataset.count = count;
+    bell.textContent = `🔔 ${count}`;
+    bell.style.display='inline-block';
+  }
+  // Toast notification
+  toast(`🛎️ নতুন অর্ডার! ${order.customerName||'কাস্টমার'} — ${money(order.subtotal||0)}`,'success');
+  // Sound
+  try{
+    const ctx = new(window.AudioContext||window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.setValueAtTime(880,ctx.currentTime);
+    osc.frequency.setValueAtTime(660,ctx.currentTime+0.1);
+    gain.gain.setValueAtTime(0.3,ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.3);
+    osc.start(ctx.currentTime); osc.stop(ctx.currentTime+0.3);
+  }catch(e){}
+};
+
+// ─── 2. Driver performance ───
+AdminDash.renderDriverPerformance = function(orders){
+  const el = document.getElementById('driverPerformanceTable');
+  if(!el) return;
+  const stats = {};
+  orders.forEach(o=>{
+    if(!o.driverId) return;
+    if(!stats[o.driverId]) stats[o.driverId] = {name:o.driverName||'—',total:0,delivered:0,cancelled:0,revenue:0};
+    stats[o.driverId].total++;
+    if(o.status==='delivered'){ stats[o.driverId].delivered++; stats[o.driverId].revenue+=(o.subtotal||0); }
+    if(o.status==='cancelled') stats[o.driverId].cancelled++;
+  });
+  const list = Object.values(stats).sort((a,b)=>b.delivered-a.delivered);
+  if(!list.length){ el.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--ink-muted);padding:16px">তথ্য নেই</td></tr>'; return; }
+  el.innerHTML = list.map(d=>{
+    const rate = d.total>0?Math.round(d.delivered/d.total*100):0;
+    return `<tr>
+      <td style="color:#fff;font-weight:600">${d.name}</td>
+      <td style="text-align:center">${d.total}</td>
+      <td style="text-align:center;color:#22c55e">${d.delivered}</td>
+      <td style="text-align:center">
+        <div style="display:flex;align-items:center;gap:6px">
+          <div style="flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,.06)">
+            <div style="height:100%;width:${rate}%;border-radius:3px;background:${rate>=80?'#22c55e':rate>=50?'#fbbf24':'#f87171'}"></div>
+          </div>
+          <span style="font-size:11px;color:var(--ink-muted)">${rate}%</span>
+        </div>
+      </td>
+      <td style="color:var(--gold)">${money(d.revenue)}</td>
+    </tr>`;
+  }).join('');
+};
+
+// ─── 3. Bulk product operations ───
+AdminDash.selectedProducts = new Set();
+
+AdminDash.toggleProductSelect = function(id, checked){
+  checked ? this.selectedProducts.add(id) : this.selectedProducts.delete(id);
+  const bar = document.getElementById('productBulkBar');
+  const count = document.getElementById('productBulkCount');
+  if(this.selectedProducts.size > 0){
+    bar.style.display='flex';
+    count.textContent = `${this.selectedProducts.size}টি প্রোডাক্ট সিলেক্ট`;
+  } else { bar.style.display='none'; }
+};
+
+AdminDash.bulkDeleteProducts = async function(){
+  if(!this.selectedProducts.size){ toast('কোনো প্রোডাক্ট সিলেক্ট নেই','error'); return; }
+  if(!confirm(`${this.selectedProducts.size}টি প্রোডাক্ট মুছে ফেলবেন?`)) return;
+  if(!FB) return;
+  let done=0;
+  for(const id of this.selectedProducts){
+    try{ await FB.deleteDoc(FB.doc(FB.db,'products',id)); done++; }catch(e){ devWarn(e.message); }
+  }
+  this.selectedProducts.clear();
+  await ProductStore.refreshAndRerender();
+  this.renderProducts();
+  document.getElementById('productBulkBar').style.display='none';
+  toast(`✓ ${done}টি প্রোডাক্ট মুছে ফেলা হয়েছে`,'success');
+};
+
+AdminDash.bulkUpdatePrice = async function(){
+  const pct = parseFloat(prompt('মূল্য কত % পরিবর্তন করবেন? (+ বাড়াতে, - কমাতে, যেমন: 10 বা -5)'));
+  if(isNaN(pct)) return;
+  if(!FB) return;
+  let done=0;
+  for(const id of this.selectedProducts){
+    const p = ALL_PRODUCTS.find(x=>x.id===id); if(!p) continue;
+    const newPrice = Math.round(p.salePrice*(1+pct/100));
+    try{
+      await FB.updateDoc(FB.doc(FB.db,'products',id),{salePrice:newPrice,updatedAt:FB.serverTimestamp()});
+      p.salePrice=newPrice; done++;
+    }catch(e){ devWarn(e.message); }
+  }
+  this.selectedProducts.clear();
+  this.renderProducts();
+  document.getElementById('productBulkBar').style.display='none';
+  toast(`✓ ${done}টি প্রোডাক্টের মূল্য ${pct>0?'+':''}${pct}% আপডেট হয়েছে`,'success');
+};
+
+// ─── 4. Date range filter for analytics ───
+AdminDash.renderAnalyticsWithDateRange = function(){
+  const from = document.getElementById('anDateFrom')?.value;
+  const to = document.getElementById('anDateTo')?.value;
+  let orders = this._allOrders;
+  if(from) orders = orders.filter(o=>new Date(o.createdAt?.seconds*1000||0)>=new Date(from));
+  if(to) orders = orders.filter(o=>new Date(o.createdAt?.seconds*1000||0)<=new Date(to+'T23:59:59'));
+  this.renderAnalytics(orders);
+  // Revenue trend vs previous same period
+  if(from && to){
+    const fromD=new Date(from), toD=new Date(to+'T23:59:59');
+    const diff=toD-fromD;
+    const prevFrom=new Date(fromD-diff), prevTo=new Date(fromD-1);
+    const prevOrders=this._allOrders.filter(o=>{
+      const d=new Date(o.createdAt?.seconds*1000||0);
+      return d>=prevFrom && d<=prevTo && o.status!=='cancelled';
+    });
+    const currRev=orders.filter(o=>o.status!=='cancelled').reduce((s,o)=>s+(o.subtotal||0),0);
+    const prevRev=prevOrders.reduce((s,o)=>s+(o.subtotal||0),0);
+    const trendEl=document.getElementById('anTrend');
+    if(trendEl && prevRev>0){
+      const pct=Math.round((currRev-prevRev)/prevRev*100);
+      trendEl.innerHTML=`আগের সময়ের তুলনায়: <strong style="color:${pct>=0?'#22c55e':'#f87171'}">${pct>=0?'↑':'↓'} ${Math.abs(pct)}%</strong>`;
+    }
+  }
+};
+
+// ─── 5. Order internal notes ───
+AdminDash.saveOrderNote = async function(orderId){
+  const note = document.getElementById('odNoteInput')?.value.trim();
+  if(!note||!FB) return;
+  try{
+    await FB.updateDoc(FB.doc(FB.db,'orders',orderId),{adminNote:note,noteUpdatedAt:FB.serverTimestamp()});
+    toast('✓ নোট সংরক্ষণ হয়েছে','success');
+    document.getElementById('odNoteStatus').textContent='✓ সংরক্ষিত';
+  }catch(e){ toast('সমস্যা: '+e.message,'error'); }
+};
+
+// ─── 6. Store settings ───
+AdminDash.loadStoreSettings = async function(){
+  if(!FB) return;
+  try{
+    const snap=await FB.getDoc(FB.doc(FB.db,'setting','store'));
+    const d=snap.exists()?snap.data():{};
+    const fields=['storeAnnouncement','storeHours','deliveryMin','deliveryMax','expressCharge'];
+    fields.forEach(f=>{ const el=document.getElementById('ss_'+f); if(el) el.value=d[f]||''; });
+  }catch(e){ devWarn(e.message); }
+};
+
+AdminDash.saveStoreSettings = async function(){
+  if(!FB){ toast('সংযোগ সমস্যা','error'); return; }
+  try{
+    const data={};
+    ['storeAnnouncement','storeHours','deliveryMin','deliveryMax','expressCharge'].forEach(f=>{
+      const el=document.getElementById('ss_'+f); if(el) data[f]=el.value.trim();
+    });
+    await FB.setDoc(FB.doc(FB.db,'setting','store'),{...data,updatedAt:FB.serverTimestamp()});
+    toast('✓ স্টোর সেটিংস সংরক্ষণ হয়েছে','success');
+  }catch(e){ toast('সমস্যা: '+e.message,'error'); }
 };
