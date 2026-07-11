@@ -90,7 +90,7 @@
 </div>
 
 <main id="appRoot">
-<!-- pages injected by page-loader.js -->
+  <!-- Pages injected synchronously by pages/*.js before app boots -->
 </main>
 
 <footer class="main" id="custFooter">
@@ -297,15 +297,6 @@
 
 <div class="toast-wrap" id="toastWrap"></div>
 
-  <script src="page-loader.js"></script>
-  <script src="./js/utils.js"></script>
-<script src="./js/data.js"></script>
-<script src="./js/router.js"></script>
-<script src="./js/auth.js"></script>
-<script src="./js/widgets.js"></script>
-<script src="./js/pages.js"></script>
-<script src="./js/app.js"></script>
-
 <!-- ============ ORDER DETAIL MODAL ============ -->
 <div class="modal" id="orderDetailModal">
   <div class="modal-box" style="max-width:560px;position:relative;max-height:90vh;overflow-y:auto">
@@ -379,22 +370,57 @@
     <div id="coOrdersList"></div>
   </div>
 </div>
+</body>
+
+</footer>
+
+<!-- ① Page HTML injection (synchronous, before app scripts) -->
+<script src="pages/home.js"></script>
+<script src="pages/medical.js"></script>
+<script src="pages/custom-bazar.js"></script>
+<script src="pages/listing.js"></script>
+<script src="pages/product.js"></script>
+<script src="pages/checkout.js"></script>
+<script src="pages/orders.js"></script>
+<script src="pages/account.js"></script>
+<script src="pages/admin.js"></script>
+<script src="pages/zone-manager.js"></script>
+<script src="pages/driver.js"></script>
+<script src="pages/modals.js"></script>
+
+<!-- ② Firebase -->
+
+
+<!-- ③ App scripts -->
+<script src="./js/utils.js"></script>
+<script src="./js/data.js"></script>
+<script src="./js/router.js"></script>
+<script src="./js/auth.js"></script>
+<script src="./js/store.js"></script>
+<script src="./js/widgets.js"></script>
+<script src="./js/pages.js"></script>
+<script src="./js/app.js"></script>
+
+<!-- ④ Admin scripts -->
+<script src="js/admin/services.js"></script>
+<script src="js/admin/driver.js"></script>
+<script src="js/admin/zone-manager.js"></script>
+<script src="js/admin/admin.js"></script>
 
 <script>
-// Chat toggle — logo দেখাও বা ✕ দেখাও
-const _origToggle = ChatWidget.toggle.bind(ChatWidget);
-ChatWidget.toggle = function(){
-  _origToggle();
-  const img = document.getElementById('chatLogoImg');
-  const icon = document.getElementById('chatIcon');
-  if(img) img.style.display = this.isOpen ? 'none' : 'block';
-  if(icon && this.isOpen) icon.textContent = '✕';
-  else if(icon && !this.isOpen){ icon.innerHTML = '<img src="chat_logo.jpeg" id="chatLogoImg" alt="chat" style="width:32px;height:32px;object-fit:cover;border-radius:50%;display:block">'; }
-};
+// Chat icon toggle
+document.addEventListener('DOMContentLoaded', function(){
+  const btn = document.getElementById('chatBtn');
+  if(!btn) return;
+  btn.addEventListener('click', function(){
+    const icon = document.getElementById('chatIcon');
+    if(!icon) return;
+    const isOpen = document.getElementById('chatWin')?.classList.contains('show');
+    if(isOpen) icon.innerHTML = '<img src="chat_logo.jpeg" alt="chat" style="width:32px;height:32px;object-fit:cover;border-radius:50%;display:block">';
+    else icon.innerHTML = '✕';
+  });
+});
 </script>
-  <script src="js/admin/services.js"></script>
-  <script src="js/admin/driver.js"></script>
-  <script src="js/admin/zone-manager.js"></script>
-  <script src="js/admin/admin.js"></script>
+
 </body>
 </html>
