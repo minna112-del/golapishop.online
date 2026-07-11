@@ -355,11 +355,49 @@ const AdminDash = {
 /* ---------- Product Form (Add/Edit) ---------- */
 const ProductForm = {
   mode:'add', editId:null,
+  imgBase64: null,
+  onImageSelect(input){
+    const file = input.files[0]; if(!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      this.imgBase64 = e.target.result;
+      document.getElementById('pfImgThumb').src = e.target.result;
+      document.getElementById('pfImgPreview').style.display = 'block';
+      document.getElementById('pfDescAiBtn').style.display = 'inline-block';
+    };
+    reader.readAsDataURL(file);
+  },
+  async generateDesc(){
+    const name = document.getElementById('pfName').value.trim();
+    const cat = document.getElementById('pfCategory').value;
+    const loadEl = document.getElementById('pfDescLoading');
+    const descEl = document.getElementById('pfDescription');
+    loadEl.style.display = 'block';
+    document.getElementById('pfDescAiBtn').style.display = 'none';
+    try{
+      const messages = [{role:'user', content:[
+        {type:'text', text:`তুমি একটি বাংলাদেশি ই-কমার্স দোকানের জন্য পণ্যের বিবরণ লিখবে। পণ্যের নাম: "${name || 'পণ্য'}", ক্যাটাগরি: "${cat}". ছবি দেখে সংক্ষিপ্ত, আকর্ষণীয় বাংলা বিবরণ লিখো (৩-৫ লাইন)। শুধু বিবরণ দাও, অন্য কিছু না।`},
+        ...(this.imgBase64 ? [{type:'image', source:{type:'base64', media_type:'image/jpeg', data: this.imgBase64.split(',')[1]}}] : [])
+      ]}];
+      const res = await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({model:'claude-sonnet-4-6', max_tokens:300, messages})
+      });
+      const data = await res.json();
+      const text = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+      if(text) descEl.value = text;
+      else toast('বিবরণ তৈরি হয়নি','error');
+    }catch(e){ toast('AI সংযোগ সমস্যা','error'); }
+    finally{ loadEl.style.display='none'; document.getElementById('pfDescAiBtn').style.display='inline-block'; }
+  },
   openAdd(){
-    this.mode='add'; this.editId=null;
+    this.mode='add'; this.editId=null; this.imgBase64=null;
     document.getElementById('pfTitle').textContent='নতুন প্রোডাক্ট যুক্ত করুন';
     document.getElementById('pfSubmitBtn').textContent='প্রোডাক্ট সংরক্ষণ করুন';
     ['pfName','pfPrice','pfSalePrice','pfStock','pfDescription','pfCostPrice'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('pfImgFile').value='';
+    document.getElementById('pfImgPreview').style.display='none';
+    document.getElementById('pfDescAiBtn').style.display='none';
     document.getElementById('pfExtraCost').value='0'; document.getElementById('pfDeliveryPercent').value='0'; document.getElementById('pfProfitPercent').value='20';
     document.getElementById('pfBreakdown').textContent='৳০';
     document.getElementById('pfZoneSadar').disabled=false; document.getElementById('pfZoneBegumganj').disabled=false;
@@ -419,7 +457,15 @@ const ProductForm = {
     if(!FB){ msgEl.textContent='সংযোগ সমস্যা — Firebase কনফিগার নেই'; msgEl.className='form-msg err'; return; }
     const btn=document.getElementById('pfSubmitBtn'); const orig=btn.textContent; btn.textContent='সংরক্ষণ হচ্ছে...'; btn.disabled=true;
     try{
+      let imageUrl = null;
+      const imgFile = document.getElementById('pfImgFile').files[0];
+      if(imgFile){
+        const fileRef = FB.storageRef(FB.storage, `products/${Date.now()}_${imgFile.name}`);
+        await FB.uploadBytes(fileRef, imgFile);
+        imageUrl = await FB.getDownloadURL(fileRef);
+      }
       const base = {name,category,unit,price:price||salePrice,salePrice,stock,description,costPrice,extraCost,deliveryPercent,profitPercent,cod,isFlash,isFeatured,status:'active',updatedAt:FB.serverTimestamp()};
+      if(imageUrl) base.imageUrl = imageUrl;
       if(this.mode==='add'){
         const groupId = selZones.length>1 ? `${Date.now()}` : null;
         for(const zone of selZones){
