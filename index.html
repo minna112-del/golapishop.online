@@ -260,40 +260,72 @@
 
 <!-- ============ PRODUCT ============ -->
 <div class="page" id="page-product">
-  <section class="sec">
-    <div class="crumb" id="pdpCrumb"></div>
-    <div class="pdp-layout">
-      <div><div class="gallery"><img id="pdpImg" src="" alt=""></div></div>
-      <div>
-        <h1 class="tiro" style="font-size:24px;margin-bottom:8px" id="pdpName"></h1>
-        <div style="font-size:13px;color:var(--ink-muted);margin-bottom:14px" id="pdpMeta"></div>
-        <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:12px;flex-wrap:wrap">
-          <span class="price-now" style="font-size:26px" id="pdpPrice"></span>
-          <span class="price-old" id="pdpOld"></span>
-          <span id="pdpDisc" style="display:none;font-size:11px;font-weight:700;color:#f87171;background:rgba(239,68,68,.1);padding:2px 8px;border-radius:6px"></span>
-          <span style="font-size:13px;color:var(--ink-muted)" id="pdpUnit"></span>
-        </div>
-        <div style="margin-bottom:10px" id="pdpTags"></div>
-        <p style="color:#22c55e;font-size:13px;margin-bottom:18px" id="pdpStock"></p>
-        <div style="display:flex;align-items:center;gap:14px;margin-bottom:22px">
-          <span style="font-size:13.5px;font-weight:600">পরিমাণ:</span>
-          <div class="qty-ctrl"><button onclick="PDP.changeQty(-1)">−</button><span id="pdpQty">১</span><button onclick="PDP.changeQty(1)">+</button></div>
-        </div>
-        <div class="btn-row"><button class="btn btn-gold" style="flex:1" onclick="PDP.addToCart()">🛍️ কার্টে যুক্ত করুন</button><button class="btn btn-outline" style="flex:1" onclick="PDP.buyNow()">এখনই কিনুন</button></div>
-        <div class="card" style="padding:14px;display:flex;align-items:center;justify-content:space-between;margin:16px 0">
-          <div style="display:flex;align-items:center;gap:10px"><span style="font-size:22px">🌹</span><div><div style="color:var(--rose);font-size:13px;font-weight:600">Golapi Shop Online</div><div style="font-size:11px;color:var(--ink-muted)">১০০% অরিজিনাল পণ্যের নিশ্চয়তা</div></div></div>
-          <span class="badge b-green">✓ Verified</span>
-        </div>
-        <div class="pdp-tabs">
-          <button class="active" onclick="PDP.tab(this,'desc')">বিবরণ</button>
-          <button onclick="PDP.tab(this,'spec')">স্পেসিফিকেশন</button>
-          <button onclick="PDP.tab(this,'ship')">শিপিং ও রিটার্ন</button>
-        </div>
-        <div class="tab-pane active" id="tab-desc"><p id="pdpDesc" style="font-size:13.5px;color:var(--ink-soft);line-height:1.8"></p></div>
-        <div class="tab-pane" id="tab-spec"><table class="spec-table" id="pdpSpec"></table></div>
-        <div class="tab-pane" id="tab-ship"><p style="font-size:13.5px;color:var(--ink-soft);line-height:1.9">🚚 নোয়াখালী সদর ও বেগমগঞ্জে নিজস্ব ড্রাইভার।<br>⚡ এক্সপ্রেস: ৬০-৯০ মিনিট | 📅 আজই: ফ্রি<br>↩️ ৩ দিনের মধ্যে রিটার্ন</p></div>
-      </div>
+  <section class="sec" style="padding-top:12px">
+
+    <!-- Back button + breadcrumb -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <button onclick="history.back()||Router.go('home')" style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.06);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">‹</button>
+      <div class="crumb" id="pdpCrumb" style="margin:0;font-size:12px"></div>
     </div>
+
+    <!-- Image gallery -->
+    <div id="pdpGalleryWrap" style="position:relative;border-radius:16px;overflow:hidden;background:var(--card);border:1px solid var(--line);margin-bottom:18px;cursor:zoom-in" onclick="PDP.openFullImg()">
+      <img id="pdpImg" src="" alt="" style="width:100%;aspect-ratio:1/1;object-fit:cover;display:block">
+      <div style="position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);padding:4px 10px;border-radius:20px;font-size:11px;color:#fff">🔍 বড় দেখুন</div>
+    </div>
+
+    <!-- Fullscreen image overlay -->
+    <div id="pdpImgOverlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.95);align-items:center;justify-content:center;flex-direction:column" onclick="this.style.display='none'">
+      <button style="position:absolute;top:16px;right:16px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.1);color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center">✕</button>
+      <img id="pdpImgFull" src="" style="max-width:100%;max-height:90vh;object-fit:contain">
+    </div>
+
+    <!-- Product info -->
+    <h1 class="tiro" style="font-size:20px;margin-bottom:8px;line-height:1.5" id="pdpName"></h1>
+    <div style="font-size:12.5px;color:var(--ink-muted);margin-bottom:12px" id="pdpMeta"></div>
+
+    <!-- Price -->
+    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+      <span class="price-now" style="font-size:28px" id="pdpPrice"></span>
+      <span class="price-old" id="pdpOld"></span>
+      <span id="pdpDisc" style="display:none;font-size:11px;font-weight:700;color:#f87171;background:rgba(239,68,68,.1);padding:2px 8px;border-radius:6px"></span>
+      <span style="font-size:13px;color:var(--ink-muted)" id="pdpUnit"></span>
+    </div>
+
+    <div style="margin-bottom:10px" id="pdpTags"></div>
+    <p style="color:#22c55e;font-size:13px;margin-bottom:16px" id="pdpStock"></p>
+
+    <!-- Quantity -->
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px">
+      <span style="font-size:13.5px;font-weight:600">পরিমাণ:</span>
+      <div class="qty-ctrl"><button onclick="PDP.changeQty(-1)">−</button><span id="pdpQty">১</span><button onclick="PDP.changeQty(1)">+</button></div>
+    </div>
+
+    <!-- Action buttons -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px">
+      <button class="btn btn-gold" onclick="PDP.addToCart()">🛍️ কার্টে যুক্ত করুন</button>
+      <button class="btn btn-rose" onclick="PDP.buyNow()">এখনই কিনুন</button>
+    </div>
+
+    <!-- Verified badge -->
+    <div class="card" style="padding:12px;display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <img src="head_logo.jpeg" style="width:32px;height:32px;border-radius:8px;object-fit:cover">
+        <div><div style="color:var(--rose);font-size:13px;font-weight:600">Golapi Shop Online</div><div style="font-size:11px;color:var(--ink-muted)">১০০% অরিজিনাল পণ্যের নিশ্চয়তা</div></div>
+      </div>
+      <span class="badge b-green">✓ Verified</span>
+    </div>
+
+    <!-- Tabs -->
+    <div class="pdp-tabs">
+      <button class="active" onclick="PDP.tab(this,'desc')">বিবরণ</button>
+      <button onclick="PDP.tab(this,'spec')">স্পেসিফিকেশন</button>
+      <button onclick="PDP.tab(this,'ship')">শিপিং ও রিটার্ন</button>
+    </div>
+    <div class="tab-pane active" id="tab-desc"><p id="pdpDesc" style="font-size:13.5px;color:var(--ink-soft);line-height:1.8"></p></div>
+    <div class="tab-pane" id="tab-spec"><table class="spec-table" id="pdpSpec"></table></div>
+    <div class="tab-pane" id="tab-ship"><p style="font-size:13.5px;color:var(--ink-soft);line-height:1.9">🚚 নোয়াখালী সদর ও বেগমগঞ্জে নিজস্ব ড্রাইভার।<br>⚡ এক্সপ্রেস: ৬০-৯০ মিনিট | 📅 আজই: ফ্রি<br>↩️ ৩ দিনের মধ্যে রিটার্ন</p></div>
+
     <div style="margin-top:36px"><h2 class="tiro" style="font-size:19px;margin-bottom:14px">আপনার পছন্দ হতে পারে</h2><div class="scroll-row" id="relatedRow"></div></div>
   </section>
 </div>
@@ -460,40 +492,199 @@
 
 <!-- ============ OWNER (ADMIN) DASHBOARD ============ -->
 <div class="page" id="page-admin-dash">
-  <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 20px;background:var(--card);border-bottom:1px solid var(--line)">
-    <a href="#" onclick="Router.go('home')" style="font-weight:700;color:var(--gold);font-size:14px">🌹 Golapi Shop — <span style="color:#fff">Owner Dashboard</span></a>
-    <a href="#" onclick="Router.go('home')" style="font-size:12.5px;color:var(--ink-muted)">← সাইটে ফিরে যান</a>
+  <!-- Top bar -->
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 20px;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:100">
+    <a href="#" onclick="Router.go('home')" style="display:flex;align-items:center;gap:8px;font-weight:700;color:var(--gold);font-size:14px">
+      <img src="head_logo.jpeg" style="width:28px;height:28px;border-radius:8px;object-fit:cover"> Owner Dashboard
+    </a>
+    <div style="display:flex;gap:10px;align-items:center">
+      <span id="adminLastUpdated" style="font-size:11px;color:var(--ink-muted)"></span>
+      <button onclick="AdminDash.refresh()" style="padding:6px 12px;border-radius:8px;background:rgba(212,175,55,.1);border:1px solid var(--gold-line);color:var(--gold);font-size:12px">↻ রিফ্রেশ</button>
+      <button onclick="OwnerAuth.lock()" style="padding:6px 12px;border-radius:8px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:#f87171;font-size:12px">🔒 লক</button>
+    </div>
   </div>
+
   <section class="sec">
     <div class="dash-layout">
+      <!-- Sidebar -->
       <aside class="dash-side">
         <a class="active" onclick="AdminDash.tab(this,'overview')">📊 ওভারভিউ</a>
         <a onclick="AdminDash.tab(this,'products')">📦 প্রোডাক্ট</a>
         <a onclick="AdminDash.tab(this,'orders')">🧾 অর্ডার</a>
-        <a onclick="AdminDash.tab(this,'finance')">💰 ফাইন্যান্স</a>
+        <a onclick="AdminDash.tab(this,'analytics')">📈 অ্যানালিটিক্স</a>
+        <a onclick="AdminDash.tab(this,'customers')">👥 কাস্টমার</a>
         <a onclick="AdminDash.tab(this,'settings')">⚙️ সেটিংস</a>
-        <a onclick="OwnerAuth.lock()" style="color:#f87171">🔒 লক করুন</a>
       </aside>
+
       <div>
+        <!-- OVERVIEW -->
         <div id="adminOverviewPane">
-          <div class="stat-grid">
-            <div class="stat-card"><div class="lbl">মোট সেল</div><div class="val rose" id="aStatGmv">৳০</div></div>
+          <!-- Stats -->
+          <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr));margin-bottom:16px">
+            <div class="stat-card"><div class="lbl">আজকের সেল</div><div class="val rose" id="aStatToday">৳০</div></div>
+            <div class="stat-card"><div class="lbl">মোট সেল</div><div class="val" id="aStatGmv">৳০</div></div>
             <div class="stat-card"><div class="lbl">মোট অর্ডার</div><div class="val" id="aStatOrders">০</div></div>
-            <div class="stat-card"><div class="lbl">পেন্ডিং অর্ডার</div><div class="val" id="aStatPending">০</div></div>
-            <div class="stat-card"><div class="lbl">মোট প্রোডাক্ট</div><div class="val" id="aStatProducts">০</div></div>
+            <div class="stat-card"><div class="lbl">পেন্ডিং</div><div class="val rose" id="aStatPending">০</div></div>
+            <div class="stat-card"><div class="lbl">প্রোডাক্ট</div><div class="val" id="aStatProducts">০</div></div>
+            <div class="stat-card"><div class="lbl">কাস্টমার</div><div class="val" id="aStatCustomers">০</div></div>
           </div>
-          <div class="card-box"><h3 style="font-size:14px;margin-bottom:12px;color:#fff">সাম্প্রতিক অর্ডার</h3>
-            <div class="table-scroll"><table class="data-table"><thead><tr><th>অর্ডার ID</th><th>আইটেম</th><th>মোট</th><th>স্ট্যাটাস</th></tr></thead><tbody id="aRecentOrders"></tbody></table></div>
+
+          <!-- Inventory Alerts -->
+          <div id="inventoryAlerts" style="display:none;margin-bottom:16px">
+            <div style="background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.25);border-radius:14px;padding:14px">
+              <div style="color:#fbbf24;font-weight:600;font-size:13.5px;margin-bottom:10px">⚠️ ইনভেন্টরি সতর্কতা</div>
+              <div id="inventoryAlertList"></div>
+            </div>
+          </div>
+
+          <!-- Revenue chart last 7 days -->
+          <div class="card-box" style="margin-bottom:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+              <h3 style="font-size:14px;color:#fff">গত ৭ দিনের সেল</h3>
+              <span id="aChart7Total" style="font-size:12px;color:var(--gold)"></span>
+            </div>
+            <div id="aRevenueChart" style="display:flex;align-items:flex-end;gap:6px;height:80px"></div>
+            <div id="aRevenueChartLabels" style="display:flex;gap:6px;margin-top:4px"></div>
+          </div>
+
+          <!-- Recent orders -->
+          <div class="card-box">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <h3 style="font-size:14px;color:#fff">সাম্প্রতিক অর্ডার</h3>
+              <a href="#" onclick="AdminDash.tab(null,'orders')" style="font-size:12px;color:var(--gold)">সব দেখুন →</a>
+            </div>
+            <div class="table-scroll">
+              <table class="data-table">
+                <thead><tr><th>অর্ডার ID</th><th>কাস্টমার</th><th>মোট</th><th>স্ট্যাটাস</th><th>একশন</th></tr></thead>
+                <tbody id="aRecentOrders"></tbody>
+              </table>
+            </div>
           </div>
         </div>
+
+        <!-- PRODUCTS -->
         <div id="adminProductsPane" style="display:none">
-          <div style="display:flex;justify-content:space-between;margin-bottom:16px"><h2 class="tiro" style="font-size:19px">প্রোডাক্ট ম্যানেজমেন্ট</h2><button class="btn btn-gold" style="padding:9px 16px;font-size:13px" onclick="ProductForm.openAdd()">+ নতুন প্রোডাক্ট</button></div>
-          <div class="table-scroll"><table class="data-table"><thead><tr><th>প্রোডাক্ট</th><th>শাখা</th><th>ক্যাটাগরি</th><th>মূল্য</th><th>স্টক</th><th>স্ট্যাটাস</th><th>একশন</th></tr></thead><tbody id="aProductsTable"></tbody></table></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+            <h2 class="tiro" style="font-size:19px">প্রোডাক্ট ম্যানেজমেন্ট</h2>
+            <div style="display:flex;gap:8px">
+              <input id="productSearch" type="text" placeholder="খুঁজুন..." oninput="AdminDash.filterProducts()" style="padding:8px 12px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid var(--line);color:#fff;font-size:13px;width:160px">
+              <button class="btn btn-gold" style="padding:9px 16px;font-size:13px" onclick="ProductForm.openAdd()">+ নতুন প্রোডাক্ট</button>
+            </div>
+          </div>
+          <!-- Low stock alert -->
+          <div id="lowStockBanner" style="display:none;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#f87171"></div>
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead><tr><th>ছবি</th><th>প্রোডাক্ট</th><th>শাখা</th><th>মূল্য</th><th>স্টক</th><th>স্ট্যাটাস</th><th>একশন</th></tr></thead>
+              <tbody id="aProductsTable"></tbody>
+            </table>
+          </div>
         </div>
+
+        <!-- ORDERS -->
         <div id="adminOrdersPane" style="display:none">
-          <h2 class="tiro" style="font-size:19px;margin-bottom:16px">সব অর্ডার</h2>
-          <div class="table-scroll"><table class="data-table"><thead><tr><th>ID</th><th>শাখা</th><th>কাস্টমার</th><th>ফোন</th><th>মোট</th><th>ড্রাইভার</th><th>স্ট্যাটাস</th></tr></thead><tbody id="aOrdersTable"></tbody></table></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+            <h2 class="tiro" style="font-size:19px">অর্ডার ম্যানেজমেন্ট</h2>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <select id="orderStatusFilter" onchange="AdminDash.filterOrders()" style="padding:8px 12px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid var(--line);color:#fff;font-size:13px">
+                <option value="">সব স্ট্যাটাস</option>
+                <option value="pending">পেন্ডিং</option>
+                <option value="confirmed">কনফার্মড</option>
+                <option value="packed">প্যাকড</option>
+                <option value="assigned">ড্রাইভার অ্যাসাইনড</option>
+                <option value="in_transit">পথে</option>
+                <option value="delivered">ডেলিভারড</option>
+                <option value="cancelled">বাতিল</option>
+              </select>
+              <select id="orderZoneFilter" onchange="AdminDash.filterOrders()" style="padding:8px 12px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid var(--line);color:#fff;font-size:13px">
+                <option value="">সব শাখা</option>
+                <option value="noakhali_sadar">নোয়াখালী সদর</option>
+                <option value="begumganj">বেগমগঞ্জ</option>
+              </select>
+            </div>
+          </div>
+          <!-- Bulk actions -->
+          <div id="bulkActionsBar" style="display:none;background:rgba(212,175,55,.08);border:1px solid var(--gold-line);border-radius:10px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <span id="bulkCount" style="font-size:13px;color:var(--gold);font-weight:600"></span>
+            <select id="bulkStatusSelect" style="padding:6px 10px;border-radius:8px;background:var(--bg2);border:1px solid var(--line);color:#fff;font-size:12.5px">
+              <option value="">স্ট্যাটাস পরিবর্তন করুন</option>
+              <option value="confirmed">কনফার্মড</option>
+              <option value="packed">প্যাকড</option>
+              <option value="delivered">ডেলিভারড</option>
+              <option value="cancelled">বাতিল</option>
+            </select>
+            <button onclick="AdminDash.bulkUpdateStatus()" style="padding:6px 12px;border-radius:8px;background:var(--gold);color:var(--bg);font-size:12.5px;font-weight:600">আপডেট করুন</button>
+            <button onclick="AdminDash.exportOrders()" style="padding:6px 12px;border-radius:8px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.2);color:#22c55e;font-size:12.5px">📥 CSV Export</button>
+          </div>
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead><tr>
+                <th><input type="checkbox" id="selectAllOrders" onchange="AdminDash.toggleSelectAll(this)"></th>
+                <th>ID</th><th>তারিখ</th><th>কাস্টমার</th><th>ফোন</th><th>মোট</th><th>ড্রাইভার</th><th>স্ট্যাটাস</th><th>একশন</th>
+              </tr></thead>
+              <tbody id="aOrdersTable"></tbody>
+            </table>
+          </div>
         </div>
+
+        <!-- ANALYTICS -->
+        <div id="adminAnalyticsPane" style="display:none">
+          <h2 class="tiro" style="font-size:19px;margin-bottom:16px">অ্যানালিটিক্স</h2>
+          <div class="stat-grid" style="margin-bottom:16px">
+            <div class="stat-card"><div class="lbl">আজ</div><div class="val rose" id="anToday">৳০</div></div>
+            <div class="stat-card"><div class="lbl">এই সপ্তাহ</div><div class="val" id="anWeek">৳০</div></div>
+            <div class="stat-card"><div class="lbl">এই মাস</div><div class="val" id="anMonth">৳০</div></div>
+            <div class="stat-card"><div class="lbl">মোট</div><div class="val" id="anTotal">৳০</div></div>
+          </div>
+
+          <!-- Payment method breakdown -->
+          <div class="card-box" style="margin-bottom:16px">
+            <h3 style="font-size:14px;color:#fff;margin-bottom:12px">💳 পেমেন্ট পদ্ধতি</h3>
+            <div id="paymentBreakdown"></div>
+          </div>
+
+          <!-- Zone breakdown -->
+          <div class="card-box" style="margin-bottom:16px">
+            <h3 style="font-size:14px;color:#fff;margin-bottom:12px">🏢 শাখাভিত্তিক সেল</h3>
+            <div id="zoneBreakdown"></div>
+          </div>
+
+          <!-- Top products -->
+          <div class="card-box">
+            <h3 style="font-size:14px;color:#fff;margin-bottom:12px">🏆 সেরা বিক্রিত পণ্য</h3>
+            <div id="topProducts"></div>
+          </div>
+        </div>
+
+        <!-- CUSTOMERS -->
+        <div id="adminCustomersPane" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+            <h2 class="tiro" style="font-size:19px">কাস্টমার ম্যানেজমেন্ট</h2>
+            <input id="customerSearch" type="text" placeholder="নাম বা ফোন খুঁজুন..." oninput="AdminDash.filterCustomers()" style="padding:8px 12px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid var(--line);color:#fff;font-size:13px;width:200px">
+          </div>
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead><tr><th>কাস্টমার</th><th>ফোন</th><th>NID</th><th>মোট অর্ডার</th><th>মোট খরচ</th><th>শেষ অর্ডার</th><th>একশন</th></tr></thead>
+              <tbody id="aCustomersTable"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- SETTINGS -->
+        <div id="adminSettingsPane" style="display:none">
+          <div class="card-box" style="margin-bottom:16px">
+            <h3 style="font-size:14px;margin-bottom:12px;color:#fff">🚴 ড্রাইভার ম্যানেজমেন্ট</h3>
+            <div style="display:flex;justify-content:flex-end;margin-bottom:10px"><button class="btn btn-outline" style="padding:7px 14px;font-size:12.5px" onclick="DriverManage.openAdd()">+ নতুন ড্রাইভার</button></div>
+            <div class="table-scroll"><table class="data-table"><thead><tr><th>নাম</th><th>শাখা</th><th>মোবাইল</th><th>স্ট্যাটাস</th></tr></thead><tbody id="driverManageTable"></tbody></table></div>
+          </div>
+          <div class="card-box">
+            <h3 style="font-size:14px;margin-bottom:12px;color:#fff">🏢 জোন ম্যানেজার পিন</h3>
+            <div class="field"><label>নোয়াখালী সদর — পিন</label><input type="text" id="zmPinSadar" placeholder="যেমন 1111"></div>
+            <div class="field"><label>বেগমগঞ্জ — পিন</label><input type="text" id="zmPinBegumganj" placeholder="যেমন 2222"></div>
+            <button class="btn btn-gold" onclick="AdminDash.saveZmPins()">পিন সংরক্ষণ করুন</button>
+          </div>
+        </div>
+        <!-- Finance pane (kept for compatibility) -->
         <div id="adminFinancePane" style="display:none">
           <div class="stat-grid">
             <div class="stat-card"><div class="lbl">মোট সেল</div><div class="val rose" id="fMonth">৳০</div></div>
@@ -501,21 +692,11 @@
             <div class="stat-card"><div class="lbl">অনলাইন পেমেন্ট</div><div class="val" id="fOnline">৳০</div></div>
           </div>
         </div>
-        <div id="adminSettingsPane" style="display:none">
-          <div class="card-box"><h3 style="font-size:14px;margin-bottom:12px;color:#fff">🚴 ড্রাইভার ম্যানেজমেন্ট</h3>
-            <div style="display:flex;justify-content:flex-end;margin-bottom:10px"><button class="btn btn-outline" style="padding:7px 14px;font-size:12.5px" onclick="DriverManage.openAdd()">+ নতুন ড্রাইভার</button></div>
-            <div class="table-scroll"><table class="data-table"><thead><tr><th>নাম</th><th>শাখা</th><th>মোবাইল</th><th>স্ট্যাটাস</th></tr></thead><tbody id="driverManageTable"></tbody></table></div>
-          </div>
-          <div class="card-box"><h3 style="font-size:14px;margin-bottom:12px;color:#fff">🏢 জোন ম্যানেজার পিন</h3>
-            <div class="field"><label>নোয়াখালী সদর — পিন</label><input type="text" id="zmPinSadar" placeholder="যেমন 1111"></div>
-            <div class="field"><label>বেগমগঞ্জ — পিন</label><input type="text" id="zmPinBegumganj" placeholder="যেমন 2222"></div>
-            <button class="btn btn-gold" onclick="AdminDash.saveZmPins()">পিন সংরক্ষণ করুন</button>
-          </div>
-        </div>
       </div>
     </div>
   </section>
 </div>
+
 
 <!-- ============ ZONE MANAGER ============ -->
 <div class="page" id="page-zone-manager">
@@ -538,22 +719,88 @@
           <a class="active" onclick="ZoneManagerDash.tab(this,'overview')">📊 ওভারভিউ</a>
           <a onclick="ZoneManagerDash.tab(this,'products')">📦 প্রোডাক্ট</a>
           <a onclick="ZoneManagerDash.tab(this,'orders')">🧾 অর্ডার</a>
+          <a onclick="ZoneManagerDash.tab(this,'analytics')">📈 অ্যানালিটিক্স</a>
           <a onclick="ZoneManagerDash.tab(this,'drivers')">🚴 ড্রাইভার</a>
           <a onclick="ZoneManagerDash.logout()" style="color:#f87171">🔒 লগআউট</a>
         </aside>
         <div>
-          <div id="zmOverviewPane"><div class="stat-grid">
-            <div class="stat-card"><div class="lbl">এই শাখার সেল</div><div class="val rose" id="zmStatSales">৳০</div></div>
-            <div class="stat-card"><div class="lbl">মোট অর্ডার</div><div class="val" id="zmStatOrders">০</div></div>
-            <div class="stat-card"><div class="lbl">পেন্ডিং</div><div class="val" id="zmStatPending">০</div></div>
-            <div class="stat-card"><div class="lbl">প্রোডাক্ট</div><div class="val" id="zmStatProducts">০</div></div>
-          </div></div>
-          <div id="zmProductsPane" style="display:none"><div style="display:flex;justify-content:space-between;margin-bottom:14px"><h3 style="font-size:15px;color:#fff">এই শাখার প্রোডাক্ট</h3><button class="btn btn-gold" style="padding:8px 14px;font-size:12.5px" onclick="ZoneManagerDash.openAddProduct()">+ নতুন প্রোডাক্ট</button></div>
-            <div class="table-scroll"><table class="data-table"><thead><tr><th>প্রোডাক্ট</th><th>ক্যাটাগরি</th><th>মূল্য</th><th>স্টক</th><th>স্ট্যাটাস</th><th>একশন</th></tr></thead><tbody id="zmProductsTable"></tbody></table></div></div>
-          <div id="zmOrdersPane" style="display:none"><h3 style="font-size:15px;color:#fff;margin-bottom:14px">এই শাখার অর্ডার</h3>
-            <div class="table-scroll"><table class="data-table"><thead><tr><th>ID</th><th>কাস্টমার</th><th>ফোন</th><th>মোট</th><th>ড্রাইভার</th><th>স্ট্যাটাস</th></tr></thead><tbody id="zmOrdersTable"></tbody></table></div></div>
-          <div id="zmDriversPane" style="display:none"><div style="display:flex;justify-content:space-between;margin-bottom:14px"><h3 style="font-size:15px;color:#fff">এই শাখার ড্রাইভার</h3><button class="btn btn-outline" style="padding:8px 14px;font-size:12.5px" onclick="DriverManage.openAdd(ZoneManagerDash.currentZone)">+ নতুন ড্রাইভার</button></div>
-            <div class="table-scroll"><table class="data-table"><thead><tr><th>নাম</th><th>মোবাইল</th><th>স্ট্যাটাস</th></tr></thead><tbody id="zmDriverManageTable"></tbody></table></div></div>
+          <!-- Overview -->
+          <div id="zmOverviewPane">
+            <div class="stat-grid" style="margin-bottom:14px">
+              <div class="stat-card"><div class="lbl">আজকের সেল</div><div class="val rose" id="zmStatToday">৳০</div></div>
+              <div class="stat-card"><div class="lbl">মোট সেল</div><div class="val" id="zmStatSales">৳০</div></div>
+              <div class="stat-card"><div class="lbl">মোট অর্ডার</div><div class="val" id="zmStatOrders">০</div></div>
+              <div class="stat-card"><div class="lbl">পেন্ডিং</div><div class="val rose" id="zmStatPending">০</div></div>
+              <div class="stat-card"><div class="lbl">প্রোডাক্ট</div><div class="val" id="zmStatProducts">০</div></div>
+            </div>
+            <!-- Inventory alerts -->
+            <div id="zmInventoryAlerts" style="display:none;margin-bottom:14px">
+              <div style="background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.25);border-radius:14px;padding:14px">
+                <div style="color:#fbbf24;font-weight:600;font-size:13px;margin-bottom:8px">⚠️ স্টক সতর্কতা</div>
+                <div id="zmInventoryAlertList"></div>
+              </div>
+            </div>
+            <!-- Revenue chart -->
+            <div class="card-box" style="margin-bottom:14px">
+              <h3 style="font-size:13.5px;color:#fff;margin-bottom:12px">গত ৭ দিনের সেল</h3>
+              <div id="zmRevenueChart" style="display:flex;align-items:flex-end;gap:6px;height:70px"></div>
+              <div id="zmChartLabels" style="display:flex;gap:6px;margin-top:4px"></div>
+            </div>
+            <!-- Recent orders -->
+            <div class="card-box">
+              <h3 style="font-size:13.5px;color:#fff;margin-bottom:10px">সাম্প্রতিক অর্ডার</h3>
+              <div class="table-scroll"><table class="data-table"><thead><tr><th>ID</th><th>কাস্টমার</th><th>মোট</th><th>স্ট্যাটাস</th><th>একশন</th></tr></thead><tbody id="zmRecentOrders"></tbody></table></div>
+            </div>
+          </div>
+          <!-- Products -->
+          <div id="zmProductsPane" style="display:none">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+              <h3 style="font-size:15px;color:#fff">এই শাখার প্রোডাক্ট</h3>
+              <div style="display:flex;gap:8px">
+                <input id="zmProductSearch" type="text" placeholder="খুঁজুন..." oninput="ZoneManagerDash.filterProducts()" style="padding:7px 11px;border-radius:9px;background:rgba(255,255,255,.04);border:1px solid var(--line);color:#fff;font-size:12.5px;width:140px">
+                <button class="btn btn-gold" style="padding:8px 14px;font-size:12.5px" onclick="ZoneManagerDash.openAddProduct()">+ নতুন</button>
+              </div>
+            </div>
+            <div class="table-scroll"><table class="data-table">
+              <thead><tr><th>ছবি</th><th>প্রোডাক্ট</th><th>মূল্য</th><th>স্টক</th><th>স্ট্যাটাস</th><th>একশন</th></tr></thead>
+              <tbody id="zmProductsTable"></tbody>
+            </table></div>
+          </div>
+          <!-- Orders -->
+          <div id="zmOrdersPane" style="display:none">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+              <h3 style="font-size:15px;color:#fff">এই শাখার অর্ডার</h3>
+              <select id="zmOrderStatusFilter" onchange="ZoneManagerDash.filterOrders()" style="padding:7px 10px;border-radius:9px;background:rgba(255,255,255,.04);border:1px solid var(--line);color:#fff;font-size:12.5px">
+                <option value="">সব স্ট্যাটাস</option>
+                <option value="pending">পেন্ডিং</option>
+                <option value="confirmed">কনফার্মড</option>
+                <option value="delivered">ডেলিভারড</option>
+                <option value="cancelled">বাতিল</option>
+              </select>
+            </div>
+            <div class="table-scroll"><table class="data-table">
+              <thead><tr><th>ID</th><th>কাস্টমার</th><th>ফোন</th><th>মোট</th><th>ড্রাইভার</th><th>স্ট্যাটাস</th><th>একশন</th></tr></thead>
+              <tbody id="zmOrdersTable"></tbody>
+            </table></div>
+          </div>
+          <!-- Analytics -->
+          <div id="zmAnalyticsPane" style="display:none">
+            <h3 style="font-size:15px;color:#fff;margin-bottom:14px">শাখার অ্যানালিটিক্স</h3>
+            <div class="stat-grid" style="margin-bottom:14px">
+              <div class="stat-card"><div class="lbl">আজ</div><div class="val rose" id="zmAnToday">৳০</div></div>
+              <div class="stat-card"><div class="lbl">এই সপ্তাহ</div><div class="val" id="zmAnWeek">৳০</div></div>
+              <div class="stat-card"><div class="lbl">এই মাস</div><div class="val" id="zmAnMonth">৳০</div></div>
+            </div>
+            <div class="card-box"><h3 style="font-size:13.5px;color:#fff;margin-bottom:10px">💳 পেমেন্ট পদ্ধতি</h3><div id="zmPayBreakdown"></div></div>
+          </div>
+          <!-- Drivers -->
+          <div id="zmDriversPane" style="display:none">
+            <div style="display:flex;justify-content:space-between;margin-bottom:14px">
+              <h3 style="font-size:15px;color:#fff">এই শাখার ড্রাইভার</h3>
+              <button class="btn btn-outline" style="padding:8px 14px;font-size:12.5px" onclick="DriverManage.openAdd(ZoneManagerDash.currentZone)">+ নতুন ড্রাইভার</button>
+            </div>
+            <div class="table-scroll"><table class="data-table"><thead><tr><th>নাম</th><th>মোবাইল</th><th>স্ট্যাটাস</th></tr></thead><tbody id="zmDriverManageTable"></tbody></table></div>
+          </div>
         </div>
       </div>
     </div>
@@ -798,9 +1045,74 @@
 <script src="./js/router.js"></script>
 <script src="./js/auth.js"></script>
 <script src="./js/widgets.js"></script>
-<script src="./js/admin.js"></script>
 <script src="./js/pages.js"></script>
 <script src="./js/app.js"></script>
+
+<!-- ============ ORDER DETAIL MODAL ============ -->
+<div class="modal" id="orderDetailModal">
+  <div class="modal-box" style="max-width:560px;position:relative;max-height:90vh;overflow-y:auto">
+    <button class="close" onclick="OrderDetail.close()" style="position:absolute;top:14px;right:14px">✕</button>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;padding-right:30px">
+      <div>
+        <h3 class="tiro" style="font-size:17px;color:#fff" id="odOrderNum"></h3>
+        <div style="font-size:11.5px;color:var(--ink-muted);margin-top:2px" id="odDate"></div>
+      </div>
+      <span id="odStatus" class="status-pill"></span>
+    </div>
+
+    <!-- Customer info -->
+    <div class="card-box" style="margin-bottom:12px">
+      <div style="font-size:12px;font-weight:600;color:var(--gold);margin-bottom:8px">👤 কাস্টমার তথ্য</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px">
+        <div><div style="color:var(--ink-muted);font-size:11px">নাম</div><div id="odName" style="color:#fff"></div></div>
+        <div><div style="color:var(--ink-muted);font-size:11px">ফোন</div><div id="odPhone" style="color:#fff"></div></div>
+        <div><div style="color:var(--ink-muted);font-size:11px">NID</div><div id="odNid" style="color:#fff"></div></div>
+        <div><div style="color:var(--ink-muted);font-size:11px">পেমেন্ট</div><div id="odPayment" style="color:#fff"></div></div>
+      </div>
+    </div>
+
+    <!-- Delivery address -->
+    <div class="card-box" style="margin-bottom:12px">
+      <div style="font-size:12px;font-weight:600;color:var(--gold);margin-bottom:8px">📍 ডেলিভারি ঠিকানা</div>
+      <div style="font-size:13px;color:var(--ink-soft);line-height:1.7" id="odAddress"></div>
+      <div style="margin-top:8px;padding:8px 10px;background:rgba(212,175,55,.06);border-radius:8px;font-size:12px;color:var(--ink-muted)" id="odInstructions"></div>
+    </div>
+
+    <!-- Items -->
+    <div class="card-box" style="margin-bottom:12px">
+      <div style="font-size:12px;font-weight:600;color:var(--gold);margin-bottom:8px">📦 অর্ডার আইটেম</div>
+      <div id="odItems"></div>
+      <div style="border-top:1px solid var(--line);margin-top:10px;padding-top:10px">
+        <div class="row-between"><span>সাবটোটাল</span><span id="odSubtotal"></span></div>
+        <div class="row-between"><span>ডেলিভারি চার্জ</span><span id="odShipping"></span></div>
+        <div class="row-total"><span>মোট</span><span id="odTotal"></span></div>
+      </div>
+    </div>
+
+    <!-- Driver info -->
+    <div class="card-box" style="margin-bottom:16px" id="odDriverBox">
+      <div style="font-size:12px;font-weight:600;color:var(--gold);margin-bottom:6px">🚴 ড্রাইভার</div>
+      <div id="odDriver" style="font-size:13px;color:#fff"></div>
+    </div>
+
+    <!-- Actions -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-gold" style="flex:1;padding:10px" onclick="OrderDetail.print()">🖨️ প্রিন্ট / Invoice</button>
+      <button class="btn btn-outline" style="flex:1;padding:10px" onclick="OrderDetail.close()">বন্ধ করুন</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ CUSTOMER ORDERS MODAL ============ -->
+<div class="modal" id="customerOrdersModal">
+  <div class="modal-box" style="max-width:520px;position:relative;max-height:90vh;overflow-y:auto">
+    <button class="close" onclick="document.getElementById('customerOrdersModal').classList.remove('show')" style="position:absolute;top:14px;right:14px">✕</button>
+    <h3 class="tiro" style="font-size:17px;margin-bottom:4px" id="coCustomerName"></h3>
+    <div style="font-size:12.5px;color:var(--ink-muted);margin-bottom:16px" id="coCustomerPhone"></div>
+    <div id="coOrdersList"></div>
+  </div>
+</div>
+
 <script>
 // Chat toggle — logo দেখাও বা ✕ দেখাও
 const _origToggle = ChatWidget.toggle.bind(ChatWidget);
@@ -813,5 +1125,9 @@ ChatWidget.toggle = function(){
   else if(icon && !this.isOpen){ icon.innerHTML = '<img src="chat_logo.jpeg" id="chatLogoImg" alt="chat" style="width:32px;height:32px;object-fit:cover;border-radius:50%;display:block">'; }
 };
 </script>
+  <script type="module" src="js/admin/services.js"></script>
+  <script type="module" src="js/admin/driver.js"></script>
+  <script type="module" src="js/admin/zone-manager.js"></script>
+  <script type="module" src="js/admin/admin.js"></script>
 </body>
 </html>
