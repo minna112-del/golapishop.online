@@ -1,400 +1,48 @@
-<!DOCTYPE html>
-<html lang="bn" class="scroll-smooth">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Golapi Shop Online — নোয়াখালী সদর ও বেগমগঞ্জের অনলাইন শপ</title>
-<meta name="google" content="notranslate">
-  <meta name="description" content="Golapi Shop Online — নোয়াখালী সদর ও বেগমগঞ্জের নিজস্ব অনলাইন শপ। ঔষধ, মুদি, গ্যাস, মোবাইল, কসমেটিকস — bKash, Nagad ও COD পেমেন্ট, নিজস্ব লোকাল ডেলিভারি, কাস্টম বাজার লিস্ট, ফ্রী স্বাস্থ্য সেবা।">
-<meta property="og:title" content="Golapi Shop Online — নোয়াখালীর বিশ্বস্ত অনলাইন শপ">
-<meta property="og:description" content="আপনার দায়িত্ব লিস্ট করা, আমাদের দায়িত্ব বাজার করে দেওয়া।">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://www.golapishop.online">
-<meta property="og:locale" content="bn_BD">
-<meta name="theme-color" content="#050810">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<link rel="manifest" href="./manifest.json">
-<link rel="canonical" href="https://www.golapishop.online">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Tiro+Bangla:ital@0;1&family=Hind+Siliguri:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<script type="application/ld+json">
-{"@context":"https://schema.org","@type":"OnlineStore","name":"Golapi Shop Online","url":"https://www.golapishop.online","email":"golapishoponline.bd@gmail.com","telephone":"+8801612057371","description":"নোয়াখালী সদর ও বেগমগঞ্জের নিজস্ব অনলাইন শপ। bKash, Nagad, COD পেমেন্ট।","areaServed":["নোয়াখালী সদর","বেগমগঞ্জ"],"sameAs":["https://facebook.com/golapishoponline"]}
-</script>
+python3 << 'PYEOF'
+# Shell index.html — শুধু header, footer, scripts
+# main এর ভেতরে কোনো page content নেই
+shell = open('/home/claude/index.html').read()
 
-<!-- ================= FIREBASE ================= -->
-<script type="module" src="./js/firebase-init.js"></script>
+# main start থেকে /main পর্যন্ত সব page content মুছো
+main_open = shell.find('<main id="appRoot">')
+main_close = shell.find('</main>') + len('</main>')
 
-<link rel="stylesheet" href="./css/style.css">
-</head>
-<body>
+# main tag-এর ভেতরে শুধু empty div রাখো
+new_main = '<main id="appRoot">\n<!-- pages injected by page-loader.js -->\n</main>'
 
-<a href="#appRoot" class="skip-link" onfocus="this.style.top='0'" onblur="this.style.top='-40px'">মূল কন্টেন্টে যান</a>
+# Footer খুঁজে বের করো
+footer_start = shell.find('<footer class="main"')
+if footer_start == -1:
+    footer_start = shell.find('<footer')
 
-<div class="topbar" id="custTopbar">
-  <div class="topbar-inner">
-    <span>📍 নোয়াখালী সদর ও বেগমগঞ্জে ডেলিভারি</span>
-    <span>📞 <a href="tel:+8801612057371" style="color:inherit">+880 1612-057371</a></span>
-    <span>🔥 ক্যাশ অন ডেলিভারি চালু</span>
-    <span><img src="dr_logo.jpeg" style="width:14px;height:14px;object-fit:cover;border-radius:3px;vertical-align:middle;margin-right:4px"> গোলাপী ফ্রী স্বাস্থ্য সেবা</span>
-    <span>📍 নোয়াখালী সদর ও বেগমগঞ্জে ডেলিভারি</span>
-    <span>📞 <a href="tel:+8801612057371" style="color:inherit">+880 1612-057371</a></span>
-    <span>🔥 ক্যাশ অন ডেলিভারি চালু</span>
-    <span><img src="dr_logo.jpeg" style="width:14px;height:14px;object-fit:cover;border-radius:3px;vertical-align:middle;margin-right:4px"> গোলাপী ফ্রী স্বাস্থ্য সেবা</span>
-  </div>
-</div>
+# Modals — footer-এর পরে থেকে শেষ পর্যন্ত (scripts সহ)
+after_main = shell[footer_start:]
 
-<header class="main" id="custHeader">
-  <div class="header-row">
-    <a href="#" onclick="Router.go('home')" class="logo">
-      <div class="mark"><img src="head_logo.jpeg" alt="Golapi Shop" style="width:100%;height:100%;object-fit:cover;border-radius:12px"></div>
-      <div><div class="word">Golapi<span class="g">Shop</span><span class="r">.online</span></div><div class="tag">নোয়াখালীর বিশ্বস্ত অনলাইন শপ</div></div>
-    </a>
-    <div class="search-wrap" id="searchWrapDesktop">
-      <input type="search" id="searchInput" placeholder="প্রোডাক্ট, ব্র্যান্ড বা ক্যাটাগরি খুঁজুন..." oninput="doSearch(this.value)">
-      <button onclick="submitSearch()">🔍</button>
-    </div>
-    <div class="header-actions">
-      <button class="icon-btn" onclick="toggleLang()" id="langBtn" title="Change language / ভাষা পরিবর্তন">🌐 <span id="langBtnLabel">EN</span></button>
-      <button class="icon-btn" onclick="AccountPage.openOrLogin()"><span>👤</span><span id="accLabel" class="hide-sm">লগইন</span></button>
-      <button class="icon-btn" onclick="Cart.open()" style="position:relative"><span>🛍️</span><span class="hide-sm">কার্ট</span><span class="cart-badge" id="cartBadge" style="display:none">0</span></button>
-    </div>
-  </div>
-  <nav class="catnav">
-    <div class="inner">
-      <a href="#" onclick="Router.go('custom-bazar')" class="flash" data-bn="📝 কাস্টম বাজার" data-en="📝 Custom Bazar">📝 কাস্টম বাজার</a>
-      <a href="#" onclick="Router.go('medical')" class="medical" data-bn='<img src="dr_logo.jpeg" style="width:16px;height:16px;object-fit:cover;border-radius:4px;vertical-align:middle;margin-right:4px"> ফ্রী স্বাস্থ্য সেবা' data-en='<img src="dr_logo.jpeg" style="width:16px;height:16px;object-fit:cover;border-radius:4px;vertical-align:middle;margin-right:4px"> Free Health Care'><img src="dr_logo.jpeg" style="width:16px;height:16px;object-fit:cover;border-radius:4px;vertical-align:middle;margin-right:4px"> ফ্রী স্বাস্থ্য সেবা</a>
-      <a href="#" onclick="Router.go('listing',{cat:'all'})" data-bn="সব ক্যাটাগরি ▾" data-en="All Categories ▾">সব ক্যাটাগরি ▾</a>
-      <a href="#" onclick="Router.go('listing',{cat:'medicine'})" data-bn="💊 ঔষধ" data-en="💊 Medicine">💊 ঔষধ</a>
-      <a href="#" onclick="Router.go('listing',{cat:'grocery'})" data-bn="🛒 মুদি বাজার" data-en="🛒 Grocery">🛒 মুদি বাজার</a>
-      <a href="#" onclick="Router.go('listing',{cat:'gas'})" data-bn="🔥 গ্যাস সিলিন্ডার" data-en="🔥 Gas Cylinder">🔥 গ্যাস সিলিন্ডার</a>
-      <a href="#" onclick="Router.go('listing',{cat:'cosmetics'})" data-bn="💄 কসমেটিকস" data-en="💄 Cosmetics">💄 কসমেটিকস</a>
-      <a href="#" onclick="Router.go('listing',{cat:'flash'})" data-bn="🔥 ফ্ল্যাশ সেল" data-en="🔥 Flash Sale">🔥 ফ্ল্যাশ সেল</a>
-    </div>
-  </nav>
-</header>
+new_shell = shell[:main_open] + new_main + '\n\n' + after_main
 
-<div class="overlay" id="cartOverlay" onclick="Cart.close()"></div>
-<div class="drawer" id="cartDrawer">
-  <div style="padding:20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center">
-    <h3 class="tiro" style="font-size:18px">🛍️ আপনার কার্ট</h3>
-    <button onclick="Cart.close()" style="width:32px;height:32px;border-radius:9px;background:rgba(255,255,255,.05)">✕</button>
-  </div>
-  <div style="padding:18px;flex:1" id="cartBody"></div>
-  <div style="padding:18px;border-top:1px solid var(--line);display:none" id="cartFoot">
-    <div class="row-between"><span>সাবটোটাল</span><span id="cartSub">৳০</span></div>
-    <div class="row-between"><span>ডেলিভারি চার্জ</span><span id="cartDel">৳৬০</span></div>
-    <div class="row-total row-between"><span>মোট</span><span id="cartTot">৳০</span></div>
-    <button class="btn btn-gold btn-block" style="margin-top:12px" onclick="Cart.goCheckout()">চেকআউট করুন →</button>
-  </div>
-</div>
+# page-loader.js script tag — অন্য সব script-এর আগে
+# first script tag খুঁজো
+import re
+first_script_pos = new_shell.find('<script src="./js/')
+if first_script_pos == -1:
+    first_script_pos = new_shell.find('<script src="js/')
 
-<main id="appRoot">
+if first_script_pos != -1:
+    new_shell = (new_shell[:first_script_pos] + 
+                 '  <script src="page-loader.js"></script>\n  ' + 
+                 new_shell[first_script_pos:])
+    print('✅ page-loader.js added before other scripts')
 
-<!-- Pages loaded dynamically by page-loader.js -->
-  <div id="pageLoadingIndicator" style="text-align:center;padding:60px 20px;color:var(--ink-muted);font-size:14px">
-    <div style="font-size:32px;margin-bottom:12px">🌹</div>
-    <div>লোড হচ্ছে...</div>
-  </div>
+# app.js restore — simple version without pages-ready
+open('/mnt/user-data/outputs/index.html', 'w').write(new_shell)
+print(f'✅ Shell index.html: {new_shell.count(chr(10))} lines')
 
-</main>
-
-<footer class="main" id="custFooter">
-  <div class="footer-grid">
-    <div>
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><div class="mark" style="width:36px;height:36px"><img src="head_logo.jpeg" alt="Golapi" style="width:100%;height:100%;object-fit:cover;border-radius:10px"></div><span class="word" style="font-size:14px">Golapi<span class="g">Shop</span>.online</span></div>
-      <p style="font-size:12.5px;color:var(--ink-muted)">নোয়াখালী সদর ও বেগমগঞ্জের মানুষের দৈনন্দিন প্রয়োজনীয় পণ্য ঘরে বসে পাওয়ার জন্য আমরা কাজ করি।</p>
-    </div>
-    <div><h5>দ্রুত লিংক</h5>
-      <a href="#" onclick="Router.go('custom-bazar')">📝 কাস্টম বাজার</a>
-      <a href="#" onclick="Router.go('medical')"><img src="dr_logo.jpeg" style="width:14px;height:14px;object-fit:cover;border-radius:3px;vertical-align:middle;margin-right:4px"> ফ্রী স্বাস্থ্য সেবা</a>
-      <a href="#" onclick="Router.go('myorders')">📦 আমার অর্ডার</a>
-      <a href="#" onclick="Router.go('contact')">📞 যোগাযোগ</a>
-    </div>
-    <div><h5>যোগাযোগ</h5>
-      <div style="margin-bottom:10px"><span class="footer-label">🔴 হটলাইন</span><a href="tel:+8801612057371">+880 1612-057371</a></div>
-      <div style="margin-bottom:10px"><span class="footer-label">📍 সদর — রিমন</span><a href="tel:+8801627010060">+880 1627-010060</a></div>
-      <div style="margin-bottom:10px"><span class="footer-label">📍 বেগমগঞ্জ — সৃজন</span><a href="tel:+8801310006959">+880 1310-006959</a></div>
-      <div><span class="footer-label">ইমেইল</span><a href="mailto:golapishoponline.bd@gmail.com">golapishoponline.bd@gmail.com</a></div>
-    </div>
-    <div><h5>পেমেন্ট</h5>
-      <div class="pay-icons" style="margin-bottom:14px"><span>bKash</span><span>Nagad</span><span>COD</span></div>
-      <a href="https://facebook.com/golapishoponline" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:9px;background:#1877F2;color:#fff;font-size:12px;font-weight:600">📘 Facebook</a>
-    </div>
-  </div>
-  <div class="footer-bottom">
-    <span>© ২০২৬ Golapi Shop Online — সর্বস্বত্ব সংরক্ষিত</span>
-    <span style="display:flex;gap:14px"><a href="#" onclick="Router.go('contact')">যোগাযোগ</a><a href="#" onclick="Router.go('admin-dash')" style="opacity:.35">শপ ম্যানেজমেন্ট</a><a href="#" onclick="Router.go('zone-manager')" style="opacity:.35">শাখা ব্যবস্থাপনা</a></span>
-  </div>
-</footer>
-
-<nav class="mobnav" id="custMobNav">
-  <a class="active" onclick="Router.go('home')"><span class="em">🏠</span><span data-bn="হোম" data-en="Home">হোম</span></a>
-  <a onclick="Router.go('listing',{cat:'all'})"><span class="em">📂</span><span data-bn="ক্যাটাগরি" data-en="Category">ক্যাটাগরি</span></a>
-  <a onclick="Cart.open()"><span class="em">🛍️</span><span data-bn="কার্ট" data-en="Cart">কার্ট</span></a>
-  <a onclick="Router.go('myorders')"><span class="em">📦</span><span data-bn="অর্ডার" data-en="Orders">অর্ডার</span></a>
-  <a onclick="Router.go('medical')"><span class="em"><img src="dr_logo.jpeg" style="width:22px;height:22px;object-fit:cover;border-radius:5px;vertical-align:middle"></span><span data-bn="স্বাস্থ্য" data-en="Health">স্বাস্থ্য</span></a>
-</nav>
-
-<button id="chatBtn" onclick="ChatWidget.toggle()"><span id="chatIcon"><img src="chat_logo.jpeg" id="chatLogoImg" alt="chat" style="width:32px;height:32px;object-fit:cover;border-radius:50%;display:block"></span></button>
-<div id="chatWin">
-  <div id="chatHead">
-    <div style="display:flex;align-items:center;gap:9px"><span style="font-size:20px">🌹</span><div><div style="font-weight:700;font-size:13.5px">Golapi সহায়ক</div><div style="font-size:11px;opacity:.85">প্রায় সাথে সাথেই উত্তর দেয়</div></div></div>
-    <button onclick="ChatWidget.toggle()" style="font-size:18px">✕</button>
-  </div>
-  <div id="chatBody"><div class="cw-msg cw-bot">হ্যালো! 🌹 আমি Golapi Shop-এর সহায়ক। প্রোডাক্ট, ডেলিভারি, পেমেন্ট বা অর্ডার নিয়ে যা জানতে চান জিজ্ঞেস করুন।</div></div>
-  <div id="chatQuick">
-    <button onclick="ChatWidget.quickAsk('ডেলিভারি কতদিনে পাব?')">ডেলিভারি</button>
-    <button onclick="ChatWidget.quickAsk('কোন কোন পেমেন্ট মেথড আছে?')">পেমেন্ট</button>
-    <button onclick="ChatWidget.quickAsk('ফ্রী স্বাস্থ্য সেবা কি?')">স্বাস্থ্য সেবা</button>
-  </div>
-  <div id="chatInputRow"><input type="text" id="chatInput" placeholder="আপনার প্রশ্ন লিখুন..." onkeydown="if(event.key==='Enter')ChatWidget.send()"><button onclick="ChatWidget.send()">➤</button></div>
-</div>
-
-<!-- ============ AUTH MODAL ============ -->
-<div class="modal" id="authModal">
-  <div class="modal-box" style="position:relative">
-    <button class="close" onclick="AuthUI.close()">✕</button>
-    <div style="display:flex;border-bottom:1px solid var(--line);margin-bottom:20px">
-      <button id="tabLogin" class="active" onclick="AuthUI.switchTab('login')" style="flex:1;padding:11px;font-weight:600;color:var(--gold);border-bottom:2px solid var(--gold)">লগইন</button>
-      <button id="tabRegister" onclick="AuthUI.switchTab('register')" style="flex:1;padding:11px;font-weight:600;color:var(--ink-muted)">রেজিস্ট্রেশন</button>
-    </div>
-    <div id="authMsg" class="form-msg"></div>
-    <form id="loginForm" onsubmit="event.preventDefault();AuthUI.login();">
-      <div class="field"><label>ইমেইল</label><input type="text" id="loginEmail"></div>
-      <div class="field"><label>পাসওয়ার্ড</label><input type="password" id="loginPass"></div>
-      <button type="submit" class="btn btn-gold btn-block">লগইন করুন</button>
-    </form>
-    <form id="registerForm" style="display:none" onsubmit="event.preventDefault();AuthUI.register();">
-      <div class="field"><label>পূর্ণ নাম *</label><input type="text" id="regName" required></div>
-      <div class="field"><label>ইমেইল *</label><input type="email" id="regEmail" required></div>
-      <div class="field"><label>মোবাইল নম্বর *</label><input type="tel" id="regPhone" placeholder="01XXXXXXXXX" required></div>
-      <div class="field"><label>পাসওয়ার্ড *</label><input type="password" id="regPass" required></div>
-      <button type="submit" class="btn btn-gold btn-block">রেজিস্ট্রেশন করুন</button>
-    </form>
-  </div>
-</div>
-
-<!-- ============ ADD/EDIT PRODUCT MODAL ============ -->
-<div class="modal" id="productModal">
-  <div class="modal-box" style="max-width:520px;position:relative">
-    <button class="close" onclick="ProductForm.close()">✕</button>
-    <h3 class="tiro" id="pfTitle" style="font-size:18px;margin-bottom:14px">নতুন প্রোডাক্ট যুক্ত করুন</h3>
-    <div id="pfMsg" class="form-msg"></div>
-    <div class="field"><label>প্রোডাক্টের নাম *</label><input type="text" id="pfName"></div>
-    <div class="field"><label>শাখা/জোন *</label>
-      <div style="display:flex;gap:16px;margin-top:4px">
-        <label class="filter-opt"><input type="checkbox" id="pfZoneSadar" checked> নোয়াখালী সদর</label>
-        <label class="filter-opt"><input type="checkbox" id="pfZoneBegumganj"> বেগমগঞ্জ</label>
-      </div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <div class="field"><label>ক্যাটাগরি *</label><select id="pfCategory">
-        <option value="medicine">ঔষধ</option><option value="grocery">মুদি বাজার</option><option value="confectionery">কনফেকশনারি</option>
-        <option value="stationery">স্টেশনারি</option><option value="gas">গ্যাস সিলিন্ডার</option><option value="mobile">মোবাইল এক্সেসরিস</option>
-        <option value="watch">ঘড়ি ও ব্যাটারি</option><option value="cosmetics">কসমেটিকস</option><option value="clothing">জামা-কাপড়</option><option value="furniture">ফার্নিচার</option>
-      </select></div>
-      <div class="field"><label>একক *</label><select id="pfUnit"><option>পিস</option><option>কেজি</option><option>৫০০ গ্রাম</option><option>লিটার</option><option>ডজন</option><option>প্যাকেট</option><option>পাতা</option><option>বক্স</option></select></div>
-    </div>
-    <div style="background:rgba(212,175,55,.06);border-radius:12px;padding:14px;margin-bottom:14px">
-      <div style="font-size:12.5px;font-weight:600;color:var(--gold);margin-bottom:10px">💰 দাম হিসাব</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px">
-        <div class="field" style="margin-bottom:0"><label>কেনা দাম (৳) *</label><input type="number" id="pfCostPrice" min="0" oninput="ProductForm.recalc()"></div>
-        <div class="field" style="margin-bottom:0"><label>অতিরিক্ত খরচ (৳)</label><input type="number" id="pfExtraCost" min="0" value="0" oninput="ProductForm.recalc()"></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div class="field" style="margin-bottom:0"><label>ডেলিভারি চার্জ (%)</label><input type="number" id="pfDeliveryPercent" min="0" value="0" step="0.1" oninput="ProductForm.recalc()"></div>
-        <div class="field" style="margin-bottom:0"><label>লাভ (%) *</label><input type="number" id="pfProfitPercent" min="0" value="20" step="0.1" oninput="ProductForm.recalc()"></div>
-      </div>
-      <div style="font-size:11.5px;color:var(--ink-muted);background:rgba(0,0,0,.2);border-radius:8px;padding:9px 12px;margin-top:10px">হিসাব: <strong id="pfBreakdown" style="color:var(--gold)">৳০</strong></div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <div class="field"><label>নিয়মিত মূল্য (৳)</label><input type="number" id="pfPrice" min="0"></div>
-      <div class="field"><label>বিক্রয় মূল্য (৳) *</label><input type="number" id="pfSalePrice" min="0"></div>
-    </div>
-    <div class="field"><label>স্টক পরিমাণ *</label><input type="number" id="pfStock" min="0"></div>
-    <div class="field">
-      <label>প্রোডাক্টের ছবি</label>
-      <input type="file" id="pfImgFile" accept="image/*" onchange="ProductForm.onImageSelect(this)" style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--line-l);border-radius:11px;padding:11px 15px;color:var(--ink);font-size:14px">
-      <div id="pfImgPreview" style="margin-top:8px;display:none"><img id="pfImgThumb" style="width:80px;height:80px;object-fit:cover;border-radius:10px;border:1px solid var(--line)"></div>
-    </div>
-    <div class="field">
-      <label>বিবরণ <span id="pfDescAiBtn" style="display:none;margin-left:8px;font-size:11px;color:var(--gold);cursor:pointer;background:rgba(212,175,55,.1);padding:3px 8px;border-radius:6px;border:1px solid var(--gold-line)" onclick="ProductForm.generateDesc()">✨ AI দিয়ে লিখুন</span></label>
-      <div id="pfDescLoading" style="display:none;font-size:12px;color:var(--ink-muted);margin-bottom:6px">⏳ বিবরণ তৈরি হচ্ছে...</div>
-      <textarea id="pfDescription" rows="3"></textarea>
-    </div>
-    <div style="display:flex;gap:18px;margin:8px 0 18px;flex-wrap:wrap">
-      <label class="filter-opt"><input type="checkbox" id="pfCod" checked> COD সুবিধা</label>
-      <label class="filter-opt"><input type="checkbox" id="pfFlash"> ফ্ল্যাশ সেল</label>
-      <label class="filter-opt"><input type="checkbox" id="pfFeatured"> ফিচার্ড</label>
-    </div>
-    <button class="btn btn-gold btn-block" id="pfSubmitBtn" onclick="ProductForm.submit()">প্রোডাক্ট সংরক্ষণ করুন</button>
-  </div>
-</div>
-
-<!-- ============ ADD DRIVER MODAL ============ -->
-<div class="modal" id="driverModal">
-  <div class="modal-box" style="position:relative">
-    <button class="close" onclick="DriverManage.close()">✕</button>
-    <h3 class="tiro" style="font-size:18px;margin-bottom:14px">নতুন ড্রাইভার যুক্ত করুন</h3>
-    <div id="dfMsg" class="form-msg"></div>
-    <div class="field"><label>ড্রাইভারের নাম *</label><input type="text" id="dfName"></div>
-    <div class="field"><label>শাখা *</label><select id="dfZone"><option value="noakhali_sadar">নোয়াখালী সদর</option><option value="begumganj">বেগমগঞ্জ</option></select></div>
-    <div class="field"><label>মোবাইল নম্বর *</label><input type="tel" id="dfPhone"></div>
-    <div class="field"><label>পিন (৪ ডিজিট) *</label><input type="password" id="dfPin" maxlength="4"></div>
-    <button class="btn btn-gold btn-block" onclick="DriverManage.submit()">ড্রাইভার যুক্ত করুন</button>
-  </div>
-</div>
-
-<!-- ============ OWNER PIN GATE ============ -->
-<div class="modal" id="ownerGateModal">
-  <div class="modal-box" style="position:relative;text-align:center">
-    <button class="close" onclick="OwnerAuth.cancel()">✕</button>
-    <h3 class="tiro" style="font-size:18px;margin-bottom:6px">🔒 Owner Dashboard</h3>
-    <p style="color:var(--ink-muted);font-size:13px;margin-bottom:16px">পিন দিয়ে আনলক করুন</p>
-    <div id="ownerGateMsg" class="form-msg"></div>
-    <input type="password" id="ownerPinInput" maxlength="4" inputmode="numeric" style="font-size:22px;letter-spacing:10px;text-align:center;width:100%;background:rgba(255,255,255,.04);border:1px solid var(--line-l);border-radius:11px;padding:13px;color:#fff;margin-bottom:14px">
-    <button class="btn btn-gold btn-block" onclick="OwnerAuth.unlock()">আনলক করুন</button>
-  </div>
-</div>
-
-<!-- ============ ORDER CHAT (customer <-> driver) ============ -->
-<div class="modal" id="chatOrderModal">
-  <div class="modal-box" style="position:relative;padding:0;max-width:380px;display:flex;flex-direction:column;max-height:80vh">
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:linear-gradient(120deg,var(--pink),var(--pink-dark));border-radius:20px 20px 0 0">
-      <strong style="color:#fff;font-size:14px">💬 অর্ডার চ্যাট</strong>
-      <button onclick="OrderChat.close()" style="color:#fff;font-size:18px">✕</button>
-    </div>
-    <div id="chatOrderBody" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px;min-height:200px;max-height:340px"></div>
-    <div style="display:flex;gap:8px;padding:12px 14px;border-top:1px solid var(--line)">
-      <input type="text" id="chatOrderInput" placeholder="মেসেজ লিখুন..." style="flex:1;background:rgba(255,255,255,.04);border:1px solid var(--line-l);border-radius:20px;padding:10px 15px;color:#fff;font-size:13px" onkeydown="if(event.key==='Enter')OrderChat.send()">
-      <button onclick="OrderChat.send()" style="width:38px;height:38px;border-radius:50%;background:var(--gold);color:var(--bg)">➤</button>
-    </div>
-  </div>
-</div>
-
-<!-- ============ EDIT ORDER (address/instructions — allowed until picked_up) ============ -->
-<div class="modal" id="editOrderModal">
-  <div class="modal-box" style="position:relative">
-    <button class="close" onclick="OrderEdit.close()">✕</button>
-    <h3 class="tiro" style="font-size:17px;margin-bottom:14px">অর্ডার তথ্য সম্পাদনা</h3>
-    <div id="editOrderMsg" class="form-msg"></div>
-    <div class="field"><label>গ্রাম / এলাকার নাম</label><input type="text" id="eoVillage"></div>
-    <div class="field"><label>সম্পূর্ণ ঠিকানা</label><textarea id="eoAddress" rows="2"></textarea></div>
-    <div class="field"><label>ডেলিভারি ইনস্ট্রাকশন</label><textarea id="eoInstructions" rows="2"></textarea></div>
-    <button class="btn btn-gold btn-block" onclick="OrderEdit.save()">পরিবর্তন সংরক্ষণ করুন</button>
-  </div>
-</div>
-
-<!-- ============ ADD ADDRESS ============ -->
-<div class="modal" id="addressModal">
-  <div class="modal-box" style="position:relative">
-    <button class="close" onclick="AccountPage.closeAddAddress()">✕</button>
-    <h3 class="tiro" style="font-size:17px;margin-bottom:14px">নতুন ঠিকানা</h3>
-    <div id="addressMsg" class="form-msg"></div>
-    <div class="field"><label>লেবেল (যেমন: বাসা, অফিস)</label><input type="text" id="addrLabel" placeholder="বাসা"></div>
-    <div class="field"><label>উপজেলা</label><select id="addrDistrict" onchange="onUpazilaChange('addr')"><option value="">বেছে নিন</option><option value="noakhali_sadar">নোয়াখালী সদর</option><option value="begumganj">বেগমগঞ্জ</option></select></div>
-    <div class="field"><label>ইউনিয়ন</label><select id="addrZone"><option value="">প্রথমে উপজেলা বেছে নিন</option></select></div>
-    <div class="field"><label>গ্রাম / এলাকা</label><input type="text" id="addrVillage"></div>
-    <div class="field"><label>সম্পূর্ণ ঠিকানা</label><textarea id="addrFull" rows="2"></textarea></div>
-    <button class="btn btn-gold btn-block" onclick="AccountPage.saveAddress()">সংরক্ষণ করুন</button>
-  </div>
-</div>
-
-<div class="toast-wrap" id="toastWrap"></div>
-
-<script src="page-loader.js"></script>
-  <script src="./js/utils.js"></script>
-<script src="./js/data.js"></script>
-<script src="./js/router.js"></script>
-<script src="./js/auth.js"></script>
-<script src="./js/widgets.js"></script>
-<script src="./js/pages.js"></script>
-<script src="./js/app.js"></script>
-
-<!-- ============ ORDER DETAIL MODAL ============ -->
-<div class="modal" id="orderDetailModal">
-  <div class="modal-box" style="max-width:560px;position:relative;max-height:90vh;overflow-y:auto">
-    <button class="close" onclick="OrderDetail.close()" style="position:absolute;top:14px;right:14px">✕</button>
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;padding-right:30px">
-      <div>
-        <h3 class="tiro" style="font-size:17px;color:#fff" id="odOrderNum"></h3>
-        <div style="font-size:11.5px;color:var(--ink-muted);margin-top:2px" id="odDate"></div>
-      </div>
-      <span id="odStatus" class="status-pill"></span>
-    </div>
-
-    <!-- Customer info -->
-    <div class="card-box" style="margin-bottom:12px">
-      <div style="font-size:12px;font-weight:600;color:var(--gold);margin-bottom:8px">👤 কাস্টমার তথ্য</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px">
-        <div><div style="color:var(--ink-muted);font-size:11px">নাম</div><div id="odName" style="color:#fff"></div></div>
-        <div><div style="color:var(--ink-muted);font-size:11px">ফোন</div><div id="odPhone" style="color:#fff"></div></div>
-        <div><div style="color:var(--ink-muted);font-size:11px">NID</div><div id="odNid" style="color:#fff"></div></div>
-        <div><div style="color:var(--ink-muted);font-size:11px">পেমেন্ট</div><div id="odPayment" style="color:#fff"></div></div>
-      </div>
-    </div>
-
-    <!-- Delivery address -->
-    <div class="card-box" style="margin-bottom:12px">
-      <div style="font-size:12px;font-weight:600;color:var(--gold);margin-bottom:8px">📍 ডেলিভারি ঠিকানা</div>
-      <div style="font-size:13px;color:var(--ink-soft);line-height:1.7" id="odAddress"></div>
-      <div style="margin-top:8px;padding:8px 10px;background:rgba(212,175,55,.06);border-radius:8px;font-size:12px;color:var(--ink-muted)" id="odInstructions"></div>
-    </div>
-
-    <!-- Items -->
-    <div class="card-box" style="margin-bottom:12px">
-      <div style="font-size:12px;font-weight:600;color:var(--gold);margin-bottom:8px">📦 অর্ডার আইটেম</div>
-      <div id="odItems"></div>
-      <div style="border-top:1px solid var(--line);margin-top:10px;padding-top:10px">
-        <div class="row-between"><span>সাবটোটাল</span><span id="odSubtotal"></span></div>
-        <div class="row-between"><span>ডেলিভারি চার্জ</span><span id="odShipping"></span></div>
-        <div class="row-total"><span>মোট</span><span id="odTotal"></span></div>
-      </div>
-    </div>
-
-    <!-- Driver info -->
-    <div class="card-box" style="margin-bottom:16px" id="odDriverBox">
-      <div style="font-size:12px;font-weight:600;color:var(--gold);margin-bottom:6px">🚴 ড্রাইভার</div>
-      <div id="odDriver" style="font-size:13px;color:#fff"></div>
-    </div>
-
-    <!-- Internal note -->
-    <div class="card-box" style="margin-bottom:12px">
-      <div style="font-size:12px;font-weight:600;color:var(--gold);margin-bottom:6px">📝 অভ্যন্তরীণ নোট (শুধু Admin দেখতে পাবে)</div>
-      <textarea id="odNoteInput" rows="2" placeholder="অর্ডার সম্পর্কে নোট লিখুন..." style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px;padding:9px 12px;color:#fff;font-size:13px;font-family:inherit;resize:vertical"></textarea>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
-        <span id="odNoteStatus" style="font-size:11.5px;color:#22c55e"></span>
-        <button onclick="AdminDash.saveOrderNote(OrderDetail.current?.id)" style="padding:5px 12px;border-radius:8px;background:rgba(212,175,55,.1);border:1px solid var(--gold-line);color:var(--gold);font-size:12px">সংরক্ষণ করুন</button>
-      </div>
-    </div>
-    <!-- Actions -->
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn btn-gold" style="flex:1;padding:10px" onclick="OrderDetail.print()">🖨️ প্রিন্ট / Invoice</button>
-      <button class="btn btn-outline" style="flex:1;padding:10px" onclick="OrderDetail.close()">বন্ধ করুন</button>
-    </div>
-  </div>
-</div>
-
-<!-- ============ CUSTOMER ORDERS MODAL ============ -->
-<div class="modal" id="customerOrdersModal">
-  <div class="modal-box" style="max-width:520px;position:relative;max-height:90vh;overflow-y:auto">
-    <button class="close" onclick="document.getElementById('customerOrdersModal').classList.remove('show')" style="position:absolute;top:14px;right:14px">✕</button>
-    <h3 class="tiro" style="font-size:17px;margin-bottom:4px" id="coCustomerName"></h3>
-    <div style="font-size:12.5px;color:var(--ink-muted);margin-bottom:16px" id="coCustomerPhone"></div>
-    <div id="coOrdersList"></div>
-  </div>
-</div>
-
-<script>
-// Chat toggle
-const _origToggle = ChatWidget.toggle.bind(ChatWidget);
-ChatWidget.toggle = function(){
-  _origToggle();
-  const icon = document.getElementById('chatIcon');
-  if(icon && this.isOpen) icon.innerHTML = '✕';
-  else if(icon) icon.innerHTML = '<img src="chat_logo.jpeg" id="chatLogoImg" alt="chat" style="width:32px;height:32px;object-fit:cover;border-radius:50%;display:block">';
-};
-</script>
-</body>
-</html>
+# Verify — appRoot should be empty
+if '<!-- pages injected by page-loader.js -->' in new_shell:
+    print('✅ appRoot is empty (pages will be injected)')
+    
+# Check script order
+scripts = re.findall(r'<script src="[^"]*">', new_shell)
+print('\nScript order:')
+for i, s in enumerate(scripts): print(f'  {i+1}. {s}')
+PYEOF
