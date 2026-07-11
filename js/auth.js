@@ -1,11 +1,11 @@
-/* auth.js — Firebase Auth + login/register modal */
-/* ---------- Auth ---------- */
+/* auth.js — Firebase Auth + login/register modal + Account page + Order editing + Wishlist page + Refund */
 const Auth = {
   currentUser:null,
   init(){
     FB.onAuthStateChanged(FB.auth, user=>{
       this.currentUser = user;
-      document.getElementById('accLabel').textContent = user ? (user.displayName||'অ্যাকাউন্ট').split(' ')[0] : 'লগইন';
+      const labelEl = document.getElementById('accLabel');
+      if(labelEl) labelEl.textContent = user ? (user.displayName||'অ্যাকাউন্ট').split(' ')[0] : 'লগইন';
     });
   }
 };
@@ -49,14 +49,14 @@ const AuthUI = {
   }
 };
 
-/* ---------- Account / Profile page (Temu-style settings) ---------- */
+/* ---------- Account / Profile page ---------- */
 const AccountPage = {
   openOrLogin(){ Auth.currentUser ? Router.go('account') : AuthUI.open(); },
   render(){
     const u = Auth.currentUser;
-    document.getElementById('accName').textContent = u ? (u.displayName||'কাস্টমার') : 'অতিথি';
-    document.getElementById('accEmail').textContent = u ? (u.email||'') : '';
-    document.getElementById('accAvatar').textContent = u ? (u.displayName||'ক')[0] : '👤';
+    const nameEl=document.getElementById('accName'); if(nameEl) nameEl.textContent = u ? (u.displayName||'কাস্টমার') : 'অতিথি';
+    const emailEl=document.getElementById('accEmail'); if(emailEl) emailEl.textContent = u ? (u.email||'') : '';
+    const avatarEl=document.getElementById('accAvatar'); if(avatarEl) avatarEl.textContent = u ? (u.displayName||'ক')[0] : '👤';
   },
   requestNotifications(){
     if(!('Notification' in window)){ toast('এই ব্রাউজারে নোটিফিকেশন সাপোর্ট নেই','error'); return; }
@@ -67,7 +67,6 @@ const AccountPage = {
     try{ await FB.signOut(FB.auth); toast('✓ লগআউট হয়েছে','success'); Router.go('home'); }
     catch(e){ toast('লগআউট ব্যর্থ','error'); }
   },
-  /* ---- Saved addresses (stored at users/{uid}.addresses = [{label,district,zone,village,address}]) ---- */
   async renderAddresses(){
     const list = document.getElementById('addressList');
     if(!Auth.currentUser){ list.innerHTML = `<div class="empty-state"><div class="em">🔒</div><h3>লগইন করুন</h3><button class="btn btn-gold" onclick="AuthUI.open()">লগইন করুন</button></div>`; return; }
@@ -150,5 +149,49 @@ const OrderEdit = {
       toast('✓ অর্ডার তথ্য আপডেট হয়েছে','success');
       this.close(); MyOrders.render();
     }catch(e){ msgEl.textContent='সমস্যা: '+e.message; msgEl.className='form-msg err'; }
+  }
+};
+
+/* ---------- Cancel Order ---------- */
+const CancelOrder = {
+  orderId:null,
+  open(orderId){
+    this.orderId = orderId;
+    document.getElementById('cancelReason').value='';
+    document.getElementById('cancelOrderMsg').className='form-msg';
+    document.getElementById('cancelOrderModal').classList.add('show');
+  },
+  close(){ document.getElementById('cancelOrderModal').classList.remove('show'); },
+  async confirm(){
+    const msgEl = document.getElementById('cancelOrderMsg');
+    const reason = document.getElementById('cancelReason').value.trim();
+    if(!reason){ msgEl.textContent='বাতিলের কারণ লিখুন'; msgEl.className='form-msg err'; return; }
+    if(!FB){ msgEl.textContent='সংযোগ সমস্যা'; msgEl.className='form-msg err'; return; }
+    try{
+      await FB.updateDoc(FB.doc(FB.db,'orders',this.orderId),{
+        status:'cancelled', cancelReason:reason, cancelledAt:FB.serverTimestamp()
+      });
+      toast('✓ অর্ডার বাতিল করা হয়েছে','success');
+      this.close(); MyOrders.render();
+    }catch(e){ msgEl.textContent='বাতিল ব্যর্থ: '+e.message; msgEl.className='form-msg err'; }
+  }
+};
+
+/* ---------- Refund Request ---------- */
+const RefundRequest = {
+  orderId:null,
+  open(orderId){
+    this.orderId = orderId;
+    document.getElementById('refundReason').value='';
+    document.getElementById('refundMsg').className='form-msg';
+    document.getElementById('refundModal').classList.add('show');
+  },
+  close(){ document.getElementById('refundModal').classList.remove('show'); },
+  async submit(){
+    const msgEl = document.getElementById('refundMsg');
+    const reason = document.getElementById('refundReason').value.trim();
+    if(!reason){ msgEl.textContent='রিফান্ডের কারণ লিখুন'; msgEl.className='form-msg err'; return; }
+    const ok = await RefundService.requestRefund(this.orderId, reason);
+    if(ok){ this.close(); MyOrders.render(); }
   }
 };
