@@ -282,64 +282,407 @@ const ZoneManagerDash = {
   }
 };
 
+// ============================================================
+// ENHANCED AdminDash — Complete replacement
+// ============================================================
 const AdminDash = {
+  _orders: [], _allOrders: [],
+
   async render(){
+    document.getElementById('adminLastUpdated').textContent = '🕐 ' + new Date().toLocaleTimeString('bn-BD');
     const orders = await OrdersService.loadAll();
+    this._orders = orders; this._allOrders = orders;
     await DriverManage.loadDrivers();
-    const sales = orders.filter(o=>o.status!=='cancelled').reduce((s,o)=>s+(o.subtotal||0),0);
-    const pending = orders.filter(o=>o.status==='pending'||o.status==='confirmed').length;
-    document.getElementById('aStatGmv').textContent=money(sales);
-    document.getElementById('aStatOrders').textContent=bn(orders.length);
-    document.getElementById('aStatPending').textContent=bn(pending);
-    document.getElementById('aStatProducts').textContent=bn(ALL_PRODUCTS.length);
-    document.getElementById('aRecentOrders').innerHTML = orders.length ? orders.slice(0,5).map(o=>{
-      const s=ORDER_STATUS[o.status]||ORDER_STATUS.pending;
-      return `<tr><td>${o.orderNumber||o.id}</td><td>${(o.items||[]).length} আইটেম</td><td>${money(o.subtotal||0)}</td><td><span class="status-pill ${s.cls}">${s.label}</span></td></tr>`;
-    }).join('') : `<tr><td colspan="4" style="text-align:center;color:var(--ink-muted);padding:24px">কোনো অর্ডার নেই</td></tr>`;
-    this.renderProducts(); this.renderOrders(orders); DriverManage.renderTable();
-    const cod = orders.filter(o=>o.paymentMethod==='cod'&&o.status!=='delivered'&&o.status!=='cancelled').reduce((s,o)=>s+(o.subtotal||0),0);
+
+    const now = new Date();
+    const todayStr = now.toDateString();
+    const weekAgo = new Date(now - 7*24*60*60*1000);
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const active = orders.filter(o=>o.status!=='cancelled');
+    const sales = active.reduce((s,o)=>s+(o.subtotal||0),0);
+    const todaySales = active.filter(o=>new Date(o.createdAt?.seconds*1000||0).toDateString()===todayStr).reduce((s,o)=>s+(o.subtotal||0),0);
+    const pending = orders.filter(o=>['pending','confirmed'].includes(o.status)).length;
+
+    // Unique customers
+    const customers = [...new Set(orders.map(o=>o.customerPhone).filter(Boolean))];
+
+    document.getElementById('aStatToday').textContent = money(todaySales);
+    document.getElementById('aStatGmv').textContent = money(sales);
+    document.getElementById('aStatOrders').textContent = bn(orders.length);
+    document.getElementById('aStatPending').textContent = bn(pending);
+    document.getElementById('aStatProducts').textContent = bn(ALL_PRODUCTS.length);
+    document.getElementById('aStatCustomers').textContent = bn(customers.length);
+
+    // Finance pane compat
+    const cod = orders.filter(o=>o.paymentMethod==='cod'&&!['delivered','cancelled'].includes(o.status)).reduce((s,o)=>s+(o.subtotal||0),0);
     const online = orders.filter(o=>o.paymentMethod!=='cod').reduce((s,o)=>s+(o.subtotal||0),0);
-    document.getElementById('fMonth').textContent=money(sales);
-    document.getElementById('fCod').textContent=money(cod);
-    document.getElementById('fOnline').textContent=money(online);
+    document.getElementById('fMonth').textContent = money(sales);
+    document.getElementById('fCod').textContent = money(cod);
+    document.getElementById('fOnline').textContent = money(online);
+
+    this.renderInventoryAlerts();
+    this.renderRevenueChart(orders);
+    this.renderRecentOrders(orders.slice(0,8));
+    this.renderProducts();
+    this.renderOrdersTable(orders);
+    this.renderAnalytics(orders);
+    this.renderCustomers(orders);
+    DriverManage.renderTable();
+    this.loadZmPins();
   },
+
+  async refresh(){ await this.render(); toast('✓ আপডেট হয়েছে','success'); },
+
+  renderInventoryAlerts(){
+    const low = ALL_PRODUCTS.filter(p=>p.stock >= 0 && p.stock <= 5);
+    const alertEl = document.getElementById('inventoryAlerts');
+    const listEl = document.getElementById('inventoryAlertList');
+    const bannerEl = document.getElementById('lowStockBanner');
+    if(!low.length){ alertEl.style.display='none'; if(bannerEl) bannerEl.style.display='none'; return; }
+    alertEl.style.display='block';
+    listEl.innerHTML = low.map(p=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(251,191,36,.1);font-size:12.5px">
+        <span style="color:#fff">${p.name}</span>
+        <span style="${p.stock===0?'color:#f87171':'color:#fbbf24'};font-weight:600">${p.stock===0?'স্টক আউট':p.stock+' টি বাকি'}
+          <a href="#" onclick="event.preventDefault();ProductForm.openEdit('${p.id}')" style="margin-left:8px;font-size:11px;color:var(--gold)">আপডেট করুন</a>
+        </span>
+      </div>`).join('');
+    if(bannerEl){ bannerEl.style.display='block'; bannerEl.textContent = `⚠️ ${low.length}টি পণ্যের স্টক কম — স্টক আপডেট করুন`; }
+  },
+
+  renderRevenueChart(orders){
+    const chartEl = document.getElementById('aRevenueChart');
+    const labelsEl = document.getElementById('aRevenueChartLabels');
+    if(!chartEl) return;
+    const days = [];
+    const now = new Date();
+    for(let i=6;i>=0;i--){
+      const d = new Date(now); d.setDate(d.getDate()-i);
+      const ds = d.toDateString();
+      const dayOrders = orders.filter(o=>new Date(o.createdAt?.seconds*1000||0).toDateString()===ds && o.status!=='cancelled');
+      const revenue = dayOrders.reduce((s,o)=>s+(o.subtotal||0),0);
+      const label = ['রবি','সোম','মঙ্গ','বুধ','বৃহ','শুক্র','শনি'][d.getDay()];
+      days.push({revenue, label, isToday: i===0});
+    }
+    const max = Math.max(...days.map(d=>d.revenue), 1);
+    const total = days.reduce((s,d)=>s+d.revenue,0);
+    document.getElementById('aChart7Total').textContent = 'মোট: '+money(total);
+    chartEl.innerHTML = days.map(d=>{
+      const pct = Math.max((d.revenue/max)*100, d.revenue>0?8:2);
+      return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">
+        <span style="font-size:9px;color:var(--ink-muted)">${d.revenue>0?money(d.revenue):''}</span>
+        <div style="width:100%;height:${pct}%;border-radius:4px 4px 0 0;background:${d.isToday?'var(--gold)':'rgba(212,175,55,.35)'};min-height:4px;transition:.3s"></div>
+      </div>`;
+    }).join('');
+    labelsEl.innerHTML = days.map(d=>`<div style="flex:1;text-align:center;font-size:9.5px;color:${d.isToday?'var(--gold)':'var(--ink-muted)'}">${d.label}</div>`).join('');
+  },
+
+  renderRecentOrders(orders){
+    const tbody = document.getElementById('aRecentOrders');
+    if(!tbody) return;
+    if(!orders.length){ tbody.innerHTML=`<tr><td colspan="5" style="text-align:center;color:var(--ink-muted);padding:20px">কোনো অর্ডার নেই</td></tr>`; return; }
+    tbody.innerHTML = orders.map(o=>{
+      const s = ORDER_STATUS[o.status]||ORDER_STATUS.pending;
+      return `<tr>
+        <td style="font-size:11px">${o.orderNumber||o.id.slice(-6)}</td>
+        <td>${o.customerName||'—'}<br><span style="font-size:10.5px;color:var(--ink-muted)">${o.customerPhone||''}</span></td>
+        <td style="color:var(--gold)">${money(o.subtotal||0)}</td>
+        <td><span class="status-pill ${s.cls}">${s.label}</span></td>
+        <td><a href="#" onclick="event.preventDefault();AdminDash.openOrderDetail('${o.id}')" style="color:var(--gold);font-size:11px;display:block;margin-bottom:4px">বিস্তারিত</a>
+          <select onchange="AdminDash.quickStatus('${o.id}',this.value)" style="padding:3px 6px;border-radius:6px;background:var(--bg2);border:1px solid var(--line);color:#fff;font-size:11px">
+            ${Object.entries(ORDER_STATUS).map(([k,v])=>`<option value="${k}" ${o.status===k?'selected':''}>${v.label}</option>`).join('')}
+          </select>
+        </td>
+      </tr>`;
+    }).join('');
+  },
+
   renderProducts(){
-    if(!ALL_PRODUCTS.length){ document.getElementById('aProductsTable').innerHTML=`<tr><td colspan="7" style="text-align:center;color:var(--ink-muted);padding:24px">কোনো প্রোডাক্ট নেই</td></tr>`; return; }
-    document.getElementById('aProductsTable').innerHTML = ALL_PRODUCTS.map(p=>`<tr><td>${p.name}</td><td>${AREA_LABELS[p.zone]||'—'}</td><td>${CATEGORIES.find(c=>c.id===p.category)?.label||p.category}</td><td>${money(p.salePrice)}</td><td>${bn(p.stock)}</td><td><span class="status-pill ${p.stock>0?'delivered':'cancelled'}">${p.stock>0?'লাইভ':'স্টক আউট'}</span></td><td><a href="#" onclick="event.preventDefault();ProductForm.openEdit('${p.id}')">এডিট</a></td></tr>`).join('');
+    const tbody = document.getElementById('aProductsTable');
+    if(!tbody) return;
+    const search = document.getElementById('productSearch')?.value.toLowerCase()||'';
+    const list = search ? ALL_PRODUCTS.filter(p=>p.name.toLowerCase().includes(search)) : ALL_PRODUCTS;
+    if(!list.length){ tbody.innerHTML=`<tr><td colspan="7" style="text-align:center;color:var(--ink-muted);padding:20px">কোনো প্রোডাক্ট নেই</td></tr>`; return; }
+    tbody.innerHTML = list.map(p=>`<tr style="${p.stock===0?'opacity:.6':''}">
+      <td><div style="width:38px;height:38px;border-radius:8px;overflow:hidden;background:var(--elevated)"><img src="${p.img}" style="width:100%;height:100%;object-fit:cover" loading="lazy"></div></td>
+      <td><div style="font-size:12.5px;color:#fff;max-width:160px">${p.name}</div><div style="font-size:10.5px;color:var(--ink-muted)">${CATEGORIES.find(c=>c.id===p.category)?.label||''}</div></td>
+      <td>${AREA_LABELS[p.zone]||'—'}</td>
+      <td><div style="color:var(--gold);font-weight:600">${money(p.salePrice)}</div>${p.price>p.salePrice?`<div style="font-size:10px;color:var(--ink-dim);text-decoration:line-through">${money(p.price)}</div>`:''}</td>
+      <td>
+        <input type="number" value="${p.stock}" min="0" onchange="AdminDash.quickStockUpdate('${p.id}',this.value)"
+          style="width:60px;padding:4px 6px;border-radius:6px;background:var(--bg2);border:1px solid ${p.stock<=5?'rgba(239,68,68,.4)':'var(--line)'};color:${p.stock===0?'#f87171':p.stock<=5?'#fbbf24':'#fff'};font-size:12px;text-align:center">
+      </td>
+      <td><span class="status-pill ${p.stock>0?'delivered':'cancelled'}">${p.stock>0?'লাইভ':'স্টক আউট'}</span></td>
+      <td style="display:flex;gap:6px">
+        <a href="#" onclick="event.preventDefault();ProductForm.openEdit('${p.id}')" style="color:var(--gold);font-size:12px">এডিট</a>
+        <a href="#" onclick="event.preventDefault();AdminDash.toggleProductStatus('${p.id}')" style="color:${p.status==='inactive'?'#22c55e':'#f87171'};font-size:12px">${p.status==='inactive'?'চালু':'বন্ধ'}</a>
+      </td>
+    </tr>`).join('');
   },
-  renderOrders(orders){
-    if(!orders.length){ document.getElementById('aOrdersTable').innerHTML=`<tr><td colspan="7" style="text-align:center;color:var(--ink-muted);padding:24px">কোনো অর্ডার নেই</td></tr>`; return; }
-    document.getElementById('aOrdersTable').innerHTML = orders.map(o=>{
+
+  filterProducts(){ this.renderProducts(); },
+
+  async quickStockUpdate(id, val){
+    if(!FB) return;
+    try{
+      await FB.updateDoc(FB.doc(FB.db,'products',id), {stock: Number(val), updatedAt: FB.serverTimestamp()});
+      const p = ALL_PRODUCTS.find(x=>x.id===id);
+      if(p){ p.stock = Number(val); }
+      this.renderInventoryAlerts();
+      toast('✓ স্টক আপডেট হয়েছে','success');
+    }catch(e){ toast('সমস্যা: '+e.message,'error'); }
+  },
+
+  async toggleProductStatus(id){
+    if(!FB) return;
+    const p = ALL_PRODUCTS.find(x=>x.id===id); if(!p) return;
+    const newStatus = p.status==='inactive' ? 'active' : 'inactive';
+    try{
+      await FB.updateDoc(FB.doc(FB.db,'products',id), {status:newStatus, updatedAt:FB.serverTimestamp()});
+      p.status = newStatus;
+      this.renderProducts();
+      toast(`✓ প্রোডাক্ট ${newStatus==='active'?'সক্রিয়':'নিষ্ক্রিয়'} করা হয়েছে`,'success');
+    }catch(e){ toast('সমস্যা: '+e.message,'error'); }
+  },
+
+  renderOrdersTable(orders){
+    const tbody = document.getElementById('aOrdersTable');
+    if(!tbody) return;
+    const statusFilter = document.getElementById('orderStatusFilter')?.value||'';
+    const zoneFilter = document.getElementById('orderZoneFilter')?.value||'';
+    let list = orders;
+    if(statusFilter) list = list.filter(o=>o.status===statusFilter);
+    if(zoneFilter) list = list.filter(o=>o.branchZone===zoneFilter);
+    if(!list.length){ tbody.innerHTML=`<tr><td colspan="9" style="text-align:center;color:var(--ink-muted);padding:20px">কোনো অর্ডার নেই</td></tr>`; return; }
+    tbody.innerHTML = list.map(o=>{
       const s = ORDER_STATUS[o.status]||ORDER_STATUS.pending;
       const zoneDrivers = DriverManage.drivers.filter(d=>d.branchZone===o.branchZone);
       const opts = zoneDrivers.map(d=>`<option value="${d.id}" ${o.driverId===d.id?'selected':''}>${d.name}</option>`).join('');
-      return `<tr><td>${o.orderNumber||o.id}</td><td>${AREA_LABELS[o.branchZone]||'—'}</td><td>${o.customerName||''}</td><td>${o.customerPhone||''}</td><td>${money(o.subtotal||0)}</td>
-      <td><select onchange="AdminDash.assignDriver('${o.id}',this.value)" style="padding:4px;border-radius:6px;background:var(--bg2);border:1px solid var(--line);color:#fff"><option value="">বেছে নিন</option>${opts}</select></td>
-      <td><span class="status-pill ${s.cls}">${s.label}</span></td></tr>`;
+      const date = o.createdAt?.seconds ? new Date(o.createdAt.seconds*1000).toLocaleDateString('bn-BD') : '—';
+      return `<tr>
+        <td><input type="checkbox" class="orderCheck" value="${o.id}" onchange="AdminDash.onCheckChange()"></td>
+        <td style="font-size:11px;white-space:normal">${o.orderNumber||o.id.slice(-6)}</td>
+        <td style="font-size:11px">${date}</td>
+        <td>${o.customerName||'—'}</td>
+        <td>${o.customerPhone||'—'}</td>
+        <td style="color:var(--gold)">${money(o.subtotal||0)}</td>
+        <td>
+          <select onchange="AdminDash.assignDriver('${o.id}',this.value)" style="padding:3px 6px;border-radius:6px;background:var(--bg2);border:1px solid var(--line);color:#fff;font-size:11px;max-width:120px">
+            <option value="">বেছে নিন</option>${opts}
+          </select>
+        </td>
+        <td><span class="status-pill ${s.cls}">${s.label}</span></td>
+        <td><a href="#" onclick="event.preventDefault();AdminDash.openOrderDetail('${o.id}')" style="color:var(--gold);font-size:11px;display:block;margin-bottom:4px">বিস্তারিত</a>
+          <select onchange="AdminDash.quickStatus('${o.id}',this.value)" style="padding:3px 6px;border-radius:6px;background:var(--bg2);border:1px solid var(--line);color:#fff;font-size:11px">
+            ${Object.entries(ORDER_STATUS).map(([k,v])=>`<option value="${k}" ${o.status===k?'selected':''}>${v.label}</option>`).join('')}
+          </select>
+        </td>
+      </tr>`;
     }).join('');
+    document.getElementById('selectAllOrders').checked = false;
   },
+
+  filterOrders(){ this.renderOrdersTable(this._allOrders); },
+
+  onCheckChange(){
+    const checked = document.querySelectorAll('.orderCheck:checked');
+    const bar = document.getElementById('bulkActionsBar');
+    if(checked.length > 0){
+      bar.style.display='flex';
+      document.getElementById('bulkCount').textContent = `${checked.length}টি অর্ডার সিলেক্ট করা হয়েছে`;
+    } else {
+      bar.style.display='none';
+    }
+  },
+
+  toggleSelectAll(cb){
+    document.querySelectorAll('.orderCheck').forEach(c=>c.checked=cb.checked);
+    this.onCheckChange();
+  },
+
+  async bulkUpdateStatus(){
+    const status = document.getElementById('bulkStatusSelect').value;
+    if(!status){ toast('স্ট্যাটাস বেছে নিন','error'); return; }
+    const ids = [...document.querySelectorAll('.orderCheck:checked')].map(c=>c.value);
+    if(!ids.length){ toast('কোনো অর্ডার সিলেক্ট নেই','error'); return; }
+    let done = 0;
+    for(const id of ids){
+      const ok = await OrdersService.updateStatus(id, status);
+      if(ok) done++;
+    }
+    toast(`✓ ${done}টি অর্ডার আপডেট হয়েছে`,'success');
+    await this.render();
+  },
+
+  exportOrders(){
+    const ids = [...document.querySelectorAll('.orderCheck:checked')].map(c=>c.value);
+    const list = ids.length > 0 ? this._allOrders.filter(o=>ids.includes(o.id)) : this._allOrders;
+    const rows = [['অর্ডার ID','কাস্টমার','ফোন','NID','ঠিকানা','মোট','স্ট্যাটাস','তারিখ']];
+    list.forEach(o=>{
+      const date = o.createdAt?.seconds ? new Date(o.createdAt.seconds*1000).toLocaleDateString('bn-BD') : '';
+      rows.push([o.orderNumber||o.id,o.customerName||'',o.customerPhone||'',o.customerNid||'',o.address||'',o.subtotal||0,ORDER_STATUS[o.status]?.label||'',date]);
+    });
+    const csv = rows.map(r=>r.map(c=>`"${c}"`).join(',')).join('\n');
+    const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `golapi-orders-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    toast(`✓ ${list.length}টি অর্ডার export হয়েছে`,'success');
+  },
+
+  async quickStatus(orderId, status){
+    if(!status) return;
+    const ok = await OrdersService.updateStatus(orderId, status);
+    if(ok){ toast(`✓ স্ট্যাটাস আপডেট হয়েছে`,'success'); await this.render(); }
+  },
+
   async assignDriver(orderId,driverId){
     if(!driverId) return;
     const d = DriverManage.drivers.find(x=>x.id===driverId); if(!d) return;
     const ok = await OrdersService.assignDriver(orderId,driverId,d.name);
-    if(ok){ toast(`✓ ${d.name}-কে অ্যাসাইন করা হয়েছে`,'success'); this.render(); }
+    if(ok){ toast(`✓ ${d.name}-কে অ্যাসাইন করা হয়েছে`,'success'); await this.render(); }
   },
+
+  renderAnalytics(orders){
+    const active = orders.filter(o=>o.status!=='cancelled');
+    const now = new Date();
+    const todayStr = now.toDateString();
+    const weekAgo = new Date(now-7*24*60*60*1000);
+    const monthStart = new Date(now.getFullYear(),now.getMonth(),1);
+
+    const todayRev = active.filter(o=>new Date(o.createdAt?.seconds*1000||0).toDateString()===todayStr).reduce((s,o)=>s+(o.subtotal||0),0);
+    const weekRev = active.filter(o=>new Date(o.createdAt?.seconds*1000||0)>=weekAgo).reduce((s,o)=>s+(o.subtotal||0),0);
+    const monthRev = active.filter(o=>new Date(o.createdAt?.seconds*1000||0)>=monthStart).reduce((s,o)=>s+(o.subtotal||0),0);
+    const total = active.reduce((s,o)=>s+(o.subtotal||0),0);
+
+    ['anToday','anWeek','anMonth','anTotal'].forEach((id,i)=>{
+      const el=document.getElementById(id);
+      if(el) el.textContent=money([todayRev,weekRev,monthRev,total][i]);
+    });
+
+    // Payment breakdown
+    const pbEl = document.getElementById('paymentBreakdown');
+    if(pbEl){
+      const methods = {};
+      active.forEach(o=>{ const m=o.paymentMethod||'cod'; methods[m]=(methods[m]||0)+(o.subtotal||0); });
+      const labels = {cod:'💵 COD',bkash:'📱 bKash',nagad:'📱 Nagad'};
+      pbEl.innerHTML = Object.entries(methods).map(([m,v])=>{
+        const pct = total>0?Math.round(v/total*100):0;
+        return `<div style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px">
+            <span>${labels[m]||m}</span><span style="color:var(--gold)">${money(v)} (${pct}%)</span>
+          </div>
+          <div style="height:6px;border-radius:3px;background:rgba(255,255,255,.06)">
+            <div style="height:100%;width:${pct}%;border-radius:3px;background:var(--gold);transition:.5s"></div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    // Zone breakdown
+    const zbEl = document.getElementById('zoneBreakdown');
+    if(zbEl){
+      const zones = {};
+      active.forEach(o=>{ const z=o.branchZone||'unknown'; zones[z]=(zones[z]||0)+(o.subtotal||0); });
+      zbEl.innerHTML = Object.entries(zones).map(([z,v])=>{
+        const pct = total>0?Math.round(v/total*100):0;
+        return `<div style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px">
+            <span>${AREA_LABELS[z]||z}</span><span style="color:var(--rose)">${money(v)} (${pct}%)</span>
+          </div>
+          <div style="height:6px;border-radius:3px;background:rgba(255,255,255,.06)">
+            <div style="height:100%;width:${pct}%;border-radius:3px;background:var(--rose);transition:.5s"></div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    // Top products
+    const tpEl = document.getElementById('topProducts');
+    if(tpEl){
+      const productSales = {};
+      active.forEach(o=>(o.items||[]).forEach(item=>{
+        productSales[item.productId]=(productSales[item.productId]||0)+item.qty;
+      }));
+      const sorted = Object.entries(productSales).sort((a,b)=>b[1]-a[1]).slice(0,5);
+      tpEl.innerHTML = sorted.length ? sorted.map(([id,qty],i)=>{
+        const p = ALL_PRODUCTS.find(x=>x.id===id);
+        return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)">
+          <span style="width:20px;text-align:center;font-weight:700;color:var(--gold);font-size:13px">${i+1}</span>
+          <div style="width:32px;height:32px;border-radius:6px;overflow:hidden"><img src="${p?.img||''}" style="width:100%;height:100%;object-fit:cover"></div>
+          <div style="flex:1;min-width:0"><div style="font-size:12.5px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p?.name||id}</div></div>
+          <span style="font-size:12px;color:var(--ink-muted)">${qty} বিক্রি</span>
+        </div>`;
+      }).join('') : '<p style="color:var(--ink-muted);font-size:13px">তথ্য নেই</p>';
+    }
+  },
+
+  renderCustomers(orders){
+    const tbody = document.getElementById('aCustomersTable');
+    if(!tbody) return;
+    // Group by phone
+    const customers = {};
+    orders.forEach(o=>{
+      const phone = o.customerPhone||'';
+      if(!phone) return;
+      if(!customers[phone]){
+        customers[phone] = {name:o.customerName||'—', phone, nid:o.customerNid||'—', orders:[], total:0, lastDate:null};
+      }
+      customers[phone].orders.push(o);
+      customers[phone].total += (o.subtotal||0);
+      const d = o.createdAt?.seconds ? new Date(o.createdAt.seconds*1000) : null;
+      if(d && (!customers[phone].lastDate || d > customers[phone].lastDate)) customers[phone].lastDate = d;
+    });
+
+    const search = document.getElementById('customerSearch')?.value.toLowerCase()||'';
+    let list = Object.values(customers);
+    if(search) list = list.filter(c=>c.name.toLowerCase().includes(search)||c.phone.includes(search));
+    list.sort((a,b)=>b.total-a.total);
+
+    if(!list.length){ tbody.innerHTML=`<tr><td colspan="7" style="text-align:center;color:var(--ink-muted);padding:20px">কোনো কাস্টমার নেই</td></tr>`; return; }
+    tbody.innerHTML = list.map(c=>`<tr>
+      <td>${c.name}</td>
+      <td>${c.phone}</td>
+      <td style="font-size:11.5px">${c.nid}</td>
+      <td style="text-align:center">${c.orders.length}</td>
+      <td style="color:var(--gold)">${money(c.total)}</td>
+      <td style="font-size:11px">${c.lastDate?c.lastDate.toLocaleDateString('bn-BD'):'—'}</td>
+      <td><a href="#" onclick="event.preventDefault();AdminDash.showCustomerOrders('${c.phone}')" style="color:var(--gold);font-size:12px">অর্ডার দেখুন</a></td>
+    </tr>`).join('');
+  },
+
+  filterCustomers(){ this.renderCustomers(this._allOrders); },
+
+  showCustomerOrders(phone){
+    const orders = this._allOrders.filter(o=>o.customerPhone===phone);
+    const c = orders[0];
+    alert(`${c?.customerName||phone} এর ${orders.length}টি অর্ডার:\n\n${orders.map(o=>`${o.orderNumber||o.id.slice(-6)} — ${money(o.subtotal||0)} — ${ORDER_STATUS[o.status]?.label||''}`).join('\n')}`);
+  },
+
   tab(btn,name){
-    ['overview','products','orders','finance','settings'].forEach(t=>{ document.getElementById('admin'+t.charAt(0).toUpperCase()+t.slice(1)+'Pane').style.display = t===name?'block':'none'; });
+    ['overview','products','orders','analytics','customers','settings','finance'].forEach(t=>{
+      const el = document.getElementById('admin'+t.charAt(0).toUpperCase()+t.slice(1)+'Pane');
+      if(el) el.style.display = t===name?'block':'none';
+    });
     document.querySelectorAll('#page-admin-dash .dash-side a').forEach(a=>a.classList.remove('active'));
     if(btn) btn.classList.add('active');
     if(name==='products') this.renderProducts();
-    if(name==='settings') this.loadZmPins();
+    if(name==='analytics') this.renderAnalytics(this._allOrders);
+    if(name==='customers') this.renderCustomers(this._allOrders);
   },
+
   async loadZmPins(){
     if(!FB) return;
     try{
       const snap = await FB.getDoc(FB.doc(FB.db,'setting','zone_manager_pins'));
       const pins = snap.exists()? snap.data() : {};
-      document.getElementById('zmPinSadar').value = pins.noakhali_sadar||'';
-      document.getElementById('zmPinBegumganj').value = pins.begumganj||'';
+      const s = document.getElementById('zmPinSadar'); if(s) s.value=pins.noakhali_sadar||'';
+      const b = document.getElementById('zmPinBegumganj'); if(b) b.value=pins.begumganj||'';
     }catch(e){ devWarn(e.message); }
   },
+
   async saveZmPins(){
     if(!FB){ toast('সংযোগ সমস্যা','error'); return; }
     try{
@@ -351,6 +694,7 @@ const AdminDash = {
     }catch(e){ toast('সমস্যা: '+e.message,'error'); }
   }
 };
+
 
 /* ---------- Product Form (Add/Edit) ---------- */
 const ProductForm = {
@@ -484,4 +828,349 @@ const ProductForm = {
     }catch(e){ msgEl.textContent='সমস্যা হয়েছে: '+e.message; msgEl.className='form-msg err'; }
     finally{ btn.textContent=orig; btn.disabled=false; }
   }
+};
+
+// ============================================================
+// ORDER DETAIL — Full view + Print/Invoice
+// ============================================================
+const OrderDetail = {
+  current: null,
+  open(order){
+    this.current = order;
+    const s = ORDER_STATUS[order.status]||ORDER_STATUS.pending;
+    document.getElementById('odOrderNum').textContent = order.orderNumber||order.id;
+    document.getElementById('odDate').textContent = order.createdAt?.seconds ? new Date(order.createdAt.seconds*1000).toLocaleString('bn-BD') : '—';
+    const statusEl = document.getElementById('odStatus');
+    statusEl.textContent = s.label; statusEl.className = 'status-pill '+s.cls;
+    document.getElementById('odName').textContent = order.customerName||'—';
+    document.getElementById('odPhone').textContent = order.customerPhone||'—';
+    document.getElementById('odNid').textContent = order.customerNid||'প্রযোজ্য নয়';
+    document.getElementById('odPayment').textContent = {cod:'💵 COD',bkash:'📱 bKash',nagad:'📱 Nagad'}[order.paymentMethod]||order.paymentMethod||'COD';
+    document.getElementById('odAddress').innerHTML = `
+      <strong style="color:#fff">${order.village||''}</strong>${order.village?', ':''}<br>
+      ${AREA_LABELS[order.branchZone]||''} — ${order.address||''}
+    `;
+    document.getElementById('odInstructions').textContent = '💬 ' + (order.instructions||'কোনো বিশেষ নির্দেশনা নেই');
+    // Items
+    const itemsEl = document.getElementById('odItems');
+    const items = order.items||[];
+    itemsEl.innerHTML = items.map(item=>{
+      const p = ALL_PRODUCTS.find(x=>x.id===item.productId);
+      return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line)">
+        <div style="width:36px;height:36px;border-radius:7px;overflow:hidden;background:var(--elevated);flex-shrink:0">
+          <img src="${p?.img||''}" style="width:100%;height:100%;object-fit:cover">
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12.5px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p?.name||item.productId}</div>
+          <div style="font-size:11px;color:var(--ink-muted)">${money(p?.salePrice||0)} × ${item.qty}</div>
+        </div>
+        <span style="color:var(--gold);font-weight:600;font-size:13px">${money((p?.salePrice||0)*item.qty)}</span>
+      </div>`;
+    }).join('') || '<p style="color:var(--ink-muted);font-size:13px">আইটেম তথ্য নেই</p>';
+    const ship = order.shippingCost||0;
+    const sub = (order.subtotal||0) - ship;
+    document.getElementById('odSubtotal').textContent = money(sub>0?sub:order.subtotal||0);
+    document.getElementById('odShipping').textContent = ship>0?money(ship):'ফ্রি';
+    document.getElementById('odTotal').textContent = money(order.subtotal||0);
+    // Driver
+    const dbox = document.getElementById('odDriverBox');
+    const dEl = document.getElementById('odDriver');
+    if(order.driverName){ dbox.style.display='block'; dEl.textContent = `${order.driverName} — ${order.customerPhone||''}`; }
+    else { dbox.style.display='none'; }
+    document.getElementById('orderDetailModal').classList.add('show');
+  },
+  close(){ document.getElementById('orderDetailModal').classList.remove('show'); },
+  print(){
+    if(!this.current) return;
+    const o = this.current;
+    const items = (o.items||[]).map(item=>{
+      const p = ALL_PRODUCTS.find(x=>x.id===item.productId);
+      return `<tr><td>${p?.name||item.productId}</td><td style="text-align:center">${item.qty}</td><td style="text-align:right">${money((p?.salePrice||0)*item.qty)}</td></tr>`;
+    }).join('');
+    const ship = o.shippingCost||0;
+    const sub = (o.subtotal||0)-ship;
+    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <title>Invoice — ${o.orderNumber||o.id}</title>
+    <style>
+      body{font-family:'Hind Siliguri',Arial,sans-serif;max-width:400px;margin:0 auto;padding:20px;color:#111}
+      .logo{text-align:center;margin-bottom:16px}
+      .logo h1{font-size:20px;margin:0;color:#C2185B}
+      .logo p{font-size:11px;color:#666;margin:2px 0}
+      h2{font-size:14px;border-bottom:2px solid #C2185B;padding-bottom:6px;margin-bottom:12px}
+      table{width:100%;border-collapse:collapse;font-size:13px}
+      td,th{padding:7px 8px;text-align:left}
+      thead{background:#f5f5f5}
+      .total-row{border-top:2px solid #C2185B;font-weight:bold}
+      .info{font-size:12px;line-height:1.8;margin-bottom:12px}
+      .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;background:#e8f5e9;color:#2e7d32;font-weight:600}
+      @media print{button{display:none}}
+    </style></head><body>
+    <div class="logo">
+      <h1>🌹 Golapi Shop Online</h1>
+      <p>নোয়াখালী সদর ও বেগমগঞ্জ | golapishop.online</p>
+      <p>📞 +880 1612-057371</p>
+    </div>
+    <h2>🧾 ডেলিভারি রিসিট / Invoice</h2>
+    <div class="info">
+      <strong>অর্ডার নং:</strong> ${o.orderNumber||o.id}<br>
+      <strong>তারিখ:</strong> ${o.createdAt?.seconds?new Date(o.createdAt.seconds*1000).toLocaleDateString('bn-BD'):new Date().toLocaleDateString('bn-BD')}<br>
+      <strong>কাস্টমার:</strong> ${o.customerName||'—'}<br>
+      <strong>ফোন:</strong> ${o.customerPhone||'—'}<br>
+      <strong>NID:</strong> ${o.customerNid||'—'}<br>
+      <strong>ঠিকানা:</strong> ${o.village||''} ${o.address||''}<br>
+      <strong>পেমেন্ট:</strong> ${o.paymentMethod?.toUpperCase()||'COD'}
+      <span class="badge">${ORDER_STATUS[o.status]?.label||''}</span>
+    </div>
+    <h2>📦 পণ্য তালিকা</h2>
+    <table><thead><tr><th>পণ্য</th><th style="text-align:center">পরিমাণ</th><th style="text-align:right">মোট</th></tr></thead>
+    <tbody>${items}</tbody>
+    <tfoot>
+      <tr><td colspan="2">ডেলিভারি চার্জ</td><td style="text-align:right">${ship>0?money(ship):'ফ্রি'}</td></tr>
+      <tr class="total-row"><td colspan="2">সর্বমোট</td><td style="text-align:right">${money(o.subtotal||0)}</td></tr>
+    </tfoot></table>
+    <br><p style="text-align:center;font-size:11px;color:#888">ধন্যবাদ আপনার অর্ডারের জন্য — Golapi Shop Online</p>
+    <br><button onclick="window.print()" style="width:100%;padding:10px;background:#C2185B;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer">🖨️ প্রিন্ট করুন</button>
+    </body></html>`;
+    const w = window.open('','_blank','width=460,height=700');
+    w.document.write(html); w.document.close();
+  }
+};
+
+// ============================================================
+// ENHANCED ZoneManagerDash
+// ============================================================
+const ZoneManagerDash = {
+  currentZone: null, _orders: [],
+  applyHeader(zone){
+    const info = BRANCH_INFO[zone];
+    document.getElementById('zmZoneLabel').textContent = info.label;
+    document.getElementById('zmManagerLabel').textContent = 'ম্যানেজার: '+info.managerName;
+  },
+  async login(){
+    const zone=document.getElementById('zmZoneSelect').value;
+    const pin=document.getElementById('zmPinInput').value.trim();
+    const msgEl=document.getElementById('zmLoginMsg');
+    if(!pin){ msgEl.textContent='পিন দিন'; msgEl.className='form-msg err'; return; }
+    if(!FB){ msgEl.textContent='সংযোগ সমস্যা'; msgEl.className='form-msg err'; return; }
+    try{
+      const snap = await FB.getDoc(FB.doc(FB.db,'setting','zone_manager_pins'));
+      const pins = snap.exists()? snap.data() : {};
+      if(!pins[zone]||pins[zone]!==pin){ msgEl.textContent='পিন সঠিক নয়'; msgEl.className='form-msg err'; return; }
+      this.currentZone=zone; localStorage.setItem('golapi_zm_session',zone);
+      document.getElementById('zmLoginBox').style.display='none';
+      document.getElementById('zmDashBox').style.display='block';
+      this.applyHeader(zone); await this.render();
+    }catch(e){ msgEl.textContent='লগইন সমস্যা: '+e.message; msgEl.className='form-msg err'; }
+  },
+  logout(){ this.currentZone=null; localStorage.removeItem('golapi_zm_session'); document.getElementById('zmLoginBox').style.display='block'; document.getElementById('zmDashBox').style.display='none'; },
+  async render(){
+    const saved=localStorage.getItem('golapi_zm_session');
+    if(saved&&!this.currentZone) this.currentZone=saved;
+    if(!this.currentZone){ document.getElementById('zmLoginBox').style.display='block'; document.getElementById('zmDashBox').style.display='none'; return; }
+    document.getElementById('zmLoginBox').style.display='none';
+    document.getElementById('zmDashBox').style.display='block';
+    this.applyHeader(this.currentZone);
+    const allOrders = await OrdersService.loadAll();
+    const orders = allOrders.filter(o=>o.branchZone===this.currentZone);
+    this._orders = orders;
+    const products = ALL_PRODUCTS.filter(p=>p.zone===this.currentZone);
+    await DriverManage.loadDrivers();
+
+    const now = new Date();
+    const todayStr = now.toDateString();
+    const active = orders.filter(o=>o.status!=='cancelled');
+    const sales = active.reduce((s,o)=>s+(o.subtotal||0),0);
+    const todaySales = active.filter(o=>new Date(o.createdAt?.seconds*1000||0).toDateString()===todayStr).reduce((s,o)=>s+(o.subtotal||0),0);
+    const pending = orders.filter(o=>['pending','confirmed'].includes(o.status)).length;
+
+    document.getElementById('zmStatToday').textContent = money(todaySales);
+    document.getElementById('zmStatSales').textContent = money(sales);
+    document.getElementById('zmStatOrders').textContent = bn(orders.length);
+    document.getElementById('zmStatPending').textContent = bn(pending);
+    document.getElementById('zmStatProducts').textContent = bn(products.length);
+
+    this.renderInventoryAlerts(products);
+    this.renderRevenueChart(orders);
+    this.renderRecentOrders(orders.slice(0,6));
+    this.renderProducts(products);
+    this.renderOrders(orders);
+    this.renderAnalytics(orders);
+    DriverManage.renderTable(this.currentZone);
+  },
+  renderInventoryAlerts(products){
+    const low = products.filter(p=>p.stock>=0&&p.stock<=5);
+    const el = document.getElementById('zmInventoryAlerts');
+    const listEl = document.getElementById('zmInventoryAlertList');
+    if(!low.length||!el){ if(el) el.style.display='none'; return; }
+    el.style.display='block';
+    listEl.innerHTML = low.map(p=>`<div style="display:flex;justify-content:space-between;font-size:12.5px;padding:5px 0;border-bottom:1px solid rgba(251,191,36,.1)">
+      <span style="color:#fff">${p.name}</span>
+      <span style="color:${p.stock===0?'#f87171':'#fbbf24'};font-weight:600">${p.stock===0?'স্টক আউট':p.stock+' টি বাকি'}</span>
+    </div>`).join('');
+  },
+  renderRevenueChart(orders){
+    const chartEl = document.getElementById('zmRevenueChart');
+    const labelsEl = document.getElementById('zmChartLabels');
+    if(!chartEl) return;
+    const now = new Date();
+    const days = [];
+    for(let i=6;i>=0;i--){
+      const d=new Date(now); d.setDate(d.getDate()-i);
+      const ds=d.toDateString();
+      const rev = orders.filter(o=>new Date(o.createdAt?.seconds*1000||0).toDateString()===ds&&o.status!=='cancelled').reduce((s,o)=>s+(o.subtotal||0),0);
+      days.push({rev, label:['রবি','সোম','মঙ্গ','বুধ','বৃহ','শুক্র','শনি'][d.getDay()], isToday:i===0});
+    }
+    const max = Math.max(...days.map(d=>d.rev),1);
+    chartEl.innerHTML = days.map(d=>{
+      const pct = Math.max((d.rev/max)*100,d.rev>0?8:2);
+      return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
+        <div style="width:100%;height:${pct}%;border-radius:4px 4px 0 0;background:${d.isToday?'var(--gold)':'rgba(212,175,55,.3)'};min-height:3px"></div>
+      </div>`;
+    }).join('');
+    labelsEl.innerHTML = days.map(d=>`<div style="flex:1;text-align:center;font-size:9.5px;color:${d.isToday?'var(--gold)':'var(--ink-muted)'}">${d.label}</div>`).join('');
+  },
+  renderRecentOrders(orders){
+    const tbody = document.getElementById('zmRecentOrders');
+    if(!tbody) return;
+    tbody.innerHTML = orders.map(o=>{
+      const s=ORDER_STATUS[o.status]||ORDER_STATUS.pending;
+      return `<tr>
+        <td style="font-size:11px">${o.orderNumber||o.id.slice(-6)}</td>
+        <td>${o.customerName||'—'}</td>
+        <td style="color:var(--gold)">${money(o.subtotal||0)}</td>
+        <td><span class="status-pill ${s.cls}">${s.label}</span></td>
+        <td><a href="#" onclick="event.preventDefault();OrderDetail.open(${JSON.stringify(o).replace(/"/g,'&quot;')})" style="color:var(--gold);font-size:12px">বিস্তারিত</a></td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--ink-muted);padding:16px">কোনো অর্ডার নেই</td></tr>';
+  },
+  renderProducts(list){
+    const tbody = document.getElementById('zmProductsTable');
+    if(!tbody) return;
+    const search = document.getElementById('zmProductSearch')?.value.toLowerCase()||'';
+    const filtered = search ? list.filter(p=>p.name.toLowerCase().includes(search)) : list;
+    tbody.innerHTML = filtered.map(p=>`<tr>
+      <td><div style="width:34px;height:34px;border-radius:7px;overflow:hidden;background:var(--elevated)"><img src="${p.img}" style="width:100%;height:100%;object-fit:cover" loading="lazy"></div></td>
+      <td><div style="font-size:12px;color:#fff">${p.name}</div><div style="font-size:10px;color:var(--ink-muted)">${CATEGORIES.find(c=>c.id===p.category)?.label||''}</div></td>
+      <td style="color:var(--gold)">${money(p.salePrice)}</td>
+      <td><input type="number" value="${p.stock}" min="0" onchange="ZoneManagerDash.quickStock('${p.id}',this.value)" style="width:55px;padding:3px 5px;border-radius:6px;background:var(--bg2);border:1px solid ${p.stock<=5?'rgba(239,68,68,.4)':'var(--line)'};color:${p.stock===0?'#f87171':p.stock<=5?'#fbbf24':'#fff'};font-size:12px;text-align:center"></td>
+      <td><span class="status-pill ${p.stock>0?'delivered':'cancelled'}">${p.stock>0?'লাইভ':'আউট'}</span></td>
+      <td><a href="#" onclick="event.preventDefault();ProductForm.openEdit('${p.id}')" style="color:var(--gold);font-size:12px">এডিট</a></td>
+    </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--ink-muted);padding:16px">কোনো প্রোডাক্ট নেই</td></tr>';
+  },
+  filterProducts(){ this.renderProducts(ALL_PRODUCTS.filter(p=>p.zone===this.currentZone)); },
+  async quickStock(id,val){
+    if(!FB) return;
+    try{ await FB.updateDoc(FB.doc(FB.db,'products',id),{stock:Number(val),updatedAt:FB.serverTimestamp()}); const p=ALL_PRODUCTS.find(x=>x.id===id); if(p) p.stock=Number(val); toast('✓ স্টক আপডেট','success'); }
+    catch(e){ toast('সমস্যা: '+e.message,'error'); }
+  },
+  renderOrders(orders){
+    const tbody = document.getElementById('zmOrdersTable');
+    if(!tbody) return;
+    const f = document.getElementById('zmOrderStatusFilter')?.value||'';
+    const list = f ? orders.filter(o=>o.status===f) : orders;
+    const zoneDrivers = DriverManage.drivers.filter(d=>d.branchZone===this.currentZone);
+    tbody.innerHTML = list.map(o=>{
+      const s=ORDER_STATUS[o.status]||ORDER_STATUS.pending;
+      const opts = zoneDrivers.map(d=>`<option value="${d.id}" ${o.driverId===d.id?'selected':''}>${d.name}</option>`).join('');
+      return `<tr>
+        <td style="font-size:11px">${o.orderNumber||o.id.slice(-6)}</td>
+        <td>${o.customerName||'—'}</td>
+        <td>${o.customerPhone||'—'}</td>
+        <td style="color:var(--gold)">${money(o.subtotal||0)}</td>
+        <td><select onchange="ZoneManagerDash.assignDriver('${o.id}',this.value)" style="padding:3px 6px;border-radius:6px;background:var(--bg2);border:1px solid var(--line);color:#fff;font-size:11px;max-width:110px">
+          <option value="">বেছে নিন</option>${opts}
+        </select></td>
+        <td>
+          <select onchange="ZoneManagerDash.quickStatus('${o.id}',this.value)" style="padding:3px 6px;border-radius:6px;background:var(--bg2);border:1px solid var(--line);color:#fff;font-size:11px">
+            ${Object.entries(ORDER_STATUS).map(([k,v])=>`<option value="${k}" ${o.status===k?'selected':''}>${v.label}</option>`).join('')}
+          </select>
+        </td>
+        <td><a href="#" onclick="event.preventDefault();OrderDetail.open(${JSON.stringify(o).replace(/"/g,'&quot;')})" style="color:var(--gold);font-size:12px">বিস্তারিত</a></td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--ink-muted);padding:16px">কোনো অর্ডার নেই</td></tr>';
+  },
+  filterOrders(){ this.renderOrders(this._orders); },
+  renderAnalytics(orders){
+    const active=orders.filter(o=>o.status!=='cancelled');
+    const now=new Date();
+    const todayStr=now.toDateString();
+    const weekAgo=new Date(now-7*24*60*60*1000);
+    const monthStart=new Date(now.getFullYear(),now.getMonth(),1);
+    const get=(fn)=>active.filter(fn).reduce((s,o)=>s+(o.subtotal||0),0);
+    const t=get(o=>new Date(o.createdAt?.seconds*1000||0).toDateString()===todayStr);
+    const w=get(o=>new Date(o.createdAt?.seconds*1000||0)>=weekAgo);
+    const m=get(o=>new Date(o.createdAt?.seconds*1000||0)>=monthStart);
+    ['zmAnToday','zmAnWeek','zmAnMonth'].forEach((id,i)=>{ const el=document.getElementById(id); if(el) el.textContent=money([t,w,m][i]); });
+    const pbEl=document.getElementById('zmPayBreakdown');
+    if(pbEl){
+      const total=active.reduce((s,o)=>s+(o.subtotal||0),0);
+      const methods={};
+      active.forEach(o=>{const pm=o.paymentMethod||'cod';methods[pm]=(methods[pm]||0)+(o.subtotal||0);});
+      const labels={cod:'💵 COD',bkash:'📱 bKash',nagad:'📱 Nagad'};
+      pbEl.innerHTML=Object.entries(methods).map(([m,v])=>{
+        const pct=total>0?Math.round(v/total*100):0;
+        return `<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span>${labels[m]||m}</span><span style="color:var(--gold)">${money(v)} (${pct}%)</span></div>
+        <div style="height:5px;border-radius:3px;background:rgba(255,255,255,.06)"><div style="height:100%;width:${pct}%;border-radius:3px;background:var(--gold)"></div></div></div>`;
+      }).join('');
+    }
+  },
+  async assignDriver(orderId,driverId){
+    if(!driverId) return;
+    const d=DriverManage.drivers.find(x=>x.id===driverId); if(!d) return;
+    const ok=await OrdersService.assignDriver(orderId,driverId,d.name);
+    if(ok){ toast(`✓ ${d.name}-কে অ্যাসাইন করা হয়েছে`,'success'); await this.render(); }
+  },
+  async quickStatus(orderId,status){
+    if(!status) return;
+    const ok=await OrdersService.updateStatus(orderId,status);
+    if(ok){ toast('✓ স্ট্যাটাস আপডেট','success'); await this.render(); }
+  },
+  tab(btn,name){
+    ['overview','products','orders','analytics','drivers'].forEach(t=>{
+      const el=document.getElementById('zm'+t.charAt(0).toUpperCase()+t.slice(1)+'Pane');
+      if(el) el.style.display=t===name?'block':'none';
+    });
+    document.querySelectorAll('#page-zone-manager .dash-side a').forEach(a=>a.classList.remove('active'));
+    if(btn) btn.classList.add('active');
+    if(name==='products') this.renderProducts(ALL_PRODUCTS.filter(p=>p.zone===this.currentZone));
+    if(name==='analytics') this.renderAnalytics(this._orders);
+  },
+  openAddProduct(){
+    ProductForm.openAdd();
+    const isSadar=this.currentZone==='noakhali_sadar';
+    document.getElementById('pfZoneSadar').checked=isSadar; document.getElementById('pfZoneBegumganj').checked=!isSadar;
+    document.getElementById('pfZoneSadar').disabled=true; document.getElementById('pfZoneBegumganj').disabled=true;
+  }
+};
+
+// Admin: Customer detail modal
+AdminDash.showCustomerOrders = function(phone){
+  const orders = this._allOrders.filter(o=>o.customerPhone===phone);
+  if(!orders.length) return;
+  const c = orders[0];
+  document.getElementById('coCustomerName').textContent = c.customerName||'—';
+  document.getElementById('coCustomerPhone').textContent = `📞 ${phone} | NID: ${c.customerNid||'—'} | মোট: ${money(orders.reduce((s,o)=>s+(o.subtotal||0),0))}`;
+  const listEl = document.getElementById('coOrdersList');
+  listEl.innerHTML = orders.map(o=>{
+    const s=ORDER_STATUS[o.status]||ORDER_STATUS.pending;
+    const date=o.createdAt?.seconds?new Date(o.createdAt.seconds*1000).toLocaleDateString('bn-BD'):'—';
+    return `<div style="padding:12px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span style="font-size:12px;font-weight:600;color:var(--gold)">${o.orderNumber||o.id.slice(-6)}</span>
+        <span class="status-pill ${s.cls}">${s.label}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink-muted)">
+        <span>${date}</span><span style="color:var(--gold);font-weight:600">${money(o.subtotal||0)}</span>
+      </div>
+      <div style="margin-top:6px">
+        <a href="#" onclick="event.preventDefault();document.getElementById('customerOrdersModal').classList.remove('show');OrderDetail.open(${JSON.stringify(o).replace(/"/g,'&quot;')})" style="font-size:12px;color:var(--gold)">বিস্তারিত দেখুন →</a>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('customerOrdersModal').classList.add('show');
+};
+
+// Admin: Open order detail from orders table
+AdminDash.openOrderDetail = function(orderId){
+  const o = this._allOrders.find(x=>x.id===orderId); if(o) OrderDetail.open(o);
 };
