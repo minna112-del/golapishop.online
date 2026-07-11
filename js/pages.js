@@ -237,8 +237,10 @@ const Checkout = {
     const zone = document.getElementById('ckZone').value;
     const village = document.getElementById('ckVillage').value.trim();
     const instructions = document.getElementById('ckInstructions').value.trim();
+    const nid = document.getElementById('ckNid').value.trim().replace(/\s/g,'');
     const phoneRe = /^(?:\+880|880|0)1[3-9]\d{8}$/;
-    return name.length>0 && phoneRe.test(phone) && addr.length>=5 && upazila && zone && village.length>0 && instructions.length>0;
+    const nidRe = /^\d{10}$|^\d{13}$/;
+    return name.length>0 && phoneRe.test(phone) && nidRe.test(nid) && addr.length>=5 && upazila && zone && village.length>0 && instructions.length>0;
   },
   renderSummary(){
     const entries = Object.entries(Cart.items);
@@ -262,8 +264,10 @@ const Checkout = {
     const zone=document.getElementById('ckZone').value;
     const village=document.getElementById('ckVillage').value.trim();
     const instructions=document.getElementById('ckInstructions').value.trim();
+    const nid = document.getElementById('ckNid').value.trim().replace(/\s/g,'');
     const phoneRe = /^(?:\+880|880|0)1[3-9]\d{8}$/;
-    if(!name||!phoneRe.test(phone.replace(/[\s-]/g,''))||addr.length<5||!upazila||!zone||!village||!instructions){ toast('⚠ সব প্রয়োজনীয় তথ্য পূরণ করুন (ডেলিভারি ইনস্ট্রাকশন সহ)','error'); this.goStep(1); return; }
+    const nidRe = /^\d{10}$|^\d{13}$/;
+    if(!name||!phoneRe.test(phone.replace(/[\s-]/g,''))||!nidRe.test(nid)||addr.length<5||!upazila||!zone||!village||!instructions){ toast('⚠ সব তথ্য পূরণ করুন — NID নম্বর (১০ বা ১৩ সংখ্যা) বাধ্যতামূলক','error'); this.goStep(1); return; }
     if(!document.getElementById('ckTerms').checked){ toast('⚠ শর্তাবলীতে সম্মত হতে হবে','error'); return; }
     if(!FB){ toast('⚠ সংযোগ সমস্যা — আবার চেষ্টা করুন','error'); return; }
     const orderNo = 'GS-'+new Date().getFullYear()+'-'+String(Math.floor(Math.random()*900000)+100000);
@@ -272,7 +276,7 @@ const Checkout = {
     const ship = calcDeliveryCharge(itemCount, sub);
     try{
       await FB.addDoc(FB.collection(FB.db,'orders'),{
-        orderNumber:orderNo, customerName:name, customerPhone:phone, address:addr, village,
+        orderNumber:orderNo, customerName:name, customerPhone:phone, customerNid:nid, address:addr, village,
         branchZone:upazila, district:AREA_LABELS[upazila]||'', zone,
         instructions, paymentMethod:this.pay, deliverySlot:'express',
         items:Object.entries(Cart.items).map(([id,qty])=>({productId:id,qty})),
