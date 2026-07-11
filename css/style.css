@@ -464,7 +464,7 @@ body {
 }
 
 /* Orbs — absolute positioned, mobile-এ hide করো */
-@media(max-width:768px){
+@media(max-width:480px){
   .orb { display: none !important; }
   .hero { overflow: hidden !important; width: 100% !important; }
   .hero-inner {
