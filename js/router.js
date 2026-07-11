@@ -1,4 +1,8 @@
-/* router.js — View-based SPA Router (fetch partials + views) */
+/* router.js — View-based SPA Router (fetch partials + pages)
+ * Architecture: index.html is a thin skeleton. PartialLoader fetches
+ * HTML partials (header, footer, modals) and page views (home, listing,
+ * product...) at runtime. Each page lives in its own file under pages/.
+ */
 
 /* ============================================================
    OWNER AUTH — PIN gate for admin dashboard
@@ -10,12 +14,17 @@ const OwnerAuth = {
       || localStorage.getItem('golapi_owner_remember') === '1';
   },
   requestAccess() {
-    document.getElementById('ownerPinInput').value = '';
-    document.getElementById('ownerGateMsg').className = 'form-msg';
+    const inp = document.getElementById('ownerPinInput');
+    const msg = document.getElementById('ownerGateMsg');
+    if (inp) inp.value = '';
+    if (msg) msg.className = 'form-msg';
     document.getElementById('ownerGateModal').classList.add('show');
-    setTimeout(() => document.getElementById('ownerPinInput').focus(), 100);
+    setTimeout(() => inp && inp.focus(), 100);
   },
-  cancel() { document.getElementById('ownerGateModal').classList.remove('show'); },
+  cancel() {
+    const m = document.getElementById('ownerGateModal');
+    if (m) m.classList.remove('show');
+  },
   async unlock() {
     const entered = document.getElementById('ownerPinInput').value.trim();
     const msgEl   = document.getElementById('ownerGateMsg');
@@ -77,35 +86,43 @@ const PartialLoader = {
 
   async injectPartials() {
     const slots = [
-      { slot: 'slot-topbar',  file: './partials/topbar.html' },
-      { slot: 'slot-header',  file: './partials/header.html' },
-      { slot: 'slot-footer',  file: './partials/footer.html' },
-      { slot: 'slot-mobnav',  file: './partials/mobnav.html' },
-      { slot: 'slot-modals',  file: './partials/modals.html' },
+      { slot: 'slot-topbar',      file: './partials/topbar.html' },
+      { slot: 'slot-header',      file: './partials/header.html' },
+      { slot: 'slot-cart-drawer', file: './partials/cart-drawer.html' },
+      { slot: 'slot-footer',      file: './partials/footer.html' },
+      { slot: 'slot-mobnav',      file: './partials/mobnav.html' },
+      { slot: 'slot-chat',        file: './partials/chat-widget.html' },
+      { slot: 'slot-modals',      file: './partials/modals.html' },
+      { slot: 'slot-toast',       file: './partials/toast.html' },
     ];
     await Promise.all(slots.map(async ({ slot, file }) => {
       const el = document.getElementById(slot);
-      if (el) el.innerHTML = await this.load(file);
+      if (el) {
+        el.innerHTML = await this.load(file);
+        devLog('Partial loaded:', file);
+      }
     }));
   },
 
-  /* view files map — page id → html file */
+  /* page id → html file (one file per page) */
   viewMap: {
-    'home':              './views/home.html',
-    'listing':           './views/listing.html',
-    'product':           './views/product.html',
-    'checkout':          './views/checkout.html',
-    'myorders':          './views/myorders.html',
-    'wishlist':          './views/myorders.html',      // same file, multiple pages
-    'account':           './views/myorders.html',
-    'account-addresses': './views/myorders.html',
-    'custom-bazar':      './views/custom-bazar.html',
-    'medical':           './views/medical.html',
-    'faq':               './views/faq.html',
-    'reviews':           './views/faq.html',          // same file
-    'admin-dash':        './views/dashboards.html',
-    'zone-manager':      './views/dashboards.html',
-    'driver':            './views/dashboards.html',
+    'about-app':  './pages/about-app.html',
+    'account':  './pages/account.html',
+    'account-addresses':  './pages/account-addresses.html',
+    'admin-dash':  './pages/admin-dash.html',
+    'checkout':  './pages/checkout.html',
+    'contact':  './pages/contact.html',
+    'custom-bazar':  './pages/custom-bazar.html',
+    'driver':  './pages/driver.html',
+    'home':  './pages/home.html',
+    'listing':  './pages/listing.html',
+    'medical':  './pages/medical.html',
+    'myorders':  './pages/myorders.html',
+    'order-success':  './pages/order-success.html',
+    'privacy-info':  './pages/privacy-info.html',
+    'product':  './pages/product.html',
+    'terms':  './pages/terms.html',
+    'zone-manager':  './pages/zone-manager.html',
   },
 
   loadedViews: new Set(),
@@ -113,11 +130,14 @@ const PartialLoader = {
   async ensureView(page) {
     const file = this.viewMap[page];
     if (!file) return;
-    if (this.loadedViews.has(file)) return; // already injected
+    if (this.loadedViews.has(page)) return; // already injected
     const html = await this.load(file);
     const container = document.getElementById('pageContainer');
-    if (container) container.insertAdjacentHTML('beforeend', html);
-    this.loadedViews.add(file);
+    if (container) {
+      container.insertAdjacentHTML('beforeend', html);
+      this.loadedViews.add(page);
+      devLog('View loaded:', page, '→', file);
+    }
   }
 };
 
@@ -133,7 +153,7 @@ const Router = {
       OwnerAuth.requestAccess(); return;
     }
 
-    /* Hide page loader after first load */
+    /* Hide page loader after first navigation */
     const loader = document.getElementById('pageLoader');
     if (loader) loader.style.display = 'none';
 
@@ -197,12 +217,21 @@ const Router = {
    APP BOOT — inject partials, then start routing
    ============================================================ */
 async function bootApp() {
+  devLog('BootApp: injecting partials...');
   await PartialLoader.injectPartials();
+  devLog('BootApp: partials done, starting router...');
+
   /* Apply language after partials are in DOM */
   if (typeof applyLang === 'function') applyLang();
-  /* Start routing */
+
+  /* Customize chat widget toggle (logo ↔ ✕) */
+  if (typeof customizeChatToggle === 'function') customizeChatToggle();
+
+  /* Start routing based on URL role param */
   const role = new URLSearchParams(window.location.search).get('role');
-  if (role === 'driver')        { await Router.go('driver'); }
-  else if (role === 'zone-manager') { await Router.go('zone-manager'); }
-  else                          { await Router.go('home'); }
+  if (role === 'driver')             { await Router.go('driver'); }
+  else if (role === 'zone-manager')  { await Router.go('zone-manager'); }
+  else                               { await Router.go('home'); }
+
+  devLog('BootApp: routing complete, app ready!');
 }
