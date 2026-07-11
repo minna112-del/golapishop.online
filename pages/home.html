@@ -1,3 +1,7 @@
+/* pages/home.js */
+(function(){
+  var root = document.getElementById('appRoot');
+  if(root) root.insertAdjacentHTML('beforeend', `
 <!-- ============ HOME ============ -->
 <div class="page active" id="page-home">
   <section class="hero">
@@ -66,3 +70,5 @@
     <div class="card trust-item"><div class="em"><img src="dr_logo.jpeg" style="width:40px;height:40px;object-fit:cover;border-radius:10px"></div><h4>ফ্রী স্বাস্থ্য সেবা</h4><p>চিকিৎসা পরামর্শ ও ঔষধ</p></div>
   </div></section>
 </div>
+  `);
+})();
