@@ -1,4 +1,14 @@
-
-ðŸ›ï¸ à¦†à¦ªà¦¨à¦¾à¦° à¦•à¦¾à¦°à§à¦Ÿ
-âœ•
-
+<div class="overlay" id="cartOverlay" onclick="Cart.close()"></div>
+<div class="drawer" id="cartDrawer">
+  <div style="padding:20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center">
+    <h3 class="tiro" style="font-size:18px">🛍️ আপনার কার্ট</h3>
+    <button onclick="Cart.close()" style="width:32px;height:32px;border-radius:9px;background:rgba(255,255,255,.05)">✕</button>
+  </div>
+  <div style="padding:18px;flex:1" id="cartBody"></div>
+  <div style="padding:18px;border-top:1px solid var(--line);display:none" id="cartFoot">
+    <div class="row-between"><span>সাবটোটাল</span><span id="cartSub">৳০</span></div>
+    <div class="row-between"><span>ডেলিভারি চার্জ</span><span id="cartDel">৳৬০</span></div>
+    <div class="row-total row-between"><span>মোট</span><span id="cartTot">৳০</span></div>
+    <button class="btn btn-gold btn-block" style="margin-top:12px" onclick="Cart.goCheckout()">চেকআউট করুন →</button>
+  </div>
+</div>
