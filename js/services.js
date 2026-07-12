@@ -15,10 +15,17 @@ const OrdersService = {
     try{ await FB.updateDoc(FB.doc(FB.db,'orders',orderId),{driverId,driverName,status:'assigned',assignedAt:FB.serverTimestamp()}); return true; }
     catch(e){ toast('ড্রাইভার অ্যাসাইন ব্যর্থ: '+e.message,'error'); return false; }
   },
-  async updateStatus(orderId,status){
-    if(!FB) return false;
-    try{ await FB.updateDoc(FB.doc(FB.db,'orders',orderId),{status}); return true; }
-    catch(e){ toast('স্ট্যাটাস আপডেট ব্যর্থ','error'); return false; }
+async updateStatus(orderId, status) {
+  if (!FB) return false;
+  try {
+    await FB.updateDoc(FB.doc(FB.db, 'orders', orderId), { status });
+    /* SMS trigger */
+    const order = this.cache.find(o => o.id === orderId) || { id: orderId };
+    if (status === 'delivered') SMSGateway.onDelivered(order);
+    if (status === 'cancelled') SMSGateway.onCancelled(order);
+    return true;
+  } catch (e) { toast('স্ট্যাটাস আপডেট ব্যর্থ', 'error'); return false; }
+},
   },
   async cancelOrder(orderId){
     if(!FB) return false;
