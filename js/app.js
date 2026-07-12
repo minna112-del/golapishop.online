@@ -58,7 +58,6 @@ function updateEmergencyBanner() {
 
 /* ── Search helpers ── */
 function doSearch(val) {
-  // Sync both search inputs
   const mob = document.getElementById('searchInputMob');
   const desk = document.getElementById('searchInput');
   if (mob && mob !== document.activeElement && desk) mob.value = val;
@@ -115,9 +114,8 @@ function selectBazarType(el, type) {
 /* ── Service Worker ── */
 function registerSW() {
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () =>
-      navigator.serviceWorker.register('/firebase-messaging-sw.js').catch(e => devWarn(e))
-    );
+    navigator.serviceWorker.register('/sw.js').catch(e => devWarn('SW:', e));
+    navigator.serviceWorker.register('/firebase-messaging-sw.js').catch(e => devWarn('FCM SW:', e));
   }
 }
 
@@ -127,6 +125,5 @@ document.addEventListener('DOMContentLoaded', async () => {
   updateEmergencyBanner();
   setInterval(updateEmergencyBanner, 60000);
   applyLang();
-  /* Boot the SPA — loads partials then routes */
   await bootApp();
 });
