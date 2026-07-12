@@ -1,101 +1,159 @@
-/* sms.js — SMS Gateway Integration (Green Web / SSL Wireless) */
+/* sms.js — Green Web + SSL Wireless Dual Gateway */
 const SMSGateway = {
 
-  /* Green Web Foundation SMS API */
+  /* =============================================
+     🔴 এখানে তোমার আসল credentials বসাও
+     ============================================= */
   GREENWEB: {
-    token: 'YOUR_GREENWEB_TOKEN', // Green Web থেকে token নাও
+    token: 'YOUR_GREENWEB_TOKEN',
     url: 'https://api.greenweb.com.bd/api/v2/send.php'
   },
 
-  /* SSL Wireless SMS API */
-  SSL_WIRELESS: {
-    user: 'YOUR_SSL_USER',
-    pass: 'YOUR_SSL_PASS',
+  SSL: {
+    api_token: 'YOUR_SSL_API_TOKEN',
     sid: 'GOLAPI',
     url: 'https://api.sslwireless.com/sms/v3/api-sms.php'
   },
 
-  /* Send SMS via Green Web */
-  async sendGreenWeb(to, message) {
-    if (!this.GREENWEB.token || this.GREENWEB.token === 'YOUR_GREENWEB_TOKEN') {
-      devWarn('Green Web token not set');
-      return { success: false, error: 'Token not configured' };
-    }
-    try {
-      const url = `${this.GREENWEB.url}?token=${this.GREENWEB.token}&to=${to}&message=${encodeURIComponent(message)}`;
-      const res = await fetch(url);
-      const data = await res.json();
-      devLog('SMS sent:', data);
-      return { success: data.status === 'SENT', data };
-    } catch (e) {
-      devWarn('SMS error:', e.message);
-      return { success: false, error: e.message };
-    }
+  /* Admin alert number */
+  ADMIN_PHONE: '01612057371',
+
+  /* ── Phone normalizer ── */
+  normalizePhone(raw) {
+    let p = raw.replace(/[^0-9]/g, '');
+    if (p.startsWith('880')) p = p.slice(3);
+    if (p.startsWith('0'))   p = p.slice(1);
+    if (p.length !== 10 || !/^[13-9]/.test(p)) return null;
+    return '88' + (p.startsWith('0') ? p : '0' + p);
   },
 
-  /* Send SMS via SSL Wireless */
-  async sendSSLWireless(to, message) {
-    if (this.SSL_WIRELESS.user === 'YOUR_SSL_USER') {
-      devWarn('SSL Wireless credentials not set');
-      return { success: false, error: 'Credentials not configured' };
-    }
+  /* ── Green Web send ── */
+  async _gw(phone, msg) {
+    if (!this.GREENWEB.token || this.GREENWEB.token.includes('YOUR')) return { ok: false };
     try {
-      const res = await fetch(this.SSL_WIRELESS.url, {
+      const r = await fetch(
+        `${this.GREENWEB.url}?token=${this.GREENWEB.token}&to=${phone}&message=${encodeURIComponent(msg)}&type=text`
+      );
+      const d = await r.json().catch(() => ({}));
+      return { ok: d.status === 'SENT' || d.result === 'success', raw: d };
+    } catch (e) { return { ok: false, err: e.message }; }
+  },
+
+  /* ── SSL Wireless send ── */
+  async _ssl(phone, msg) {
+    if (!this.SSL.api_token || this.SSL.api_token.includes('YOUR')) return { ok: false };
+    try {
+      const r = await fetch(this.SSL.url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          api_token: this.SSL_WIRELESS.pass,
-          sid: this.SSL_WIRELESS.sid,
-          msisdn: to,
-          sms: message,
-          csms_id: 'golapi_' + Date.now()
+          api_token: this.SSL.api_token,
+          sid: this.SSL.sid,
+          msisdn: phone,
+          sms: msg,
+          csms_id: 'gs_' + Date.now()
         })
       });
-      const data = await res.json();
-      return { success: data.status === 'SUCCESS', data };
-    } catch (e) {
-      devWarn('SMS error:', e.message);
-      return { success: false, error: e.message };
+      const d = await r.json().catch(() => ({}));
+      return { ok: d.status === 'SUCCESS' || d.statusCode === 200, raw: d };
+    } catch (e) { return { ok: false, err: e.message }; }
+  },
+
+  /* ── Master send: GW first → SSL fallback ── */
+  async send(toRaw, msg) {
+    const phone = this.normalizePhone(toRaw);
+    if (!phone) { devWarn('SMS: invalid phone', toRaw); return false; }
+
+    let res = await this._gw(phone, msg);
+    if (!res.ok) {
+      devLog('GW failed → SSL fallback');
+      res = await this._ssl(phone, msg);
+    }
+    if (res.ok) devLog('SMS sent ✓', phone);
+    else        devWarn('SMS failed both gateways', phone);
+    return res.ok;
+  },
+
+  /* ── Send to multiple numbers ── */
+  async sendMulti(phones, msg) {
+    return Promise.all(phones.map(p => this.send(p, msg)));
+  },
+
+  /* ============================================
+     📩 Message Templates
+     ============================================ */
+  tpl: {
+    orderNew(no, name, total) {
+      return `Golapi Shop: ${name} ভাই, অর্ডার #${no} কনফার্ম! মোট: ${total}৳। ৬০-৯০ মিনিটে ডেলিভারি। ধন্যবাদ 🌹 golapishop.online`;
+    },
+    orderAssigned(no, driverName, driverPhone) {
+      return `Golapi Shop: অর্ডার #${no} রওনা হয়েছে! ড্রাইভার: ${driverName} (${driverPhone})। অ্যাপে লাইভ ট্র্যাক করুন।`;
+    },
+    orderDelivered(no) {
+      return `Golapi Shop: অর্ডার #${no} ডেলিভারি সম্পন্ন ✅ ধন্যবাদ! রিভিউ দিন: golapishop.online`;
+    },
+    orderCancelled(no) {
+      return `Golapi Shop: অর্ডার #${no} বাতিল হয়েছে। যোগাযোগ: 01612-057371`;
+    },
+    refundApproved(no, amount) {
+      return `Golapi Shop: অর্ডার #${no}-এর ${amount}৳ রিফান্ড অনুমোদিত। ২-৩ কার্যদিবসে পাবেন।`;
+    },
+    welcome(name) {
+      return `Golapi Shop Online-এ স্বাগতম ${name}! 🌹 আপনার দায়িত্ব লিস্ট করা, আমাদের বাজার করা। golapishop.online`;
+    },
+    adminNewOrder(no, name, total, zone) {
+      return `[নতুন অর্ডার] #${no} | ${name} | ${total}৳ | ${zone} — Admin: golapishop.online`;
+    },
+    otp(code) {
+      return `Golapi Shop: আপনার OTP কোড ${code}। ৫ মিনিট বৈধ। কাউকে শেয়ার করবেন না।`;
     }
   },
 
-  /* Main send function — tries Green Web first, then SSL */
-  async send(to, message) {
-    /* Clean phone number */
-    let phone = to.replace(/[^0-9]/g, '');
-    if (phone.startsWith('88')) phone = phone.substring(2);
-    if (phone.startsWith('0')) phone = '88' + phone;
-    if (!phone.startsWith('88') && phone.length === 11) phone = '88' + phone;
-    if (phone.length < 13) {
-      devWarn('Invalid phone:', to);
-      return { success: false, error: 'Invalid phone number' };
-    }
+  /* ============================================
+     🚀 Auto-trigger Functions
+     (pages.js / services.js থেকে call করো)
+     ============================================ */
 
-    devLog('Sending SMS to:', phone, 'msg:', message.substring(0, 50));
-    let result = await this.sendGreenWeb(phone, message);
-    if (!result.success) {
-      devLog('Green Web failed, trying SSL...');
-      result = await this.sendSSLWireless(phone, message);
-    }
-    return result;
+  /* নতুন অর্ডার হলে — customer + admin দুজনকেই SMS */
+  async onOrderPlaced(order) {
+    const no = (order.orderNumber || order.id || '').substring(0, 8).toUpperCase();
+    const total = order.subtotal || 0;
+    const name = order.customerName || 'গ্রাহক';
+    const phone = order.customerPhone || '';
+    const zone = order.district || '';
+
+    await Promise.all([
+      this.send(phone, this.tpl.orderNew(no, name, total)),
+      this.send(this.ADMIN_PHONE, this.tpl.adminNewOrder(no, name, total, zone))
+    ]);
   },
 
-  /* Pre-built message templates */
-  templates: {
-    orderConfirmed(orderId, total) {
-      return `Golapi Shop: আপনার অর্ডার #${orderId.substring(0,8).toUpperCase()} নিশ্চিত হয়েছে। মোট: ${total}৳। ডেলিভারি হতে ৬০-৯০ মিনিট। ধন্যবাদ! 🌹`;
-    },
-    orderShipped(orderId, driverName, driverPhone) {
-      return `Golapi Shop: অর্ডার #${orderId.substring(0,8).toUpperCase()} রাস্তায়! ড্রাইভার: ${driverName}, মোবাইল: ${driverPhone}`;
-    },
-    orderDelivered(orderId) {
-      return `Golapi Shop: অর্ডার #${orderId.substring(0,8).toUpperCase()} ডেলিভারি সম্পন্ন! 🎉 আপনাকে ধন্যবাদ। রিভিউ দিন: golapishop.online`;
-    },
-    orderCancelled(orderId) {
-      return `Golapi Shop: অর্ডার #${orderId.substring(0,8).toUpperCase()} বাতিল করা হয়েছে। যেকোনো প্রশ্নে: 01612-057371`;
-    },
-    welcome(userName) {
-      return `Golapi Shop Online-এ স্বাগতম ${userName}! 🌹 আপনার দায়িত্ব লিস্ট করা, আমাদের দায়িত্ব বাজার করে দেওয়া। golapishop.online`;
-    }
+  /* ড্রাইভার assign হলে */
+  async onDriverAssigned(order, driverName, driverPhone) {
+    const no = (order.orderNumber || order.id || '').substring(0, 8).toUpperCase();
+    await this.send(order.customerPhone, this.tpl.orderAssigned(no, driverName, driverPhone));
+  },
+
+  /* ডেলিভারি হলে */
+  async onDelivered(order) {
+    const no = (order.orderNumber || order.id || '').substring(0, 8).toUpperCase();
+    await this.send(order.customerPhone, this.tpl.orderDelivered(no));
+  },
+
+  /* অর্ডার বাতিল হলে */
+  async onCancelled(order) {
+    const no = (order.orderNumber || order.id || '').substring(0, 8).toUpperCase();
+    await this.send(order.customerPhone, this.tpl.orderCancelled(no));
+  },
+
+  /* রিফান্ড approved হলে */
+  async onRefundApproved(order, amount) {
+    const no = (order.orderNumber || order.id || '').substring(0, 8).toUpperCase();
+    await this.send(order.customerPhone, this.tpl.refundApproved(no, amount));
+  },
+
+  /* Registration welcome */
+  async onWelcome(phone, name) {
+    await this.send(phone, this.tpl.welcome(name));
   }
 };
