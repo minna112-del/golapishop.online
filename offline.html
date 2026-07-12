@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>অফলাইন — Golapi Shop Online</title>
+<meta name="theme-color" content="#050810">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#050810;color:#fff;font-family:'Hind Siliguri',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px}
+.wrap{max-width:400px}
+.rose{font-size:72px;margin-bottom:16px;animation:bounce 2s infinite}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+h1{font-size:24px;margin-bottom:8px;color:#e91e63}
+p{font-size:16px;opacity:.7;line-height:1.6;margin-bottom:24px}
+.btn{display:inline-block;padding:14px 32px;background:#e91e63;color:#fff;border:none;border-radius:12px;font-size:16px;font-family:inherit;cursor:pointer;text-decoration:none;transition:transform .2s}
+.btn:active{transform:scale(.95)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="rose">🌹</div>
+<h1>আপনি এখন অফলাইন</h1>
+<p>ইন্টারনেট সংযোগ নেই।<br>সংযোগ ফিরে এলে আবার চেষ্টা করুন।</p>
+<button class="btn" onclick="location.reload()">পুনরায় চেষ্টা করুন</button>
+</div>
+</body>
+</html>
