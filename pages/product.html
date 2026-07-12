@@ -1,24 +1,50 @@
-â€¹
-
-ðŸ” à¦¬à¦¡à¦¼ à¦¦à§‡à¦–à§à¦¨
-
-
-
-
-
-
-
-à¦ªà¦°à¦¿à¦®à¦¾à¦£:
-âˆ’à§§+
-ðŸ›ï¸ à¦•à¦¾à¦°à§à¦Ÿà§‡ à¦¯à§à¦•à§à¦¤ à¦•à¦°à§à¦¨
-à¦à¦–à¦¨à¦‡ à¦•à¦¿à¦¨à§à¦¨
-Golapi Shop Online
-à§§à§¦à§¦% à¦…à¦°à¦¿à¦œà¦¿à¦¨à¦¾à¦² à¦ªà¦£à§à¦¯à§‡à¦° à¦¨à¦¿à¦¶à§à¦šà¦¯à¦¼à¦¤à¦¾
-âœ“ Verified
-à¦¬à¦¿à¦¬à¦°à¦£ à¦¸à§à¦ªà§‡à¦¸à¦¿à¦«à¦¿à¦•à§‡à¦¶à¦¨ à¦¶à¦¿à¦ªà¦¿à¦‚ à¦“ à¦°à¦¿à¦Ÿà¦¾à¦°à§à¦¨
-
-
-ðŸšš à¦¨à§‹à¦¯à¦¼à¦¾à¦–à¦¾à¦²à§€ à¦¸à¦¦à¦° à¦“ à¦¬à§‡à¦—à¦®à¦—à¦žà§à¦œà§‡ à¦¨à¦¿à¦œà¦¸à§à¦¬ à¦¡à§à¦°à¦¾à¦‡à¦­à¦¾à¦°à¥¤ âš¡ à¦à¦•à§à¦¸à¦ªà§à¦°à§‡à¦¸: à§¬à§¦-à§¯à§¦ à¦®à¦¿à¦¨à¦¿à¦Ÿ | ðŸ“… à¦†à¦œà¦‡: à¦«à§à¦°à¦¿ â†©ï¸ à§© à¦¦à¦¿à¦¨à§‡à¦° à¦®à¦§à§à¦¯à§‡ à¦°à¦¿à¦Ÿà¦¾à¦°à§à¦¨
-à¦†à¦ªà¦¨à¦¾à¦° à¦ªà¦›à¦¨à§à¦¦ à¦¹à¦¤à§‡ à¦ªà¦¾à¦°à§‡
-
-
+<div class="page" id="page-product">
+  <section class="sec" style="padding-top:12px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <button onclick="history.back()||Router.go('home')" style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.06);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">‹</button>
+      <div class="crumb" id="pdpCrumb" style="margin:0;font-size:12px"></div>
+    </div>
+    <div id="pdpGalleryWrap" style="position:relative;border-radius:16px;overflow:hidden;background:var(--card);border:1px solid var(--line);margin-bottom:18px;cursor:zoom-in" onclick="PDP.openFullImg()">
+      <img id="pdpImg" src="" alt="" style="width:100%;aspect-ratio:1/1;object-fit:cover;display:block">
+      <div style="position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);padding:4px 10px;border-radius:20px;font-size:11px;color:#fff">🔍 বড় দেখুন</div>
+    </div>
+    <div id="pdpImgOverlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.95);align-items:center;justify-content:center;flex-direction:column" onclick="this.style.display='none'">
+      <button style="position:absolute;top:16px;right:16px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.1);color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center">✕</button>
+      <img id="pdpImgFull" src="" style="max-width:100%;max-height:90vh;object-fit:contain">
+    </div>
+    <h1 class="tiro" style="font-size:20px;margin-bottom:8px;line-height:1.5" id="pdpName"></h1>
+    <div style="font-size:12.5px;color:var(--ink-muted);margin-bottom:12px" id="pdpMeta"></div>
+    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+      <span class="price-now" style="font-size:28px" id="pdpPrice"></span>
+      <span class="price-old" id="pdpOld"></span>
+      <span id="pdpDisc" style="display:none;font-size:11px;font-weight:700;color:#f87171;background:rgba(239,68,68,.1);padding:2px 8px;border-radius:6px"></span>
+      <span style="font-size:13px;color:var(--ink-muted)" id="pdpUnit"></span>
+    </div>
+    <div style="margin-bottom:10px" id="pdpTags"></div>
+    <p style="color:#22c55e;font-size:13px;margin-bottom:16px" id="pdpStock"></p>
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px">
+      <span style="font-size:13.5px;font-weight:600">পরিমাণ:</span>
+      <div class="qty-ctrl"><button onclick="PDP.changeQty(-1)">−</button><span id="pdpQty">১</span><button onclick="PDP.changeQty(1)">+</button></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px">
+      <button class="btn btn-gold" onclick="PDP.addToCart()">🛍️ কার্টে যুক্ত করুন</button>
+      <button class="btn btn-rose" onclick="PDP.buyNow()">এখনই কিনুন</button>
+    </div>
+    <div class="card" style="padding:12px;display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <img src="icons/head_logo.jpeg" style="width:32px;height:32px;border-radius:8px;object-fit:cover">
+        <div><div style="color:var(--rose);font-size:13px;font-weight:600">Golapi Shop Online</div><div style="font-size:11px;color:var(--ink-muted)">১০০% অরিজিনাল পণ্যের নিশ্চয়তা</div></div>
+      </div>
+      <span class="badge b-green">✓ Verified</span>
+    </div>
+    <div class="pdp-tabs">
+      <button class="active" onclick="PDP.tab(this,'desc')">বিবরণ</button>
+      <button onclick="PDP.tab(this,'spec')">স্পেসিফিকেশন</button>
+      <button onclick="PDP.tab(this,'ship')">শিপিং ও রিটার্ন</button>
+    </div>
+    <div class="tab-pane active" id="tab-desc"><p id="pdpDesc" style="font-size:13.5px;color:var(--ink-soft);line-height:1.8"></p></div>
+    <div class="tab-pane" id="tab-spec"><table class="spec-table" id="pdpSpec"></table></div>
+    <div class="tab-pane" id="tab-ship"><p style="font-size:13.5px;color:var(--ink-soft);line-height:1.9">🚚 নোয়াখালী সদর ও বেগমগঞ্জে নিজস্ব ড্রাইভার।<br>⚡ এক্সপ্রেস: ৬০-৯০ মিনিট | 📅 আজই: ফ্রি<br>↩️ ৩ দিনের মধ্যে রিটার্ন</p></div>
+    <div style="margin-top:36px"><h2 class="tiro" style="font-size:19px;margin-bottom:14px">আপনার পছন্দ হতে পারে</h2><div class="scroll-row" id="relatedRow"></div></div>
+  </section>
+</div>
