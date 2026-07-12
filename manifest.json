@@ -1,1 +1,51 @@
-{"name":"Golapi Shop Online","short_name":"Golapi Shop","description":"নোয়াখালীর নিত্যপ্রয়োজনীয় পণ্যের অনলাইন শপ","start_url":"/","display":"standalone","orientation":"portrait","theme_color":"#050810","background_color":"#050810","lang":"bn","icons":[{"src":"logo.jpeg","sizes":"192x192","type":"image/jpeg","purpose":"any maskable"},{"src":"logo.jpeg","sizes":"512x512","type":"image/jpeg","purpose":"any maskable"}]}
+{
+  "name": "Golapi Shop Online",
+  "short_name": "Golapi Shop",
+  "description": "নোয়াখালীর নিত্যপ্রয়োজনীয় পণ্যের অনলাইন শপ — ঔষধ, মুদি, গ্যাস, মোবাইল, কসমেটিকস",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#050810",
+  "background_color": "#050810",
+  "lang": "bn",
+  "dir": "ltr",
+  "categories": ["shopping", "business", "medical"],
+  "icons": [
+    {
+      "src": "icons/head_logo.jpeg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/head_logo.jpeg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/head_logo.jpeg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "কাস্টম বাজার",
+      "url": "/#custom-bazar",
+      "description": "আপনার বাজারের লিস্ট দিন"
+    },
+    {
+      "name": "ফ্রী স্বাস্থ্য সেবা",
+      "url": "/#medical",
+      "description": "ফ্রী ডাক্তার পরামর্শ"
+    },
+    {
+      "name": "আমার অর্ডার",
+      "url": "/#myorders",
+      "description": "অর্ডার ট্র্যাকিং"
+    }
+  ]
+}
