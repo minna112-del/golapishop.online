@@ -1,9 +1,9 @@
 <div class="page" id="page-myorders">
-  <section class="sec" style="max-width:640px">
+  <section style="padding:12px 14px">
     <h2 class="tiro" style="font-size:22px;margin-bottom:14px">📦 আমার অর্ডার</h2>
-    <div style="display:flex;gap:8px;margin-bottom:16px;border-bottom:1px solid var(--line)">
-      <button id="ordersTabActive" class="active" onclick="MyOrders.switchTab('active')" style="flex:1;padding:10px;font-weight:600;font-size:13px;color:var(--gold);border-bottom:2px solid var(--gold)">নতুন অর্ডার</button>
-      <button id="ordersTabPast" onclick="MyOrders.switchTab('past')" style="flex:1;padding:10px;font-weight:600;font-size:13px;color:var(--ink-muted)">আগের অর্ডার</button>
+    <div style="display:flex;gap:16px;margin-bottom:16px;border-bottom:1px solid var(--line);padding-bottom:10px">
+      <button id="ordersTabActive" onclick="MyOrders.switchTab('active')" style="background:none;border:none;border-bottom:2px solid var(--gold);color:var(--gold);font-size:14px;font-weight:600;padding:4px 0;cursor:pointer;font-family:inherit">নতুন অর্ডার</button>
+      <button id="ordersTabPast" onclick="MyOrders.switchTab('past')" style="background:none;border:none;border-bottom:2px solid transparent;color:var(--ink-muted);font-size:14px;font-weight:600;padding:4px 0;cursor:pointer;font-family:inherit">আগের অর্ডার</button>
     </div>
     <div id="myOrdersList"></div>
   </section>
