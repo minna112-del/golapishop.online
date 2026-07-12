@@ -10,11 +10,20 @@ const OrdersService = {
       this.cache=orders; return orders;
     }catch(e){ devWarn(e.message); return []; }
   },
-  async assignDriver(orderId,driverId,driverName){
-    if(!FB) return false;
-    try{ await FB.updateDoc(FB.doc(FB.db,'orders',orderId),{driverId,driverName,status:'assigned',assignedAt:FB.serverTimestamp()}); return true; }
-    catch(e){ toast('ড্রাইভার অ্যাসাইন ব্যর্থ: '+e.message,'error'); return false; }
-  },
+async assignDriver(orderId, driverId, driverName) {
+  if (!FB) return false;
+  try {
+    await FB.updateDoc(FB.doc(FB.db, 'orders', orderId), {
+      driverId, driverName, status: 'assigned', assignedAt: FB.serverTimestamp()
+    });
+    /* SMS trigger */
+    const order = this.cache.find(o => o.id === orderId) || { id: orderId };
+    const driver = await FB.getDoc(FB.doc(FB.db, 'drivers', driverId)).catch(() => null);
+    const dPhone = driver?.data()?.phone || '';
+    SMSGateway.onDriverAssigned(order, driverName, dPhone);
+    return true;
+  } catch (e) { toast('ড্রাইভার অ্যাসাইন ব্যর্থ: ' + e.message, 'error'); return false; }
+},
 async updateStatus(orderId, status) {
   if (!FB) return false;
   try {
