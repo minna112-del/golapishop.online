@@ -10,3 +10,13 @@
     }
   }
 ]
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "online.golapishop.driver",
+    "sha256_cert_fingerprints": [
+      "18:48:E4:22:8E:34:4C:F5:CD:3A:04:CE:2C:98:FB:FB:9B:C1:BD:80:AC:60:7E:FA:6E:7D:6E:0D:8A:CB:D2:1E"
+    ]
+  }
+}]
