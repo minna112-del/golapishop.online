@@ -1,0 +1,63 @@
+# netlify.toml â€” Golapi Shop SPA Rewrites
+# Place this file in the ROOT of your golapishop.online repository
+
+[build]
+  publish = "."
+
+# â”€â”€â”€ SPA Rewrites â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# All unknown paths serve index.html so the JS router can handle them
+
+[[redirects]]
+  from = "/driver"
+  to = "/index.html"
+  status = 200
+  force = false
+
+[[redirects]]
+  from = "/manager"
+  to = "/index.html"
+  status = 200
+  force = false
+
+[[redirects]]
+  from = "/driver/*"
+  to = "/index.html"
+  status = 200
+  force = false
+
+[[redirects]]
+  from = "/manager/*"
+  to = "/index.html"
+  status = 200
+  force = false
+
+# SPA fallback â€” any path that doesn't match a real file
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  force = false
+
+# â”€â”€â”€ Security Headers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "geolocation=(self)"
+
+# Asset Links â€” required for TWA deep linking
+[[headers]]
+  for = "/.well-known/assetlinks.json"
+  [headers.values]
+    Content-Type = "application/json"
+    Access-Control-Allow-Origin = "*"
+
+# Manifest
+[[headers]]
+  for = "/manifest.json"
+  [headers.values]
+    Content-Type = "application/manifest+json"
+    Access-Control-Allow-Origin = "*"
