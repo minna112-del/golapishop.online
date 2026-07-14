@@ -89,8 +89,9 @@ const SMSGateway = {
     orderAssigned(no, driverName, driverPhone) {
       return `Golapi Shop: অর্ডার #${no} রওনা হয়েছে! ড্রাইভার: ${driverName} (${driverPhone})। অ্যাপে লাইভ ট্র্যাক করুন।`;
     },
-    orderDelivered(no) {
-      return `Golapi Shop: অর্ডার #${no} ডেলিভারি সম্পন্ন ✅ ধন্যবাদ! রিভিউ দিন: golapishop.online`;
+    orderDelivered(no, productId) {
+      const link = productId ? `golapishop.online/#product?id=${productId}` : 'golapishop.online';
+      return `Golapi Shop: অর্ডার #${no} ডেলিভারি সম্পন্ন ✅ কেমন লাগলো জানান, ৩০ সেকেন্ডে রিভিউ দিন: ${link}`;
     },
     orderCancelled(no) {
       return `Golapi Shop: অর্ডার #${no} বাতিল হয়েছে। যোগাযোগ: 01612-057371`;
@@ -137,7 +138,8 @@ const SMSGateway = {
   /* ডেলিভারি হলে */
   async onDelivered(order) {
     const no = (order.orderNumber || order.id || '').substring(0, 8).toUpperCase();
-    await this.send(order.customerPhone, this.tpl.orderDelivered(no));
+    const firstProductId = order.items?.[0]?.productId || null;
+    await this.send(order.customerPhone, this.tpl.orderDelivered(no, firstProductId));
   },
 
   /* অর্ডার বাতিল হলে */
