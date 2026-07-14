@@ -420,6 +420,57 @@ const CustomBazar = {
     const z=document.getElementById('cbZone'); if(z) z.innerHTML='<option value="">প্রথমে উপজেলা বেছে নিন</option>';
     const b=document.getElementById('cbBkashNum'); if(b) b.textContent='উপজেলা বেছে নিলে দেখাবে';
     const m=document.getElementById('cbMsg'); if(m) m.className='form-msg';
+    this.renderPastOrders();
+  },
+  async renderPastOrders(){
+    const box = document.getElementById('cbPastOrdersBox');
+    if(!box) return;
+    if(!Auth.currentUser || !FB){ box.style.display='none'; return; }
+    try{
+      const snap = await FB.getDocs(FB.query(
+        FB.collection(FB.db,'orders'),
+        FB.where('userId','==',Auth.currentUser.uid),
+        FB.where('orderType','==','custom-bazar')
+      ));
+      const orders=[]; snap.forEach(d=>orders.push({id:d.id,...d.data()}));
+      orders.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+      if(!orders.length){ box.style.display='none'; return; }
+      const recent = orders.slice(0,3);
+      box.style.display='block';
+      box.innerHTML = `<div class="card-box" style="border-color:var(--gold-line);background:rgba(212,175,55,.04)">
+        <strong style="font-size:13px;color:var(--gold)">🔁 আগের বাজার লিস্ট থেকে দ্রুত অর্ডার করুন</strong>
+        <div style="margin-top:8px;display:flex;flex-direction:column;gap:8px">
+          ${recent.map(o=>{
+            const date = o.createdAt?.seconds ? new Date(o.createdAt.seconds*1000).toLocaleDateString('bn-BD') : '';
+            const preview = (o.bazarList||'').split('\n').filter(Boolean).slice(0,2).join(', ');
+            return `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px;background:rgba(255,255,255,.02);border-radius:8px">
+              <div style="flex:1;min-width:0">
+                <div style="font-size:12px;color:#fff">${o.bazarTypeLabel||'বাজার'} — ${date}</div>
+                <div style="font-size:11px;color:var(--ink-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${preview}...</div>
+              </div>
+              <button class="btn btn-outline" style="font-size:11.5px;padding:6px 10px;white-space:nowrap" onclick='CustomBazar.reuseOrder(${JSON.stringify(o).replace(/'/g,"&#39;")})'>এই লিস্ট ব্যবহার করুন</button>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+    }catch(e){ devWarn('past bazar orders load failed', e.message); box.style.display='none'; }
+  },
+  reuseOrder(o){
+    document.getElementById('cbName').value = o.customerName||'';
+    document.getElementById('cbPhone').value = o.customerPhone||'';
+    document.getElementById('cbAddress').value = o.address||'';
+    document.getElementById('cbVillage').value = o.village||'';
+    document.getElementById('cbInstructions').value = o.instructions||'';
+    document.getElementById('cbNotes').value = o.notes||'';
+    document.getElementById('cbList').value = o.bazarList||'';
+    document.getElementById('cbType').value = o.bazarType||'weekly';
+    if(o.branchZone){
+      document.getElementById('cbDistrict').value = o.branchZone;
+      onUpazilaChange('cb');
+      setTimeout(()=>{ const zEl=document.getElementById('cbZone'); if(zEl) zEl.value = o.zone||''; }, 100);
+    }
+    toast('✓ আগের লিস্ট বসানো হয়েছে — চেক করে ট্রানজেকশন ID দিয়ে জমা দিন','success');
+    window.scrollTo({top:0, behavior:'smooth'});
   },
   async submit(){
     const msgEl=document.getElementById('cbMsg');
@@ -449,7 +500,9 @@ const CustomBazar = {
         billPhotoUrl:null, billAmount:null,
         status:'pending', userId:Auth.currentUser?.uid||null, createdAt:FB.serverTimestamp()
       });
-      msgEl.innerHTML = `✅ আপনার বাজার অর্ডার (${orderNo}) সফলভাবে জমা হয়েছে! ড্রাইভার বাজার করার পর বিলের ছবি এখানেই দেখতে পাবেন।`; msgEl.className='form-msg ok';
+            const submittedOrder = {orderNumber:orderNo, orderType:'custom-bazar', bazarType:type, bazarTypeLabel:typeLabels[type]||type, customerName:name, customerPhone:phone, address, village, instructions, notes, bazarList:list, advanceAmount:100};
+      msgEl.innerHTML = `✅ আপনার বাজার অর্ডার (${orderNo}) সফলভাবে জমা হয়েছে! ড্রাইভার বাজার করার পর বিলের ছবি এখানেই দেখতে পাবেন।<br><button class="btn btn-outline" style="margin-top:10px;font-size:12.5px;padding:8px 16px" onclick='BazarMemo.open(${JSON.stringify(submittedOrder).replace(/'/g,"&#39;")})'>🧾 মেমো দেখুন / প্রিন্ট করুন</button>`;
+      msgEl.className='form-msg ok';
       btn.textContent=orig; btn.disabled=false;
     }catch(e){ msgEl.textContent='সমস্যা হয়েছে: '+e.message; msgEl.className='form-msg err'; btn.textContent=orig; btn.disabled=false; }
   }
@@ -503,6 +556,8 @@ function orderTrackHTML(o){
   }).join('');
   const liveBtn = (o.status==='in_transit' && o.driverLat && o.driverLng)
     ? `<a href="https://www.google.com/maps?q=${o.driverLat},${o.driverLng}" target="_blank" rel="noopener" class="btn btn-outline btn-block" style="margin-top:8px;font-size:12.5px">📍 ড্রাইভারের লাইভ লোকেশন দেখুন</a>` : '';
+    const memoBtn = (o.orderType==='custom-bazar')
+    ? `<button class="btn btn-outline btn-block" style="margin-top:8px;font-size:12.5px" onclick='BazarMemo.open(${JSON.stringify(o).replace(/'/g,"&#39;")})'>🧾 মেমো দেখুন / প্রিন্ট করুন</button>` : '';
   const billBox = (o.orderType==='custom-bazar' && (o.billPhotos?.length || o.bazarItems?.length))
     ? `<div style="margin-top:10px">
         ${o.bazarItems?.length ? `<div style="background:rgba(255,255,255,.02);border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px">
