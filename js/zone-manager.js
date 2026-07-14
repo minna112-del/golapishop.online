@@ -1,31 +1,51 @@
-/* zone-manager.js — ZoneManagerDash */
+/* zone-manager.js — ZoneManagerDash (Firebase Auth secured) */
 const ZoneManagerDash = {
-  currentZone: null, _orders: [],
+  currentZone: null, currentUid: null, _orders: [],
   applyHeader(zone){
     const info = BRANCH_INFO[zone];
     const zl=document.getElementById('zmZoneLabel'); if(zl) zl.textContent = info.label;
     const ml=document.getElementById('zmManagerLabel'); if(ml) ml.textContent = 'ম্যানেজার: '+info.managerName;
   },
   async login(){
-    const zone=document.getElementById('zmZoneSelect').value;
-    const pin=document.getElementById('zmPinInput').value.trim();
+    const email=document.getElementById('zmEmail').value.trim();
+    const pass=document.getElementById('zmPassword').value;
     const msgEl=document.getElementById('zmLoginMsg');
-    if(!pin){ msgEl.textContent='পিন দিন'; msgEl.className='form-msg err'; return; }
+    if(!email||!pass){ msgEl.textContent='ইমেইল ও পাসওয়ার্ড দিন'; msgEl.className='form-msg err'; return; }
     if(!FB){ msgEl.textContent='সংযোগ সমস্যা'; msgEl.className='form-msg err'; return; }
     try{
-      const snap = await FB.getDoc(FB.doc(FB.db,'setting','zone_manager_pins'));
-      const pins = snap.exists()? snap.data() : {};
-      if(!pins[zone]||pins[zone]!==pin){ msgEl.textContent='পিন সঠিক নয়'; msgEl.className='form-msg err'; return; }
-      this.currentZone=zone; localStorage.setItem('golapi_zm_session',zone);
+      const cred = await FB.signInWithEmailAndPassword(FB.auth, email, pass);
+      const staffSnap = await FB.getDoc(FB.doc(FB.db,'staff',cred.user.uid));
+      if(!staffSnap.exists() || staffSnap.data().role!=='zone_manager'){
+        await FB.signOut(FB.auth).catch(()=>{});
+        msgEl.textContent='এই অ্যাকাউন্ট জোন ম্যানেজার হিসেবে অনুমোদিত নয়'; msgEl.className='form-msg err'; return;
+      }
+      const data = staffSnap.data();
+      this.currentUid = cred.user.uid;
+      this.currentZone = data.branchZone;
       document.getElementById('zmLoginBox').style.display='none';
       document.getElementById('zmDashBox').style.display='block';
-      this.applyHeader(zone); await this.render();
-    }catch(e){ msgEl.textContent='লগইন সমস্যা: '+e.message; msgEl.className='form-msg err'; }
+      this.applyHeader(this.currentZone);
+      await this.render();
+    }catch(e){ msgEl.textContent='লগইন ব্যর্থ: ইমেইল বা পাসওয়ার্ড সঠিক নয়'; msgEl.className='form-msg err'; }
   },
-  logout(){ this.currentZone=null; localStorage.removeItem('golapi_zm_session'); document.getElementById('zmLoginBox').style.display='block'; document.getElementById('zmDashBox').style.display='none'; },
+  async logout(){
+    if(FB) await FB.signOut(FB.auth).catch(()=>{});
+    this.currentZone=null; this.currentUid=null;
+    document.getElementById('zmLoginBox').style.display='block';
+    document.getElementById('zmDashBox').style.display='none';
+  },
+  async _restoreSession(){
+    if(this.currentZone || !FB || !FB.auth.currentUser) return;
+    try{
+      const staffSnap = await FB.getDoc(FB.doc(FB.db,'staff',FB.auth.currentUser.uid));
+      if(staffSnap.exists() && staffSnap.data().role==='zone_manager'){
+        this.currentUid = FB.auth.currentUser.uid;
+        this.currentZone = staffSnap.data().branchZone;
+      }
+    }catch(e){ devWarn('zone-manager session restore failed', e.message); }
+  },
   async render(){
-    const saved=localStorage.getItem('golapi_zm_session');
-    if(saved&&!this.currentZone) this.currentZone=saved;
+    await this._restoreSession();
     if(!this.currentZone){ document.getElementById('zmLoginBox').style.display='block'; document.getElementById('zmDashBox').style.display='none'; return; }
     document.getElementById('zmLoginBox').style.display='none';
     document.getElementById('zmDashBox').style.display='block';
