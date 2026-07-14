@@ -208,7 +208,7 @@ const PDP = {
 const Cart = {
   items:{},
   load(){ try{ this.items = JSON.parse(localStorage.getItem('golapi_cart')||'{}'); }catch(e){ this.items={}; } this.badge(); },
-  save(){ localStorage.setItem('golapi_cart', JSON.stringify(this.items)); this.badge(); },
+  save(){ localStorage.setItem('golapi_cart', JSON.stringify(this.items)); localStorage.setItem('golapi_cart_time', Date.now().toString()); this.badge(); },
   add(id,qty=1){ this.items[id]=(this.items[id]||0)+qty; this.save(); toast('✓ কার্টে যুক্ত হয়েছে','success'); this.renderDrawer(); },
   remove(id){ delete this.items[id]; this.save(); this.renderDrawer(); },
   setQty(id,qty){ if(qty<=0){ this.remove(id); return; } this.items[id]=qty; this.save(); this.renderDrawer(); },
