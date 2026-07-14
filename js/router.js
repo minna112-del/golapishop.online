@@ -1,44 +1,60 @@
-/* router.js — Owner PIN gate + page router */
+/* router.js — Owner Auth (Firebase Auth secured) + page router */
 const OwnerAuth = {
-  pendingPage:null, attempts:0, lockedUntil:0,
-  isUnlocked(){ return sessionStorage.getItem('golapi_owner_unlocked')==='1' || localStorage.getItem('golapi_owner_remember')==='1'; },
+  currentUid:null,
+  isUnlocked(){ return !!this.currentUid || (FB && FB.auth && FB.auth.currentUser && this._verifiedThisSession); },
+  _verifiedThisSession:false,
   requestAccess(){
-    document.getElementById('ownerPinInput').value='';
+    document.getElementById('ownerEmail').value='';
+    document.getElementById('ownerPassword').value='';
     document.getElementById('ownerGateMsg').className='form-msg';
     document.getElementById('ownerGateModal').classList.add('show');
-    setTimeout(()=>document.getElementById('ownerPinInput').focus(),100);
   },
   cancel(){ document.getElementById('ownerGateModal').classList.remove('show'); },
   async unlock(){
-    const entered = document.getElementById('ownerPinInput').value.trim();
+    const email = document.getElementById('ownerEmail').value.trim();
+    const pass = document.getElementById('ownerPassword').value;
     const msgEl = document.getElementById('ownerGateMsg');
-    if(Date.now() < this.lockedUntil){
-      msgEl.textContent = `🔒 আর ${Math.ceil((this.lockedUntil-Date.now())/60000)} মিনিট অপেক্ষা করুন`; msgEl.className='form-msg err'; return;
-    }
+    if(!email||!pass){ msgEl.textContent='ইমেইল ও পাসওয়ার্ড দিন'; msgEl.className='form-msg err'; return; }
     if(!FB){ msgEl.textContent='সংযোগ সমস্যা'; msgEl.className='form-msg err'; return; }
     try{
-      const snap = await FB.getDoc(FB.doc(FB.db,'setting','owner_pin'));
-      const storedPin = snap.exists()? snap.data().pin : null;
-      if(!storedPin){ msgEl.textContent='⚠ পিন সেট করা হয়নি — Firestore setting/owner_pin ডকুমেন্টে pin ফিল্ড বসান'; msgEl.className='form-msg err'; return; }
-      if(entered !== storedPin){
-        this.attempts++;
-        if(this.attempts>=3){ this.lockedUntil = Date.now()+5*60*1000; msgEl.textContent='🔒 ৩ বার ভুল — ৫ মিনিট অপেক্ষা করুন'; this.attempts=0; }
-        else msgEl.textContent = `❌ পিন সঠিক নয় (${3-this.attempts} বার বাকি)`;
-        msgEl.className='form-msg err'; document.getElementById('ownerPinInput').value=''; return;
+      const cred = await FB.signInWithEmailAndPassword(FB.auth, email, pass);
+      const staffSnap = await FB.getDoc(FB.doc(FB.db,'staff',cred.user.uid));
+      if(!staffSnap.exists() || staffSnap.data().role!=='admin'){
+        await FB.signOut(FB.auth).catch(()=>{});
+        msgEl.textContent='এই অ্যাকাউন্ট অ্যাডমিন হিসেবে অনুমোদিত নয়'; msgEl.className='form-msg err'; return;
       }
-      this.attempts=0;
-      sessionStorage.setItem('golapi_owner_unlocked','1'); localStorage.setItem('golapi_owner_remember','1');
+      this.currentUid = cred.user.uid;
+      this._verifiedThisSession = true;
       document.getElementById('ownerGateModal').classList.remove('show');
       Router.go('admin-dash');
-    }catch(e){ msgEl.textContent='যাচাই ব্যর্থ: '+e.message; msgEl.className='form-msg err'; }
+    }catch(e){ msgEl.textContent='লগইন ব্যর্থ: ইমেইল বা পাসওয়ার্ড সঠিক নয়'; msgEl.className='form-msg err'; }
   },
-  lock(){ sessionStorage.removeItem('golapi_owner_unlocked'); localStorage.removeItem('golapi_owner_remember'); toast('🔒 লক করা হয়েছে'); Router.go('home'); }
+  async _restoreSession(){
+    if(this.currentUid || !FB || !FB.auth.currentUser) return false;
+    try{
+      const staffSnap = await FB.getDoc(FB.doc(FB.db,'staff',FB.auth.currentUser.uid));
+      if(staffSnap.exists() && staffSnap.data().role==='admin'){
+        this.currentUid = FB.auth.currentUser.uid;
+        this._verifiedThisSession = true;
+        return true;
+      }
+    }catch(e){ devWarn('owner session restore failed', e.message); }
+    return false;
+  },
+  async lock(){
+    if(FB) await FB.signOut(FB.auth).catch(()=>{});
+    this.currentUid=null; this._verifiedThisSession=false;
+    toast('🔒 লক করা হয়েছে'); Router.go('home');
+  }
 };
 
 const Router = {
   current:'home', params:{},
-  go(page, params={}, opts={}){
-    if(page==='admin-dash' && !OwnerAuth.isUnlocked()){ OwnerAuth.requestAccess(); return; }
+  async go(page, params={}, opts={}){
+    if(page==='admin-dash' && !OwnerAuth.isUnlocked()){
+      const restored = await OwnerAuth._restoreSession();
+      if(!restored){ OwnerAuth.requestAccess(); return; }
+    }
     this.current = page; this.params = params;
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
     const el=document.getElementById('page-'+page);
