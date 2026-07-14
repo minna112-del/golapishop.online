@@ -1,27 +1,26 @@
-/* payment.js — bKash/Nagad Payment Gateway Integration */
+/* payment.js — bKash/Nagad Payment Gateway Integration (Zone-aware) */
 const PaymentGateway = {
-  
-  /* bKash merchant info — এখানে তোমার বাস্তব নম্বর বসাও */
-  BKASH: {
-    merchantNumber: '01XXXXXXXXX',
-    type: 'personal' // 'personal' or 'merchant'
-  },
-  
-  NAGAD: {
-    merchantNumber: '01XXXXXXXXX',
-    type: 'personal'
+
+  /* জোন অনুযায়ী merchant নম্বর — একক সোর্স utils.js এর BRANCH_INFO */
+  getMerchantNumber(method, zone) {
+    const info = (typeof BRANCH_INFO !== 'undefined') ? BRANCH_INFO[zone] : null;
+    if (!info) return null;
+    return method === 'bkash' ? info.bkashNumber : info.nagadNumber;
   },
 
+  accountType: 'personal', // দুই জোনের নম্বরই personal অ্যাকাউন্ট
+
   /* Generate payment instructions for customer */
-  generateBkashInstructions(amount, orderId) {
+  generateBkashInstructions(amount, orderId, zone) {
+    const number = this.getMerchantNumber('bkash', zone) || 'শাখা নির্বাচন করুন';
     return {
-      number: this.BKASH.merchantNumber,
+      number,
       amount: amount,
       reference: orderId.substring(0, 8).toUpperCase(),
       instructions: [
         `*247# ডায়াল করুন অথবা bKash App খুলুন`,
         `Send Money নির্বাচন করুন`,
-        `নম্বর: ${this.BKASH.merchantNumber}`,
+        `নম্বর: ${number}`,
         `টাকা: ${amount}৳`,
         `রেফারেন্স: ${orderId.substring(0,8).toUpperCase()}`,
         `PIN দিয়ে কনফার্ম করুন`,
@@ -30,15 +29,16 @@ const PaymentGateway = {
     };
   },
 
-  generateNagadInstructions(amount, orderId) {
+  generateNagadInstructions(amount, orderId, zone) {
+    const number = this.getMerchantNumber('nagad', zone) || 'শাখা নির্বাচন করুন';
     return {
-      number: this.NAGAD.merchantNumber,
+      number,
       amount: amount,
       reference: orderId.substring(0, 8).toUpperCase(),
       instructions: [
         `Nagad App খুলুন`,
         `Send Money নির্বাচন করুন`,
-        `নম্বর: ${this.NAGAD.merchantNumber}`,
+        `নম্বর: ${number}`,
         `টাকা: ${amount}৳`,
         `রেফারেন্স: ${orderId.substring(0,8).toUpperCase()}`,
         `PIN দিয়ে কনফার্ম করুন`,
@@ -56,11 +56,11 @@ const PaymentGateway = {
   },
 
   /* Show payment modal with instructions */
-  showPaymentModal(method, amount, orderId) {
+  showPaymentModal(method, amount, orderId, zone) {
     const isBkash = method === 'bkash';
     const info = isBkash
-      ? this.generateBkashInstructions(amount, orderId)
-      : this.generateNagadInstructions(amount, orderId);
+      ? this.generateBkashInstructions(amount, orderId, zone)
+      : this.generateNagadInstructions(amount, orderId, zone);
     const logo = isBkash ? '📱 bKash' : '📱 Nagad';
     const color = isBkash ? '#E2136E' : '#EC1C24';
 
