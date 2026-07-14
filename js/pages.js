@@ -130,6 +130,41 @@ const PDP = {
         <div class="field"><textarea id="reviewText" rows="2" placeholder="আপনার অভিজ্ঞতা লিখুন..."></textarea></div>
         <button class="btn btn-gold" style="font-size:13px" onclick="PDP.submitReview()">রিভিউ সাবমিট করুন</button>`;
     }
+    /* SEO: inject dynamic Product schema (JSON-LD) for this product */
+    this.injectProductSchema(p, disc);
+  },
+  injectProductSchema(p, disc){
+    const old = document.getElementById('productSchemaLD');
+    if(old) old.remove();
+    const schema = {
+      "@context":"https://schema.org",
+      "@type":"Product",
+      "name": p.name,
+      "image": p.img,
+      "description": p.description || `${p.name} — Golapi Shop Online থেকে হোম ডেলিভারি, নোয়াখালী সদর ও বেগমগঞ্জ।`,
+      "sku": p.id,
+      "brand": { "@type":"Brand", "name":"Golapi Shop Online" },
+      "offers": {
+        "@type":"Offer",
+        "url": `https://www.golapishop.online/#product?id=${p.id}`,
+        "priceCurrency":"BDT",
+        "price": p.salePrice,
+        "availability": p.stock>0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+        "itemCondition":"https://schema.org/NewCondition"
+      }
+    };
+    if(p.reviews>0){
+      schema.aggregateRating = {
+        "@type":"AggregateRating",
+        "ratingValue": p.rating,
+        "reviewCount": p.reviews
+      };
+    }
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.id = 'productSchemaLD';
+    script.textContent = JSON.stringify(schema);
+    document.head.appendChild(script);
   },
   currentRating:0,
   setRating(n){
