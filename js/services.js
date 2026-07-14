@@ -28,10 +28,29 @@ const OrdersService = {
     try {
       await FB.updateDoc(FB.doc(FB.db, 'orders', orderId), { status });
       const order = this.cache.find(o => o.id === orderId) || { id: orderId };
-      if (status === 'delivered') SMSGateway.onDelivered(order);
+      if (status === 'delivered') {
+        SMSGateway.onDelivered(order);
+        this.giveReferralBonusIfEligible(order);
+      }
       if (status === 'cancelled') SMSGateway.onCancelled(order);
       return true;
     } catch (e) { toast('স্ট্যাটাস আপডেট ব্যর্থ', 'error'); return false; }
+  },
+  /* ---------- Loyalty/Referral bonus — first delivered order after referral ---------- */
+  async giveReferralBonusIfEligible(order){
+    if(!FB || !order.userId) return;
+    try{
+      const userRef = FB.doc(FB.db,'users',order.userId);
+      const userSnap = await FB.getDoc(userRef);
+      if(!userSnap.exists()) return;
+      const u = userSnap.data();
+      if(!u.referredBy || u.referralBonusGiven) return;
+      const BONUS = 20;
+      await FB.updateDoc(userRef, { walletBalance: FB.increment(BONUS), referralBonusGiven: true });
+      const referrerRef = FB.doc(FB.db,'users',u.referredBy);
+      await FB.updateDoc(referrerRef, { walletBalance: FB.increment(BONUS) }).catch(()=>{});
+      devWarn('referral bonus given', order.userId);
+    }catch(e){ devWarn('referral bonus failed', e.message); }
   },
   async cancelOrder(orderId){
     if(!FB) return false;
@@ -133,9 +152,9 @@ const RefundService = {
     if(!reason.trim()){ toast('রিফান্ডের কারণ লিখুন','error'); return false; }
     try{
       await FB.updateDoc(FB.doc(FB.db,'orders',orderId),{refundRequested:true, refundReason:reason.trim(), refundStatus:'pending', refundRequestedAt:FB.serverTimestamp()});
-      toast('✓ রিফান্ড রিকোয়েস্ট সাবমিট হয়েছে','success');
+      toast('✓ রিফান্ড রকোয়েস্ট সাবমিট হয়েছে','success');
       return true;
-    }catch(e){ toast('রিকোয়েস্ট ব্যর্থ: '+e.message,'error'); return false; }
+    }catch(e){ toast('রিকয়েস্ট ব্যর্থ: '+e.message,'error'); return false; }
   },
   async approveRefund(orderId, status){
     if(!FB) return false;
