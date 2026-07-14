@@ -1,32 +1,47 @@
-/* driver.js — DriverPortal, BazarShop */
+/* driver.js — DriverPortal (Firebase Auth secured), BazarShop */
 const DriverPortal = {
-  currentDriver:null,
+  currentDriver:null, currentUid:null,
   async login(){
-    const phone=document.getElementById('driverPhone').value.trim();
-    const pin=document.getElementById('driverPin').value.trim();
+    const email=document.getElementById('driverEmail').value.trim();
+    const pass=document.getElementById('driverPassword').value;
     const msgEl=document.getElementById('driverLoginMsg');
-    if(!phone||!pin){ msgEl.textContent='মোবাইল ও পিন দিন'; msgEl.className='form-msg err'; return; }
+    if(!email||!pass){ msgEl.textContent='ইমেইল ও পাসওয়ার্ড দিন'; msgEl.className='form-msg err'; return; }
     if(!FB){ msgEl.textContent='সংযোগ সমস্যা'; msgEl.className='form-msg err'; return; }
     try{
-      const snap = await FB.getDocs(FB.collection(FB.db,'drivers'));
-      let found=null; snap.forEach(d=>{ const data=d.data(); if(data.phone===phone && String(data.pin)===pin) found={id:d.id,...data}; });
-      if(!found){ msgEl.textContent='মোবাইল বা পিন সঠিক নয়'; msgEl.className='form-msg err'; return; }
-      this.currentDriver=found;
-      localStorage.setItem('golapi_driver_session', JSON.stringify({id:found.id,name:found.name,branchZone:found.branchZone}));
+      const cred = await FB.signInWithEmailAndPassword(FB.auth, email, pass);
+      const staffSnap = await FB.getDoc(FB.doc(FB.db,'staff',cred.user.uid));
+      if(!staffSnap.exists() || staffSnap.data().role!=='driver'){
+        await FB.signOut(FB.auth).catch(()=>{});
+        msgEl.textContent='এই অ্যাকাউন্ট ড্রাইভার হিসেবে অনুমোদিত নয়'; msgEl.className='form-msg err'; return;
+      }
+      const data = staffSnap.data();
+      this.currentUid = cred.user.uid;
+      this.currentDriver = { id: data.driverId || cred.user.uid, name: data.name, branchZone: data.branchZone, phone: data.phone };
       document.getElementById('driverLoginBox').style.display='none';
       document.getElementById('driverDashBox').style.display='block';
-      document.getElementById('driverNameLabel').textContent=found.name;
+      document.getElementById('driverNameLabel').textContent=data.name;
       await this.render();
-    }catch(e){ msgEl.textContent='লগইন সমস্যা: '+e.message; msgEl.className='form-msg err'; }
+    }catch(e){ msgEl.textContent='লগইন ব্যর্থ: ইমেইল বা পাসওয়ার্ড সঠিক নয়'; msgEl.className='form-msg err'; }
   },
-  logout(){
-    this.currentDriver=null; localStorage.removeItem('golapi_driver_session');
+  async logout(){
+    if(FB) await FB.signOut(FB.auth).catch(()=>{});
+    this.currentDriver=null; this.currentUid=null;
     document.getElementById('driverLoginBox').style.display='block';
     document.getElementById('driverDashBox').style.display='none';
   },
+  async _restoreSession(){
+    if(this.currentDriver || !FB || !FB.auth.currentUser) return;
+    try{
+      const staffSnap = await FB.getDoc(FB.doc(FB.db,'staff',FB.auth.currentUser.uid));
+      if(staffSnap.exists() && staffSnap.data().role==='driver'){
+        const data = staffSnap.data();
+        this.currentUid = FB.auth.currentUser.uid;
+        this.currentDriver = { id: data.driverId || FB.auth.currentUser.uid, name: data.name, branchZone: data.branchZone, phone: data.phone };
+      }
+    }catch(e){ devWarn('driver session restore failed', e.message); }
+  },
   async render(){
-    const saved=localStorage.getItem('golapi_driver_session');
-    if(saved && !this.currentDriver) this.currentDriver=JSON.parse(saved);
+    await this._restoreSession();
     if(!this.currentDriver){ document.getElementById('driverLoginBox').style.display='block'; document.getElementById('driverDashBox').style.display='none'; return; }
     document.getElementById('driverLoginBox').style.display='none';
     document.getElementById('driverDashBox').style.display='block';
