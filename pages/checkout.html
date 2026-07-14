@@ -32,9 +32,16 @@
     <div id="ckStep3" class="card-box" style="display:none">
       <h3 style="font-size:15px;margin-bottom:14px;color:#fff">অর্ডার রিভিউ</h3>
       <div id="ckSummary"></div>
+      <div id="ckWalletBox" style="display:none;margin-top:12px;padding:12px;background:rgba(212,175,55,.05);border:1px solid var(--gold-line);border-radius:10px">
+        <label style="display:flex;justify-content:space-between;align-items:center;font-size:13px;cursor:pointer">
+          <span>🎁 ওয়ালেট ব্যালেন্স ব্যবহার করুন (আপনার আছে <strong id="ckWalletAvail" style="color:var(--gold)">৳০</strong>)</span>
+          <input type="checkbox" id="ckUseWallet" onchange="Checkout.renderSummary()" style="accent-color:var(--gold);width:18px;height:18px">
+        </label>
+      </div>
       <div style="border-top:1px solid var(--line);padding-top:12px;margin-top:10px">
         <div class="row-between"><span>সাবটোটাল</span><span id="ckSub">৳০</span></div>
         <div class="row-between"><span>ডেলিভারি চার্জ</span><span id="ckShip">৳০</span></div>
+        <div class="row-between" id="ckWalletRow" style="display:none;color:#22c55e"><span>ওয়ালেট ডিসকাউন্ট</span><span id="ckWalletDiscount">−৳০</span></div>
         <div class="row-total row-between"><span>সর্বমোট</span><span id="ckTotal">৳০</span></div>
       </div>
       <label style="display:flex;gap:8px;font-size:12px;color:var(--ink-muted);margin:14px 0"><input type="checkbox" id="ckTerms" checked style="accent-color:var(--gold);margin-top:2px"> আমি শর্তাবলীতে সম্মত</label>
