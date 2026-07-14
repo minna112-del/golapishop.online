@@ -92,7 +92,9 @@ const PDP = {
     const img=document.getElementById('pdpImg'); if(img) img.src = p.img;
     const name=document.getElementById('pdpName'); if(name) name.textContent = p.name;
     const meta=document.getElementById('pdpMeta');
-    if(meta) meta.innerHTML = `⭐ ${p.rating} (${bn(p.reviews)} রিভিউ) · ${bn(p.sold)} বিক্রি হয়েছে`;
+    if(meta) meta.innerHTML = p.reviews>0
+      ? `⭐ ${p.rating} (${bn(p.reviews)} রিভিউ) · ${bn(p.sold)} বিক্রি হয়েছে`
+      : `<span style="color:#22c55e;font-weight:600">🆕 নতুন প্রোডাক্ট — প্রথম কেনার সুযোগ নিন!</span>`;
     const price=document.getElementById('pdpPrice'); if(price) price.textContent = money(p.salePrice);
     const disc = p.price>p.salePrice ? Math.round((1-p.salePrice/p.price)*100) : 0;
     const old=document.getElementById('pdpOld'); if(old) old.textContent = disc? money(p.price):'';
