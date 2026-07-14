@@ -45,7 +45,7 @@ function initApp(){
     setTimeout(()=>Router.go('driver'),200);
   } else if(role==='zone-manager'||path==='/manager'||path==='/zone-manager'){
     setTimeout(()=>Router.go('zone-manager'),200);
-  } else if(hash&&document.getElementById('page-'+hash)){
+ } else if(hash && (document.getElementById('page-'+hash) || (window.__lazyPages||[]).includes(hash))){
     setTimeout(()=>Router.go(hash),200);
   } else {
     Router.go('home',{},{skipHash:true});
