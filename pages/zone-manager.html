@@ -3,11 +3,11 @@
     <a href="#" onclick="Router.go('home')" style="font-size:12.5px;color:var(--ink-muted);display:inline-block;margin-bottom:16px">← সাইটে ফিরে যান</a>
     <div id="zmLoginBox" style="max-width:420px;margin:0 auto">
       <h2 class="tiro" style="font-size:20px;margin-bottom:6px">🏢 জোন ম্যানেজার লগইন</h2>
-      <p style="color:var(--ink-muted);font-size:13px;margin-bottom:18px">আপনার শাখার পিন দিয়ে লগইন করুন</p>
+      <p style="color:var(--ink-muted);font-size:13px;margin-bottom:18px">আপনার নিজস্ব ইমেইল ও পাসওয়ার্ড দিয়ে লগইন করুন — শাখা অটোমেটিক নির্ধারিত হবে</p>
       <div id="zmLoginMsg" class="form-msg"></div>
       <div class="card-box">
-        <div class="field"><label>শাখা</label><select id="zmZoneSelect"><option value="noakhali_sadar">নোয়াখালী সদর</option><option value="begumganj">বেগমগঞ্জ</option></select></div>
-        <div class="field"><label>পিন</label><input type="password" id="zmPinInput"></div>
+        <div class="field"><label>ইমেইল</label><input type="email" id="zmEmail" autocomplete="username"></div>
+        <div class="field"><label>পাসওয়ার্ড</label><input type="password" id="zmPassword" autocomplete="current-password"></div>
         <button class="btn btn-gold btn-block" onclick="ZoneManagerDash.login()">লগইন করুন</button>
       </div>
     </div>
