@@ -1,8 +1,8 @@
 /* widgets.js — floating AI chat widget */
 const ChatWidget = {
   isOpen:false, history:[],
-  systemPrompt:`তুমি Golapi Shop Online এর কাস্টমার সাপোর্ট সহায়ক। বাংলায়, সংক্ষিপ্ত ও বন্ধুত্বপূর্ণভাবে উত্তর দাও।
-দোকানের তথ্য: শুধু নোয়াখালী সদর ও বেগমগঞ্জ উপজেলায় ডেলিভারি, নিজস্ব লোকাল ড্রাইভার। ক্যাটাগরি: ঔষধ, মুদি বাজার, কনফেকশনারি, স্টেশনারি, গ্যাস সিলিন্ডার, মোবাইল এক্সেসরিস, ঘড়ি, কসমেটিকস, জামা-কাপড়, ফার্নিচার। কাস্টম বাজার সেবা আছে (১০০ টাকা বিকাশ অগ্রিম + বাকি COD)। ডেলিভারি: এক্সপ্রেস ৩০-৬০ মিনিট (+৳১২০) বা আজই ফ্রি। পেমেন্ট: COD, bKash, Nagad। ফ্রি ডেলিভারি ৳১০০০+ অর্ডারে। হটলাইন: +8801612057371।`,
+  systemPrompt:`তুমি Golapi Shop Online এর কস্টমার সাপোর্ট সহায়ক। বাংলায়, সংক্ষিপ ও বন্ধুত্বপূর্ণভাবে উত্তর দাও।
+দকানের তথ্য: শুধু নোয়াখলী সদর ও বেগমগঞ্জ উপজেলায় ডেলিভারি, নিজস্ব লোকাল ড্রাইভার। ক্যাটাগর: ঔষধ, মুদি বাজার, কনফেকশনারি, স্টেশনারি, গ্যাস সিলিন্ডার, মোবাইল এক্সেসরিস, ঘড়ি, কসমেটিকস, জমা-কাপড়, ফার্নিচার। কাস্টম বাজার সবা আছে (১০০ টাকা বিকাশ অগ্রিম + বাকি COD)। ডেলিভারি: এক্সপ্রেস ৩০-৬০ মিনিট (+৳১২০) বা আজই ফ্রি। পমেন্ট: COD, bKash, Nagad। ফ্রি ডেলিভারি ৳১০০০+ অর্ডারে। হটলাইন: +8801612057371।`,
   workerUrl: 'https://golapi-chat-proxy.studiomt46.workers.dev',
   toggle(){
     this.isOpen=!this.isOpen;
@@ -22,7 +22,7 @@ const ChatWidget = {
     const input=document.getElementById('chatInput'); if(!input) return;
     const msg=input.value.trim(); if(!msg) return;
     input.value=''; this.append('user',msg); this.history.push({role:'user',content:msg});
-    if(this.workerUrl.includes('YOUR-SUBDOMAIN')){ this.append('bot','AI চ্যাট এখনো সেটআপ হয়নি — golapishoponline.bd@gmail.com-এ মেসেজ দিন।'); return; }
+    if(this.workerUrl.includes('YOUR-SUBDOMAIN')){ this.append('bot','AI চ্যাট এখনো সেটআপ হয়নি — golapishoponline.bd@gmail.com-এ মেসজ দিন।'); return; }
     try{
       const res = await fetch(this.workerUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:400,system:this.systemPrompt,messages:this.history})});
       const data = await res.json();
@@ -46,6 +46,25 @@ const FAQ = {
         </div>
         <div id="faqAns${i}" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:13px;color:var(--ink-soft);line-height:1.7">${f.a}</div>
       </div>`).join('');
+    this.injectFAQSchema();
+  },
+  injectFAQSchema(){
+    const old = document.getElementById('faqSchemaLD');
+    if(old) old.remove();
+    const schema = {
+      "@context":"https://schema.org",
+      "@type":"FAQPage",
+      "mainEntity": FAQ_LIST.map(f=>({
+        "@type":"Question",
+        "name": f.q,
+        "acceptedAnswer": { "@type":"Answer", "text": f.a }
+      }))
+    };
+    const script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.id = 'faqSchemaLD';
+    script.textContent = JSON.stringify(schema);
+    document.head.appendChild(script);
   },
   toggle(i){
     const ans=document.getElementById('faqAns'+i);
