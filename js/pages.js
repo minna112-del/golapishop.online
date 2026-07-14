@@ -331,17 +331,22 @@ const Checkout = {
     const itemCount = Object.values(Cart.items).reduce((a,b)=>a+b,0);
     const ship = calcDeliveryCharge(itemCount, sub);
     try{
-      await FB.addDoc(FB.collection(FB.db,'orders'),{
+      const orderRef = await FB.addDoc(FB.collection(FB.db,'orders'),{
         orderNumber:orderNo, customerName:name, customerPhone:phone, customerNid:nid, address:addr, village,
         branchZone:upazila, district:AREA_LABELS[upazila]||'', zone,
-        instructions, paymentMethod:this.pay, deliverySlot:'express',
+        instructions, paymentMethod:this.pay, paymentStatus:this.pay==='cod'?'cod':'pending_submission', deliverySlot:'express',
         items:Object.entries(Cart.items).map(([id,qty])=>({productId:id,qty})),
         subtotal:sub+ship, shippingCost:ship, status:'pending', driverId:null, driverName:null,
         userId:Auth.currentUser?.uid||null, createdAt:FB.serverTimestamp()
       });
       const sn=document.getElementById('successOrderNo'); if(sn) sn.textContent = orderNo;
       Cart.items={}; Cart.save();
-      Router.go('order-success');
+      if(this.pay==='bkash' || this.pay==='nagad'){
+        /* bKash/Nagad হলে ট্রানজেকশন ID ক্যাপচার করার মডাল দেখানো হবে, তারপর order-success-এ যাবে */
+        PaymentGateway.showPaymentModal(this.pay, sub+ship, orderRef.id, upazila);
+      } else {
+        Router.go('order-success');
+      }
     }catch(e){ devWarn('order failed', e.message); toast('❌ অর্ডার সম্পন্ন হয়নি, আবার চেষ্টা করুন','error'); }
   }
 };
