@@ -122,9 +122,10 @@
   <div class="modal-box" style="position:relative;text-align:center">
     <button class="close" onclick="OwnerAuth.cancel()">✕</button>
     <h3 class="tiro" style="font-size:18px;margin-bottom:6px">🔒 Owner Dashboard</h3>
-    <p style="color:var(--ink-muted);font-size:13px;margin-bottom:16px">পিন দিয়ে আনলক করুন</p>
+    <p style="color:var(--ink-muted);font-size:13px;margin-bottom:16px">ইমেইল ও পাসওয়ার্ড দিয়ে আনলক করুন</p>
     <div id="ownerGateMsg" class="form-msg"></div>
-    <input type="password" id="ownerPinInput" maxlength="4" inputmode="numeric" style="font-size:22px;letter-spacing:10px;text-align:center;width:100%;background:rgba(255,255,255,.04);border:1px solid var(--line-l);border-radius:11px;padding:13px;color:#fff;margin-bottom:14px">
+    <input type="email" id="ownerEmail" placeholder="ইমেইল" autocomplete="username" style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--line-l);border-radius:11px;padding:13px;color:#fff;margin-bottom:10px;font-size:14px">
+    <input type="password" id="ownerPassword" placeholder="পাসওয়ার্ড" autocomplete="current-password" style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--line-l);border-radius:11px;padding:13px;color:#fff;margin-bottom:14px;font-size:14px">
     <button class="btn btn-gold btn-block" onclick="OwnerAuth.unlock()">আনলক করুন</button>
   </div>
 </div>
