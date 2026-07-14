@@ -1,68 +1,64 @@
-/* page-loader.js — Loads slot + page partials before app boot */
+/* page-loader.js — Loads page partials + view partials into slot divs */
 (function(){
-  var container = document.getElementById('pageContainer');
-
-  // slot id -> partial filename (loaded from /pages/*.html, injected into fixed slot divs)
-  var slots = {
-    'slot-topbar':      'topbar',
-    'slot-header':      'header',
-    'slot-cart-drawer': 'cart-drawer',
-    'slot-footer':      'footer',
-    'slot-mobnav':      'mobnav',
-    'slot-chat':        'chat-widget',
-    'slot-modals':      'modals',
-    'slot-toast':       'toast'
-  };
-
-  // page name -> partial filename (all injected into #pageContainer in this order)
-  var pages = [
-    'home','listing','product','checkout','order-success','myorders',
-    'account','account-addresses','about-app','privacy-info','terms',
-    'contact','custom-bazar','medical','admin-dash','driver','zone-manager'
+  /* ---- Partials (header, footer, modals, cart-drawer, mobnav, chat-widget, toast, topbar) ---- */
+  const partials = [
+    { url: 'partials/topbar.html',       slot: 'slot-topbar' },
+    { url: 'partials/header.html',       slot: 'slot-header' },
+    { url: 'partials/cart-drawer.html',  slot: 'slot-cart-drawer' },
+    { url: 'partials/footer.html',       slot: 'slot-footer' },
+    { url: 'partials/mobnav.html',       slot: 'slot-mobnav' },
+    { url: 'partials/chat-widget.html',  slot: 'slot-chat' },
+    { url: 'partials/modals.html',       slot: 'slot-modals' },
+    { url: 'partials/toast.html',        slot: 'slot-toast' }
   ];
 
-  var slotKeys = Object.keys(slots);
-  var total = slotKeys.length + pages.length;
-  var done = 0;
+  /* ---- View pages (loaded into #pageContainer) ---- */
+  const pages = ['home','listing','product','checkout','myorders','account','medical','custom-bazar','admin-dash','driver','zone-manager','order-success','account-addresses','about-app','privacy-info','terms','contact','modals'];
 
-  function finish(){
-    done++;
-    if(done === total){
-      var loader = document.getElementById('pageLoader');
-      if(loader) loader.style.display = 'none';
-      document.dispatchEvent(new Event('pages-ready'));
-    }
+  let pending = partials.length + pages.length;
+  const container = document.getElementById('pageContainer');
+
+  function done(){
+    pending--;
+    if(pending > 0) return;
+    const loader = document.getElementById('pageLoader');
+    if(loader) loader.style.display = 'none';
+    document.dispatchEvent(new Event('pages-ready'));
   }
 
-  function loadInto(url, targetEl, appendMode){
-    var xhr = new XMLHttpRequest();
+  function fetchInto(url, targetEl){
+    const xhr = new XMLHttpRequest();
     xhr.open('GET', url, true);
     xhr.onload = function(){
       if(xhr.status === 200 && targetEl){
-        if(appendMode){
-          var wrapper = document.createElement('div');
-          wrapper.innerHTML = xhr.responseText;
-          while(wrapper.firstChild) targetEl.appendChild(wrapper.firstChild);
-        } else {
-          targetEl.innerHTML = xhr.responseText;
-        }
-      } else if(xhr.status !== 200){
-        console.warn('[page-loader] সাইট থকে লোড ব্যর্থ:', url, xhr.status);
+        targetEl.innerHTML = xhr.responseText;
       }
-      finish();
+      done();
     };
-    xhr.onerror = function(){ console.warn('[page-loader] নেটওয়ার্ক এরর:', url); finish(); };
+    xhr.onerror = function(){ done(); };
     xhr.send();
   }
 
-  // 1) Fill fixed UI slots (header, footer, topbar, nav, cart, chat, modals, toast)
-  slotKeys.forEach(function(slotId){
-    var el = document.getElementById(slotId);
-    loadInto('pages/' + slots[slotId] + '.html', el, false);
+  /* Load partials into slot divs */
+  partials.forEach(function(p){
+    const slot = document.getElementById(p.slot);
+    if(slot){ fetchInto(p.url, slot); }
+    else { done(); }
   });
 
-  // 2) Append all app pages into #pageContainer
+  /* Load view pages into pageContainer */
   pages.forEach(function(name){
-    loadInto('pages/' + name + '.html', container, true);
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', 'pages/' + name + '.html', true);
+    xhr.onload = function(){
+      if(xhr.status === 200 && container){
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = xhr.responseText;
+        while(wrapper.firstChild) container.appendChild(wrapper.firstChild);
+      }
+      done();
+    };
+    xhr.onerror = function(){ done(); };
+    xhr.send();
   });
 })();
