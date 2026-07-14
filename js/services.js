@@ -16,7 +16,6 @@ const OrdersService = {
       await FB.updateDoc(FB.doc(FB.db, 'orders', orderId), {
         driverId, driverName, status: 'assigned', assignedAt: FB.serverTimestamp()
       });
-      /* SMS trigger */
       const order = this.cache.find(o => o.id === orderId) || { id: orderId };
       const driver = await FB.getDoc(FB.doc(FB.db, 'drivers', driverId)).catch(() => null);
       const dPhone = driver?.data()?.phone || '';
@@ -28,7 +27,6 @@ const OrdersService = {
     if (!FB) return false;
     try {
       await FB.updateDoc(FB.doc(FB.db, 'orders', orderId), { status });
-      /* SMS trigger */
       const order = this.cache.find(o => o.id === orderId) || { id: orderId };
       if (status === 'delivered') SMSGateway.onDelivered(order);
       if (status === 'cancelled') SMSGateway.onCancelled(order);
