@@ -72,7 +72,7 @@ const Listing = {
     if(sort==='rating') items.sort((a,b)=>parseFloat(b.rating)-parseFloat(a.rating));
     if(sort==='sold') items.sort((a,b)=>b.sold-a.sold);
     const titleEl=document.getElementById('listTitle'); if(titleEl) titleEl.textContent = title;
-    const countEl=document.getElementById('listCount'); if(countEl) countEl.textContent = `${bn(items.length)} টি প্রোডাক্ট পাওয়া গেছে`;
+    const countEl=document.getElementById('listCount'); if(countEl) countEl.textContent = `${bn(items.length)} টি প্রোডাক্ পাওয়া গেছে`;
     const grid=document.getElementById('listingGrid');
     if(grid) grid.innerHTML = items.map(pcardHTML).join('') || `<div class="empty-state" style="grid-column:1/-1"><div class="em">🔍</div><h3>কোনো প্রোডাক্ট পাওয়া যায়নি</h3></div>`;
   }
@@ -93,7 +93,7 @@ const PDP = {
     const name=document.getElementById('pdpName'); if(name) name.textContent = p.name;
     const meta=document.getElementById('pdpMeta');
     if(meta) meta.innerHTML = p.reviews>0
-      ? `⭐ ${p.rating} (${bn(p.reviews)} রিভিউ) · ${bn(p.sold)} বিক্রি হয়েছে`
+      ? `⭐ ${p.rating} (${bn(p.reviews)} রভিউ) · ${bn(p.sold)} বিক্রি হয়েছে`
       : `<span style="color:#22c55e;font-weight:600">🆕 নতুন প্রোডাক্ট — প্রথম কেনার সুযোগ নিন!</span>`;
     const price=document.getElementById('pdpPrice'); if(price) price.textContent = money(p.salePrice);
     const disc = p.price>p.salePrice ? Math.round((1-p.salePrice/p.price)*100) : 0;
@@ -141,7 +141,7 @@ const PDP = {
       "@type":"Product",
       "name": p.name,
       "image": p.img,
-      "description": p.description || `${p.name} — Golapi Shop Online থেকে হোম ডেলিভারি, নোয়াখালী সদর ও বেগমগঞ্জ।`,
+      "description": p.description || `${p.name} — Golapi Shop Online থেকে হোম ডেলিভারি, নোয়াখলী সদর ও বেগমগঞ্জ।`,
       "sku": p.id,
       "brand": { "@type":"Brand", "name":"Golapi Shop Online" },
       "offers": {
@@ -469,7 +469,7 @@ const CustomBazar = {
       onUpazilaChange('cb');
       setTimeout(()=>{ const zEl=document.getElementById('cbZone'); if(zEl) zEl.value = o.zone||''; }, 100);
     }
-    toast('✓ আগের লিস্ট বসানো হয়েছে — চেক করে ট্রানজেকশন ID দিয়ে জমা দিন','success');
+    toast('✓ আগের লিস্ট বসনো হয়েছে — চেক করে ট্রানজেকশন ID দিয়ে জমা দিন','success');
     window.scrollTo({top:0, behavior:'smooth'});
   },
   async submit(){
@@ -490,7 +490,7 @@ const CustomBazar = {
     if(!phoneRe.test(phone.replace(/[\s-]/g,''))){ msgEl.textContent='সঠিক মোবাইল নম্বর দিন'; msgEl.className='form-msg err'; return; }
     if(!FB){ msgEl.textContent='সংযোগ সমস্যা'; msgEl.className='form-msg err'; return; }
     const btn=document.getElementById('cbSubmitBtn'); const orig=btn.textContent; btn.textContent='জমা হচ্ছে...'; btn.disabled=true;
-    const typeLabels={weekly:'সাপ্তাহিক',monthly:'মাসিক',wedding:'বিয়ের',ramadan:'রমজানের',qurbani:'কুরবানির',other:'অন্যান্য'};
+    const typeLabels={weekly:'সাপ্তাহিক',monthly:'মাসিক',wedding:'বিয়ের',ramadan:'রমজানের',qurbani:'কুরবনির',other:'অন্যান্য'};
     const orderNo = 'CB-'+new Date().getFullYear()+'-'+String(Math.floor(Math.random()*900000)+100000);
     try{
       await FB.addDoc(FB.collection(FB.db,'orders'),{
@@ -500,12 +500,11 @@ const CustomBazar = {
         billPhotoUrl:null, billAmount:null,
         status:'pending', userId:Auth.currentUser?.uid||null, createdAt:FB.serverTimestamp()
       });
-const submittedOrder = {orderNumber:orderNo, orderType:'custom-bazar', bazarType:type, bazarTypeLabel:typeLabels[type]||type, customerName:name, customerPhone:phone, address, village, instructions, notes, bazarList:list, advanceAmount:100};
-      msgEl.innerHTML = `✅ আপনার বাজার অর্ডার (${orderNo}) সফলভাবে জমা হয়েছে! ড্রাইভার বাজার করার পর বিলের ছবি এখানেই দেখতে পাবেন।<br><button class="btn btn-outline" style="margin-top:10px;font-size:12.5px;padding:8px 16px" onclick='BazarMemo.open(${JSON.stringify(submittedOrder).replace(/'/g,"&#39;")})'>🧾 মেমো দেখুন / প্রিন্ট করুন</button>`;
+      const submittedOrder = {orderNumber:orderNo, orderType:'custom-bazar', bazarType:type, bazarTypeLabel:typeLabels[type]||type, customerName:name, customerPhone:phone, address, village, instructions, notes, bazarList:list, advanceAmount:100};
+      msgEl.innerHTML = `✅ আপনার বাজার অর্ডার (${orderNo}) সফলভাবে জমা হয়েছে! ড্রাইভার বাজার করার পর বিলর ছবি এখানেই দেখতে পাবেন।<br><button class="btn btn-outline" style="margin-top:10px;font-size:12.5px;padding:8px 16px" onclick='BazarMemo.open(${JSON.stringify(submittedOrder).replace(/'/g,"&#39;")})'>🧾 মেমো দেখুন / প্রিন্ট করুন</button>`;
       msgEl.className='form-msg ok';
       btn.textContent=orig; btn.disabled=false;
     }catch(e){ msgEl.textContent='সমস্যা হয়েছে: '+e.message; msgEl.className='form-msg err'; btn.textContent=orig; btn.disabled=false; }
-
   }
 };
 
@@ -532,14 +531,14 @@ const OrderChat = {
     const text = input?.value.trim(); if(!text || !this.orderId || !FB) return;
     if(input) input.value='';
     try{ await FB.addDoc(FB.collection(FB.db,'orders',this.orderId,'messages'), {from:this.role, text, at:FB.serverTimestamp()}); }
-    catch(e){ toast('মেসেজ পাঠানো যায়নি','error'); }
+    catch(e){ toast('মেসেজ পাঠানো যাযনি','error'); }
   }
 };
 
 /* ---------- Order tracking ---------- */
 const TRACK_STAGES = [
   {key:'confirmed', label:'অর্ডার কনফার্মড'},
-  {key:'packed', label:'প্যাকিং সম্পন্ন'},
+  {key:'packed', label:'পকিং সম্পন্ন'},
   {key:'picked_up', label:'পিকআপ হয়েছে'},
   {key:'in_transit', label:'ড্রাইভার আপনার পথে (লাইভ)'},
   {key:'delivered', label:'ডেলিভারি সম্পন্ন'}
@@ -557,7 +556,7 @@ function orderTrackHTML(o){
   }).join('');
   const liveBtn = (o.status==='in_transit' && o.driverLat && o.driverLng)
     ? `<a href="https://www.google.com/maps?q=${o.driverLat},${o.driverLng}" target="_blank" rel="noopener" class="btn btn-outline btn-block" style="margin-top:8px;font-size:12.5px">📍 ড্রাইভারের লাইভ লোকেশন দেখুন</a>` : '';
-    const memoBtn = (o.orderType==='custom-bazar')
+  const memoBtn = (o.orderType==='custom-bazar')
     ? `<button class="btn btn-outline btn-block" style="margin-top:8px;font-size:12.5px" onclick='BazarMemo.open(${JSON.stringify(o).replace(/'/g,"&#39;")})'>🧾 মেমো দেখুন / প্রিন্ট করুন</button>` : '';
   const billBox = (o.orderType==='custom-bazar' && (o.billPhotos?.length || o.bazarItems?.length))
     ? `<div style="margin-top:10px">
