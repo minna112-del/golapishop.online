@@ -55,6 +55,10 @@ const Router = {
       const restored = await OwnerAuth._restoreSession();
       if(!restored){ OwnerAuth.requestAccess(); return; }
     }
+    /* স্টাফ পেজ (admin-dash/driver/zone-manager) হলে আগে ফ্র্যাগমেন্ট লোড করে নিতে হবে */
+    if(window.__lazyPages && window.__lazyPages.includes(page) && !window.__loadedLazyPages[page]){
+      await new Promise(resolve => window.__ensureLazyPage(page, resolve));
+    }
     this.current = page; this.params = params;
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
     const el=document.getElementById('page-'+page);
