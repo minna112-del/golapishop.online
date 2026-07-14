@@ -1,34 +1,57 @@
-/* page-loader.js — Loads page partials into slot divs */
+/* page-loader.js — Loads partials + pages into their slot divs */
 (function(){
-  var pages = ['home','listing','product','checkout','myorders','account','medical','custom-bazar','admin','driver','zone-manager','modals'];
-  var done = 0;
-  var total = pages.length;
-  var container = document.getElementById('pageContainer');
+  var PARTIALS = [
+    { name:'topbar',      slot:'slot-topbar' },
+    { name:'header',      slot:'slot-header' },
+    { name:'cart-drawer', slot:'slot-cart-drawer' },
+    { name:'footer',      slot:'slot-footer' },
+    { name:'mobnav',      slot:'slot-mobnav' },
+    { name:'chat-widget', slot:'slot-chat' },
+    { name:'modals',      slot:'slot-modals' },
+    { name:'toast',       slot:'slot-toast' }
+  ];
 
-  pages.forEach(function(name){
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', 'pages/' + name + '.html', true);
-    xhr.onload = function(){
-      if(xhr.status === 200 && container){
+  var PAGES = [
+    'home','listing','product','checkout','order-success','myorders',
+    'account','account-addresses','about-app','privacy-info','terms',
+    'contact','custom-bazar','medical','admin-dash','zone-manager','driver'
+  ];
+
+  var pageContainer = document.getElementById('pageContainer');
+
+  function loadPartial(p){
+    return fetch('partials/' + p.name + '.html')
+      .then(function(res){ return res.ok ? res.text() : ''; })
+      .then(function(html){
+        var slot = document.getElementById(p.slot);
+        if(slot) slot.innerHTML = html;
+      })
+      .catch(function(e){ console.warn('Partial load failed:', p.name, e); });
+  }
+
+  function loadPage(name){
+    return fetch('pages/' + name + '.html')
+      .then(function(res){ return res.ok ? res.text() : ''; })
+      .then(function(html){
+        if(!pageContainer || !html) return;
         var wrapper = document.createElement('div');
-        wrapper.innerHTML = xhr.responseText;
-        while(wrapper.firstChild) container.appendChild(wrapper.firstChild);
-      }
-      done++;
-      if(done === total){
-        var loader = document.getElementById('pageLoader');
-        if(loader) loader.style.display = 'none';
-        document.dispatchEvent(new Event('pages-ready'));
-      }
-    };
-    xhr.onerror = function(){
-      done++;
-      if(done === total){
-        var loader = document.getElementById('pageLoader');
-        if(loader) loader.style.display = 'none';
-        document.dispatchEvent(new Event('pages-ready'));
-      }
-    };
-    xhr.send();
+        wrapper.innerHTML = html;
+        while(wrapper.firstChild) pageContainer.appendChild(wrapper.firstChild);
+      })
+      .catch(function(e){ console.warn('Page load failed:', name, e); });
+  }
+
+  var partialPromises = PARTIALS.map(loadPartial);
+  var pagePromises = PAGES.map(loadPage);
+
+  Promise.all(partialPromises.concat(pagePromises)).then(function(){
+    var loader = document.getElementById('pageLoader');
+    if(loader) loader.style.display = 'none';
+    document.dispatchEvent(new Event('pages-ready'));
+  }).catch(function(e){
+    console.error('Page-loader fatal error:', e);
+    var loader = document.getElementById('pageLoader');
+    if(loader) loader.style.display = 'none';
+    document.dispatchEvent(new Event('pages-ready'));
   });
 })();
