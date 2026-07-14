@@ -736,6 +736,22 @@ const OrderDetail = {
     const dEl = document.getElementById('odDriver');
     if(order.driverName){ dbox.style.display='block'; dEl.textContent = `${order.driverName} — ${order.customerPhone||''}`; }
     else { dbox.style.display='none'; }
+
+    /* রিফান্ড রিকোয়েস্ট বক্স */
+    const rbox = document.getElementById('odRefundBox');
+    if(order.refundRequested){
+      rbox.style.display='block';
+      document.getElementById('odRefundReason').textContent = '📝 কারণ: ' + (order.refundReason||'উল্লেখ নেই');
+      const statusEl = document.getElementById('odRefundStatus');
+      const actionsEl = document.getElementById('odRefundActions');
+      const rs = order.refundStatus || 'pending';
+      const rsMap = { pending:{label:'⏳ পেন্ডিং',cls:'pending'}, approved:{label:'✓ অনুমোদিত',cls:'delivered'}, rejected:{label:'✕ বাতিল',cls:'cancelled'} };
+      const rInfo = rsMap[rs] || rsMap.pending;
+      statusEl.textContent = rInfo.label; statusEl.className = 'status-pill ' + rInfo.cls;
+      actionsEl.style.display = rs==='pending' ? 'flex' : 'none';
+    } else {
+      rbox.style.display='none';
+    }
     const noteInput = document.getElementById('odNoteInput');
     const noteStatus = document.getElementById('odNoteStatus');
     if(noteInput) noteInput.value = order.adminNote||'';
@@ -743,6 +759,15 @@ const OrderDetail = {
     document.getElementById('orderDetailModal').classList.add('show');
   },
   close(){ document.getElementById('orderDetailModal').classList.remove('show'); },
+  async handleRefund(status){
+    if(!this.current) return;
+    const ok = await RefundService.approveRefund(this.current.id, status);
+    if(ok){
+      this.current.refundStatus = status;
+      this.open(this.current);
+      await AdminDash.render();
+    }
+  },
   print(){
     const o = this.current; if(!o) return;
     const w = window.open('', '_blank');
