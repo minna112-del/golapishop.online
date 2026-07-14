@@ -1,5 +1,4 @@
 /* router.js — Owner PIN gate + page router */
-/* ---------- Router ---------- */
 const OwnerAuth = {
   pendingPage:null, attempts:0, lockedUntil:0,
   isUnlocked(){ return sessionStorage.getItem('golapi_owner_unlocked')==='1' || localStorage.getItem('golapi_owner_remember')==='1'; },
@@ -70,7 +69,6 @@ const Router = {
   }
 };
 
-/* ─── Clean URL navigation helper ─── */
 Router.navigate = function(path) {
   window.history.pushState({}, '', path);
   const p = path.toLowerCase();
@@ -78,30 +76,3 @@ Router.navigate = function(path) {
   else if (p === '/manager' || p === '/zone-manager') Router.go('zone-manager');
   else Router.go('home');
 };
-
-/* ─── bootApp: path-based routing for TWA apps ─── */
-async function bootApp() {
-  await PartialLoader.injectPartials();
-  if (typeof applyLang === 'function') applyLang();
-
-  const path = window.location.pathname.toLowerCase();
-  const role = new URLSearchParams(window.location.search).get('role');
-  const hash = window.location.hash.replace('#', '');
-
-  if (role === 'driver' || path === '/driver') {
-    await Router.go('driver');
-  } else if (role === 'zone-manager' || path === '/manager' || path === '/zone-manager') {
-    await Router.go('zone-manager');
-  } else if (hash && PartialLoader.viewMap[hash]) {
-    await Router.go(hash);
-  } else {
-    await Router.go('home');
-  }
-
-  window.addEventListener('popstate', () => {
-    const p = window.location.pathname.toLowerCase();
-    if (p === '/driver') Router.go('driver');
-    else if (p === '/manager' || p === '/zone-manager') Router.go('zone-manager');
-    else Router.go('home');
-  });
-}
