@@ -82,6 +82,9 @@ const ProductStore = {
 
 function pcardHTML(p){
   const discount = p.price>p.salePrice ? Math.round((1-p.salePrice/p.price)*100) : 0;
+  const ratingLine = p.reviews>0
+    ? `<span class="st">★</span> ${p.rating} (${bn(p.reviews)}) · ${bn(p.sold)} বিক্রি`
+    : `<span style="color:#22c55e;font-weight:600">🆕 নতুন প্রোডাক্ট</span>`;
   return `<div class="pcard" onclick="Router.go('product',{id:'${p.id}'})">
     <div class="imgwrap"><img src="${p.img}" alt="${p.name}" loading="lazy">
       ${discount?`<span class="pbadge">-${bn(discount)}%</span>`:''}
@@ -91,7 +94,7 @@ function pcardHTML(p){
     <div class="pbody">
       ${p.fastDelivery?'<span class="fast-tag">⚡ ৩০ মিনিট</span>':''}${p.cod?'<span class="cod-tag">✓ COD</span>':''}
       <div class="pname">${p.name}</div>
-      <div class="prating"><span class="st">★</span> ${p.rating} (${bn(p.reviews)}) · ${bn(p.sold)} বিক্রি</div>
+      <div class="prating">${ratingLine}</div>
       <div><span class="price-now">${money(p.salePrice)}</span>${discount?`<span class="price-old">${money(p.price)}</span>`:''}<span class="unit-tag"> / ${p.unit}</span></div>
       <button class="add-btn" onclick="event.stopPropagation();Cart.add('${p.id}')">কার্টে যুক্ত করুন</button>
     </div>
