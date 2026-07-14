@@ -15,7 +15,6 @@ function applyLang(){document.querySelectorAll('[data-bn][data-en]').forEach(el=
 function toggleLang(){currentLang=currentLang==='bn'?'en':'bn';localStorage.setItem('golapi_lang',currentLang);applyLang();}
 applyLang();
 function initApp(){
-  // Path-based routing for TWA apps
   const path=window.location.pathname.toLowerCase();
   const role=new URLSearchParams(window.location.search).get('role');
   const hash=window.location.hash.replace('#','');
