@@ -10,6 +10,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
     serverTimestamp, increment, runTransaction
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
   import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+  import { getMessaging, getToken, isSupported as messagingIsSupported } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyBdtIlcoPFFqzkI6X9KOIH-f4QAyEfH4o8",
@@ -36,3 +37,30 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
     storageRef, uploadBytes, getDownloadURL
   };
   window.dispatchEvent(new Event('firebase-ready'));
+
+  /* ---------- FCM: customer push token capture ---------- */
+  /* 🔴 এখানে তোমার VAPID key বসাও — Firebase Console > Project Settings > Cloud Messaging > Web Push certificates */
+  const VAPID_KEY = 'YOUR_VAPID_KEY_HERE';
+
+  async function registerPushToken(userId){
+    try{
+      const supported = await messagingIsSupported();
+      if(!supported || !('Notification' in window)) return;
+      if(Notification.permission === 'default'){
+        const perm = await Notification.requestPermission();
+        if(perm !== 'granted') return;
+      }
+      if(Notification.permission !== 'granted') return;
+      const messaging = getMessaging(app);
+      const swReg = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js');
+      const token = await getToken(messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: swReg });
+      if(token){
+        await setDoc(doc(db,'fcmTokens', userId), { token, updatedAt: serverTimestamp() }, { merge:true });
+      }
+    }catch(e){ console.warn('FCM token error', e.message); }
+  }
+  window.__fb.registerPushToken = registerPushToken;
+
+  onAuthStateChanged(auth, user=>{
+    if(user) registerPushToken(user.uid);
+  });
