@@ -10,7 +10,14 @@ const Auth = {
   }
 };
 const AuthUI = {
-  open(){ document.getElementById('authModal').classList.add('show'); },
+  open(){
+    document.getElementById('authModal').classList.add('show');
+    /* URL-এ ?ref=CODE থাকলে রেফারেল ফিল্ড প্রি-ফিল করা */
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref');
+    const refInput = document.getElementById('regReferralCode');
+    if(ref && refInput) refInput.value = ref.toUpperCase();
+  },
   close(){ document.getElementById('authModal').classList.remove('show'); this.clearMsg(); },
   switchTab(tab){
     document.getElementById('tabLogin').style.color = tab==='login'?'var(--gold)':'var(--ink-muted)';
@@ -36,6 +43,7 @@ const AuthUI = {
     const email=document.getElementById('regEmail').value.trim();
     const phone=document.getElementById('regPhone').value.trim();
     const pass=document.getElementById('regPass').value;
+    const referralCodeInput = (document.getElementById('regReferralCode')?.value||'').trim().toUpperCase();
     if(!name||!email||!phone||!pass){ this.showMsg('সব তথ্য পূরণ করুন','err'); return; }
     const phoneRe=/^(?:\+880|880|0)1[3-9]\d{8}$/;
     if(!phoneRe.test(phone.replace(/[\s-]/g,''))){ this.showMsg('সঠিক মোবাইল নম্বর দিন','err'); return; }
@@ -43,7 +51,21 @@ const AuthUI = {
     try{
       const cred = await FB.createUserWithEmailAndPassword(FB.auth,email,pass);
       await FB.updateProfile(cred.user,{displayName:name});
-      await FB.setDoc(FB.doc(FB.db,'users',cred.user.uid),{name,email,phone,role:'customer',createdAt:FB.serverTimestamp()});
+      const myReferralCode = cred.user.uid.slice(0,6).toUpperCase();
+
+      let referredBy = null;
+      if(referralCodeInput){
+        try{
+          const q = FB.query(FB.collection(FB.db,'users'), FB.where('referralCode','==',referralCodeInput), FB.limit(1));
+          const snap = await FB.getDocs(q);
+          if(!snap.empty){ referredBy = snap.docs[0].id; }
+        }catch(e){ devWarn('referral lookup failed', e.message); }
+      }
+
+      await FB.setDoc(FB.doc(FB.db,'users',cred.user.uid),{
+        name, email, phone, role:'customer', createdAt:FB.serverTimestamp(),
+        referralCode: myReferralCode, referredBy, referralBonusGiven:false, walletBalance:0
+      });
       this.showMsg('✓ রেজিস্ট্রেশন সফল','ok'); setTimeout(()=>this.close(),700);
     }catch(e){ this.showMsg('রেজিস্ট্রেশন ব্যর্থ: '+e.message,'err'); }
   }
@@ -57,6 +79,31 @@ const AccountPage = {
     const nameEl=document.getElementById('accName'); if(nameEl) nameEl.textContent = u ? (u.displayName||'কাস্টমার') : 'অতিথি';
     const emailEl=document.getElementById('accEmail'); if(emailEl) emailEl.textContent = u ? (u.email||'') : '';
     const avatarEl=document.getElementById('accAvatar'); if(avatarEl) avatarEl.textContent = u ? (u.displayName||'ক')[0] : '👤';
+    this.renderLoyalty();
+  },
+  async renderLoyalty(){
+    const box = document.getElementById('loyaltyBox');
+    if(!box) return;
+    if(!Auth.currentUser || !FB){ box.style.display='none'; return; }
+    try{
+      const snap = await FB.getDoc(FB.doc(FB.db,'users',Auth.currentUser.uid));
+      if(!snap.exists()){ box.style.display='none'; return; }
+      const u = snap.data();
+      box.style.display='block';
+      const codeEl = document.getElementById('loyaltyCode'); if(codeEl) codeEl.textContent = u.referralCode||'—';
+      const balEl = document.getElementById('loyaltyBalance'); if(balEl) balEl.textContent = money(u.walletBalance||0);
+    }catch(e){ box.style.display='none'; }
+  },
+  shareReferral(){
+    const code = document.getElementById('loyaltyCode')?.textContent||'';
+    if(!code || code==='—') return;
+    const link = `https://www.golapishop.online/?ref=${code}`;
+    if(navigator.share){
+      navigator.share({ title:'Golapi Shop Online', text:`আমার রেফারেল কোড ব্যবহার করে রেজিস্ট্রেশন করলে আপনিও পাবেন ২০৳ বোনাস! কোড: ${code}`, url: link });
+    } else {
+      navigator.clipboard?.writeText(link);
+      toast('✓ রেফারেল লিংক কপি হয়েছে','success');
+    }
   },
   requestNotifications(){
     if(!('Notification' in window)){ toast('এই ব্রাউজারে নোটিফিকেশন সাপোর্ট নেই','error'); return; }
