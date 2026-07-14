@@ -283,11 +283,19 @@ function calcDeliveryCharge(itemCount, subtotal=0, distanceKm=null){
 
 /* ---------- Checkout ---------- */
 const Checkout = {
-  pay:'cod', currentStep:1,
-  init(){
+  pay:'cod', currentStep:1, walletAvailable:0,
+  async init(){
     const d=document.getElementById('ckDistrict'); if(d) d.value='';
     const z=document.getElementById('ckZone'); if(z) z.innerHTML='<option value="">প্রথমে উপজেলা বেছে নিন</option>';
     const v=document.getElementById('ckVillage'); if(v) v.value='';
+    this.walletAvailable = 0;
+    const useWalletEl=document.getElementById('ckUseWallet'); if(useWalletEl) useWalletEl.checked=false;
+    if(Auth.currentUser && FB){
+      try{
+        const snap = await FB.getDoc(FB.doc(FB.db,'users',Auth.currentUser.uid));
+        if(snap.exists()) this.walletAvailable = Number(snap.data().walletBalance||0);
+      }catch(e){ devWarn('wallet fetch failed', e.message); }
+    }
     this.goStep(1);
   },
   selectPay(el,method){
@@ -334,6 +342,11 @@ const Checkout = {
     const nidRe = /^\d{10}$|^\d{13}$/;
     return name.length>0 && phoneRe.test(phone) && nidRe.test(nid) && addr.length>=5 && upazila && zone && village.length>0 && instructions.length>0;
   },
+  getWalletUsed(sub, ship){
+    const useWallet = document.getElementById('ckUseWallet')?.checked;
+    if(!useWallet || this.walletAvailable<=0) return 0;
+    return Math.min(this.walletAvailable, sub+ship);
+  },
   renderSummary(){
     const entries = Object.entries(Cart.items);
     let itemCount = 0;
@@ -345,9 +358,16 @@ const Checkout = {
     }).join('');
     const sub = Cart.totalPrice();
     const ship = calcDeliveryCharge(itemCount, sub);
+    const walletBox=document.getElementById('ckWalletBox');
+    if(walletBox) walletBox.style.display = this.walletAvailable>0 ? 'block' : 'none';
+    const availEl=document.getElementById('ckWalletAvail'); if(availEl) availEl.textContent = money(this.walletAvailable);
+    const walletUsed = this.getWalletUsed(sub, ship);
+    const walletRow=document.getElementById('ckWalletRow');
+    if(walletRow) walletRow.style.display = walletUsed>0 ? 'flex' : 'none';
+    const walletDiscEl=document.getElementById('ckWalletDiscount'); if(walletDiscEl) walletDiscEl.textContent = '−'+money(walletUsed);
     const subEl=document.getElementById('ckSub'); if(subEl) subEl.textContent = money(sub);
     const shipEl=document.getElementById('ckShip'); if(shipEl) shipEl.textContent = ship===0?'ফ্রি':money(ship);
-    const totEl=document.getElementById('ckTotal'); if(totEl) totEl.textContent = money(sub+ship);
+    const totEl=document.getElementById('ckTotal'); if(totEl) totEl.textContent = money(sub+ship-walletUsed);
   },
   async placeOrder(){
     const name=document.getElementById('ckName').value.trim();
@@ -367,20 +387,24 @@ const Checkout = {
     const sub = Cart.totalPrice();
     const itemCount = Object.values(Cart.items).reduce((a,b)=>a+b,0);
     const ship = calcDeliveryCharge(itemCount, sub);
+    const walletUsed = this.getWalletUsed(sub, ship);
     try{
       const orderRef = await FB.addDoc(FB.collection(FB.db,'orders'),{
         orderNumber:orderNo, customerName:name, customerPhone:phone, customerNid:nid, address:addr, village,
         branchZone:upazila, district:AREA_LABELS[upazila]||'', zone,
         instructions, paymentMethod:this.pay, paymentStatus:this.pay==='cod'?'cod':'pending_submission', deliverySlot:'express',
         items:Object.entries(Cart.items).map(([id,qty])=>({productId:id,qty})),
-        subtotal:sub+ship, shippingCost:ship, status:'pending', driverId:null, driverName:null,
+        subtotal:sub+ship-walletUsed, shippingCost:ship, walletUsed,
+        status:'pending', driverId:null, driverName:null,
         userId:Auth.currentUser?.uid||null, createdAt:FB.serverTimestamp()
       });
+      if(walletUsed>0 && Auth.currentUser){
+        await FB.updateDoc(FB.doc(FB.db,'users',Auth.currentUser.uid), { walletBalance: FB.increment(-walletUsed) }).catch(e=>devWarn('wallet deduct failed', e.message));
+      }
       const sn=document.getElementById('successOrderNo'); if(sn) sn.textContent = orderNo;
       Cart.items={}; Cart.save();
       if(this.pay==='bkash' || this.pay==='nagad'){
-        /* bKash/Nagad হলে ট্রানজেকশন ID ক্যাপচার করার মডাল দেখানো হবে, তারপর order-success-এ যাবে */
-        PaymentGateway.showPaymentModal(this.pay, sub+ship, orderRef.id, upazila);
+        PaymentGateway.showPaymentModal(this.pay, sub+ship-walletUsed, orderRef.id, upazila);
       } else {
         Router.go('order-success');
       }
