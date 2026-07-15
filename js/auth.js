@@ -78,7 +78,7 @@ const AccountPage = {
   render(){
     const u = Auth.currentUser;
     const nameEl=document.getElementById('accName'); if(nameEl) nameEl.textContent = u ? (u.displayName||'কাস্টমার') : 'অতিথি';
-    const emailEl=document.getElementById('accEmail'); if(emailEl) emailEl.textContent = u ? (u.email||'') : '';
+    const emailEl=document.getElementById('accEmail'); if(emailEl) emailEl.textContent = u ? (u.email||u.phoneNumber||'') : '';
     const avatarEl=document.getElementById('accAvatar'); if(avatarEl) avatarEl.textContent = u ? (u.displayName||'ক')[0] : '👤';
     this.renderLoyalty();
   },
