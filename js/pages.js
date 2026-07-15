@@ -54,19 +54,44 @@ function getAIAdvice(){
 /* ---------- Listing ---------- */
 const Listing = {
   toggleMobile(){ document.getElementById('listingAside')?.classList.toggle('show'); },
+  selectedCategories: new Set(),
+  renderCategoryFilters(){
+    const el = document.getElementById('filterCategoryList');
+    if(!el) return;
+    el.innerHTML = CATEGORIES.map(c=>`<label class="filter-opt"><input type="checkbox" value="${c.id}" onchange="Listing.toggleCategory('${c.id}',this.checked)" ${this.selectedCategories.has(c.id)?'checked':''}> ${c.icon} ${c.label}</label>`).join('');
+  },
+  toggleCategory(id, checked){
+    checked ? this.selectedCategories.add(id) : this.selectedCategories.delete(id);
+    this.render();
+  },
+  clearFilters(){
+    this.selectedCategories.clear();
+    const pr=document.getElementById('priceRange'); if(pr) pr.value = 10000;
+    const pl=document.getElementById('priceMaxLabel'); if(pl) pl.textContent='৳১০,০০০';
+    const cod=document.getElementById('filterCOD'); if(cod) cod.checked=false;
+    const stock=document.getElementById('filterInStock'); if(stock) stock.checked=false;
+    this.renderCategoryFilters();
+    this.render();
+  },
   render(){
     const cat = Router.params.cat || 'all';
     const q = (Router.params.q||'').trim().toLowerCase();
     const sortEl=document.getElementById('sortSelect');
     const sort = sortEl?sortEl.value:'relevance';
+    if(!document.getElementById('filterCategoryList')?.children.length) this.renderCategoryFilters();
     let items = zoneProducts();
     let title = 'সব প্রোডাক্ট';
     if(cat==='flash'){ items = items.filter(p=>p.isFlash); title='🔥 ফ্ল্যাশ সেল'; }
     else if(cat==='bestseller'){ items = [...items].sort((a,b)=>b.sold-a.sold); title='⭐ বেস্ট সেলার'; }
     else if(cat!=='all'){ items = items.filter(p=>p.category===cat); title = CATEGORIES.find(c=>c.id===cat)?.label || cat; }
     if(q){ items = items.filter(p=>p.name.toLowerCase().includes(q)); title = `"${q}" — অনুসন্ধান`; }
+    if(this.selectedCategories.size) items = items.filter(p=>this.selectedCategories.has(p.category));
+    const priceMax = Number(document.getElementById('priceRange')?.value||10000);
+    if(priceMax < 10000) items = items.filter(p=>p.salePrice <= priceMax);
     const codEl=document.getElementById('filterCOD');
     if(codEl && codEl.checked) items = items.filter(p=>p.cod);
+    const stockEl=document.getElementById('filterInStock');
+    if(stockEl && stockEl.checked) items = items.filter(p=>p.stock>0);
     if(sort==='price_asc') items.sort((a,b)=>a.salePrice-b.salePrice);
     if(sort==='price_desc') items.sort((a,b)=>b.salePrice-a.salePrice);
     if(sort==='rating') items.sort((a,b)=>parseFloat(b.rating)-parseFloat(a.rating));
@@ -74,7 +99,7 @@ const Listing = {
     const titleEl=document.getElementById('listTitle'); if(titleEl) titleEl.textContent = title;
     const countEl=document.getElementById('listCount'); if(countEl) countEl.textContent = `${bn(items.length)} টি প্রোডাক্ট পাওয়া গেছে`;
     const grid=document.getElementById('listingGrid');
-    if(grid) grid.innerHTML = items.map(pcardHTML).join('') || `<div class="empty-state" style="grid-column:1/-1"><div class="em">🔍</div><h3>কোনো প্রোডাক্ট পাওয়া যায়নি</h3></div>`;
+    if(grid) grid.innerHTML = items.map(pcardHTML).join('') || `<div class="empty-state" style="grid-column:1/-1"><div class="em">🔍</div><h3>কোনো প্রোডাক্ট পাওয়া যায়নি</h3><button class="btn btn-outline" style="margin-top:10px" onclick="Listing.clearFilters()">ফিল্টার রিসেট করুন</button></div>`;
   }
 };
 
@@ -242,12 +267,61 @@ const Cart = {
 };
 Cart.load();
 
-/* ---------- Search ---------- */
-function doSearch(v){ }
+/* ---------- Search: suggestions, recent searches, voice search ---------- */
+function getRecentSearches(){
+  try{ return JSON.parse(localStorage.getItem('golapi_recent_searches')||'[]'); }catch(e){ return []; }
+}
+function saveRecentSearch(q){
+  if(!q || !q.trim()) return;
+  let list = getRecentSearches().filter(x=>x.toLowerCase()!==q.toLowerCase());
+  list.unshift(q.trim());
+  list = list.slice(0,6);
+  localStorage.setItem('golapi_recent_searches', JSON.stringify(list));
+}
+function doSearch(v){
+  const box = document.getElementById('searchSuggestBox');
+  if(!box) return;
+  const query = (v||'').trim().toLowerCase();
+  if(!query){
+    const recent = getRecentSearches();
+    if(!recent.length){ box.style.display='none'; return; }
+    box.innerHTML = `<div style="padding:10px 14px;font-size:11px;color:var(--ink-muted);border-bottom:1px solid var(--line)">সাম্প্রতিক অনুসন্ধান</div>` +
+      recent.map(r=>`<div onclick="document.getElementById('searchInput').value='${r.replace(/'/g,"\\'")}';submitSearch()" style="padding:11px 14px;font-size:13px;color:var(--ink);cursor:pointer;border-bottom:1px solid var(--line)">🕐 ${r}</div>`).join('');
+    box.style.display='block';
+    return;
+  }
+  const matches = ALL_PRODUCTS.filter(p=>p.name.toLowerCase().includes(query)).slice(0,6);
+  if(!matches.length){ box.innerHTML = `<div style="padding:14px;font-size:13px;color:var(--ink-muted);text-align:center">কোনো মিল পাওয়া যায়নি</div>`; box.style.display='block'; return; }
+  box.innerHTML = matches.map(p=>`<div onclick="Router.go('product',{id:'${p.id}'});document.getElementById('searchSuggestBox').style.display='none'" style="display:flex;align-items:center;gap:10px;padding:9px 14px;cursor:pointer;border-bottom:1px solid var(--line)">
+    <img src="${p.img}" style="width:32px;height:32px;border-radius:6px;object-fit:cover">
+    <div style="flex:1;min-width:0"><div style="font-size:12.5px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}</div><div style="font-size:11px;color:var(--gold)">${money(p.salePrice)}</div></div>
+  </div>`).join('');
+  box.style.display='block';
+}
 function submitSearch(){
   const q = document.getElementById('searchInput')?.value.trim();
   if(!q) return;
+  saveRecentSearch(q);
+  const box = document.getElementById('searchSuggestBox'); if(box) box.style.display='none';
   Router.go('listing',{cat:'all', q});
+}
+function toggleVoiceSearch(){
+  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SpeechRec){ toast('এই ব্রাউজারে ভয়েস সার্চ সাপোর্ট নেই','error'); return; }
+  const btn = document.getElementById('voiceSearchBtn');
+  const rec = new SpeechRec();
+  rec.lang = 'bn-BD';
+  rec.interimResults = false;
+  rec.maxAlternatives = 1;
+  btn.textContent = '🔴';
+  rec.onresult = (e) => {
+    const text = e.results[0][0].transcript;
+    document.getElementById('searchInput').value = text;
+    submitSearch();
+  };
+  rec.onerror = () => { toast('ভয়েস শোনা যায়নি, আবার চেষ্টা করুন','error'); };
+  rec.onend = () => { btn.textContent = '🎤'; };
+  rec.start();
 }
 document.addEventListener('DOMContentLoaded', ()=>{
   document.getElementById('searchInput')?.addEventListener('keydown', e=>{ if(e.key==='Enter') submitSearch(); });
@@ -337,11 +411,11 @@ const Checkout = {
     const zone = document.getElementById('ckZone')?.value||'';
     const village = document.getElementById('ckVillage')?.value.trim()||'';
     const instructions = document.getElementById('ckInstructions')?.value.trim()||'';
-    const nid = document.getElementById('ckNid').value.trim().replace(/\s/g,'');
+    const nid = document.getElementById('ckNid')?.value.trim().replace(/\s/g,'')||'';
     const phoneRe = /^(?:\+880|880|0)1[3-9]\d{8}$/;
     const nidRe = /^\d{10}$|^\d{13}$/;
     const nidOk = nid.length===0 || nidRe.test(nid);
-    if(!name||!phoneRe.test(phone.replace(/[\s-]/g,''))||!nidOk||addr.length<5||!upazila||!zone||!village||!instructions){ toast('⚠ সব প্রয়োজনীয় তথ্য সঠিকভাবে পূরণ করুন','error'); this.goStep(1); return; }
+    return name.length>0 && phoneRe.test(phone) && nidOk && addr.length>=5 && upazila && zone && village.length>0 && instructions.length>0;
   },
   getWalletUsed(sub, ship){
     const useWallet = document.getElementById('ckUseWallet')?.checked;
@@ -414,7 +488,8 @@ const Checkout = {
     const nid = document.getElementById('ckNid').value.trim().replace(/\s/g,'');
     const phoneRe = /^(?:\+880|880|0)1[3-9]\d{8}$/;
     const nidRe = /^\d{10}$|^\d{13}$/;
-    if(!name||!phoneRe.test(phone.replace(/[\s-]/g,''))||!nidRe.test(nid)||addr.length<5||!upazila||!zone||!village||!instructions){ toast('⚠ সব তথ্য পূরণ করুন — NID নম্বর (১০ বা ১৩ সংখ্যা) বাধ্যতামূলক','error'); this.goStep(1); return; }
+    const nidOk = nid.length===0 || nidRe.test(nid);
+    if(!name||!phoneRe.test(phone.replace(/[\s-]/g,''))||!nidOk||addr.length<5||!upazila||!zone||!village||!instructions){ toast('⚠ সব প্রয়োজনীয় তথ্য সঠিকভাবে পূরণ করুন','error'); this.goStep(1); return; }
     if(!document.getElementById('ckTerms').checked){ toast('⚠ শর্তাবলীতে সম্মত হতে হবে','error'); return; }
     if(!FB){ toast('⚠ সংযোগ সমস্যা — আবার চেষ্টা করুন','error'); return; }
     const orderNo = 'GS-'+new Date().getFullYear()+'-'+String(Math.floor(Math.random()*900000)+100000);
