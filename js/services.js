@@ -21,7 +21,7 @@ const OrdersService = {
       const dPhone = driver?.data()?.phone || '';
       SMSGateway.onDriverAssigned(order, driverName, dPhone);
       return true;
-    } catch (e) { toast('ড্রাইভার অ্যাসাইন ব্যর্থ: ' + e.message, 'error'); return false; }
+    } catch (e) { toast('ড্রাইভার অ্যাসাইন ব্যর: ' + e.message, 'error'); return false; }
   },
   async updateStatus(orderId, status) {
     if (!FB) return false;
@@ -36,7 +36,6 @@ const OrdersService = {
       return true;
     } catch (e) { toast('স্ট্যাটাস আপডেট ব্যর্থ', 'error'); return false; }
   },
-  /* ---------- Loyalty/Referral bonus — first delivered order after referral ---------- */
   async giveReferralBonusIfEligible(order){
     if(!FB || !order.userId) return;
     try{
@@ -114,15 +113,46 @@ const ReviewService = {
       return reviews;
     }catch(e){ devWarn(e.message); return []; }
   },
-  async submitReview(productId, rating, text, userName){
+
+  /* কাস্টমার এই প্রোডাক্টটা সত্যিই ডেলিভারি নিয়েছে কিনা চেক করে */
+  async checkVerifiedPurchase(productId, userId){
+    if(!FB || !userId) return false;
+    try{
+      const snap = await FB.getDocs(FB.query(
+        FB.collection(FB.db,'orders'),
+        FB.where('userId','==',userId),
+        FB.where('status','==','delivered')
+      ));
+      let found = false;
+      snap.forEach(d=>{
+        const items = d.data().items || [];
+        if(items.some(it=>it.productId===productId)) found = true;
+      });
+      return found;
+    }catch(e){ devWarn('verified purchase check failed', e.message); return false; }
+  },
+
+  async submitReview(productId, rating, text, userName, photoFile){
     if(!FB){ toast('সংযোগ সমস্যা','error'); return false; }
     if(!rating || !text.trim()){ toast('রেটিং ও মন্তব্য দিন','error'); return false; }
     try{
-      await FB.addDoc(FB.collection(FB.db,'reviews'),{productId, rating:Number(rating), text:text.trim(), userName:userName||'গ্রাহক', createdAt:FB.serverTimestamp()});
-      toast('✓ রিভিউ সাবমিট হয়েছে','success');
+      const userId = Auth.currentUser?.uid || null;
+      const verified = await this.checkVerifiedPurchase(productId, userId);
+      let photoUrl = null;
+      if(photoFile){
+        const fileRef = FB.storageRef(FB.storage, `review_photos/${productId}_${Date.now()}_${photoFile.name}`);
+        await FB.uploadBytes(fileRef, photoFile);
+        photoUrl = await FB.getDownloadURL(fileRef);
+      }
+      await FB.addDoc(FB.collection(FB.db,'reviews'),{
+        productId, rating:Number(rating), text:text.trim(), userName:userName||'গ্রাহক',
+        userId, verified, photoUrl, createdAt:FB.serverTimestamp()
+      });
+      toast(verified ? '✓ যাচাইকৃত রভিউ সাবমিট হয়েছে' : '✓ রিভিউ সাবমিট হয়েছে','success');
       return true;
     }catch(e){ toast('রিভিউ সাবমিট ব্যর্থ: '+e.message,'error'); return false; }
   },
+
   async renderReviews(productId, containerId){
     const el = document.getElementById(containerId);
     if(!el) return;
@@ -131,16 +161,19 @@ const ReviewService = {
       el.innerHTML = `<p style="color:var(--ink-muted);font-size:13px;text-align:center;padding:14px">এখনো কোনো রিভিউ নেই। আপনি প্রথম রিভিউ দিন!</p>`;
       return;
     }
+    /* ভেরিফাইড রিভিউ আগে দেখাবে */
+    reviews.sort((a,b)=>(b.verified===true)-(a.verified===true));
     el.innerHTML = reviews.map(r=>{
       const stars = '★'.repeat(r.rating) + '☆'.repeat(5-r.rating);
       const date = r.createdAt?.seconds ? new Date(r.createdAt.seconds*1000).toLocaleDateString('bn-BD') : '';
       return `<div style="padding:12px 0;border-bottom:1px solid var(--line)">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-          <strong style="font-size:13px;color:#fff">${r.userName||'গ্রাহক'}</strong>
+          <strong style="font-size:13px;color:#fff">${r.userName||'গ্রাহক'} ${r.verified?'<span style="font-size:10.5px;color:#22c55e;font-weight:600;background:rgba(34,197,94,.1);padding:2px 7px;border-radius:8px;margin-left:6px">✓ যাচাইকৃত ক্রয়</span>':''}</strong>
           <span style="color:var(--gold);font-size:13px">${stars}</span>
         </div>
         <p style="font-size:12.5px;color:var(--ink-soft);line-height:1.6">${r.text}</p>
-        <span style="font-size:10.5px;color:var(--ink-dim)">${date}</span>
+        ${r.photoUrl?`<img src="${r.photoUrl}" style="width:90px;height:90px;object-fit:cover;border-radius:10px;margin-top:8px;border:1px solid var(--line);cursor:pointer" onclick="window.open('${r.photoUrl}','_blank')">`:''}
+        <span style="font-size:10.5px;color:var(--ink-dim);display:block;margin-top:6px">${date}</span>
       </div>`;
     }).join('');
   }
@@ -152,9 +185,9 @@ const RefundService = {
     if(!reason.trim()){ toast('রিফান্ডের কারণ লিখুন','error'); return false; }
     try{
       await FB.updateDoc(FB.doc(FB.db,'orders',orderId),{refundRequested:true, refundReason:reason.trim(), refundStatus:'pending', refundRequestedAt:FB.serverTimestamp()});
-      toast('✓ রিফান্ড রকোয়েস্ট সাবমিট হয়েছে','success');
+      toast('✓ রিফান্ড রিকোয়েস সাবমিট হয়েছে','success');
       return true;
-    }catch(e){ toast('রিকয়েস্ট ব্যর্থ: '+e.message,'error'); return false; }
+    }catch(e){ toast('রিকোয়েস্ট ব্যর্থ: '+e.message,'error'); return false; }
   },
   async approveRefund(orderId, status){
     if(!FB) return false;
