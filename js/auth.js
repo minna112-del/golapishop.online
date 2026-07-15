@@ -20,10 +20,11 @@ const AuthUI = {
   },
   close(){ document.getElementById('authModal').classList.remove('show'); this.clearMsg(); },
   switchTab(tab){
-    document.getElementById('tabLogin').style.color = tab==='login'?'var(--gold)':'var(--ink-muted)';
-    document.getElementById('tabLogin').style.borderColor = tab==='login'?'var(--gold)':'transparent';
-    document.getElementById('tabRegister').style.color = tab==='register'?'var(--gold)':'var(--ink-muted)';
-    document.getElementById('tabRegister').style.borderColor = tab==='register'?'var(--gold)':'transparent';
+    ['phone','login','register'].forEach(t=>{
+      const btn = document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1));
+      if(btn){ btn.style.color = t===tab?'var(--gold)':'var(--ink-muted)'; btn.style.borderColor = t===tab?'var(--gold)':'transparent'; }
+    });
+    document.getElementById('phoneForm').style.display = tab==='phone'?'block':'none';
     document.getElementById('loginForm').style.display = tab==='login'?'block':'none';
     document.getElementById('registerForm').style.display = tab==='register'?'block':'none';
     this.clearMsg();
