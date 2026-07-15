@@ -690,6 +690,88 @@ function orderTrackHTML(o){
   return `<div style="margin-top:10px;border-top:1px solid var(--line);padding-top:10px">${rows}${liveBtn}${memoBtn}${billBox}${chatBtn}${cancelBtn}${refundBtn}</div>`;
 }
 
+/* ---------- Reorder (regular products) ---------- */
+async function reorderFromPastOrder(orderId){
+  const order = MyOrders.cache.find(o=>o.id===orderId);
+  if(!order || !order.items || !order.items.length){ toast('এই অর্ডারে কোনো প্রোডাক্ট তথ্য নেই','error'); return; }
+  let added = 0, skipped = 0;
+  order.items.forEach(item=>{
+    const p = ALL_PRODUCTS.find(x=>x.id===item.productId);
+    if(p && p.stock > 0){ Cart.items[item.productId] = (Cart.items[item.productId]||0) + item.qty; added++; }
+    else skipped++;
+  });
+  Cart.save();
+  if(added>0){
+    toast(skipped>0 ? `✓ ${added}টি প্রোডাক্ট কার্ট যোগ হয়েছে (${skipped}টি এখন অনুপলব্ধ)` : `✓ ${added}টি প্রোডাক্ট কার্টে যোগ হয়েছে`, 'success');
+    Cart.open();
+  } else {
+    toast('দুঃখিত, এই অর্ডারের কোনো প্রোডাক্টই এখন স্টকে নেই','error');
+  }
+}
+
+/* ---------- Saved Lists (কার্ট টমপ্লেট সেভ করা) ---------- */
+const SavedLists = {
+  cache: [],
+  async saveCurrentCart(){
+    if(!Auth.currentUser){ toast('লিস্ট সেভ করতে লগইন করুন','error'); AuthUI.open(); return; }
+    const entries = Object.entries(Cart.items);
+    if(!entries.length){ toast('কার্ট খালি আছে','error'); return; }
+    const name = prompt('এই লিস্র একটা নাম দিন (যেমন: সাপ্তাহিক বাজার):', 'আমার লিস্ট '+new Date().toLocaleDateString('bn-BD'));
+    if(!name) return;
+    if(!FB){ toast('সংযোগ সমস্যা','error'); return; }
+    try{
+      await FB.addDoc(FB.collection(FB.db,'saved_lists'), {
+        userId: Auth.currentUser.uid, name: name.trim(),
+        items: entries.map(([id,qty])=>({productId:id,qty})),
+        createdAt: FB.serverTimestamp()
+      });
+      toast('✓ লিস্ট সেভ হয়েছে — "আমার অর্ডার" পেজের সেভড ট্যাব পাবেন','success');
+    }catch(e){ toast('সমস্যা: '+e.message,'error'); }
+  },
+  async render(){
+    const box = document.getElementById('savedListsBox');
+    if(!box) return;
+    if(!Auth.currentUser){ box.innerHTML = `<div class="empty-state"><div class="em">🔒</div><h3>লগইন করুন</h3><button class="btn btn-gold" onclick="AuthUI.open()">লগইন করুন</button></div>`; return; }
+    if(!FB){ box.innerHTML = `<p style="color:var(--ink-muted)">সংযোগ সমস্যা</p>`; return; }
+    box.innerHTML = `<p style="color:var(--ink-muted);padding:16px">লোড হচ্ছে...</p>`;
+    try{
+      const snap = await FB.getDocs(FB.query(FB.collection(FB.db,'saved_lists'), FB.where('userId','==',Auth.currentUser.uid)));
+      const list=[]; snap.forEach(d=>list.push({id:d.id,...d.data()}));
+      list.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+      this.cache = list;
+      if(!list.length){ box.innerHTML = `<div class="empty-state"><div class="em">📑</div><h3>কোনো সেভড লিস্ট নেই</h3><p>কার্ট থেকে "লিস্ট সেভ করুন" চেপে বানাতে পারবেন</p></div>`; return; }
+      box.innerHTML = list.map(l=>{
+        const availableCount = l.items.filter(it=>{ const p=ALL_PRODUCTS.find(x=>x.id===it.productId); return p && p.stock>0; }).length;
+        return `<div class="card-box">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <strong style="color:#fff">${l.name}</strong>
+            <a href="#" onclick="event.preventDefault();SavedLists.deleteList('${l.id}')" style="color:#f87171;font-size:11.5px">মুছুন</a>
+          </div>
+          <div style="font-size:12px;color:var(--ink-muted);margin-bottom:10px">${l.items.length}টি প্রোডাক্ট — ${availableCount}টি এখন পাওয়া যাচ্ছে</div>
+          <button class="btn btn-gold btn-block" style="font-size:12.5px" onclick="SavedLists.addToCart('${l.id}')">🛒 কার্টে যোগ করুন</button>
+        </div>`;
+      }).join('');
+    }catch(e){ devWarn('saved lists load failed', e.message); box.innerHTML = `<p style="color:var(--ink-muted)">লোড করা যায়নি</p>`; }
+  },
+  addToCart(id){
+    const l = this.cache.find(x=>x.id===id); if(!l) return;
+    let added=0, skipped=0;
+    l.items.forEach(item=>{
+      const p = ALL_PRODUCTS.find(x=>x.id===item.productId);
+      if(p && p.stock>0){ Cart.items[item.productId]=(Cart.items[item.productId]||0)+item.qty; added++; }
+      else skipped++;
+    });
+    Cart.save();
+    toast(skipped>0 ? `✓ ${added}টি যোগ হয়েছ (${skipped}টি অনুপলব্ধ)` : `✓ ${added}টি প্রোডাক্ট কার্টে যোগ হয়েছে`,'success');
+    Cart.open();
+  },
+  async deleteList(id){
+    if(!confirm('এই সেভড লিস্টটা মুছে ফেলবেন?') || !FB) return;
+    try{ await FB.deleteDoc(FB.doc(FB.db,'saved_lists',id)); this.render(); toast('✓ মুছে ফেলা হয়েছে','success'); }
+    catch(e){ toast('সমস্যা: '+e.message,'error'); }
+  }
+};
+
 /* ---------- My Orders ---------- */
 const MyOrders = {
   cache: [], tab: 'active',
@@ -697,9 +779,24 @@ const MyOrders = {
     this.tab = tab;
     const actEl=document.getElementById('ordersTabActive');
     const pastEl=document.getElementById('ordersTabPast');
-    if(actEl){ actEl.style.color = tab==='active' ? 'var(--gold)' : 'var(--ink-muted)'; actEl.style.borderColor = tab==='active' ? 'var(--gold)' : 'transparent'; }
-    if(pastEl){ pastEl.style.color = tab==='past' ? 'var(--gold)' : 'var(--ink-muted)'; pastEl.style.borderColor = tab==='past' ? 'var(--gold)' : 'transparent'; }
-    this.renderList();
+    const savedEl=document.getElementById('ordersTabSaved');
+    [actEl,pastEl,savedEl].forEach((el,i)=>{
+      if(!el) return;
+      const t = ['active','past','saved'][i];
+      el.style.color = tab===t ? 'var(--gold)' : 'var(--ink-muted)';
+      el.style.borderColor = tab===t ? 'var(--gold)' : 'transparent';
+    });
+    const listEl = document.getElementById('myOrdersList');
+    const savedBox = document.getElementById('savedListsBox');
+    if(tab==='saved'){
+      if(listEl) listEl.style.display='none';
+      if(savedBox) savedBox.style.display='block';
+      SavedLists.render();
+    } else {
+      if(listEl) listEl.style.display='block';
+      if(savedBox) savedBox.style.display='none';
+      this.renderList();
+    }
   },
   async render(){
     const list = document.getElementById('myOrdersList');
@@ -732,9 +829,11 @@ const MyOrders = {
       const editBtn = (this.tab==='active' && OrderEdit.isEditable(o.status))
         ? `<button class="btn btn-outline" style="font-size:11.5px;padding:6px 12px;margin-top:8px" onclick='OrderEdit.open("${o.id}", ${JSON.stringify({village:o.village||'',address:o.address||'',instructions:o.instructions||''})})'>✏️ ঠিকানা/ইনস্ট্রাকশন এডিট করুন</button>`
         : '';
+      const reorderBtn = (this.tab==='past' && o.orderType!=='custom-bazar' && o.items?.length)
+        ? `<button class="btn btn-gold" style="font-size:11.5px;padding:6px 14px;margin-top:8px" onclick="reorderFromPastOrder('${o.id}')">🔁 আবার অর্ডার করুন</button>` : '';
       return `<div class="card-box"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><strong>${o.orderNumber||o.id}</strong><span class="status-pill ${s.cls}">${s.label}</span></div>
       <div style="font-size:13px;color:var(--ink-muted)">মোট: ${money(o.subtotal||0)}</div>
-      ${editBtn}
+      ${editBtn}${reorderBtn}
       ${this.tab==='active' ? orderTrackHTML(o) : ''}
       </div>`;
     }).join('');
