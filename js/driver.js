@@ -1,6 +1,8 @@
-/* driver.js — DriverPortal (Firebase Auth secured), BazarShop */
+/* driver.js — DriverPortal (Firebase Auth secured), BazarShop
+   আপডেট: অনলাইন/অফলাইন টগল, রিয়েল-টাইম অর্ডার সিঙ্ক + নতুন অর্ডারে ভাইব্রেশন, নেভিগেশন বাটন, হিস্ট্রি ট্যাব */
 const DriverPortal = {
-  currentDriver:null, currentUid:null,
+  currentDriver:null, currentUid:null, tab:'active', unsub:null, knownOrderIds:new Set(),
+
   async login(){
     const email=document.getElementById('driverEmail').value.trim();
     const pass=document.getElementById('driverPassword').value;
@@ -20,15 +22,20 @@ const DriverPortal = {
       document.getElementById('driverLoginBox').style.display='none';
       document.getElementById('driverDashBox').style.display='block';
       document.getElementById('driverNameLabel').textContent=data.name;
+      await this.loadOnlineStatus();
       await this.render();
+      this.startRealtimeSync();
     }catch(e){ msgEl.textContent='লগইন ব্যর্থ: ইমেইল বা পাসওয়ার্ড সঠিক নয়'; msgEl.className='form-msg err'; }
   },
+
   async logout(){
+    if(this.unsub){ this.unsub(); this.unsub=null; }
     if(FB) await FB.signOut(FB.auth).catch(()=>{});
     this.currentDriver=null; this.currentUid=null;
     document.getElementById('driverLoginBox').style.display='block';
     document.getElementById('driverDashBox').style.display='none';
   },
+
   async _restoreSession(){
     if(this.currentDriver || !FB || !FB.auth.currentUser) return;
     try{
@@ -40,6 +47,57 @@ const DriverPortal = {
       }
     }catch(e){ devWarn('driver session restore failed', e.message); }
   },
+
+  /* ---------- Online/Offline toggle ---------- */
+  async loadOnlineStatus(){
+    if(!FB || !this.currentDriver) return;
+    try{
+      const snap = await FB.getDoc(FB.doc(FB.db,'drivers',this.currentDriver.id));
+      const isOnline = snap.exists() ? (snap.data().online !== false) : true;
+      const toggle = document.getElementById('driverOnlineToggle');
+      if(toggle) toggle.checked = isOnline;
+      this.renderOnlineUI(isOnline);
+    }catch(e){ devWarn('online status load failed', e.message); }
+  },
+  renderOnlineUI(isOnline){
+    const label = document.getElementById('driverOnlineLabel');
+    const slider = document.getElementById('driverToggleSlider');
+    if(label) label.textContent = isOnline ? '🟢 অনলাইন — অর্ডার নেওয়ার জন্য প্রস্তুত' : '🔴 অফলাইন — নতুন অর্ডার আসবে না';
+    if(slider) slider.style.background = isOnline ? '#22c55e' : '#64748b';
+  },
+  async toggleOnline(isOnline){
+    this.renderOnlineUI(isOnline);
+    if(!FB || !this.currentDriver) return;
+    try{ await FB.updateDoc(FB.doc(FB.db,'drivers',this.currentDriver.id), {online:isOnline}); toast(isOnline?'✓ অনলাইন হয়েছেন':'অফলাইন করা হয়েছে', isOnline?'success':'info'); }
+    catch(e){ devWarn('toggle online failed', e.message); }
+  },
+
+  /* ---------- Tabs ---------- */
+  switchTab(t){
+    this.tab = t;
+    const a=document.getElementById('driverTabActive'), h=document.getElementById('driverTabHistory');
+    if(a){ a.style.color = t==='active'?'var(--gold)':'var(--ink-muted)'; a.style.borderColor = t==='active'?'var(--gold)':'transparent'; }
+    if(h){ h.style.color = t==='history'?'var(--gold)':'var(--ink-muted)'; h.style.borderColor = t==='history'?'var(--gold)':'transparent'; }
+    this.render();
+  },
+
+  /* ---------- Realtime sync + vibration on new order ---------- */
+  startRealtimeSync(){
+    if(!FB || !this.currentDriver || this.unsub) return;
+    this.unsub = FB.onSnapshot(FB.query(FB.collection(FB.db,'orders'), FB.where('driverId','==',this.currentDriver.id)), snap=>{
+      let hasNew = false;
+      snap.docChanges().forEach(ch=>{
+        if(ch.type==='added' && !this.knownOrderIds.has(ch.doc.id) && ['assigned','packed','picked_up','in_transit'].includes(ch.doc.data().status)){
+          hasNew = true;
+        }
+        this.knownOrderIds.add(ch.doc.id);
+      });
+      if(hasNew && navigator.vibrate) navigator.vibrate([200,100,200]);
+      if(hasNew) toast('🔔 নতুন অর্ডার অ্যাসাইন হয়েছে!','success');
+      this.render();
+    });
+  },
+
   async render(){
     await this._restoreSession();
     if(!this.currentDriver){ document.getElementById('driverLoginBox').style.display='block'; document.getElementById('driverDashBox').style.display='none'; return; }
@@ -47,33 +105,53 @@ const DriverPortal = {
     document.getElementById('driverDashBox').style.display='block';
     document.getElementById('driverNameLabel').textContent=this.currentDriver.name;
     const all = await OrdersService.loadAll();
-    const mine = all.filter(o=>o.driverId===this.currentDriver.id && o.status!=='delivered' && o.status!=='cancelled');
+    all.forEach(o=>this.knownOrderIds.add(o.id));
+    const mineAll = all.filter(o=>o.driverId===this.currentDriver.id);
+    const mine = mineAll.filter(o=>o.status!=='delivered' && o.status!=='cancelled');
+    const history = mineAll.filter(o=>o.status==='delivered' || o.status==='cancelled')
+      .sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0)).slice(0,30);
     const transit = mine.filter(o=>o.status==='in_transit'||o.status==='picked_up').length;
-    const done = all.filter(o=>o.driverId===this.currentDriver.id && o.status==='delivered').length;
+    const done = mineAll.filter(o=>o.status==='delivered' && new Date(o.createdAt?.seconds*1000||0).toDateString()===new Date().toDateString()).length;
     document.getElementById('dStatAssigned').textContent=bn(mine.length);
     document.getElementById('dStatTransit').textContent=bn(transit);
     document.getElementById('dStatDone').textContent=bn(done);
+
     const listEl=document.getElementById('driverOrdersList');
-    if(!mine.length){ listEl.innerHTML=`<div class="empty-state"><div class="em">📦</div><h3>কোনো অর্ডার অ্যাসাইন করা নেই</h3></div>`; return; }
-    listEl.innerHTML = mine.map(o=>{
+    const list = this.tab==='active' ? mine : history;
+
+    if(!list.length){
+      listEl.innerHTML = this.tab==='active'
+        ? `<div class="empty-state"><div class="em">📦</div><h3>কোনো অর্ডার অ্যাসাইন করা নেই</h3></div>`
+        : `<div class="empty-state"><div class="em">🗂️</div><h3>এখনো কোনো অর্ডার সম্পন্ন হয়নি</h3></div>`;
+      return;
+    }
+
+    listEl.innerHTML = list.map(o=>{
       const s = ORDER_STATUS[o.status]||ORDER_STATUS.assigned;
       const isCustomBazar = o.orderType==='custom-bazar';
+      const fullAddress = `${o.village?o.village+', ':''}${o.zone||''}, ${o.district||''} — ${o.address||''}`;
+      const navBtn = this.tab==='active'
+        ? `<a class="btn btn-outline btn-block" style="margin-top:6px;font-size:12px" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(fullAddress)}">🧭 নেভিগেট করুন</a>`
+        : '';
       let nextBtn='';
       let bazarBox='';
-      if(isCustomBazar && o.status==='assigned'){
-        bazarBox = bazarShopHTML(o);
-      } else if(o.status==='assigned') nextBtn=`<button class="btn btn-gold btn-block" onclick="DriverPortal.advance('${o.id}','packed')">📦 প্যাকিং সম্পন্ন</button>`;
-      else if(o.status==='packed') nextBtn=`<button class="btn btn-gold btn-block" onclick="DriverPortal.advance('${o.id}','picked_up')">✓ পিকআপ সম্পন্ন</button>`;
-      else if(o.status==='picked_up') nextBtn=`<button class="btn btn-gold btn-block" onclick="DriverPortal.startTransit('${o.id}')">🚴 রওনা দিন (লাইভ লোকেশন শুরু)</button>`;
-      else if(o.status==='in_transit') nextBtn=`<button class="btn btn-gold btn-block" onclick="DriverPortal.advance('${o.id}','delivered')">✅ ডেলিভারি সম্পন্ন</button>`;
-      const chatBtn = `<button class="btn btn-outline btn-block" style="margin-top:6px;font-size:12px" onclick="OrderChat.open('${o.id}','driver')">💬 কাস্টমারের সাথে চ্যাট</button>`;
+      if(this.tab==='active'){
+        if(isCustomBazar && o.status==='assigned'){
+          bazarBox = bazarShopHTML(o);
+        } else if(o.status==='assigned') nextBtn=`<button class="btn btn-gold btn-block" onclick="DriverPortal.advance('${o.id}','packed')">📦 প্যাকিং সম্পন্ন</button>`;
+        else if(o.status==='packed') nextBtn=`<button class="btn btn-gold btn-block" onclick="DriverPortal.advance('${o.id}','picked_up')">✓ পিকআপ সম্পন্ন</button>`;
+        else if(o.status==='picked_up') nextBtn=`<button class="btn btn-gold btn-block" onclick="DriverPortal.startTransit('${o.id}')">🚴 রওনা দিন (লাইভ লোকেশন শুরু)</button>`;
+        else if(o.status==='in_transit') nextBtn=`<button class="btn btn-gold btn-block" onclick="DriverPortal.advance('${o.id}','delivered')">✅ ডেলিভারি সম্পন্ন</button>`;
+      }
+      const chatBtn = this.tab==='active' ? `<button class="btn btn-outline btn-block" style="margin-top:6px;font-size:12px" onclick="OrderChat.open('${o.id}','driver')">💬 কাস্টমারের সাথে চ্যাট</button>` : '';
       return `<div class="card-box"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><strong>${o.orderNumber||o.id}</strong><span class="status-pill ${s.cls}">${s.label}</span></div>
         <div style="font-size:12.5px;margin-bottom:4px">👤 ${o.customerName} — <a href="tel:${o.customerPhone}">${o.customerPhone}</a></div>
-        <div style="font-size:12.5px;color:var(--ink-muted);margin-bottom:8px">📍 ${o.village?o.village+', ':''}${o.zone||''}, ${o.district||''} — ${o.address||''}</div>
+        <div style="font-size:12.5px;color:var(--ink-muted);margin-bottom:8px">📍 ${fullAddress}</div>
         ${o.instructions?`<div style="font-size:12px;background:rgba(255,255,255,.03);padding:8px;border-radius:8px;margin-bottom:8px;color:var(--ink-soft)">💬 ${o.instructions}</div>`:''}
-        <div style="font-size:13px;font-weight:600;margin-bottom:8px">মোট: ${money(o.subtotal||o.billAmount||0)}</div>${bazarBox}${nextBtn}${chatBtn}</div>`;
+        <div style="font-size:13px;font-weight:600;margin-bottom:8px">মোট: ${money(o.subtotal||o.billAmount||0)}</div>${navBtn}${bazarBox}${nextBtn}${chatBtn}</div>`;
     }).join('');
   },
+
   liveWatchId:null,
   async advance(orderId,status){ const ok=await OrdersService.updateStatus(orderId,status); if(ok){ toast('✓ স্ট্যাটাস আপডেট হয়েছে','success'); this.render(); } },
   startTransit(orderId){
