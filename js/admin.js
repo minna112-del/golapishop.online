@@ -547,6 +547,17 @@ const AdminDash = {
       toast('✓ পিন সংরক্ষণ করা হয়েছে','success');
     }catch(e){ toast('সমস্যা: '+e.message,'error'); }
   },
+  async loadSmsFailures(){
+    if(!FB) return;
+    const el = document.getElementById('smsFailuresTable');
+    if(!el) return;
+    try{
+      const snap = await FB.getDocs(FB.query(FB.collection(FB.db,'sms_failures'), FB.orderBy('createdAt','desc'), FB.limit(20)));
+      const list=[]; snap.forEach(d=>list.push(d.data()));
+      if(!list.length){ el.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--ink-muted);padding:16px">কোনো ব্যর্থতা নেই ✓</td></tr>'; return; }
+      el.innerHTML = list.map(f=>`<tr><td>${f.phone}</td><td style="font-size:11px;max-width:200px;white-space:normal">${f.message}</td><td style="font-size:11px">${f.createdAt?.seconds?new Date(f.createdAt.seconds*1000).toLocaleString('bn-BD'):''}</td></tr>`).join('');
+    }catch(e){ devWarn('sms failures load failed', e.message); }
+  },
 
   tab(btn,name){
     ['overview','products','orders','analytics','customers','coupons','settings','finance'].forEach(t=>{
