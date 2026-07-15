@@ -4,9 +4,11 @@
     <button id="mobFilterBtn" onclick="Listing.toggleMobile()" style="display:none;width:100%;margin-bottom:14px;padding:11px;background:var(--card);border:1px solid var(--line);border-radius:11px;text-align:left;font-size:13.5px">⚙️ ফিল্টার ও সর্ট <span style="float:right">▾</span></button>
     <div class="listing-layout">
       <aside id="listingAside">
-        <div class="filter-box"><h4>মূল্য পরিসীমা</h4><input type="range" id="priceRange" min="0" max="10000" value="10000" style="width:100%;accent-color:var(--gold)">
+        <div class="filter-box"><h4>মূল্য পরিসীমা</h4><input type="range" id="priceRange" min="0" max="10000" step="50" value="10000" oninput="document.getElementById('priceMaxLabel').textContent='৳'+bn(this.value);Listing.render()" style="width:100%;accent-color:var(--gold)">
           <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink-muted)"><span>৳০</span><span id="priceMaxLabel">৳১০,০০০</span></div></div>
-        <div class="filter-box"><h4>অন্যান্য</h4><label class="filter-opt"><input type="checkbox" id="filterCOD" onchange="Listing.render()"> COD সুবিধা আছে</label></div>
+        <div class="filter-box"><h4>ক্যাটাগরি</h4><div id="filterCategoryList"></div></div>
+        <div class="filter-box"><h4>অন্যান্য</h4><label class="filter-opt"><input type="checkbox" id="filterCOD" onchange="Listing.render()"> COD সুবিধা আছে</label><label class="filter-opt"><input type="checkbox" id="filterInStock" onchange="Listing.render()"> শুধু স্টকে আছে</label></div>
+        <button class="btn btn-outline btn-block" style="font-size:12.5px;margin-top:6px" onclick="Listing.clearFilters()">ফিল্টার রিসেট করুন</button>
       </aside>
       <div>
         <div class="toolbar"><span id="listCount" style="font-size:13px;color:var(--ink-muted)"></span>
