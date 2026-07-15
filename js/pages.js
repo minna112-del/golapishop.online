@@ -340,7 +340,8 @@ const Checkout = {
     const nid = document.getElementById('ckNid').value.trim().replace(/\s/g,'');
     const phoneRe = /^(?:\+880|880|0)1[3-9]\d{8}$/;
     const nidRe = /^\d{10}$|^\d{13}$/;
-    if(!name||!phoneRe.test(phone.replace(/[\s-]/g,''))||!nidRe.test(nid)||addr.length<5||!upazila||!zone||!village||!instructions){ toast('⚠ সব তথ্য পূরণ করুন — NID নম্বর (১০ বা ১৩ সংখ্যা) বাধ্যতামূলক','error'); this.goStep(1); return; }
+    const nidOk = nid.length===0 || nidRe.test(nid);
+    if(!name||!phoneRe.test(phone.replace(/[\s-]/g,''))||!nidOk||addr.length<5||!upazila||!zone||!village||!instructions){ toast('⚠ সব প্রয়োজনীয় তথ্য সঠিকভাবে পূরণ করুন','error'); this.goStep(1); return; }
   },
   getWalletUsed(sub, ship){
     const useWallet = document.getElementById('ckUseWallet')?.checked;
