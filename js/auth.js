@@ -243,3 +243,74 @@ const RefundRequest = {
     if(ok){ this.close(); MyOrders.render(); }
   }
 };
+/* ---------- Phone OTP Authentication ---------- */
+const PhoneAuth = {
+  confirmationResult:null, recaptchaVerifier:null,
+
+  ensureRecaptcha(){
+    if(!FB || this.recaptchaVerifier) return;
+    this.recaptchaVerifier = new FB.RecaptchaVerifier(FB.auth, 'recaptcha-container', {
+      size:'invisible'
+    });
+  },
+
+  async sendOtp(){
+    const raw = document.getElementById('phoneNumber').value.trim();
+    const msgEl = document.getElementById('authMsg');
+    const phoneRe = /^(?:\+880|880|0)1[3-9]\d{8}$/;
+    if(!phoneRe.test(raw.replace(/[\s-]/g,''))){ AuthUI.showMsg('সঠিক মোবাইল নম্বর দিন (01XXXXXXXXX)','err'); return; }
+    if(!FB){ AuthUI.showMsg('সংযোগ সমস্যা','err'); return; }
+    let digits = raw.replace(/[\s-]/g,'');
+    if(digits.startsWith('0')) digits = digits.slice(1);
+    if(digits.startsWith('880')) digits = digits.slice(3);
+    const e164 = '+880' + digits;
+
+    const btn = document.getElementById('sendOtpBtn');
+    const orig = btn.textContent; btn.textContent = 'পাঠানো হচ্ছে...'; btn.disabled = true;
+    try{
+      this.ensureRecaptcha();
+      this.confirmationResult = await FB.signInWithPhoneNumber(FB.auth, e164, this.recaptchaVerifier);
+      document.getElementById('otpSentTo').textContent = raw;
+      document.getElementById('phoneStep1').style.display='none';
+      document.getElementById('phoneStep2').style.display='block';
+      AuthUI.showMsg('✓ OTP পাঠানো হয়েছে','ok');
+    }catch(e){
+      devWarn('OTP send failed', e.message);
+      AuthUI.showMsg('OTP পাঠানো ব্যর্থ: '+ (e.code==='auth/too-many-requests' ? 'অনেকবার চেষ্টা হয়েছে, একটু পর আবার চেষ্টা করুন' : e.message), 'err');
+      if(this.recaptchaVerifier){ this.recaptchaVerifier.clear(); this.recaptchaVerifier = null; }
+    }finally{ btn.textContent = orig; btn.disabled = false; }
+  },
+
+  async verifyOtp(){
+    const code = document.getElementById('otpCode').value.trim();
+    if(!code || code.length!==6){ AuthUI.showMsg('৬ সংখ্যার সঠিক OTP দিন','err'); return; }
+    if(!this.confirmationResult){ AuthUI.showMsg('আগে OTP পাঠান','err'); return; }
+    try{
+      const cred = await this.confirmationResult.confirm(code);
+      const uid = cred.user.uid;
+      const userRef = FB.doc(FB.db,'users',uid);
+      const snap = await FB.getDoc(userRef);
+      if(!snap.exists()){
+        await FB.setDoc(userRef, {
+          phone: cred.user.phoneNumber, name:'গ্রাহক', role:'customer',
+          createdAt:FB.serverTimestamp(), referralCode: uid.slice(0,6).toUpperCase(),
+          referredBy:null, referralBonusGiven:false, walletBalance:0
+        });
+      }
+      AuthUI.showMsg('✓ লগইন সফল','ok');
+      setTimeout(()=>AuthUI.close(),700);
+    }catch(e){
+      devWarn('OTP verify failed', e.message);
+      AuthUI.showMsg(e.code==='auth/invalid-verification-code' ? '❌ ভুল OTP কোড' : 'ভেরিফিকেশন ব্যর্থ','err');
+    }
+  },
+  
+  resetPhoneStep(){
+    document.getElementById('phoneStep1').style.display='block';
+    document.getElementById('phoneStep2').style.display='none';
+    document.getElementById('phoneNumber').value='';
+    document.getElementById('otpCode').value='';
+    this.confirmationResult=null;
+    if(this.recaptchaVerifier){ this.recaptchaVerifier.clear(); this.recaptchaVerifier=null; }
+  }
+};
