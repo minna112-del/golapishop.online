@@ -1,4 +1,4 @@
-/* admin.js — AdminDash, ProductForm, OrderDetail (complete) */
+/* admin.js — AdminDash, ProductForm, OrderDetail, CouponManage (complete) */
 
 const AdminDash = {
   _orders: [], _allOrders: [],
@@ -25,7 +25,6 @@ const AdminDash = {
     const st5=document.getElementById('aStatProducts'); if(st5) st5.textContent = bn(ALL_PRODUCTS.length);
     const st6=document.getElementById('aStatCustomers'); if(st6) st6.textContent = bn(customers.length);
 
-    /* Finance pane compat */
     const cod = orders.filter(o=>o.paymentMethod==='cod'&&!['delivered','cancelled'].includes(o.status)).reduce((s,o)=>s+(o.subtotal||0),0);
     const online = orders.filter(o=>o.paymentMethod!=='cod').reduce((s,o)=>s+(o.subtotal||0),0);
     const fm=document.getElementById('fMonth'); if(fm) fm.textContent = money(sales);
@@ -366,7 +365,6 @@ const AdminDash = {
     const o = this._allOrders.find(x=>x.id===orderId); if(o) OrderDetail.open(o);
   },
 
-  /* Real-time listener */
   _listener:null,
   startRealtimeListener(){
     if(!FB || this._listener) return;
@@ -550,7 +548,7 @@ const AdminDash = {
   },
 
   tab(btn,name){
-    ['overview','products','orders','analytics','customers','settings','finance'].forEach(t=>{
+    ['overview','products','orders','analytics','customers','coupons','settings','finance'].forEach(t=>{
       const el = document.getElementById('admin'+t.charAt(0).toUpperCase()+t.slice(1)+'Pane');
       if(el) el.style.display = t===name?'block':'none';
     });
@@ -559,13 +557,14 @@ const AdminDash = {
     if(name==='products') this.renderProducts();
     if(name==='analytics') this.renderAnalytics(this._allOrders);
     if(name==='customers') this.renderCustomers(this._allOrders);
+    if(name==='coupons') CouponManage.render();
   }
 };
 
 /* ---------- Product Form ---------- */
 const ProductForm = {
   mode:'add', editId:null, imgBase64:null,
-    onImageSelect(input){
+  onImageSelect(input){
     const file = input.files[0]; if(!file) return;
     const reader = new FileReader();
     reader.onload = e => {
@@ -573,14 +572,12 @@ const ProductForm = {
       const thumb=document.getElementById('pfImgThumb'); if(thumb) thumb.src = e.target.result;
       const prev=document.getElementById('pfImgPreview'); if(prev) prev.style.display = 'block';
       const ai=document.getElementById('pfDescAiBtn'); if(ai) ai.style.display = 'inline-block';
-      /* ছবি আপলোড হলে, নাম আগে থেকে দেওয়া থাকলে সাথে সাথেই AI বিবরণ লিখে দেবে */
       const name = document.getElementById('pfName')?.value.trim();
       if(name) this.generateDesc();
     };
     reader.readAsDataURL(file);
   },
   maybeAutoGenerate(){
-    /* নাম ফিল্ড থেকে বের হলে, ছবি আগে থেকে আপলোড করা থাকলে AI বিবরণ লিখে দেবে */
     const name = document.getElementById('pfName')?.value.trim();
     const hasImg = document.getElementById('pfImgFile')?.files.length > 0;
     const descEmpty = !document.getElementById('pfDescription')?.value.trim();
@@ -747,7 +744,6 @@ const OrderDetail = {
     if(order.driverName){ dbox.style.display='block'; dEl.textContent = `${order.driverName} — ${order.customerPhone||''}`; }
     else { dbox.style.display='none'; }
 
-    /* রিফান্ড রিকোয়েস্ট বক্স */
     const rbox = document.getElementById('odRefundBox');
     if(order.refundRequested){
       rbox.style.display='block';
@@ -783,5 +779,101 @@ const OrderDetail = {
     const w = window.open('', '_blank');
     w.document.write(`<html><head><title>${o.orderNumber||o.id}</title><style>body{font-family:sans-serif;padding:30px;max-width:600px;margin:0 auto}h1{color:#C2185B}.row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee}table{width:100%;margin-top:14px}.tot{font-size:18px;font-weight:700;margin-top:14px}</style></head><body><h1>Golapi Shop Online</h1><p>অর্ডার: ${o.orderNumber||o.id}</p><p>তারিখ: ${o.createdAt?.seconds?new Date(o.createdAt.seconds*1000).toLocaleString('bn-BD'):'—'}</p><hr><h3>কাস্টমার</h3><p>${o.customerName||''}<br>${o.customerPhone||''}<br>${o.village||''}, ${AREA_LABELS[o.branchZone]||''}<br>${o.address||''}</p><h3>আইটেম</h3><table><tr><th>পণ্য</th><th>মোট</th></tr>${(o.items||[]).map(it=>{const p=ALL_PRODUCTS.find(x=>x.id===it.productId);return `<tr><td>${p?.name||it.productId} × ${it.qty}</td><td>${money((p?.salePrice||0)*it.qty)}</td></tr>`}).join('')}</table><div class="tot"><div class="row"><span>মোট</span><span>${money(o.subtotal||0)}</span></div></div><p style="margin-top:20px;font-size:12px;color:#888">Golapi Shop Online — নোয়াখালী</p></body></html>`);
     w.document.close(); w.print();
+  }
+};
+
+/* ---------- Coupon Management ---------- */
+const CouponManage = {
+  coupons:[], mode:'add', editId:null,
+  async load(){
+    if(!FB) return [];
+    try{
+      const snap = await FB.getDocs(FB.collection(FB.db,'coupons'));
+      const list=[]; snap.forEach(d=>list.push({id:d.id,...d.data()}));
+      list.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+      this.coupons = list;
+      return list;
+    }catch(e){ devWarn('coupon load failed', e.message); return []; }
+  },
+  async render(){
+    await this.load();
+    const tbody = document.getElementById('aCouponsTable');
+    if(!tbody) return;
+    if(!this.coupons.length){ tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--ink-muted);padding:20px">কোনো কুপন নেই</td></tr>`; return; }
+    const today = new Date();
+    tbody.innerHTML = this.coupons.map(c=>{
+      const expired = c.expiresAt && new Date(c.expiresAt) < today;
+      const usedUp = c.usageLimit && (c.usedCount||0) >= c.usageLimit;
+      const isLive = c.active!==false && !expired && !usedUp;
+      return `<tr>
+        <td style="font-weight:700;color:var(--gold)">${c.code}</td>
+        <td>${c.type==='percent'?'শতাংশ':'ফ্ল্যাট'}</td>
+        <td>${c.type==='percent'?c.value+'%':money(c.value)}</td>
+        <td>${money(c.minOrder||0)}</td>
+        <td>${bn(c.usedCount||0)}${c.usageLimit?' / '+bn(c.usageLimit):''}</td>
+        <td style="font-size:11px">${c.expiresAt||'সীমাহীন'}</td>
+        <td><span class="status-pill ${isLive?'delivered':'cancelled'}">${isLive?'সক্রিয়':expired?'মেয়াদ শেষ':usedUp?'শেষ':'বন্ধ'}</span></td>
+        <td style="display:flex;gap:6px">
+          <a href="#" onclick="event.preventDefault();CouponManage.openEdit('${c.id}')" style="color:var(--gold);font-size:12px">এডিট</a>
+          <a href="#" onclick="event.preventDefault();CouponManage.toggleActive('${c.id}')" style="color:${c.active===false?'#22c55e':'#f87171'};font-size:12px">${c.active===false?'চালু':'বন্ধ'}</a>
+        </td>
+      </tr>`;
+    }).join('');
+  },
+  openAdd(){
+    this.mode='add'; this.editId=null;
+    document.getElementById('cpTitle').textContent='নতুন কুপন তৈরি করুন';
+    document.getElementById('cpSubmitBtn').textContent='কুপন তৈরি করুন';
+    ['cpCode','cpValue','cpMaxDiscount','cpUsageLimit','cpExpiry'].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';});
+    document.getElementById('cpType').value='percent';
+    document.getElementById('cpMinOrder').value='0';
+    document.getElementById('cpMsg').className='form-msg';
+    document.getElementById('couponModal').classList.add('show');
+  },
+  openEdit(id){
+    const c = this.coupons.find(x=>x.id===id); if(!c) return;
+    this.mode='edit'; this.editId=id;
+    document.getElementById('cpTitle').textContent='কুপন সম্পাদনা করুন';
+    document.getElementById('cpSubmitBtn').textContent='পরিবর্তন সংরক্ষণ করুন';
+    document.getElementById('cpCode').value=c.code;
+    document.getElementById('cpType').value=c.type;
+    document.getElementById('cpValue').value=c.value;
+    document.getElementById('cpMaxDiscount').value=c.maxDiscount||'';
+    document.getElementById('cpMinOrder').value=c.minOrder||0;
+    document.getElementById('cpUsageLimit').value=c.usageLimit||'';
+    document.getElementById('cpExpiry').value=c.expiresAt||'';
+    document.getElementById('cpMsg').className='form-msg';
+    document.getElementById('couponModal').classList.add('show');
+  },
+  close(){ document.getElementById('couponModal').classList.remove('show'); },
+  async submit(){
+    const msgEl=document.getElementById('cpMsg');
+    const code = document.getElementById('cpCode').value.trim().toUpperCase();
+    const type = document.getElementById('cpType').value;
+    const value = Number(document.getElementById('cpValue').value);
+    const maxDiscount = Number(document.getElementById('cpMaxDiscount').value)||null;
+    const minOrder = Number(document.getElementById('cpMinOrder').value)||0;
+    const usageLimit = Number(document.getElementById('cpUsageLimit').value)||null;
+    const expiresAt = document.getElementById('cpExpiry').value||null;
+    if(!code || !value){ msgEl.textContent='কোড ও ছাড়ের পরিমাণ দিন'; msgEl.className='form-msg err'; return; }
+    if(!FB){ msgEl.textContent='সংযোগ সমস্যা'; msgEl.className='form-msg err'; return; }
+    try{
+      if(this.mode==='add'){
+        const dupe = this.coupons.find(c=>c.code===code);
+        if(dupe){ msgEl.textContent='এই কোড ইতিমধ্যে আছে'; msgEl.className='form-msg err'; return; }
+        await FB.addDoc(FB.collection(FB.db,'coupons'), {code,type,value,maxDiscount,minOrder,usageLimit,expiresAt,usedCount:0,active:true,createdAt:FB.serverTimestamp()});
+        msgEl.textContent='✓ কুপন তৈরি হয়েছে'; msgEl.className='form-msg ok';
+      } else {
+        await FB.updateDoc(FB.doc(FB.db,'coupons',this.editId), {code,type,value,maxDiscount,minOrder,usageLimit,expiresAt});
+        msgEl.textContent='✓ কুপন আপডেট হয়েছে'; msgEl.className='form-msg ok';
+      }
+      await this.render();
+      setTimeout(()=>this.close(),800);
+    }catch(e){ msgEl.textContent='সমস্যা: '+e.message; msgEl.className='form-msg err'; }
+  },
+  async toggleActive(id){
+    const c = this.coupons.find(x=>x.id===id); if(!c || !FB) return;
+    try{ await FB.updateDoc(FB.doc(FB.db,'coupons',id), {active: c.active===false}); this.render(); }
+    catch(e){ toast('সমস্যা: '+e.message,'error'); }
   }
 };
