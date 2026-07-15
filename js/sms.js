@@ -32,10 +32,11 @@ const SMSGateway = {
     if (!this.GREENWEB.token || this.GREENWEB.token.includes('YOUR')) return { ok: false, reason:'not_configured' };
     try {
       const r = await fetch(
-        `${this.GREENWEB.url}?token=${this.GREENWEB.token}&to=${phone}&message=${encodeURIComponent(msg)}&type=text`
+        `${this.GREENWEB.url}?json&token=${this.GREENWEB.token}&to=${phone}&message=${encodeURIComponent(msg)}`
       );
       const d = await r.json().catch(() => ({}));
-      return { ok: d.status === 'SENT' || d.result === 'success', raw: d };
+      const ok = d.error === '0' || d.error === 0 || (typeof d.msg === 'string' && d.msg.toLowerCase().includes('success'));
+      return { ok, raw: d };
     } catch (e) { return { ok: false, err: e.message }; }
   },
 
