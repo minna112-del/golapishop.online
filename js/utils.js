@@ -14,10 +14,14 @@ function toast(msg,type='info'){
 
 const CATEGORIES = [
   {id:'medicine',label:'ঔষধ',icon:'💊'},{id:'grocery',label:'মুদি বাজার',icon:'🛒'},
+  {id:'vegetables',label:'শাকসবজি ও ফল',icon:'🥦'},{id:'dairy_bakery',label:'দুধ ও বেকারি',icon:'🥛'},
   {id:'confectionery',label:'কনফেকশনারি',icon:'🍬'},{id:'stationery',label:'স্টেশনারি',icon:'📒'},
-  {id:'gas',label:'গ্যাস সিলিন্ডার',icon:'🔥'},{id:'mobile',label:'মোবাইল',icon:'📱'},
-  {id:'watch',label:'ঘড়ি ও ব্যাটারি',icon:'⌚'},{id:'cosmetics',label:'কসমেটিকস',icon:'💄'},
-  {id:'clothing',label:'জামা-কাপড়',icon:'👕'},{id:'furniture',label:'ফার্নিচার',icon:'🪑'}
+  {id:'gas',label:'গ্যাস সিলিন্ডার',icon:'🔥'},{id:'mobile',label:'মোবাইল এক্সেসরিজ',icon:'📱'},
+  {id:'electronics',label:'ইলেকট্রনিক্স',icon:'🔌'},{id:'watch',label:'ঘড়ি ও ব্যাটারি',icon:'⌚'},
+  {id:'cosmetics',label:'কসমেটিকস',icon:'💄'},{id:'clothing',label:'জামা-কাপড়',icon:'👕'},
+  {id:'footwear',label:'জুতা',icon:'👞'},{id:'furniture',label:'ফার্নিচার',icon:'🪑'},
+  {id:'toys',label:'খেলনা',icon:'🧸'},{id:'baby_care',label:'শিশু যত্ন',icon:'🍼'},
+  {id:'home_care',label:'গৃহস্থালি ও পরিষ্কার',icon:'🧴'},{id:'others',label:'অন্যান্য',icon:'🎁'}
 ];
 
 const EMERGENCY_CATEGORIES = ['medicine','gas'];
