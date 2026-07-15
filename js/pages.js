@@ -60,9 +60,9 @@ const Listing = {
     const sortEl=document.getElementById('sortSelect');
     const sort = sortEl?sortEl.value:'relevance';
     let items = zoneProducts();
-    let title = 'সব প্রোডাক্';
+    let title = 'সব প্রোডাক্ট';
     if(cat==='flash'){ items = items.filter(p=>p.isFlash); title='🔥 ফ্ল্যাশ সেল'; }
-    else if(cat==='bestseller'){ items = [...items].sort((a,b)=>b.sold-a.sold); title='⭐ বেস সেলার'; }
+    else if(cat==='bestseller'){ items = [...items].sort((a,b)=>b.sold-a.sold); title='⭐ বেস্ট সেলার'; }
     else if(cat!=='all'){ items = items.filter(p=>p.category===cat); title = CATEGORIES.find(c=>c.id===cat)?.label || cat; }
     if(q){ items = items.filter(p=>p.name.toLowerCase().includes(q)); title = `"${q}" — অনুসন্ধান`; }
     const codEl=document.getElementById('filterCOD');
@@ -138,7 +138,7 @@ const PDP = {
       "@type":"Product",
       "name": p.name,
       "image": p.img,
-      "description": p.description || `${p.name} — Golapi Shop Online থকে হোম ডেলিভারি, নোয়াখালী সদর ও বেগমগঞ্জ।`,
+      "description": p.description || `${p.name} — Golapi Shop Online থেকে হোম ডেলিভারি, নোয়াখালী সদর ও বেগমগঞ্জ।`,
       "sku": p.id,
       "brand": { "@type":"Brand", "name":"Golapi Shop Online" },
       "offers": {
@@ -358,7 +358,7 @@ const Checkout = {
       if(snap.empty){ msgEl.textContent='❌ এই কুপন কোডটি সঠিক নয়'; msgEl.style.color='#f87171'; this.couponCode=null; this.couponData=null; this.renderSummary(); return; }
       const c = { id:snap.docs[0].id, ...snap.docs[0].data() };
       const today = new Date();
-      if(c.active===false){ msgEl.textContent='❌ এই কুপনটি বন আছে'; msgEl.style.color='#f87171'; return; }
+      if(c.active===false){ msgEl.textContent='❌ এই কুপনটি বন্ধ আছে'; msgEl.style.color='#f87171'; return; }
       if(c.expiresAt && new Date(c.expiresAt) < today){ msgEl.textContent='❌ কুপনের মেয়াদ শেষ হয়ে গেছে'; msgEl.style.color='#f87171'; return; }
       if(c.usageLimit && (c.usedCount||0) >= c.usageLimit){ msgEl.textContent='❌ কুপনের ব্যবহারসীমা শেষ'; msgEl.style.color='#f87171'; return; }
       const sub = Cart.totalPrice();
@@ -507,7 +507,7 @@ const CustomBazar = {
       onUpazilaChange('cb');
       setTimeout(()=>{ const zEl=document.getElementById('cbZone'); if(zEl) zEl.value = o.zone||''; }, 100);
     }
-    toast('✓ আগের লিস্ট বসানো হয়েছে — চেক করে ট্রানজেকশন ID দয়ে জমা দিন','success');
+    toast('✓ আগের লিস্ট বসানো হয়েছে — চেক করে ট্রানজেকশন ID দিয়ে জমা দিন','success');
     window.scrollTo({top:0, behavior:'smooth'});
   },
   async submit(){
@@ -523,7 +523,7 @@ const CustomBazar = {
     const list=document.getElementById('cbList')?.value.trim()||'';
     const notes=document.getElementById('cbNotes')?.value.trim()||'';
     const trxId=document.getElementById('cbTrxId')?.value.trim()||'';
-    if(!name||!phone||!address||!district||!zone||!village||!instructions||!list||!trxId){ msgEl.textContent='সব প্রয়োজনীয় তথ্য পূরণ করুন (ডেলিভারি ইনস্ট্রকশন সহ)'; msgEl.className='form-msg err'; return; }
+    if(!name||!phone||!address||!district||!zone||!village||!instructions||!list||!trxId){ msgEl.textContent='সব প্রয়োজনীয় তথ্য পূরণ করুন (ডেলিভারি ইনস্ট্রাকশন সহ)'; msgEl.className='form-msg err'; return; }
     const phoneRe=/^(?:\+880|880|0)1[3-9]\d{8}$/;
     if(!phoneRe.test(phone.replace(/[\s-]/g,''))){ msgEl.textContent='সঠিক মোবাইল নম্বর দিন'; msgEl.className='form-msg err'; return; }
     if(!FB){ msgEl.textContent='সংযোগ সমস্যা'; msgEl.className='form-msg err'; return; }
