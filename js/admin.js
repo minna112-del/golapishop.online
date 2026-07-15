@@ -42,6 +42,7 @@ const AdminDash = {
     this.loadZmPins();
     this.renderDriverPerformance(orders);
     this.loadStoreSettings();
+    this.loadSmsFailures();
     this.startRealtimeListener();
   },
 
