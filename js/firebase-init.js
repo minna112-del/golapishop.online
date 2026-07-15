@@ -2,7 +2,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
   import { getAnalytics, isSupported as analyticsIsSupported } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
   import {
     getAuth, onAuthStateChanged, createUserWithEmailAndPassword,
-    signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, updateProfile
+    signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, updateProfile,
+    signInWithPhoneNumber, RecaptchaVerifier
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
   import {
     getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc,
@@ -32,6 +33,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
     auth, db, storage, GoogleAuthProvider,
     onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword,
     signOut, signInWithPopup, updateProfile,
+    signInWithPhoneNumber, RecaptchaVerifier,
     collection, doc, setDoc, getDoc, getDocs, addDoc, updateDoc, deleteDoc,
     query, where, orderBy, limit, onSnapshot, serverTimestamp, increment, runTransaction,
     storageRef, uploadBytes, getDownloadURL
