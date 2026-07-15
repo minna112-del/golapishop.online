@@ -12,13 +12,33 @@
       </div>
     </div>
     <div id="driverDashBox" style="display:none">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px"><h2 class="tiro" style="font-size:19px">🚴 <span id="driverNameLabel"></span></h2><button class="btn btn-outline" style="padding:7px 14px;font-size:12px" onclick="DriverPortal.logout()">লগআউট</button></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <h2 class="tiro" style="font-size:19px">🚴 <span id="driverNameLabel"></span></h2>
+        <button class="btn btn-outline" style="padding:7px 14px;font-size:12px" onclick="DriverPortal.logout()">লগআউট</button>
+      </div>
+
+      <div class="card-box" style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px;margin-bottom:14px" id="driverOnlineBox">
+        <div>
+          <div style="font-size:13.5px;font-weight:600;color:#fff" id="driverOnlineLabel">🟢 অনলাইন — অর্ডার নেওয়ার জন্য প্রস্তুত</div>
+          <div style="font-size:11px;color:var(--ink-muted);margin-top:2px">অফলাইন করলে নতুন অর্ডার অ্যাসাইন হবে না</div>
+        </div>
+        <label style="position:relative;display:inline-block;width:50px;height:28px;flex-shrink:0">
+          <input type="checkbox" id="driverOnlineToggle" checked onchange="DriverPortal.toggleOnline(this.checked)" style="opacity:0;width:0;height:0">
+          <span id="driverToggleSlider" style="position:absolute;cursor:pointer;inset:0;background:#22c55e;border-radius:28px;transition:.3s"></span>
+        </label>
+      </div>
+
       <div class="stat-grid" style="grid-template-columns:repeat(3,1fr)">
         <div class="stat-card"><div class="lbl">অ্যাসাইনড</div><div class="val" id="dStatAssigned">০</div></div>
         <div class="stat-card"><div class="lbl">পথে আছে</div><div class="val rose" id="dStatTransit">০</div></div>
         <div class="stat-card"><div class="lbl">আজ সম্পন্ন</div><div class="val" id="dStatDone">০</div></div>
       </div>
-      <h3 style="font-size:14px;color:#fff;margin-bottom:10px">আপনার অর্ডারসমূহ</h3>
+
+      <div style="display:flex;border-bottom:1px solid var(--line);margin:16px 0 14px">
+        <button id="driverTabActive" onclick="DriverPortal.switchTab('active')" style="flex:1;padding:10px;font-weight:600;font-size:13px;color:var(--gold);border-bottom:2px solid var(--gold)">🚴 সক্রিয় অর্ডার</button>
+        <button id="driverTabHistory" onclick="DriverPortal.switchTab('history')" style="flex:1;padding:10px;font-weight:600;font-size:13px;color:var(--ink-muted);border-bottom:2px solid transparent">✅ সম্পন্ন</button>
+      </div>
+
       <div id="driverOrdersList"></div>
     </div>
   </section>
