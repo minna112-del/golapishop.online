@@ -41,14 +41,22 @@
       <select id="pfCategory">
         <option value="medicine">💊 ঔষধ</option>
         <option value="grocery">🛒 মুদি বাজার</option>
+        <option value="vegetables">🥦 শাকসবজি ও ফল</option>
+        <option value="dairy_bakery">🥛 দুধ ও বেকারি</option>
+        <option value="confectionery">🍬 কনফেকশনারি</option>
+        <option value="stationery">📒 স্টেশনারি</option>
         <option value="gas">🔥 গ্যাস সিলিন্ডার</option>
-        <option value="mobile">📱 মোবাইল</option>
+        <option value="mobile">📱 মোবাইল এক্সেসরিজ</option>
+        <option value="electronics">🔌 ইলেকট্রনিক্স</option>
         <option value="watch">⌚ ঘড়ি ও ব্যাটারি</option>
         <option value="cosmetics">💄 কসমেটিকস</option>
         <option value="clothing">👕 জামা-কাপড়</option>
+        <option value="footwear">👞 জুতা</option>
         <option value="furniture">🪑 ফার্নিচার</option>
-        <option value="stationery">📒 স্টেশনারি</option>
-        <option value="confectionery">🍬 কনফেকশনারি</option>
+        <option value="toys">🧸 খেলনা</option>
+        <option value="baby_care">🍼 শিশু যত্ন</option>
+        <option value="home_care">🧴 গৃহস্থালি ও পরিষ্কার</option>
+        <option value="others">🎁 অন্যান্য</option>
       </select>
     </div>
 
@@ -67,10 +75,22 @@
         <option value="প্যাকেট">প্যাকেট</option>
         <option value="বোতল">বোতল</option>
         <option value="বক্স">বক্স</option>
+        <option value="কার্টুন">কার্টুন</option>
+        <option value="বস্তা">বস্তা</option>
         <option value="পাতা">পাতা (স্ট্রিপ)</option>
+        <option value="টিউব">টিউব</option>
+        <option value="জার">জার</option>
+        <option value="ক্যান">ক্যান</option>
         <option value="সেট">সেট</option>
         <option value="জোড়া">জোড়া</option>
         <option value="গজ">গজ</option>
+        <option value="থান">থান</option>
+        <option value="মিটার">মিটার</option>
+        <option value="ফুট">ফুট</option>
+        <option value="রিম">রিম</option>
+        <option value="রোল">রোল</option>
+        <option value="শীট">শীট</option>
+        <option value="বান্ডিল">বান্ডিল</option>
         <option value="কম্বো প্যাক">🎁 কম্বো প্যাক</option>
       </select>
     </div>
@@ -93,6 +113,8 @@
       <div class="field"><label>বিক্রয় মূল্য (৳) *</label><input type="number" id="pfSalePrice" min="0"></div>
     </div>
 
+    <div class="field"><label>মেয়াদ উত্তীর্ণের তারিখ (ঐচ্ছিক — ঔষধ/খাবারের জন্য)</label><input type="date" id="pfExpiryDate"></div>
+
     <div class="field">
       <label>প্রোডাক্ট ছবি</label>
       <input type="file" id="pfImgFile" accept="image/*" onchange="ProductForm.onImageSelect(this)">
@@ -114,6 +136,32 @@
     </div>
 
     <button class="btn btn-gold btn-block" id="pfSubmitBtn" onclick="ProductForm.submit()">প্রোডাক্ট সংরক্ষণ করুন</button>
+  </div>
+</div>
+
+<div class="modal" id="couponModal">
+  <div class="modal-box" style="position:relative">
+    <button class="close" onclick="CouponManage.close()">✕</button>
+    <h3 class="tiro" id="cpTitle" style="font-size:18px;margin-bottom:14px">নতুন কুপন তৈরি করুন</h3>
+    <div id="cpMsg" class="form-msg"></div>
+    <div class="field"><label>কুপন কোড *</label><input type="text" id="cpCode" placeholder="যেমন: EID50" style="text-transform:uppercase"></div>
+    <div class="field"><label>ধরন *</label>
+      <select id="cpType">
+        <option value="percent">শতাংশ ছাড় (%)</option>
+        <option value="flat">নির্দিষ্ট টাকা ছাড় (৳)</option>
+      </select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="field"><label>ছাড়ের পরিমাণ *</label><input type="number" id="cpValue" min="0"></div>
+      <div class="field"><label>সর্বোচ্চ ছাড় (৳) <span style="color:var(--ink-dim)">(শুধু % হলে)</span></label><input type="number" id="cpMaxDiscount" min="0" placeholder="যেমন: ২০০"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="field"><label>ন্যূনতম অর্ডার (৳)</label><input type="number" id="cpMinOrder" min="0" value="0"></div>
+      <div class="field"><label>মোট ব্যবহারের সীমা</label><input type="number" id="cpUsageLimit" min="0" placeholder="ফাঁকা = সীমাহীন"></div>
+    </div>
+    <div class="field"><label>মেয়াদ শেষ তারিখ</label><input type="date" id="cpExpiry"></div>
+    <input type="hidden" id="cpEditId">
+    <button class="btn btn-gold btn-block" id="cpSubmitBtn" onclick="CouponManage.submit()">কুপন তৈরি করুন</button>
   </div>
 </div>
 
