@@ -1,4 +1,4 @@
-/* sms.js — Green Web + SSL Wireless Dual Gateway */
+/* sms.js — Green Web + SSL Wireless Dual Gateway, with retry queue + Firestore logging */
 const SMSGateway = {
 
   /* =============================================
@@ -6,7 +6,7 @@ const SMSGateway = {
      ============================================= */
   GREENWEB: {
     token: 'YOUR_GREENWEB_TOKEN',
-    url: 'https://api.greenweb.com.bd/api/v2/send.php'
+    url: 'https://api.bdbulksms.net/api.php'
   },
 
   SSL: {
@@ -29,7 +29,7 @@ const SMSGateway = {
 
   /* ── Green Web send ── */
   async _gw(phone, msg) {
-    if (!this.GREENWEB.token || this.GREENWEB.token.includes('YOUR')) return { ok: false };
+    if (!this.GREENWEB.token || this.GREENWEB.token.includes('YOUR')) return { ok: false, reason:'not_configured' };
     try {
       const r = await fetch(
         `${this.GREENWEB.url}?token=${this.GREENWEB.token}&to=${phone}&message=${encodeURIComponent(msg)}&type=text`
@@ -41,7 +41,7 @@ const SMSGateway = {
 
   /* ── SSL Wireless send ── */
   async _ssl(phone, msg) {
-    if (!this.SSL.api_token || this.SSL.api_token.includes('YOUR')) return { ok: false };
+    if (!this.SSL.api_token || this.SSL.api_token.includes('YOUR')) return { ok: false, reason:'not_configured' };
     try {
       const r = await fetch(this.SSL.url, {
         method: 'POST',
@@ -59,19 +59,56 @@ const SMSGateway = {
     } catch (e) { return { ok: false, err: e.message }; }
   },
 
-  /* ── Master send: GW first → SSL fallback ── */
-  async send(toRaw, msg) {
+  /* ── Firestore-এ SMS লগ রাখা (সফল/ব্যর্থ দুটোই) ── */
+  async _log(phone, msg, gateway, result, attempt){
+    if(!window.FB) return;
+    try{
+      await FB.addDoc(FB.collection(FB.db,'sms_logs'), {
+        phone, message: msg.slice(0,300), gateway, success: !!result.ok,
+        errorReason: result.ok ? null : (result.reason || result.err || 'unknown'),
+        attempt, createdAt: FB.serverTimestamp()
+      });
+    }catch(e){ devWarn('sms log write failed', e.message); }
+  },
+
+  /* ── Master send: GW first → SSL fallback → ব্যর্থ হলে retry queue-তে যোগ ── */
+  async send(toRaw, msg, _attempt=1) {
     const phone = this.normalizePhone(toRaw);
     if (!phone) { devWarn('SMS: invalid phone', toRaw); return false; }
 
     let res = await this._gw(phone, msg);
+    let gatewayUsed = 'greenweb';
     if (!res.ok) {
       devLog('GW failed → SSL fallback');
       res = await this._ssl(phone, msg);
+      gatewayUsed = 'ssl';
     }
-    if (res.ok) devLog('SMS sent ✓', phone);
-    else        devWarn('SMS failed both gateways', phone);
-    return res.ok;
+    await this._log(phone, msg, gatewayUsed, res, _attempt);
+
+    if (res.ok) { devLog('SMS sent ✓', phone); return true; }
+
+    devWarn('SMS failed both gateways', phone, `attempt ${_attempt}`);
+    if(_attempt < 3){
+      await this._queueRetry(toRaw, msg, _attempt);
+    } else {
+      await this._logPermanentFailure(phone, msg);
+    }
+    return false;
+  },
+
+  /* ── ব্যর্থ হলে ৩০ সেকেন্ড পর আবার চেষ্টা (max ৩ বার) ── */
+  async _queueRetry(toRaw, msg, attempt){
+    setTimeout(()=>{ this.send(toRaw, msg, attempt+1); }, 30000);
+  },
+
+  /* ── ৩ বার চেষ্টার পরেও ব্যর্থ হলে admin-এর জন্য visible failure log ── */
+  async _logPermanentFailure(phone, msg){
+    if(!window.FB) return;
+    try{
+      await FB.addDoc(FB.collection(FB.db,'sms_failures'), {
+        phone, message: msg.slice(0,300), createdAt: FB.serverTimestamp(), resolved:false
+      });
+    }catch(e){ devWarn('permanent failure log failed', e.message); }
   },
 
   /* ── Send to multiple numbers ── */
@@ -112,10 +149,8 @@ const SMSGateway = {
 
   /* ============================================
      🚀 Auto-trigger Functions
-     (pages.js / services.js থেকে call করো)
      ============================================ */
 
-  /* নতুন অর্ডার হলে — customer + admin দুজনকেই SMS */
   async onOrderPlaced(order) {
     const no = (order.orderNumber || order.id || '').substring(0, 8).toUpperCase();
     const total = order.subtotal || 0;
@@ -129,33 +164,31 @@ const SMSGateway = {
     ]);
   },
 
-  /* ড্রাইভার assign হলে */
   async onDriverAssigned(order, driverName, driverPhone) {
     const no = (order.orderNumber || order.id || '').substring(0, 8).toUpperCase();
     await this.send(order.customerPhone, this.tpl.orderAssigned(no, driverName, driverPhone));
   },
 
-  /* ডেলিভারি হলে */
   async onDelivered(order) {
     const no = (order.orderNumber || order.id || '').substring(0, 8).toUpperCase();
     const firstProductId = order.items?.[0]?.productId || null;
     await this.send(order.customerPhone, this.tpl.orderDelivered(no, firstProductId));
   },
 
-  /* অর্ডার বাতিল হলে */
   async onCancelled(order) {
     const no = (order.orderNumber || order.id || '').substring(0, 8).toUpperCase();
     await this.send(order.customerPhone, this.tpl.orderCancelled(no));
   },
 
-  /* রিফান্ড approved হলে */
   async onRefundApproved(order, amount) {
     const no = (order.orderNumber || order.id || '').substring(0, 8).toUpperCase();
     await this.send(order.customerPhone, this.tpl.refundApproved(no, amount));
   },
 
-  /* Registration welcome */
   async onWelcome(phone, name) {
     await this.send(phone, this.tpl.welcome(name));
   }
 };
+
+/* devLog না থাকলে ক্র্যাশ এড়াতে ফলব্যাক */
+if(typeof devLog === 'undefined'){ window.devLog = function(...a){ if(typeof isDev!=='undefined' && isDev) console.log(...a); }; }
