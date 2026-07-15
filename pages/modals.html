@@ -27,31 +27,93 @@
     <button class="close" onclick="ProductForm.close()">✕</button>
     <h3 class="tiro" id="pfTitle" style="font-size:18px;margin-bottom:14px">নতুন প্রোডাক্ট যুক্ত করুন</h3>
     <div id="pfMsg" class="form-msg"></div>
-    <div class="field"><label>প্রোডাক্টের নাম *</label><input type="text" id="pfName"></div>
+
+    <div class="field"><label>প্রোডাক্টের নাম *</label><input type="text" id="pfName" onblur="ProductForm.maybeAutoGenerate()"></div>
+
     <div class="field"><label>শাখা/জোন *</label>
       <div style="display:flex;gap:16px;margin-top:4px">
         <label class="filter-opt"><input type="checkbox" id="pfZoneSadar" checked> নোয়াখালী সদর</label>
         <label class="filter-opt"><input type="checkbox" id="pfZoneBegumganj"> বেগমগঞ্জ</label>
       </div>
     </div>
-    <div class="field"><label>ক্যাটাগরি *</label><select id="pfCat"><option value="medicine">💊 ঔষধ</option><option value="grocery">🛒 মুদি বাজার</option><option value="gas">🔥 গ্যাস সিলিন্ডার</option><option value="mobile">📱 মোবাইল</option><option value="watch">⌚ ঘড়ি ও ব্যাটারি</option><option value="cosmetics">💄 কসমেটিকস</option><option value="clothing">👕 জামা-কাপড়</option><option value="furniture">🪑 ফার্নিচার</option><option value="stationery">📒 স্টেশনারি</option><option value="confectionery">🬠 কনফেকশনারি</option></select></div>
-    <div class="field"><label>একক (unit) *</label><select id="pfUnit"><option value="পিস">পিস</option><option value="কেজি">কেজি</option><option value="৫০০ গ্রাম">৫০০ গ্রাম</option><option value="লিটার">লিটার</option><option value="ডজন">ডজন</option><option value="প্যাকেট">প্যাকেট</option><option value="বোতল">বোতল</option></select></div>
+
+    <div class="field"><label>ক্যাটাগরি *</label>
+      <select id="pfCategory">
+        <option value="medicine">💊 ঔষধ</option>
+        <option value="grocery">🛒 মুদি বাজার</option>
+        <option value="gas">🔥 গ্যাস সিলিন্ডার</option>
+        <option value="mobile">📱 মোবাইল</option>
+        <option value="watch">⌚ ঘড়ি ও ব্যাটারি</option>
+        <option value="cosmetics">💄 কসমেটিকস</option>
+        <option value="clothing">👕 জামা-কাপড়</option>
+        <option value="furniture">🪑 ফার্নিচার</option>
+        <option value="stationery">📒 স্টেশনারি</option>
+        <option value="confectionery">🍬 কনফেকশনারি</option>
+      </select>
+    </div>
+
+    <div class="field"><label>একক (unit) *</label>
+      <select id="pfUnit">
+        <option value="পিস">পিস</option>
+        <option value="কেজি">কেজি</option>
+        <option value="৫০০ গ্রাম">৫০০ গ্রাম</option>
+        <option value="২৫০ গ্রাম">২৫০ গ্রাম</option>
+        <option value="গ্রাম">গ্রাম</option>
+        <option value="লিটার">লিটার</option>
+        <option value="৫০০ মিলি">৫০০ মিলি</option>
+        <option value="মিলি">মিলি</option>
+        <option value="ডজন">ডজন</option>
+        <option value="হালি">হালি</option>
+        <option value="প্যাকেট">প্যাকেট</option>
+        <option value="বোতল">বোতল</option>
+        <option value="বক্স">বক্স</option>
+        <option value="পাতা">পাতা (স্ট্রিপ)</option>
+        <option value="সেট">সেট</option>
+        <option value="জোড়া">জোড়া</option>
+        <option value="গজ">গজ</option>
+        <option value="কম্বো প্যাক">🎁 কম্বো প্যাক</option>
+      </select>
+    </div>
+
+    <div class="field"><label>স্টক পরিমাণ *</label><input type="number" id="pfStock" min="0" value="0"></div>
+
+    <div class="card-box" style="background:rgba(212,175,55,.04);border-color:var(--gold-line);margin-bottom:14px">
+      <div style="font-size:12px;color:var(--gold);font-weight:600;margin-bottom:8px">💰 মূল্য হিসাব (স্বয়ংক্রিয়)</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="field" style="margin-bottom:8px"><label style="font-size:11.5px">কস্ট মূল্য (৳)</label><input type="number" id="pfCostPrice" min="0" oninput="ProductForm.recalc()"></div>
+        <div class="field" style="margin-bottom:8px"><label style="font-size:11.5px">অতিরিক্ত খরচ (৳)</label><input type="number" id="pfExtraCost" min="0" value="0" oninput="ProductForm.recalc()"></div>
+        <div class="field" style="margin-bottom:8px"><label style="font-size:11.5px">ডেলিভারি খরচ (%)</label><input type="number" id="pfDeliveryPercent" min="0" value="0" oninput="ProductForm.recalc()"></div>
+        <div class="field" style="margin-bottom:0"><label style="font-size:11.5px">লাভ (%)</label><input type="number" id="pfProfitPercent" min="0" value="20" oninput="ProductForm.recalc()"></div>
+      </div>
+      <div id="pfBreakdown" style="font-size:11.5px;color:var(--ink-muted);margin-top:8px">৳0</div>
+    </div>
+
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <div class="field"><label>মূল মূল্য (৳) *</label><input type="number" id="pfPrice" min="0" oninput="ProductForm.calcPrice()"></div>
+      <div class="field"><label>মূল মূল্য (৳) *</label><input type="number" id="pfPrice" min="0"></div>
       <div class="field"><label>বিক্রয় মূল্য (৳) *</label><input type="number" id="pfSalePrice" min="0"></div>
     </div>
-    <div class="field"><label>স্টক পরিমাণ *</label><input type="number" id="pfStock" min="0" value="0"></div>
-    <div class="field"><label>কস্ট মূল্য (৳)</label><input type="number" id="pfCost" min="0" oninput="ProductForm.calcPrice()"></div>
-    <div class="field"><label>প্রোডাক্ট ছবি</label><input type="file" id="pfImg" accept="image/*" onchange="ProductForm.previewImg(this)"><div id="pfImgPreview" style="margin-top:8px"></div></div>
-    <div class="field"><label>বিবরণ</label><textarea id="pfDesc" rows="2"></textarea><button type="button" style="font-size:11.5px;color:var(--gold);margin-top:4px;padding:0" onclick="ProductForm.genAIDesc()">🤖 AI দিয়ে বিবরণ লিখুন</button></div>
+
+    <div class="field">
+      <label>প্রোডাক্ট ছবি</label>
+      <input type="file" id="pfImgFile" accept="image/*" onchange="ProductForm.onImageSelect(this)">
+      <div id="pfImgPreview" style="margin-top:8px;display:none">
+        <img id="pfImgThumb" style="width:70px;height:70px;object-fit:cover;border-radius:10px;border:1px solid var(--line)">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>বিবরণ <span id="pfDescLoading" style="display:none;color:var(--gold);font-size:11.5px">— 🤖 AI লিখছে...</span></label>
+      <textarea id="pfDescription" rows="3"></textarea>
+      <button type="button" id="pfDescAiBtn" style="display:none;font-size:11.5px;color:var(--gold);margin-top:4px;padding:0" onclick="ProductForm.generateDesc()">🔄 AI দিয়ে আবার লিখুন</button>
+    </div>
+
     <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px">
       <label class="filter-opt"><input type="checkbox" id="pfFlash"> ⚡ ফ্ল্যাশ সেল</label>
       <label class="filter-opt"><input type="checkbox" id="pfFeatured"> ★ ফিচার্ড</label>
-      <label class="filter-opt"><input type="checkbox" id="pfFastDel"> ⚡ ফাস্ট ডেলিভারি</label>
-      <label class="filter-opt"><input type="checkbox" id="pfCOD" checked> ✔ COD প্রোডাক্ট</label>
+      <label class="filter-opt"><input type="checkbox" id="pfCod" checked> ✔ COD প্রোডাক্ট</label>
     </div>
-    <input type="hidden" id="pfEditId">
-    <button class="btn btn-gold btn-block" onclick="ProductForm.save()">প্রোডাক্ট সংরক্ষণ করুন</button>
+
+    <button class="btn btn-gold btn-block" id="pfSubmitBtn" onclick="ProductForm.submit()">প্রোডাক্ট সংরক্ষণ করুন</button>
   </div>
 </div>
 
