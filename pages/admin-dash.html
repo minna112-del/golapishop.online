@@ -19,6 +19,7 @@
         <a onclick="AdminDash.tab(this,'analytics')">📈 অ্যানালিটিক্স</a>
         <a onclick="AdminDash.tab(this,'customers')">👥 কাস্টমার</a>
         <a onclick="AdminDash.tab(this,'coupons')">🎟️ কুপন</a>
+        <a onclick="AdminDash.tab(this,'payments')">💳 পেমেন্ট ভেরিফিকেশন</a>
         <a onclick="AdminDash.tab(this,'settings')">⚙️ সেটিংস</a>
       </aside>
       <div>
@@ -172,6 +173,19 @@
             <table class="data-table">
               <thead><tr><th>কোড</th><th>ধরন</th><th>ভ্যালু</th><th>ন্যূনতম অর্ডার</th><th>ব্যবহার</th><th>মেয়াদ</th><th>স্ট্যাটাস</th><th>একশন</th></tr></thead>
               <tbody id="aCouponsTable"></tbody>
+            </table>
+          </div>
+        </div>
+        <div id="adminPaymentsPane" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+            <h2 class="tiro" style="font-size:19px">পেমেন্ট ভেরিফিকেশন</h2>
+            <span id="paymentPendingCount" style="font-size:12.5px;color:var(--gold)"></span>
+          </div>
+          <div id="paymentDuplicateWarning" style="display:none;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#f87171"></div>
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead><tr><th>অর্ডার</th><th>কাস্টমার</th><th>পদ্ধতি</th><th>মোট</th><th>ট্রানজেকশন ID</th><th>জমা দেওয়ার সময়</th><th>একশন</th></tr></thead>
+              <tbody id="aPaymentsTable"></tbody>
             </table>
           </div>
         </div>
