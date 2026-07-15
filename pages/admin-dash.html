@@ -60,9 +60,9 @@
         <div id="adminProductsPane" style="display:none">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
             <h2 class="tiro" style="font-size:19px">প্রোডাক্ট ম্যানেজমেন্ট</h2>
-            <div style="display:flex;gap:8px">
-              <input id="productSearch" type="text" placeholder="খুঁজুন..." oninput="AdminDash.filterProducts()" style="padding:8px 12px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid var(--line);color:#fff;font-size:13px;width:160px">
-              <button class="btn btn-gold" style="padding:9px 16px;font-size:13px" onclick="ProductForm.openAdd()">+ নতুন প্রোডাক্ট</button>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;width:100%;max-width:340px">
+              <input id="productSearch" type="text" placeholder="খুঁজুন..." oninput="AdminDash.filterProducts()" style="flex:1;min-width:120px;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid var(--line);color:#fff;font-size:13px">
+              <button class="btn btn-gold" style="padding:9px 16px;font-size:13px;white-space:nowrap" onclick="ProductForm.openAdd()">+ নতুন প্রোডাক্ট</button>
             </div>
           </div>
           <div id="lowStockBanner" style="display:none;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#f87171"></div>
@@ -99,10 +99,9 @@
               </select>
             </div>
           </div>
-          <div id="bulkActionsBar" style="display:none;background:rgba(212,175,55,.08);border:1px solid var(--gold-line);border-radius:10px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-            <span id="bulkCount" style="font-size:13px;color:var(--gold);font-weight:600"></span>
+          <div id="orderBulkBar" style="display:none;background:rgba(212,175,55,.08);border:1px solid var(--gold-line);border-radius:10px;padding:10px 14px;margin-bottom:12px;align-items:center;gap:12px;flex-wrap:wrap">
+            <span id="orderBulkCount" style="font-size:13px;color:var(--gold);font-weight:600"></span>
             <select id="bulkStatusSelect" style="padding:6px 10px;border-radius:8px;background:var(--bg2);border:1px solid var(--line);color:#fff;font-size:12.5px">
-              <option value="">স্ট্যাটাস পরিবর্তন করুন</option>
               <option value="confirmed">কনফার্মড</option>
               <option value="packed">প্যাকড</option>
               <option value="delivered">ডেলিভারড</option>
@@ -152,9 +151,9 @@
           </div>
         </div>
         <div id="adminCustomersPane" style="display:none">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
             <h2 class="tiro" style="font-size:19px">কাস্টমার ম্যানেজমেন্ট</h2>
-            <input id="customerSearch" type="text" placeholder="নাম বা ফোন খুঁজুন..." oninput="AdminDash.filterCustomers()" style="padding:8px 12px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid var(--line);color:#fff;font-size:13px;width:200px">
+            <input id="customerSearch" type="text" placeholder="নাম বা ফোন খুঁজুন..." oninput="AdminDash.filterCustomers()" style="padding:8px 12px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid var(--line);color:#fff;font-size:13px;width:200px;max-width:100%">
           </div>
           <div class="table-scroll">
             <table class="data-table">
