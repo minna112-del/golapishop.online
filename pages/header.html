@@ -4,9 +4,11 @@
       <div class="mark"><img src="icons/head_logo.webp" alt="Golapi Shop" style="width:100%;height:100%;object-fit:cover;border-radius:12px"></div>
       <div><div class="word">Golapi<span class="g">Shop</span><span class="r">.online</span></div><div class="tag">নোয়াখালীর বিশ্বস্ত অনলাইন শপ</div></div>
     </a>
-    <div class="search-wrap" id="searchWrapDesktop">
-      <input type="search" id="searchInput" placeholder="প্রোডাক্ট, ব্র্যান্ড বা ক্যাটাগরি খুঁজুন..." oninput="doSearch(this.value)">
+    <div class="search-wrap" id="searchWrapDesktop" style="position:relative">
+      <input type="search" id="searchInput" placeholder="প্রোডাক্ট, ব্র্যান্ড বা ক্যাটাগরি খুঁজুন..." oninput="doSearch(this.value)" onfocus="doSearch(this.value)" onblur="setTimeout(()=>document.getElementById('searchSuggestBox').style.display='none',200)">
+      <button onclick="toggleVoiceSearch()" id="voiceSearchBtn" style="right:44px;position:absolute;top:50%;transform:translateY(-50%);width:32px;height:32px;background:none">🎤</button>
       <button onclick="submitSearch()">🔍</button>
+      <div id="searchSuggestBox" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:6px;background:var(--card);border:1px solid var(--line-l);border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.4);z-index:250;max-height:340px;overflow-y:auto"></div>
     </div>
     <div class="header-actions">
       <button class="icon-btn" onclick="toggleLang()" id="langBtn" title="Change language / ভাষা পরিবর্তন">🌐 <span id="langBtnLabel">EN</span></button>
