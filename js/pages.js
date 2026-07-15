@@ -60,9 +60,9 @@ const Listing = {
     const sortEl=document.getElementById('sortSelect');
     const sort = sortEl?sortEl.value:'relevance';
     let items = zoneProducts();
-    let title = 'সব প্রোডাক্ট';
+    let title = 'সব প্রোডাক্';
     if(cat==='flash'){ items = items.filter(p=>p.isFlash); title='🔥 ফ্ল্যাশ সেল'; }
-    else if(cat==='bestseller'){ items = [...items].sort((a,b)=>b.sold-a.sold); title='⭐ বেস্ট সেলার'; }
+    else if(cat==='bestseller'){ items = [...items].sort((a,b)=>b.sold-a.sold); title='⭐ বেস সেলার'; }
     else if(cat!=='all'){ items = items.filter(p=>p.category===cat); title = CATEGORIES.find(c=>c.id===cat)?.label || cat; }
     if(q){ items = items.filter(p=>p.name.toLowerCase().includes(q)); title = `"${q}" — অনুসন্ধান`; }
     const codEl=document.getElementById('filterCOD');
@@ -72,7 +72,7 @@ const Listing = {
     if(sort==='rating') items.sort((a,b)=>parseFloat(b.rating)-parseFloat(a.rating));
     if(sort==='sold') items.sort((a,b)=>b.sold-a.sold);
     const titleEl=document.getElementById('listTitle'); if(titleEl) titleEl.textContent = title;
-    const countEl=document.getElementById('listCount'); if(countEl) countEl.textContent = `${bn(items.length)} টি প্রোডাক্ পাওয়া গেছে`;
+    const countEl=document.getElementById('listCount'); if(countEl) countEl.textContent = `${bn(items.length)} টি প্রোডাক্ট পাওয়া গেছে`;
     const grid=document.getElementById('listingGrid');
     if(grid) grid.innerHTML = items.map(pcardHTML).join('') || `<div class="empty-state" style="grid-column:1/-1"><div class="em">🔍</div><h3>কোনো প্রোডাক্ট পাওয়া যায়নি</h3></div>`;
   }
@@ -93,7 +93,7 @@ const PDP = {
     const name=document.getElementById('pdpName'); if(name) name.textContent = p.name;
     const meta=document.getElementById('pdpMeta');
     if(meta) meta.innerHTML = p.reviews>0
-      ? `⭐ ${p.rating} (${bn(p.reviews)} রভিউ) · ${bn(p.sold)} বিক্রি হয়েছে`
+      ? `⭐ ${p.rating} (${bn(p.reviews)} রিভিউ) · ${bn(p.sold)} বিক্রি হয়েছে`
       : `<span style="color:#22c55e;font-weight:600">🆕 নতুন প্রোডাক্ট — প্রথম কেনার সুযোগ নিন!</span>`;
     const price=document.getElementById('pdpPrice'); if(price) price.textContent = money(p.salePrice);
     const disc = p.price>p.salePrice ? Math.round((1-p.salePrice/p.price)*100) : 0;
@@ -113,9 +113,7 @@ const PDP = {
     const rel=document.getElementById('relatedRow');
     if(rel) rel.innerHTML = zp.filter(x=>x.category===p.category && x.id!==p.id).slice(0,8).map(pcardHTML).join('');
     this.tab(null,'desc');
-    /* load reviews */
     ReviewService.renderReviews(p.id, 'pdpReviews');
-    /* render review form */
     const reviewForm=document.getElementById('pdpReviewForm');
     if(reviewForm){
       reviewForm.innerHTML = `
@@ -130,7 +128,6 @@ const PDP = {
         <div class="field"><textarea id="reviewText" rows="2" placeholder="আপনার অভিজ্ঞতা লিখুন..."></textarea></div>
         <button class="btn btn-gold" style="font-size:13px" onclick="PDP.submitReview()">রিভিউ সাবমিট করুন</button>`;
     }
-    /* SEO: inject dynamic Product schema (JSON-LD) for this product */
     this.injectProductSchema(p, disc);
   },
   injectProductSchema(p, disc){
@@ -141,7 +138,7 @@ const PDP = {
       "@type":"Product",
       "name": p.name,
       "image": p.img,
-      "description": p.description || `${p.name} — Golapi Shop Online থেকে হোম ডেলিভারি, নোয়াখলী সদর ও বেগমগঞ্জ।`,
+      "description": p.description || `${p.name} — Golapi Shop Online থকে হোম ডেলিভারি, নোয়াখালী সদর ও বেগমগঞ্জ।`,
       "sku": p.id,
       "brand": { "@type":"Brand", "name":"Golapi Shop Online" },
       "offers": {
@@ -283,12 +280,15 @@ function calcDeliveryCharge(itemCount, subtotal=0, distanceKm=null){
 
 /* ---------- Checkout ---------- */
 const Checkout = {
-  pay:'cod', currentStep:1, walletAvailable:0,
+  pay:'cod', currentStep:1, walletAvailable:0, couponCode:null, couponData:null,
   async init(){
     const d=document.getElementById('ckDistrict'); if(d) d.value='';
     const z=document.getElementById('ckZone'); if(z) z.innerHTML='<option value="">প্রথমে উপজেলা বেছে নিন</option>';
     const v=document.getElementById('ckVillage'); if(v) v.value='';
     this.walletAvailable = 0;
+    this.couponCode = null; this.couponData = null;
+    const cc=document.getElementById('ckCouponCode'); if(cc) cc.value='';
+    const cm=document.getElementById('ckCouponMsg'); if(cm) cm.textContent='';
     const useWalletEl=document.getElementById('ckUseWallet'); if(useWalletEl) useWalletEl.checked=false;
     if(Auth.currentUser && FB){
       try{
@@ -347,6 +347,34 @@ const Checkout = {
     if(!useWallet || this.walletAvailable<=0) return 0;
     return Math.min(this.walletAvailable, sub+ship);
   },
+  async applyCoupon(){
+    const codeEl = document.getElementById('ckCouponCode');
+    const msgEl = document.getElementById('ckCouponMsg');
+    const code = (codeEl?.value||'').trim().toUpperCase();
+    if(!code){ msgEl.textContent=''; return; }
+    if(!FB){ msgEl.textContent='সংযোগ সমস্যা'; msgEl.style.color='#f87171'; return; }
+    try{
+      const snap = await FB.getDocs(FB.query(FB.collection(FB.db,'coupons'), FB.where('code','==',code)));
+      if(snap.empty){ msgEl.textContent='❌ এই কুপন কোডটি সঠিক নয়'; msgEl.style.color='#f87171'; this.couponCode=null; this.couponData=null; this.renderSummary(); return; }
+      const c = { id:snap.docs[0].id, ...snap.docs[0].data() };
+      const today = new Date();
+      if(c.active===false){ msgEl.textContent='❌ এই কুপনটি বন আছে'; msgEl.style.color='#f87171'; return; }
+      if(c.expiresAt && new Date(c.expiresAt) < today){ msgEl.textContent='❌ কুপনের মেয়াদ শেষ হয়ে গেছে'; msgEl.style.color='#f87171'; return; }
+      if(c.usageLimit && (c.usedCount||0) >= c.usageLimit){ msgEl.textContent='❌ কুপনের ব্যবহারসীমা শেষ'; msgEl.style.color='#f87171'; return; }
+      const sub = Cart.totalPrice();
+      if(c.minOrder && sub < c.minOrder){ msgEl.textContent=`❌ ন্যূনতম ${money(c.minOrder)} অর্ডারে এই কুপন প্রযোজ্য`; msgEl.style.color='#f87171'; return; }
+      this.couponCode = code; this.couponData = c;
+      msgEl.textContent = `✓ কুপন প্রয়োগ হয়েছে!`; msgEl.style.color='#22c55e';
+      this.renderSummary();
+    }catch(e){ msgEl.textContent='সমস্যা হয়েছে'; msgEl.style.color='#f87171'; }
+  },
+  getCouponDiscount(sub){
+    if(!this.couponData) return 0;
+    const c = this.couponData;
+    let disc = c.type==='percent' ? Math.round(sub * c.value/100) : c.value;
+    if(c.maxDiscount) disc = Math.min(disc, c.maxDiscount);
+    return Math.min(disc, sub);
+  },
   renderSummary(){
     const entries = Object.entries(Cart.items);
     let itemCount = 0;
@@ -358,6 +386,11 @@ const Checkout = {
     }).join('');
     const sub = Cart.totalPrice();
     const ship = calcDeliveryCharge(itemCount, sub);
+    const couponDiscount = this.getCouponDiscount(sub);
+    const couponRow=document.getElementById('ckCouponRow');
+    if(couponRow) couponRow.style.display = couponDiscount>0 ? 'flex' : 'none';
+    const couponLabelEl=document.getElementById('ckCouponLabel'); if(couponLabelEl) couponLabelEl.textContent = `কুপন (${this.couponCode||''}) ছাড়`;
+    const couponDiscEl=document.getElementById('ckCouponDiscount'); if(couponDiscEl) couponDiscEl.textContent = '−'+money(couponDiscount);
     const walletBox=document.getElementById('ckWalletBox');
     if(walletBox) walletBox.style.display = this.walletAvailable>0 ? 'block' : 'none';
     const availEl=document.getElementById('ckWalletAvail'); if(availEl) availEl.textContent = money(this.walletAvailable);
@@ -367,7 +400,7 @@ const Checkout = {
     const walletDiscEl=document.getElementById('ckWalletDiscount'); if(walletDiscEl) walletDiscEl.textContent = '−'+money(walletUsed);
     const subEl=document.getElementById('ckSub'); if(subEl) subEl.textContent = money(sub);
     const shipEl=document.getElementById('ckShip'); if(shipEl) shipEl.textContent = ship===0?'ফ্রি':money(ship);
-    const totEl=document.getElementById('ckTotal'); if(totEl) totEl.textContent = money(sub+ship-walletUsed);
+    const totEl=document.getElementById('ckTotal'); if(totEl) totEl.textContent = money(Math.max(0, sub+ship-walletUsed-couponDiscount));
   },
   async placeOrder(){
     const name=document.getElementById('ckName').value.trim();
@@ -388,23 +421,28 @@ const Checkout = {
     const itemCount = Object.values(Cart.items).reduce((a,b)=>a+b,0);
     const ship = calcDeliveryCharge(itemCount, sub);
     const walletUsed = this.getWalletUsed(sub, ship);
+    const couponDiscount = this.getCouponDiscount(sub);
     try{
       const orderRef = await FB.addDoc(FB.collection(FB.db,'orders'),{
         orderNumber:orderNo, customerName:name, customerPhone:phone, customerNid:nid, address:addr, village,
         branchZone:upazila, district:AREA_LABELS[upazila]||'', zone,
         instructions, paymentMethod:this.pay, paymentStatus:this.pay==='cod'?'cod':'pending_submission', deliverySlot:'express',
         items:Object.entries(Cart.items).map(([id,qty])=>({productId:id,qty})),
-        subtotal:sub+ship-walletUsed, shippingCost:ship, walletUsed,
+        subtotal:Math.max(0, sub+ship-walletUsed-couponDiscount), shippingCost:ship, walletUsed, couponCode:this.couponCode||null, couponDiscount,
         status:'pending', driverId:null, driverName:null,
         userId:Auth.currentUser?.uid||null, createdAt:FB.serverTimestamp()
       });
       if(walletUsed>0 && Auth.currentUser){
         await FB.updateDoc(FB.doc(FB.db,'users',Auth.currentUser.uid), { walletBalance: FB.increment(-walletUsed) }).catch(e=>devWarn('wallet deduct failed', e.message));
       }
+      if(this.couponData){
+        await FB.updateDoc(FB.doc(FB.db,'coupons',this.couponData.id), { usedCount: FB.increment(1) }).catch(()=>{});
+        this.couponCode=null; this.couponData=null;
+      }
       const sn=document.getElementById('successOrderNo'); if(sn) sn.textContent = orderNo;
       Cart.items={}; Cart.save();
       if(this.pay==='bkash' || this.pay==='nagad'){
-        PaymentGateway.showPaymentModal(this.pay, sub+ship-walletUsed, orderRef.id, upazila);
+        PaymentGateway.showPaymentModal(this.pay, sub+ship-walletUsed-couponDiscount, orderRef.id, upazila);
       } else {
         Router.go('order-success');
       }
@@ -469,7 +507,7 @@ const CustomBazar = {
       onUpazilaChange('cb');
       setTimeout(()=>{ const zEl=document.getElementById('cbZone'); if(zEl) zEl.value = o.zone||''; }, 100);
     }
-    toast('✓ আগের লিস্ট বসনো হয়েছে — চেক করে ট্রানজেকশন ID দিয়ে জমা দিন','success');
+    toast('✓ আগের লিস্ট বসানো হয়েছে — চেক করে ট্রানজেকশন ID দয়ে জমা দিন','success');
     window.scrollTo({top:0, behavior:'smooth'});
   },
   async submit(){
@@ -485,12 +523,12 @@ const CustomBazar = {
     const list=document.getElementById('cbList')?.value.trim()||'';
     const notes=document.getElementById('cbNotes')?.value.trim()||'';
     const trxId=document.getElementById('cbTrxId')?.value.trim()||'';
-    if(!name||!phone||!address||!district||!zone||!village||!instructions||!list||!trxId){ msgEl.textContent='সব প্রয়োজনীয় তথ্য পূরণ করুন (ডেলিভারি ইনস্ট্রাকশন সহ)'; msgEl.className='form-msg err'; return; }
+    if(!name||!phone||!address||!district||!zone||!village||!instructions||!list||!trxId){ msgEl.textContent='সব প্রয়োজনীয় তথ্য পূরণ করুন (ডেলিভারি ইনস্ট্রকশন সহ)'; msgEl.className='form-msg err'; return; }
     const phoneRe=/^(?:\+880|880|0)1[3-9]\d{8}$/;
     if(!phoneRe.test(phone.replace(/[\s-]/g,''))){ msgEl.textContent='সঠিক মোবাইল নম্বর দিন'; msgEl.className='form-msg err'; return; }
     if(!FB){ msgEl.textContent='সংযোগ সমস্যা'; msgEl.className='form-msg err'; return; }
     const btn=document.getElementById('cbSubmitBtn'); const orig=btn.textContent; btn.textContent='জমা হচ্ছে...'; btn.disabled=true;
-    const typeLabels={weekly:'সাপ্তাহিক',monthly:'মাসিক',wedding:'বিয়ের',ramadan:'রমজানের',qurbani:'কুরবনির',other:'অন্যান্য'};
+    const typeLabels={weekly:'সাপ্তাহিক',monthly:'মাসিক',wedding:'বিয়ের',ramadan:'রমজানের',qurbani:'কুরবানির',other:'অন্যান্য'};
     const orderNo = 'CB-'+new Date().getFullYear()+'-'+String(Math.floor(Math.random()*900000)+100000);
     try{
       await FB.addDoc(FB.collection(FB.db,'orders'),{
@@ -501,7 +539,7 @@ const CustomBazar = {
         status:'pending', userId:Auth.currentUser?.uid||null, createdAt:FB.serverTimestamp()
       });
       const submittedOrder = {orderNumber:orderNo, orderType:'custom-bazar', bazarType:type, bazarTypeLabel:typeLabels[type]||type, customerName:name, customerPhone:phone, address, village, instructions, notes, bazarList:list, advanceAmount:100};
-      msgEl.innerHTML = `✅ আপনার বাজার অর্ডার (${orderNo}) সফলভাবে জমা হয়েছে! ড্রাইভার বাজার করার পর বিলর ছবি এখানেই দেখতে পাবেন।<br><button class="btn btn-outline" style="margin-top:10px;font-size:12.5px;padding:8px 16px" onclick='BazarMemo.open(${JSON.stringify(submittedOrder).replace(/'/g,"&#39;")})'>🧾 মেমো দেখুন / প্রিন্ট করুন</button>`;
+      msgEl.innerHTML = `✅ আপনার বাজার অর্ডার (${orderNo}) সফলভাবে জমা হয়েছে! ড্রাইভার বাজার করার পর বিলের ছবি এখানেই দেখতে পাবেন।<br><button class="btn btn-outline" style="margin-top:10px;font-size:12.5px;padding:8px 16px" onclick='BazarMemo.open(${JSON.stringify(submittedOrder).replace(/'/g,"&#39;")})'>🧾 মেমো দেখুন / প্রিন্ট করুন</button>`;
       msgEl.className='form-msg ok';
       btn.textContent=orig; btn.disabled=false;
     }catch(e){ msgEl.textContent='সমস্যা হয়েছে: '+e.message; msgEl.className='form-msg err'; btn.textContent=orig; btn.disabled=false; }
@@ -531,14 +569,14 @@ const OrderChat = {
     const text = input?.value.trim(); if(!text || !this.orderId || !FB) return;
     if(input) input.value='';
     try{ await FB.addDoc(FB.collection(FB.db,'orders',this.orderId,'messages'), {from:this.role, text, at:FB.serverTimestamp()}); }
-    catch(e){ toast('মেসেজ পাঠানো যাযনি','error'); }
+    catch(e){ toast('মেসেজ পাঠানো যায়নি','error'); }
   }
 };
 
 /* ---------- Order tracking ---------- */
 const TRACK_STAGES = [
   {key:'confirmed', label:'অর্ডার কনফার্মড'},
-  {key:'packed', label:'পকিং সম্পন্ন'},
+  {key:'packed', label:'প্যাকিং সম্পন্ন'},
   {key:'picked_up', label:'পিকআপ হয়েছে'},
   {key:'in_transit', label:'ড্রাইভার আপনার পথে (লাইভ)'},
   {key:'delivered', label:'ডেলিভারি সম্পন্ন'}
@@ -555,7 +593,9 @@ function orderTrackHTML(o){
     </div>`;
   }).join('');
   const liveBtn = (o.status==='in_transit' && o.driverLat && o.driverLng)
-    ? `<a href="https://www.google.com/maps?q=${o.driverLat},${o.driverLng}" target="_blank" rel="noopener" class="btn btn-outline btn-block" style="margin-top:8px;font-size:12.5px">📍 ড্রাইভারের লাইভ লোকেশন দেখুন</a>` : '';
+    ? `<div class="live-map-box" id="liveMapBox-${o.id}"><span class="live-map-badge"><span class="dot"></span> লাইভ ট্র্যাকিং</span></div>
+       <a href="https://www.google.com/maps?q=${o.driverLat},${o.driverLng}" target="_blank" rel="noopener" style="display:block;text-align:center;margin-top:6px;font-size:11.5px;color:var(--ink-muted)">Google Maps-এ বড় করে দেখুন ↗</a>`
+    : '';
   const memoBtn = (o.orderType==='custom-bazar')
     ? `<button class="btn btn-outline btn-block" style="margin-top:8px;font-size:12.5px" onclick='BazarMemo.open(${JSON.stringify(o).replace(/'/g,"&#39;")})'>🧾 মেমো দেখুন / প্রিন্ট করুন</button>` : '';
   const billBox = (o.orderType==='custom-bazar' && (o.billPhotos?.length || o.bazarItems?.length))
@@ -622,5 +662,13 @@ const MyOrders = {
       ${this.tab==='active' ? orderTrackHTML(o) : ''}
       </div>`;
     }).join('');
+    if(this.tab==='active' && window.LiveMap){
+      LiveMap.destroyAll();
+      orders.forEach(o=>{
+        if(o.status==='in_transit' && o.driverLat && o.driverLng){
+          LiveMap.init(o.id, 'liveMapBox-'+o.id, o.driverLat, o.driverLng);
+        }
+      });
+    }
   }
 };
