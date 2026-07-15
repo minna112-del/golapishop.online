@@ -32,15 +32,24 @@
     <div id="ckStep3" class="card-box" style="display:none">
       <h3 style="font-size:15px;margin-bottom:14px;color:#fff">অর্ডার রিভিউ</h3>
       <div id="ckSummary"></div>
+
+      <div style="margin-top:12px;display:flex;gap:8px">
+        <input type="text" id="ckCouponCode" placeholder="কুপন কোড থাকলে লিখুন" style="flex:1;text-transform:uppercase;padding:10px 14px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid var(--line-l);color:#fff;font-size:13px">
+        <button class="btn btn-outline" style="padding:10px 16px;font-size:12.5px;white-space:nowrap" onclick="Checkout.applyCoupon()">প্রয়োগ করুন</button>
+      </div>
+      <div id="ckCouponMsg" style="font-size:12px;margin-top:4px"></div>
+
       <div id="ckWalletBox" style="display:none;margin-top:12px;padding:12px;background:rgba(212,175,55,.05);border:1px solid var(--gold-line);border-radius:10px">
         <label style="display:flex;justify-content:space-between;align-items:center;font-size:13px;cursor:pointer">
           <span>🎁 ওয়ালেট ব্যালেন্স ব্যবহার করুন (আপনার আছে <strong id="ckWalletAvail" style="color:var(--gold)">৳০</strong>)</span>
           <input type="checkbox" id="ckUseWallet" onchange="Checkout.renderSummary()" style="accent-color:var(--gold);width:18px;height:18px">
         </label>
       </div>
+
       <div style="border-top:1px solid var(--line);padding-top:12px;margin-top:10px">
         <div class="row-between"><span>সাবটোটাল</span><span id="ckSub">৳০</span></div>
         <div class="row-between"><span>ডেলিভারি চার্জ</span><span id="ckShip">৳০</span></div>
+        <div class="row-between" id="ckCouponRow" style="display:none;color:#22c55e"><span id="ckCouponLabel">কুপন ছাড়</span><span id="ckCouponDiscount">−৳০</span></div>
         <div class="row-between" id="ckWalletRow" style="display:none;color:#22c55e"><span>ওয়ালেট ডিসকাউন্ট</span><span id="ckWalletDiscount">−৳০</span></div>
         <div class="row-total row-between"><span>সর্বমোট</span><span id="ckTotal">৳০</span></div>
       </div>
