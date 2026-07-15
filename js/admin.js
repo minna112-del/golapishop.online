@@ -561,7 +561,7 @@ const AdminDash = {
   },
 
   tab(btn,name){
-    ['overview','products','orders','analytics','customers','coupons','settings','finance'].forEach(t=>{
+      ['overview','products','orders','analytics','customers','coupons','payments','settings','finance'].forEach(t=>{
       const el = document.getElementById('admin'+t.charAt(0).toUpperCase()+t.slice(1)+'Pane');
       if(el) el.style.display = t===name?'block':'none';
     });
@@ -571,6 +571,7 @@ const AdminDash = {
     if(name==='analytics') this.renderAnalytics(this._allOrders);
     if(name==='customers') this.renderCustomers(this._allOrders);
     if(name==='coupons') CouponManage.render();
+    if(name==='payments') PaymentVerify.render();
   }
 };
 
@@ -888,5 +889,84 @@ const CouponManage = {
     const c = this.coupons.find(x=>x.id===id); if(!c || !FB) return;
     try{ await FB.updateDoc(FB.doc(FB.db,'coupons',id), {active: c.active===false}); this.render(); }
     catch(e){ toast('সমস্যা: '+e.message,'error'); }
+  }
+};
+
+/* ---------- Payment Verification ---------- */
+const PaymentVerify = {
+  async render(){
+    if(!FB) return;
+    const tbody = document.getElementById('aPaymentsTable');
+    const countEl = document.getElementById('paymentPendingCount');
+    const dupWarnEl = document.getElementById('paymentDuplicateWarning');
+    if(!tbody) return;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--ink-muted);padding:20px">লোড হচ্ছে...</td></tr>`;
+    try{
+      const snap = await FB.getDocs(FB.query(FB.collection(FB.db,'orders'), FB.where('paymentStatus','==','paid_pending_verification')));
+      const list=[]; snap.forEach(d=>list.push({id:d.id,...d.data()}));
+      list.sort((a,b)=>(a.createdAt?.seconds||0)-(b.createdAt?.seconds||0));
+
+      if(countEl) countEl.textContent = `${list.length}টি পেমেন্ট যাচাইয়ের অপেক্ষায়`;
+
+      /* ডুপ্লিকেট ট্রানজেকশন ID চেক */
+      const trxCounts = {};
+      list.forEach(o=>{ const t=o.paymentTrxId; if(t) trxCounts[t]=(trxCounts[t]||0)+1; });
+      const dupes = Object.entries(trxCounts).filter(([t,c])=>c>1).map(([t])=>t);
+      if(dupes.length){
+        dupWarnEl.style.display='block';
+        dupWarnEl.textContent = `⚠️ একই ট্রানজেকশন ID একাধিক অর্ডারে ব্যবহার হয়েছে: ${dupes.join(', ')} — সাবধানে যাচাই করুন`;
+      } else { dupWarnEl.style.display='none'; }
+
+      if(!list.length){ tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--ink-muted);padding:20px">যাচাইয়ের অপেক্ষায় কোনো পেমেন্ট নেই ✓</td></tr>`; return; }
+
+      const now = Date.now();
+      tbody.innerHTML = list.map(o=>{
+        const isDupe = o.paymentTrxId && trxCounts[o.paymentTrxId] > 1;
+        const submittedAt = o.createdAt?.seconds ? o.createdAt.seconds*1000 : now;
+        const hoursWaiting = (now - submittedAt) / (1000*60*60);
+        const isOverdue = hoursWaiting > 2;
+        return `<tr style="${isDupe?'background:rgba(239,68,68,.05)':''}">
+          <td style="font-size:11px">${o.orderNumber||o.id.slice(-6)}</td>
+          <td>${o.customerName||'—'}<br><span style="font-size:10.5px;color:var(--ink-muted)">${o.customerPhone||''}</span></td>
+          <td>${o.paymentMethod==='bkash'?'📱 bKash':'📱 Nagad'}</td>
+          <td style="color:var(--gold);font-weight:600">${money(o.subtotal||0)}</td>
+          <td style="font-family:monospace;font-size:12px;${isDupe?'color:#f87171;font-weight:700':''}">${o.paymentTrxId||'—'}${isDupe?' ⚠️':''}</td>
+          <td style="font-size:11px;${isOverdue?'color:#fbbf24':''}">${o.createdAt?.seconds?new Date(o.createdAt.seconds*1000).toLocaleString('bn-BD'):'—'}${isOverdue?' <br>⏰ '+Math.floor(hoursWaiting)+' ঘণ্টা+':''}</td>
+          <td style="display:flex;gap:6px;flex-wrap:wrap">
+            <button onclick="PaymentVerify.verify('${o.id}')" style="padding:5px 10px;border-radius:7px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.2);color:#22c55e;font-size:11.5px">✓ ভেরিফাই</button>
+            <button onclick="PaymentVerify.markMismatch('${o.id}')" style="padding:5px 10px;border-radius:7px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:#f87171;font-size:11.5px">✕ মিসম্যাচ</button>
+          </td>
+        </tr>`;
+      }).join('');
+    }catch(e){ devWarn('payment verify load failed', e.message); tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--ink-muted);padding:20px">লোড করা যায়নি</td></tr>`; }
+  },
+
+  async verify(orderId){
+    if(!FB) return;
+    if(!confirm('এই পেমেন্টটা ভেরিফাই করা নিশ্চিত করছেন?')) return;
+    try{
+      await FB.updateDoc(FB.doc(FB.db,'orders',orderId), {
+        paymentStatus:'verified', paymentVerifiedAt: FB.serverTimestamp(), status:'confirmed'
+      });
+      toast('✓ পেমেন্ট ভেরিফাই হয়েছে, অর্ডার কনফার্ম করা হলো','success');
+      await this.render();
+    }catch(e){ toast('সমস্যা: '+e.message,'error'); }
+  },
+
+  async markMismatch(orderId){
+    const reason = prompt('মিসম্যাচের কারণ লিখুন (কাস্টমারকে জানানো হবে):', 'ট্রানজেকশন ID মিলছে না, সঠিক ID দিয়ে আবার সাবমিট করুন');
+    if(!reason || !FB) return;
+    try{
+      await FB.updateDoc(FB.doc(FB.db,'orders',orderId), {
+        paymentStatus:'mismatch', paymentMismatchReason: reason
+      });
+      const orderSnap = await FB.getDoc(FB.doc(FB.db,'orders',orderId));
+      if(orderSnap.exists()){
+        const o = orderSnap.data();
+        await SMSGateway.send(o.customerPhone, `Golapi Shop: আপনার অর্ডার #${(o.orderNumber||orderId).slice(0,8).toUpperCase()}-এর পেমেন্ট যাচাই করা যায়নি। কারণ: ${reason}। যোগাযোগ: 01612-057371`);
+      }
+      toast('✓ মিসম্যাচ মার্ক করা হয়েছে, কাস্টমারকে SMS পাঠানো হয়েছে','success');
+      await this.render();
+    }catch(e){ toast('সমস্যা: '+e.message,'error'); }
   }
 };
