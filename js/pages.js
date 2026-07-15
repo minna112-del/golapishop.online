@@ -151,6 +151,7 @@ const PDP = {
           <span onclick="PDP.setRating(5)" data-star="5">☆</span>
         </div>
         <div class="field"><textarea id="reviewText" rows="2" placeholder="আপনার অভিজ্ঞতা লিখুন..."></textarea></div>
+        <div class="field"><label style="font-size:11.5px">ছবি যোগ করুন (ঐচ্ছিক)</label><input type="file" id="reviewPhoto" accept="image/*"></div>
         <button class="btn btn-gold" style="font-size:13px" onclick="PDP.submitReview()">রিভিউ সাবমিট করুন</button>`;
     }
     this.injectProductSchema(p, disc);
@@ -200,9 +201,12 @@ const PDP = {
   async submitReview(){
     const text=document.getElementById('reviewText')?.value.trim()||'';
     const userName = Auth.currentUser?.displayName || 'গ্রাহক';
-    const ok = await ReviewService.submitReview(this.product.id, this.currentRating, text, userName);
+    const photoFile = document.getElementById('reviewPhoto')?.files[0] || null;
+    const ok = await ReviewService.submitReview(this.product.id, this.currentRating, text, userName, photoFile);
     if(ok){
       this.currentRating=0;
+      const rt=document.getElementById('reviewText'); if(rt) rt.value='';
+      const rp=document.getElementById('reviewPhoto'); if(rp) rp.value='';
       ReviewService.renderReviews(this.product.id, 'pdpReviews');
     }
   },
