@@ -18,6 +18,7 @@
         <a onclick="AdminDash.tab(this,'orders')">🧾 অর্ডার</a>
         <a onclick="AdminDash.tab(this,'analytics')">📈 অ্যানালিটিক্স</a>
         <a onclick="AdminDash.tab(this,'customers')">👥 কাস্টমার</a>
+        <a onclick="AdminDash.tab(this,'coupons')">🎟️ কুপন</a>
         <a onclick="AdminDash.tab(this,'settings')">⚙️ সেটিংস</a>
       </aside>
       <div>
@@ -159,6 +160,18 @@
             <table class="data-table">
               <thead><tr><th>কাস্টমার</th><th>ফোন</th><th>NID</th><th>মোট অর্ডার</th><th>মোট খরচ</th><th>শেষ অর্ডার</th><th>একশন</th></tr></thead>
               <tbody id="aCustomersTable"></tbody>
+            </table>
+          </div>
+        </div>
+        <div id="adminCouponsPane" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+            <h2 class="tiro" style="font-size:19px">কুপন / ডিসকাউন্ট কোড</h2>
+            <button class="btn btn-gold" style="padding:9px 16px;font-size:13px" onclick="CouponManage.openAdd()">+ নতুন কুপন</button>
+          </div>
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead><tr><th>কোড</th><th>ধরন</th><th>ভ্যালু</th><th>ন্যূনতম অর্ডার</th><th>ব্যবহার</th><th>মেয়াদ</th><th>স্ট্যাটাস</th><th>একশন</th></tr></thead>
+              <tbody id="aCouponsTable"></tbody>
             </table>
           </div>
         </div>
