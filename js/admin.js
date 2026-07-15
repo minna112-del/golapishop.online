@@ -547,6 +547,7 @@ const AdminDash = {
       toast('✓ পিন সংরক্ষণ করা হয়েছে','success');
     }catch(e){ toast('সমস্যা: '+e.message,'error'); }
   },
+  
   async loadSmsFailures(){
     if(!FB) return;
     const el = document.getElementById('smsFailuresTable');
