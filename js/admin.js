@@ -565,7 +565,7 @@ const AdminDash = {
 /* ---------- Product Form ---------- */
 const ProductForm = {
   mode:'add', editId:null, imgBase64:null,
-  onImageSelect(input){
+    onImageSelect(input){
     const file = input.files[0]; if(!file) return;
     const reader = new FileReader();
     reader.onload = e => {
@@ -573,8 +573,18 @@ const ProductForm = {
       const thumb=document.getElementById('pfImgThumb'); if(thumb) thumb.src = e.target.result;
       const prev=document.getElementById('pfImgPreview'); if(prev) prev.style.display = 'block';
       const ai=document.getElementById('pfDescAiBtn'); if(ai) ai.style.display = 'inline-block';
+      /* ছবি আপলোড হলে, নাম আগে থেকে দেওয়া থাকলে সাথে সাথেই AI বিবরণ লিখে দেবে */
+      const name = document.getElementById('pfName')?.value.trim();
+      if(name) this.generateDesc();
     };
     reader.readAsDataURL(file);
+  },
+  maybeAutoGenerate(){
+    /* নাম ফিল্ড থেকে বের হলে, ছবি আগে থেকে আপলোড করা থাকলে AI বিবরণ লিখে দেবে */
+    const name = document.getElementById('pfName')?.value.trim();
+    const hasImg = document.getElementById('pfImgFile')?.files.length > 0;
+    const descEmpty = !document.getElementById('pfDescription')?.value.trim();
+    if(name && hasImg && descEmpty) this.generateDesc();
   },
   async generateDesc(){
     const name = document.getElementById('pfName').value.trim();
