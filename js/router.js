@@ -60,6 +60,7 @@ const Router = {
       await new Promise(resolve => window.__ensureLazyPage(page, resolve));
     }
     this.current = page; this.params = params;
+    if(typeof dataLayer!=='undefined') dataLayer.push({event:'page_view', page_title: page, page_path: '/#'+page});
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
     const el=document.getElementById('page-'+page);
     if(el) el.classList.add('active');
