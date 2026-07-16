@@ -235,7 +235,13 @@ const Cart = {
   items:{},
   load(){ try{ this.items = JSON.parse(localStorage.getItem('golapi_cart')||'{}'); }catch(e){ this.items={}; } this.badge(); },
   save(){ localStorage.setItem('golapi_cart', JSON.stringify(this.items)); localStorage.setItem('golapi_cart_time', Date.now().toString()); this.badge(); },
-  add(id,qty=1){ this.items[id]=(this.items[id]||0)+qty; this.save(); toast('✓ কার্টে যুক্ত হয়েছে','success'); this.renderDrawer(); },
+  add(id,qty=1){
+    this.items[id]=(this.items[id]||0)+qty; this.save(); toast('✓ কার্টে যুক্ত হয়েছে','success'); this.renderDrawer();
+    if(typeof dataLayer!=='undefined'){
+      const p = ALL_PRODUCTS.find(x=>x.id===id);
+      dataLayer.push({event:'add_to_cart', currency:'BDT', value: p?p.salePrice*qty:0, items:[{item_id:id, item_name:p?.name||'', quantity:qty, price:p?.salePrice||0}]});
+    }
+  },
   remove(id){ delete this.items[id]; this.save(); this.renderDrawer(); },
   setQty(id,qty){ if(qty<=0){ this.remove(id); return; } this.items[id]=qty; this.save(); this.renderDrawer(); },
   totalCount(){ return Object.values(this.items).reduce((a,b)=>a+b,0); },
@@ -398,6 +404,9 @@ const Checkout = {
   },
   goStep(n){
     if(n>1 && this.currentStep===1 && !this.isStep1Valid()){ toast('⚠ ঠিকানা ও ডেলিভারি ইনস্ট্রাকশন সঠিকভাবে পূরণ করুন','error'); return; }
+    if(n===2 && typeof dataLayer!=='undefined'){
+      dataLayer.push({event:'begin_checkout', currency:'BDT', value: Cart.totalPrice()});
+    }
     this.currentStep = n;
     [1,2,3].forEach(i=>{
       const step=document.getElementById('ckStep'+i);
@@ -518,6 +527,14 @@ const Checkout = {
       if(this.couponData){
         await FB.updateDoc(FB.doc(FB.db,'coupons',this.couponData.id), { usedCount: FB.increment(1) }).catch(()=>{});
         this.couponCode=null; this.couponData=null;
+      }
+      if(typeof dataLayer!=='undefined'){
+        dataLayer.push({event:'purchase',
+          transaction_id: orderNo, currency:'BDT',
+          value: Math.max(0, sub+ship-walletUsed-couponDiscount), shipping: ship,
+          coupon: this.couponCode||undefined,
+          items: Object.entries(Cart.items).map(([id,qty])=>{ const p=ALL_PRODUCTS.find(x=>x.id===id); return {item_id:id, item_name:p?.name||'', quantity:qty, price:p?.salePrice||0}; })
+        });
       }
       const sn=document.getElementById('successOrderNo'); if(sn) sn.textContent = orderNo;
       Cart.items={}; Cart.save();
@@ -713,14 +730,14 @@ async function reorderFromPastOrder(orderId){
   }
 }
 
-/* ---------- Saved Lists (কার্ট টমপ্লেট সেভ করা) ---------- */
+/* ---------- Saved Lists (কার্ট টেমপ্লেট সেভ করা) ---------- */
 const SavedLists = {
   cache: [],
   async saveCurrentCart(){
     if(!Auth.currentUser){ toast('লিস্ট সেভ করতে লগইন করুন','error'); AuthUI.open(); return; }
     const entries = Object.entries(Cart.items);
     if(!entries.length){ toast('কার্ট খালি আছে','error'); return; }
-    const name = prompt('এই লিস্র একটা নাম দিন (যেমন: সাপ্তাহিক বাজার):', 'আমার লিস্ট '+new Date().toLocaleDateString('bn-BD'));
+    const name = prompt('এই লিস্টের একটা নাম দিন (যেমন: সাপ্তাহিক বাজার):', 'আমার লিস্ট '+new Date().toLocaleDateString('bn-BD'));
     if(!name) return;
     if(!FB){ toast('সংযোগ সমস্যা','error'); return; }
     try{
@@ -729,7 +746,7 @@ const SavedLists = {
         items: entries.map(([id,qty])=>({productId:id,qty})),
         createdAt: FB.serverTimestamp()
       });
-      toast('✓ লিস্ট সেভ হয়েছে — "আমার অর্ডার" পেজের সেভড ট্যাব পাবেন','success');
+      toast('✓ লিস্ট সেভ হয়েছে — "আমার অর্ডার" পেজের সেভড ট্যাবে পাবেন','success');
     }catch(e){ toast('সমস্যা: '+e.message,'error'); }
   },
   async render(){
@@ -766,7 +783,7 @@ const SavedLists = {
       else skipped++;
     });
     Cart.save();
-    toast(skipped>0 ? `✓ ${added}টি যোগ হয়েছ (${skipped}টি অনুপলব্ধ)` : `✓ ${added}টি প্রোডাক্ট কার্টে যোগ হয়েছে`,'success');
+    toast(skipped>0 ? `✓ ${added}টি যোগ হয়েছে (${skipped}টি অনুপলব্ধ)` : `✓ ${added}টি প্রোডাক্ট কার্টে যোগ হয়েছে`,'success');
     Cart.open();
   },
   async deleteList(id){
