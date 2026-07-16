@@ -12,7 +12,6 @@ const Auth = {
 const AuthUI = {
   open(){
     document.getElementById('authModal').classList.add('show');
-    /* URL-এ ?ref=CODE থাকলে রেফারেল ফিল্ড প্রি-ফিল করা */
     const params = new URLSearchParams(window.location.search);
     const ref = params.get('ref');
     const refInput = document.getElementById('regReferralCode');
@@ -67,6 +66,7 @@ const AuthUI = {
         name, email, phone, role:'customer', createdAt:FB.serverTimestamp(),
         referralCode: myReferralCode, referredBy, referralBonusGiven:false, walletBalance:0
       });
+      if(typeof dataLayer!=='undefined') dataLayer.push({event:'sign_up', method:'email'});
       this.showMsg('✓ রেজিস্ট্রেশন সফল','ok'); setTimeout(()=>this.close(),700);
     }catch(e){ this.showMsg('রেজিস্ট্রেশন ব্যর্থ: '+e.message,'err'); }
   }
@@ -296,6 +296,7 @@ const PhoneAuth = {
           createdAt:FB.serverTimestamp(), referralCode: uid.slice(0,6).toUpperCase(),
           referredBy:null, referralBonusGiven:false, walletBalance:0
         });
+        if(typeof dataLayer!=='undefined') dataLayer.push({event:'sign_up', method:'phone'});
       }
       AuthUI.showMsg('✓ লগইন সফল','ok');
       setTimeout(()=>AuthUI.close(),700);
