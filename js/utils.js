@@ -67,6 +67,10 @@ const FAQ_LIST = [
 
 function money(n){ return '৳' + Number(n||0).toLocaleString('en-US'); }
 function bn(n){ return String(n); }
+function maskNid(nid){
+  if(!nid || nid.length<4) return nid||'—';
+  return nid.slice(0,2) + '•'.repeat(Math.max(nid.length-4,3)) + nid.slice(-2);
+}
 function skeletonCards(n=4){
   return Array.from({length:n}).map(()=>`<div class="pcard" style="pointer-events:none"><div class="imgwrap" style="background:linear-gradient(90deg,#131c2e 25%,#1a2740 50%,#131c2e 75%);background-size:200% 100%;animation:shimmer 1.4s infinite"></div><div class="pbody"><div style="height:12px;background:var(--line);border-radius:4px;margin-bottom:8px;width:80%"></div><div style="height:16px;background:var(--line);border-radius:4px;width:50%"></div></div></div>`).join('');
 }
