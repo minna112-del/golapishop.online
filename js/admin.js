@@ -235,7 +235,7 @@ const AdminDash = {
     const rows = [['অর্ডার ID','কাস্টমার','ফোন','NID','ঠিকানা','মোট','স্ট্যাটাস','তারিখ']];
     list.forEach(o=>{
       const date = o.createdAt?.seconds ? new Date(o.createdAt.seconds*1000).toLocaleDateString('bn-BD') : '';
-      rows.push([o.orderNumber||o.id,o.customerName||'',o.customerPhone||'',o.customerNid||'',o.address||'',o.subtotal||0,ORDER_STATUS[o.status]?.label||'',date]);
+      rows.push([o.orderNumber||o.id,o.customerName||'',o.customerPhone||'',maskNid(o.customerNid),o.address||'',o.subtotal||0,ORDER_STATUS[o.status]?.label||'',date]);
     });
     const csv = rows.map(r=>r.map(c=>`"${c}"`).join(',')).join('\n');
     const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
@@ -336,7 +336,7 @@ const AdminDash = {
     tbody.innerHTML = list.map(c=>`<tr>
       <td>${c.name}</td>
       <td>${c.phone}</td>
-      <td style="font-size:11.5px">${c.nid}</td>
+      <td style="font-size:11.5px;cursor:pointer" onclick="this.textContent=this.textContent.includes('•')?'${c.nid}':maskNid('${c.nid}')" title="ক্লিক করে দেখুন/লুকান">${maskNid(c.nid)}</td>
       <td style="text-align:center">${c.orders.length}</td>
       <td style="color:var(--gold)">${money(c.total)}</td>
       <td style="font-size:11px">${c.lastDate?c.lastDate.toLocaleDateString('bn-BD'):'—'}</td>
@@ -352,7 +352,7 @@ const AdminDash = {
     const c = orders[0];
     const cn=document.getElementById('coCustomerName'); if(cn) cn.textContent = c.customerName||'—';
     const cp=document.getElementById('coCustomerPhone');
-    if(cp) cp.textContent = `📞 ${phone} | NID: ${c.customerNid||'—'} | মোট: ${money(orders.reduce((s,o)=>s+(o.subtotal||0),0))}`;
+    if(cp) cp.textContent = `📞 ${phone} | NID: ${maskNid(c.customerNid)} | মোট: ${money(orders.reduce((s,o)=>s+(o.subtotal||0),0))}`;
     const listEl = document.getElementById('coOrdersList');
     if(listEl) listEl.innerHTML = orders.map(o=>{
       const s=ORDER_STATUS[o.status]||ORDER_STATUS.pending;
@@ -561,7 +561,7 @@ const AdminDash = {
   },
 
   tab(btn,name){
-      ['overview','products','orders','analytics','customers','coupons','payments','settings','finance'].forEach(t=>{
+    ['overview','products','orders','analytics','customers','coupons','payments','settings','finance'].forEach(t=>{
       const el = document.getElementById('admin'+t.charAt(0).toUpperCase()+t.slice(1)+'Pane');
       if(el) el.style.display = t===name?'block':'none';
     });
@@ -738,7 +738,13 @@ const OrderDetail = {
     statusEl.textContent = s.label; statusEl.className = 'status-pill '+s.cls;
     document.getElementById('odName').textContent = order.customerName||'—';
     document.getElementById('odPhone').textContent = order.customerPhone||'—';
-    document.getElementById('odNid').textContent = order.customerNid||'প্রয়োজন নয়';
+    const odNidEl = document.getElementById('odNid');
+    if(odNidEl){
+      odNidEl.textContent = order.customerNid ? maskNid(order.customerNid) : 'দেওয়া হয়নি';
+      odNidEl.style.cursor = order.customerNid ? 'pointer' : 'default';
+      odNidEl.title = order.customerNid ? 'ক্লিক করে সম্পূর্ণ NID দেখুন/লুকান' : '';
+      odNidEl.onclick = order.customerNid ? function(){ this.textContent = this.textContent.includes('•') ? order.customerNid : maskNid(order.customerNid); } : null;
+    }
     document.getElementById('odPayment').textContent = {cod:'💰 COD',bkash:'📱 bKash',nagad:'📱 Nagad'}[order.paymentMethod]||order.paymentMethod||'COD';
     document.getElementById('odAddress').innerHTML = `<strong style="color:#fff">${order.village||''}</strong>${order.village?', ':''}<br>${AREA_LABELS[order.branchZone]||''} — ${order.address||''}`;
     document.getElementById('odInstructions').textContent = '💬 ' + (order.instructions||'কোনো বিশেষ নির্দেশনা নেই');
@@ -908,7 +914,6 @@ const PaymentVerify = {
 
       if(countEl) countEl.textContent = `${list.length}টি পেমেন্ট যাচাইয়ের অপেক্ষায়`;
 
-      /* ডুপ্লিকেট ট্রানজেকশন ID চেক */
       const trxCounts = {};
       list.forEach(o=>{ const t=o.paymentTrxId; if(t) trxCounts[t]=(trxCounts[t]||0)+1; });
       const dupes = Object.entries(trxCounts).filter(([t,c])=>c>1).map(([t])=>t);
