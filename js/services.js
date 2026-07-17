@@ -21,7 +21,7 @@ const OrdersService = {
       const dPhone = driver?.data()?.phone || '';
       SMSGateway.onDriverAssigned(order, driverName, dPhone);
       return true;
-    } catch (e) { toast('ড্রাইভার অ্যাসাইন ব্যর: ' + e.message, 'error'); return false; }
+    } catch (e) { toast('ড্রাইভার অ্যাসাইন ব্যর্থ: ' + e.message, 'error'); return false; }
   },
   async updateStatus(orderId, status) {
     if (!FB) return false;
@@ -78,7 +78,7 @@ const DriverManage = {
   },
   openAdd(presetZone=null){
     this.presetZone=presetZone;
-    document.getElementById('dfName').value=''; document.getElementById('dfPhone').value=''; document.getElementById('dfPin').value='';
+    document.getElementById('dfName').value=''; document.getElementById('dfPhone').value='';
     const sel=document.getElementById('dfZone');
     if(presetZone){ sel.value=presetZone; sel.disabled=true; } else sel.disabled=false;
     document.getElementById('dfMsg').className='form-msg';
@@ -89,16 +89,16 @@ const DriverManage = {
     const name=document.getElementById('dfName').value.trim();
     const branchZone=document.getElementById('dfZone').value;
     const phone=document.getElementById('dfPhone').value.trim();
-    const pin=document.getElementById('dfPin').value.trim();
     const msgEl=document.getElementById('dfMsg');
-    if(!name||!phone||pin.length!==4){ msgEl.textContent='সব তথ্য সঠিকভাবে দিন (পিন ৪ ডিজিট)'; msgEl.className='form-msg err'; return; }
+    const phoneRe=/^(?:\+880|880|0)1[3-9]\d{8}$/;
+    if(!name||!phoneRe.test(phone.replace(/[\s-]/g,''))){ msgEl.textContent='সব তথ্য সঠিকভাবে দিন'; msgEl.className='form-msg err'; return; }
     if(!FB){ msgEl.textContent='সংযোগ সমস্যা'; msgEl.className='form-msg err'; return; }
     try{
-      await FB.addDoc(FB.collection(FB.db,'drivers'),{name,phone,pin,branchZone,active:true,createdAt:FB.serverTimestamp()});
-      msgEl.textContent='✓ ড্রাইভার যুক্ত হয়েছে'; msgEl.className='form-msg ok';
+      await FB.addDoc(FB.collection(FB.db,'drivers'),{name,phone,branchZone,active:true,createdAt:FB.serverTimestamp()});
+      msgEl.textContent='✓ ড্রাইভার যুক্ত হয়েছে — এখন Firebase Console-এ গিয়ে এই ড্রাইভারের জন্য একটা ইমেইল/পাসওয়ার্ড অ্যাকাউন্ট বানাও'; msgEl.className='form-msg ok';
       await this.renderTable(this.presetZone);
       if(ZoneManagerDash.currentZone) await ZoneManagerDash.render(); else AdminDash.render();
-      setTimeout(()=>this.close(),800);
+      setTimeout(()=>this.close(),1800);
     }catch(e){ msgEl.textContent='সমস্যা: '+e.message; msgEl.className='form-msg err'; }
   }
 };
@@ -148,7 +148,7 @@ const ReviewService = {
         productId, rating:Number(rating), text:text.trim(), userName:userName||'গ্রাহক',
         userId, verified, photoUrl, createdAt:FB.serverTimestamp()
       });
-      toast(verified ? '✓ যাচাইকৃত রভিউ সাবমিট হয়েছে' : '✓ রিভিউ সাবমিট হয়েছে','success');
+      toast(verified ? '✓ যাচাইকৃত রিভিউ সাবমিট হয়েছে' : '✓ রিভিউ সাবমিট হয়েছে','success');
       return true;
     }catch(e){ toast('রিভিউ সাবমিট ব্যর্থ: '+e.message,'error'); return false; }
   },
@@ -161,7 +161,6 @@ const ReviewService = {
       el.innerHTML = `<p style="color:var(--ink-muted);font-size:13px;text-align:center;padding:14px">এখনো কোনো রিভিউ নেই। আপনি প্রথম রিভিউ দিন!</p>`;
       return;
     }
-    /* ভেরিফাইড রিভিউ আগে দেখাবে */
     reviews.sort((a,b)=>(b.verified===true)-(a.verified===true));
     el.innerHTML = reviews.map(r=>{
       const stars = '★'.repeat(r.rating) + '☆'.repeat(5-r.rating);
@@ -185,7 +184,7 @@ const RefundService = {
     if(!reason.trim()){ toast('রিফান্ডের কারণ লিখুন','error'); return false; }
     try{
       await FB.updateDoc(FB.doc(FB.db,'orders',orderId),{refundRequested:true, refundReason:reason.trim(), refundStatus:'pending', refundRequestedAt:FB.serverTimestamp()});
-      toast('✓ রিফান্ড রিকোয়েস সাবমিট হয়েছে','success');
+      toast('✓ রিফান্ড রিকোয়েস্ট সাবমিট হয়েছে','success');
       return true;
     }catch(e){ toast('রিকোয়েস্ট ব্যর্থ: '+e.message,'error'); return false; }
   },
