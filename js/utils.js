@@ -74,3 +74,22 @@ function maskNid(nid){
 function skeletonCards(n=4){
   return Array.from({length:n}).map(()=>`<div class="pcard" style="pointer-events:none"><div class="imgwrap" style="background:linear-gradient(90deg,#131c2e 25%,#1a2740 50%,#131c2e 75%);background-size:200% 100%;animation:shimmer 1.4s infinite"></div><div class="pbody"><div style="height:12px;background:var(--line);border-radius:4px;margin-bottom:8px;width:80%"></div><div style="height:16px;background:var(--line);border-radius:4px;width:50%"></div></div></div>`).join('');
 }
+
+/* ---------- Lazy image fade-in fix ---------- */
+/* load ইভেন্ট bubble করে না, তাই capture:true দিয়ে document-এ delegate করা হলো
+   যাতে dynamically inject হওয়া (pcardHTML, admin table ইত্যাদি) সব img-ও কভার হয় */
+document.addEventListener('load', function(e){
+  const img = e.target;
+  if(img && img.tagName === 'IMG' && img.hasAttribute('loading')){
+    img.classList.add('loaded');
+  }
+}, true);
+
+/* কিছু ইমেজ এই লিসেনার অ্যাটাচ হওয়ার আগেই cache থেকে সাথে সাথে লোড হয়ে যায়,
+   ফলে তাদের load ইভেন্ট মিস হয়ে যেতে পারে। সেফটির জন্য প্রতি ৫০০ms পর
+   .complete চেক করে বাকি থাকা ইমেজগুলোকেও visible করে দেওয়া হয়। */
+setInterval(function(){
+  document.querySelectorAll('img[loading="lazy"]:not(.loaded)').forEach(img=>{
+    if(img.complete && img.naturalWidth > 0) img.classList.add('loaded');
+  });
+}, 400);
