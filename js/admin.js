@@ -578,18 +578,77 @@ const AdminDash = {
 /* ---------- Product Form ---------- */
 const ProductForm = {
   mode:'add', editId:null, imgBase64:null,
-  onImageSelect(input){
+  processedBlob: null,
+
+  /* ছবির ভেতরেই Golapi Shop সিল বসিয়ে দেয় (Canvas দিয়ে), আসল ফাইলেই স্থায়ীভাবে থাকবে */
+  compositeSeal(file){
+    return new Promise((resolve, reject)=>{
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = ()=>{
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width; canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+
+        const logo = new Image();
+        logo.crossOrigin = 'anonymous';
+        logo.onload = ()=>{
+          const sealSize = Math.round(canvas.width * 0.14);
+          const margin = Math.round(canvas.width * 0.03);
+          const cx = canvas.width - margin - sealSize/2;
+          const cy = canvas.height - margin - sealSize/2;
+
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(cx, cy, sealSize/2 + 3, 0, Math.PI*2);
+          ctx.fillStyle = 'rgba(5,8,16,0.55)';
+          ctx.fill();
+          ctx.lineWidth = Math.max(2, sealSize*0.05);
+          ctx.strokeStyle = '#D4AF37';
+          ctx.stroke();
+          ctx.restore();
+
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(cx, cy, sealSize/2, 0, Math.PI*2);
+          ctx.closePath();
+          ctx.clip();
+          ctx.drawImage(logo, cx-sealSize/2, cy-sealSize/2, sealSize, sealSize);
+          ctx.restore();
+
+          URL.revokeObjectURL(url);
+          canvas.toBlob(blob=>resolve(blob), 'image/webp', 0.9);
+        };
+        logo.onerror = ()=>{ URL.revokeObjectURL(url); canvas.toBlob(blob=>resolve(blob), 'image/webp', 0.9); };
+        logo.src = 'icons/head_logo.webp';
+      };
+      img.onerror = reject;
+      img.src = url;
+    });
+  },
+
+  async onImageSelect(input){
     const file = input.files[0]; if(!file) return;
-    const reader = new FileReader();
-    reader.onload = e => {
-      this.imgBase64 = e.target.result;
-      const thumb=document.getElementById('pfImgThumb'); if(thumb) thumb.src = e.target.result;
-      const prev=document.getElementById('pfImgPreview'); if(prev) prev.style.display = 'block';
+    const prev=document.getElementById('pfImgPreview');
+    const thumb=document.getElementById('pfImgThumb');
+    if(thumb) thumb.style.opacity='.4';
+    try{
+      const blob = await this.compositeSeal(file);
+      this.processedBlob = blob;
+      const previewUrl = URL.createObjectURL(blob);
+      if(thumb){ thumb.src = previewUrl; thumb.style.opacity='1'; }
+      if(prev) prev.style.display = 'block';
       const ai=document.getElementById('pfDescAiBtn'); if(ai) ai.style.display = 'inline-block';
       const name = document.getElementById('pfName')?.value.trim();
       if(name) this.generateDesc();
-    };
-    reader.readAsDataURL(file);
+    }catch(e){
+      devWarn('image seal composite failed', e.message);
+      this.processedBlob = file;
+      const reader = new FileReader();
+      reader.onload = ev => { if(thumb){ thumb.src = ev.target.result; thumb.style.opacity='1'; } if(prev) prev.style.display='block'; };
+      reader.readAsDataURL(file);
+    }
   },
   maybeAutoGenerate(){
     const name = document.getElementById('pfName')?.value.trim();
@@ -625,6 +684,7 @@ const ProductForm = {
     const b=document.getElementById('pfSubmitBtn'); if(b) b.textContent='প্রোডাক্ট সংরক্ষণ করুন';
     ['pfName','pfPrice','pfSalePrice','pfStock','pfDescription','pfCostPrice'].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';});
     const f=document.getElementById('pfImgFile'); if(f) f.value='';
+    this.processedBlob = null;
     const p=document.getElementById('pfImgPreview'); if(p) p.style.display='none';
     const ai=document.getElementById('pfDescAiBtn'); if(ai) ai.style.display='none';
     const ec=document.getElementById('pfExtraCost'); if(ec) ec.value='0';
@@ -700,8 +760,9 @@ const ProductForm = {
       let imageUrl = null;
       const imgFile = document.getElementById('pfImgFile').files[0];
       if(imgFile){
-        const fileRef = FB.storageRef(FB.storage, `products/${Date.now()}_${imgFile.name}`);
-        await FB.uploadBytes(fileRef, imgFile);
+        const uploadBlob = this.processedBlob || imgFile;
+        const fileRef = FB.storageRef(FB.storage, `products/${Date.now()}_sealed.webp`);
+        await FB.uploadBytes(fileRef, uploadBlob);
         imageUrl = await FB.getDownloadURL(fileRef);
       }
       const base = {name,category,unit,price:price||salePrice,salePrice,stock,description,costPrice,extraCost,deliveryPercent,profitPercent,cod,isFlash,isFeatured,status:'active',updatedAt:FB.serverTimestamp()};
