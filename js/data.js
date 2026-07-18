@@ -1,21 +1,5 @@
 /* data.js — product store, Firestore sync, product card render */
-function sampleProduct(i){
-  const names=['গোলাপি সিল্ক শাড়ি','স্মার্ট ওয়াচ প্রো','ব্লুটুথ হেডফোন','চামড়ার হ্যান্ডব্যাগ','রোজ গোল্ড লিপস্টিক','কটন পাঞ্জাবি','LED ডেস্ক ল্যাম্প','অর্গানিক হেয়ার অয়েল','দেশি চাল (মিনিকেট)','খোলা দুধ','সয়াবিন তেল','মসুর ডাল','প্যারাসিটামল ৫০০মিগ্রা','যমুনা গ্যাস ১২ কেজি','টাইপ-সি চার্জার','খাতা (রুলড)'];
-  const units={medicine:['পাতা','বক্স'],grocery:['কেজি','লিটার','ডজন'],confectionery:['পিস','প্যাকেট'],stationery:['পিস','প্যাকেট'],gas:['পিস'],mobile:['পিস'],watch:['পিস'],cosmetics:['পিস','১০০ মিলি'],clothing:['পিস'],furniture:['পিস']};
-  const cat = CATEGORIES[i%CATEGORIES.length].id;
-  const u = units[cat]||['পিস'];
-  const isGrocery = cat==='grocery';
-  const base = isGrocery? 25+(i*17)%475 : 300+(i*137)%3500;
-  const hasDisc = i%3===0;
-  return {
-    id:'demo'+i, name:names[i%names.length]+' #'+(i+1), category:cat, zone: i%2===0?'noakhali_sadar':'begumganj',
-    unit:u[i%u.length], price: hasDisc?Math.round(base*1.25):base, salePrice: base,
-    rating:(3.5+(i%15)/10).toFixed(1), reviews:10+(i*7)%300, sold:20+(i*13)%900, cod:i%4!==0,
-    img:`https://picsum.photos/seed/golapi${i}/400/400`, isFlash:i%5===0, isFeatured:i%4===0, fastDelivery:i%3===0, stock:5+(i*3)%50,
-    costPrice:Math.round(base*0.7), extraCost:0, deliveryPercent:0, profitPercent:20
-  };
-}
-let ALL_PRODUCTS = Array.from({length:36},(_,i)=>sampleProduct(i));
+let ALL_PRODUCTS = [];
 
 function zoneProducts(){
   const seenG=new Set(), seenK=new Set(), merged=[];
@@ -53,7 +37,6 @@ const ProductStore = {
     if(!FB || this.unsubscribe) return;
     try{
       this.unsubscribe = FB.onSnapshot(FB.collection(FB.db,'products'), snap=>{
-        if(snap.empty){ this.loaded = true; return; }
         const real=[];
         snap.forEach(d=>real.push(this.mapDoc(d.id, d.data())));
         ALL_PRODUCTS = real.filter(p=>p.status==='active');
@@ -68,10 +51,8 @@ const ProductStore = {
     if(!FB) return false;
     try{
       const snap = await FB.getDocs(FB.collection(FB.db,'products'));
-      if(!snap.empty){
-        const real=[]; snap.forEach(d=>real.push(this.mapDoc(d.id, d.data())));
-        ALL_PRODUCTS = real.filter(p=>p.status==='active');
-      }
+      const real=[]; snap.forEach(d=>real.push(this.mapDoc(d.id, d.data())));
+      ALL_PRODUCTS = real.filter(p=>p.status==='active');
       this.loaded = true;
     }catch(e){ devWarn('refresh failed', e.message); }
     Home.render();
