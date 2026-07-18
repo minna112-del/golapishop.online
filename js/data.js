@@ -92,7 +92,7 @@ function pcardHTML(p){
       <button class="wish" onclick="event.stopPropagation();Wishlist.toggle('${p.id}')">🤍</button>
     </div>
     <div class="pbody">
-      ${p.fastDelivery?'<span class="fast-tag">⚡ ৩০ মিনিট</span>':''}${p.cod?'<span class="cod-tag">✓ COD</span>':''}
+      ${p.fastDelivery?'<span class="fast-tag">🚴 লোকাল ডেলিভারি</span>':''}${p.cod?'<span class="cod-tag">✓ COD</span>':''}
       <div class="pname">${p.name}</div>
       <div class="prating">${ratingLine}</div>
       <div><span class="price-now">${money(p.salePrice)}</span>${discount?`<span class="price-old">${money(p.price)}</span>`:''}<span class="unit-tag"> / ${p.unit}</span></div>
