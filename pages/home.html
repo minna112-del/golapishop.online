@@ -4,43 +4,60 @@
     <div class="hero-inner">
       <div class="hero-grid">
         <div>
-          <div class="eyebrow anim-fadeUp"><span class="dot"></span> ১০০% ক্যাশ অন ডেলিভারি — নোয়াখালী জেলা</div>
-          <h1 class="hero-h anim-fadeUp d1" data-bn="বাজারের ঝামেলা শেষ,<br>এখন সবই আপনার দরজায়।" data-en="No more market hassle —<br>everything now at your doorstep.">বাজারের ঝামেলা শেষ,<br>এখন সবই আপনার দরজায়।</h1>
-          <p class="hero-p anim-fadeUp d2" data-bn="মুদি, সবজি, গ্যাস ও নিত্যপ্রয়োজনীয় সবকিছু — সহজ অর্ডার, দ্রুত ডেলিভারি, পণ্য হাতে পেয়ে তারপর মূল্য পরিশোধ করুন।" data-en="Groceries, vegetables, gas and daily essentials — easy ordering, fast delivery, pay only after you receive your items.">মুদি, সবজি, গ্যাস ও নিত্যপ্রয়োজনীয় সবকিছু — সহজ অর্ডার, দ্রুত ডেলিভারি, পণ্য হাতে পেয়ে তারপর মূল্য পরিশোধ করুন।</p>
+          <div class="eyebrow anim-fadeUp"><span class="dot"></span> মাইজদী বাজার, নোয়াখালী সদর — ২ শাখায় সরাসরি ডেলিভারি</div>
+          <h1 class="hero-h anim-fadeUp d1" data-bn="আপনার হয়ে বাজার করি আমরা,<br>টাকা দিন পণ্য হাতে পাওয়ার পর।" data-en="We do the market run for you —<br>pay only after you receive your items.">আপনার হয়ে বাজার করি আমরা,<br>টাকা দিন পণ্য হাতে পাওয়ার পর।</h1>
+          <p class="hero-p anim-fadeUp d2" data-bn="মুদি, সবজি, গ্যাস ও ঔষধ — নোয়াখালী সদর ও বেগমগঞ্জে আমাদের নিজস্ব ড্রাইভার সরাসরি বাসায় পৌঁছে দেয়। ডেলিভারি সময় ও চার্জ নির্ভর করে আপনার অর্ডারের পরিমাণ ও দূরত্বের উপর।" data-en="Groceries, vegetables, gas and medicine — our own local drivers deliver directly to your home in Noakhali Sadar & Begumganj. Delivery time and cost depend on your order quantity and distance.">মুদি, সবজি, গ্যাস ও ঔষধ — নোয়াখালী সদর ও বেগমগঞ্জে আমাদের নিজস্ব ড্রাইভার সরাসরি বাসায় পৌঁছে দেয়। ডেলিভারি সময় ও চার্জ নির্ভর করে আপনার অর্ডারের পরিমাণ ও দূরত্বের উপর।</p>
           <div class="btn-row anim-fadeUp d3">
-            <button class="btn btn-rose" onclick="Router.go('custom-bazar')" data-bn="📝 বাজারের লিস্ট লিখুন" data-en="📝 Write Your Grocery List">📝 বাজারের লিস্ট লিখুন</button>
-            <button class="btn btn-outline" onclick="Router.go('listing',{cat:'all'})" data-bn="প্রোডাক্ট কিনুন" data-en="Shop Products">প্রোডাক্ট কিনুন</button>
+            <button class="btn btn-rose" onclick="Router.go('custom-bazar')" data-bn="📝 আজকের বাজারের লিস্ট পাঠান" data-en="📝 Send Today's Grocery List">📝 আজকের বাজারের লিস্ট পাঠান</button>
+            <button class="btn btn-outline" onclick="Router.go('listing',{cat:'all'})" data-bn="সব প্রোডাক্ট দেখুন" data-en="Browse All Products">সব প্রোডাক্ট দেখুন</button>
           </div>
           <div class="badges anim-fadeUp d4">
-            <span class="badge b-green">✓ ক্যাশ অন ডেলিভারি</span>
-            <span class="badge b-gold">⚡ ৬০ মিনিট এক্সপ্রেস</span>
-            <span class="badge b-rose">🚚 নিজস্ব ড্রাইভার</span>
-            <span class="badge b-emerald"><img src="icons/dr_logo.webp" style="width:14px;height:14px;object-fit:cover;border-radius:3px;vertical-align:middle;margin-right:3px"> ফ্রী স্বাস্থ্য সেবা</span>
+            <span class="badge b-green">✓ আগে হাতে পান, পরে টাকা দিন</span>
+            <span class="badge b-gold">📦 পরিমাণ ও দূরত্ব অনুযায়ী চার্জ</span>
+            <span class="badge b-rose">🚚 নিজস্ব লোকাল ড্রাইভার</span>
           </div>
         </div>
         <div class="hero-side anim-fadeUp d4">
-          <div class="hero-card" onclick="Router.go('custom-bazar')"><h3>📝 কাস্টম বাজার লিস্ট</h3><p>নিজের মতো লিস্ট লিখুন, বাজার করে দেবো আমরা</p></div>
-          <div class="hero-card emerald" onclick="Router.go('medical')"><h3><img src="icons/dr_logo.webp" alt="স্বাস্থ্য সেবা" style="width:24px;height:24px;object-fit:cover;border-radius:50%;vertical-align:middle;margin-right:6px"> গোলাপী ফ্রী স্বাস্থ্য সেবা</h3><p>ডাক্তারের পরামর্শ ও এপয়েন্টমেন্ট সম্পূর্ণ ফ্রী</p></div>
-          <div class="hero-card rose"><h3>🔥 ফ্ল্যাশ সেল</h3><p>প্রতিদিন রাত ৮টা — ৭০% পর্যন্ত ছাড়</p></div>
+          <div class="hero-card" onclick="Router.go('custom-bazar')"><h3>📝 কাস্টম বাজার লিস্ট</h3><p>ফোনে লিস্ট লিখুন, দোকানে গিয়ে বাজার করে বিলের ছবিসহ পৌঁছে দেবে আমাদের ড্রাইভার</p></div>
+          <div class="hero-card emerald" onclick="Router.go('medical')"><h3><img src="icons/dr_logo.webp" alt="স্বাস্থ্য সেবা" style="width:24px;height:24px;object-fit:cover;border-radius:50%;vertical-align:middle;margin-right:6px"> ফ্রী ডাক্তার এপয়েন্টমেন্ট</h3><p>৬ জন নির্দিষ্ট চিকিৎসকের সিরিয়াল বুকিং, ভিজিট ফি ফ্রি</p></div>
+          <div class="hero-card rose"><h3>🔥 প্রতি রাতে ফ্ল্যাশ সেল</h3><p>রাত ৮টা থেকে, নির্বাচিত পণ্যে ছাড়</p></div>
         </div>
       </div>
     </div>
   </section>
-  <section class="sec"><div class="highlight hl-rose" onclick="Router.go('custom-bazar')"><div class="hl-flex">
-    <div class="hl-icon" style="background:linear-gradient(135deg,var(--pink),var(--rose))">🛵</div>
-    <div style="flex:1;min-width:200px"><span class="badge b-rose" style="margin-bottom:8px">🔥 মূল সেবা</span>
-    <h2 class="tiro" style="font-size:22px;color:#fff;margin:6px 0">আপনার বাজারের লিস্ট আমাদের দিন</h2>
-    <p style="font-size:13.5px;color:var(--ink-muted);max-width:560px">সাপ্তাহিক মুদি, মাসিক বাজার, বিয়ের বাজার বা রমজানের বাজার — যেকোনো লিস্ট লিখে দিন। আমাদের ড্রাইভার বাজার করে পৌঁছে দেবে আপনার বাসায়।</p>
-    <div style="color:var(--rose);font-size:13px;font-weight:600;margin-top:8px">লিস্ট পাঠান →</div></div>
-  </div></div></section>
+
+  <!-- কীভাবে কাজ করে — নতুন ভিজিটরের জন্য ৩ ধাপ -->
+  <section class="sec" style="padding-top:20px;padding-bottom:10px">
+    <h2 class="tiro" style="text-align:center;font-size:22px;margin-bottom:26px">কীভাবে কাজ করে — ৩ ধাপ</h2>
+    <div class="grid-row" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
+      <div class="card" style="padding:22px;text-align:center">
+        <div style="font-size:32px;margin-bottom:10px">📝</div>
+        <h4 style="font-size:14px;color:#fff;margin-bottom:6px">১. লিস্ট বা প্রোডাক্ট বাছুন</h4>
+        <p style="font-size:12px;color:var(--ink-muted)">নিজে প্রোডাক্ট বেছে অর্ডার করুন, অথবা কাস্টম বাজারে হাতে লেখা লিস্ট পাঠান</p>
+      </div>
+      <div class="card" style="padding:22px;text-align:center">
+        <div style="font-size:32px;margin-bottom:10px">🛵</div>
+        <h4 style="font-size:14px;color:#fff;margin-bottom:6px">২. আমাদের ড্রাইভার বাজার করে</h4>
+        <p style="font-size:12px;color:var(--ink-muted)">নিজস্ব ড্রাইভার সরাসরি দোকান থেকে কিনে আনে — সময় ও চার্জ আপনার পরিমাণ ও দূরত্ব দেখে ঠিক হয়, লাইভ ট্র্যাক করতে পারবেন</p>
+      </div>
+      <div class="card" style="padding:22px;text-align:center">
+        <div style="font-size:32px;margin-bottom:10px">💵</div>
+        <h4 style="font-size:14px;color:#fff;margin-bottom:6px">৩. হাতে পেয়ে টাকা দিন</h4>
+        <p style="font-size:12px;color:var(--ink-muted)">পণ্য চেক করে তারপর ক্যাশ, bKash বা Nagad-এ পরিশোধ — আগে টাকা দিতে হয় না</p>
+      </div>
+    </div>
+  </section>
+
   <section class="sec" style="padding-top:6px"><div class="highlight hl-emerald" onclick="Router.go('medical')"><div class="hl-flex">
     <div class="hl-icon" style="overflow:hidden;border-radius:18px"><img src="icons/dr_logo.webp" alt="স্বাস্থ্য" style="width:100%;height:100%;object-fit:cover"></div>
-    <div style="flex:1;min-width:200px"><span class="badge b-emerald" style="margin-bottom:8px">✨ বিশেষ সেবা</span>
+    <div style="flex:1;min-width:200px"><span class="badge b-emerald" style="margin-bottom:8px">✨ বিশেষ সেবা — সম্পূর্ণ ফ্রি</span>
     <h2 class="tiro" style="font-size:22px;color:#fff;margin:6px 0">গোলাপী ফ্রী স্বাস্থ্য সেবা</h2>
-    <p style="font-size:13.5px;color:var(--ink-muted);max-width:560px">ডাক্তারের পরামর্শ ও এপয়েন্টমেন্ট বুকিং সম্পূর্ণ ফ্রী! অভিজ্ঞ চিকিৎসকদের ভিজিটিং সময়সূচি জানুন এবং এআই প্রাথমিক পরামর্শ নিন।</p>
-    <div style="color:var(--emerald);font-size:13px;font-weight:600;margin-top:8px">বিস্তারিত দেখুন →</div></div>
+    <p style="font-size:13.5px;color:var(--ink-muted);max-width:560px">৬ জন নির্দিষ্ট চিকিৎসক (মেডিসিন, গাইনি, শিশু, ডেন্টাল, কার্ডিওলজি, চক্ষু) — প্রত্যেকের নাম, বিশেষত্ব ও সাপ্তাহিক সময়সূচি নিচে দেখুন। শুধু ভিজিট ফি ফ্রি, এপয়েন্টমেন্ট সিরিয়াল বুক করতে কল করুন।</p>
+    <div style="color:var(--emerald);font-size:13px;font-weight:600;margin-top:8px">চিকিৎসকদের তালিকা দেখুন →</div></div>
   </div></div></section>
+
   <section class="sec"><div class="cat-grid" id="catGrid"></div></section>
+
   <section class="sec" style="padding:0"><div class="flash-strip"><div class="sec" style="padding:0 20px">
     <div class="sec-head"><h2 class="tiro">🔥 ফ্ল্যাশ সেল</h2>
       <div class="timer" id="flashTimer"><span id="t-h">০৩</span><span style="color:var(--gold);opacity:.5">:</span><span id="t-m">৪৫</span><span style="color:var(--gold);opacity:.5">:</span><span id="t-s">১২</span></div>
@@ -51,10 +68,14 @@
   <div class="scroll-row" id="bestRow"></div></section>
   <section class="sec"><div class="sec-head"><h2 class="tiro">🆕 নতুন এসেছে</h2></div>
   <div class="grid-row" id="newGrid"></div></section>
-  <section class="sec"><div class="trust-grid">
-    <div class="card trust-item"><div class="em">🌹</div><h4>বিশ্বস্ততা</h4><p>১০০% অরিজিনাল পণ্য</p></div>
-    <div class="card trust-item"><div class="em">🚚</div><h4>দ্রুত ডেলিভারি</h4><p>৬০-৯০ মিনিট এক্সপ্রেস</p></div>
-    <div class="card trust-item"><div class="em">💰</div><h4>সেরা দাম</h4><p>বাজারের চেয়ে কম</p></div>
-    <div class="card trust-item"><div class="em"><img src="icons/dr_logo.webp" style="width:40px;height:40px;object-fit:cover;border-radius:10px"></div><h4>ফ্রী স্বাস্থ্য সেবা</h4><p>চিকিৎসা পরামর্শ ও ঔষধ</p></div>
-  </div></section>
+
+  <section class="sec">
+    <h2 class="tiro" style="text-align:center;font-size:20px;margin-bottom:20px">কেন নোয়াখালীর মানুষ আমাদের বিশ্বাস করে</h2>
+    <div class="trust-grid">
+      <div class="card trust-item"><div class="em">📍</div><h4>মাইজদী বাজারে আমাদের অফিস</h4><p>কোনো অজানা ঠিকানা না — সরাসরি ভিজিট করতে পারবেন</p></div>
+      <div class="card trust-item"><div class="em">👤</div><h4>নাম-পরিচয় জানা ড্রাইভার</h4><p>প্রতিটা ডেলিভারিতে নির্দিষ্ট, ভেরিফাইড লোকাল ড্রাইভার — অচেনা কেউ না</p></div>
+      <div class="card trust-item"><div class="em">💵</div><h4>আগে দেখুন, পরে টাকা দিন</h4><p>বেশিরভাগ অর্ডারে ক্যাশ অন ডেলিভারি — পণ্য না দেখে টাকা লাগে না</p></div>
+      <div class="card trust-item"><div class="em"><img src="icons/dr_logo.webp" style="width:40px;height:40px;object-fit:cover;border-radius:10px"></div><h4>ফ্রী স্বাস্থ্য সেবা</h4><p>প্রকৃত চিকিৎসকদের সাথে সরাসরি এপয়েন্টমেন্ট, নাম-ছবি সবই যাচাইযোগ্য</p></div>
+    </div>
+  </section>
 </div>
