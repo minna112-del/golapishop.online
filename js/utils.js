@@ -33,7 +33,7 @@ const AREA_ZONES = {
 
 const BRANCH_INFO = {
   noakhali_sadar:{label:'নোয়াখালী সদর',address:'মাইজদী বাজার, সদর, নোয়াখালী',managerName:'রিমন',managerPhone:'+880 1627-010060',bkashNumber:'01627010060',nagadNumber:'01627010060'},
-  begumganj:{label:'বেগমগঞ্জ',address:'আমানতপুর, বেগমগঞ্জ, নোয়াখালী',managerName:'সৃজন',managerPhone:'+880 1310-006959',bkashNumber:'01612057371',nagadNumber:'01310006959'}
+  begumganj:{label:'বেগমগঞ্জ',address:'চৌরাস্তা, বেগমগঞ্জ, নোয়াখালী',managerName:'সৃজন',managerPhone:'+880 1310-006959',bkashNumber:'01612057371',nagadNumber:'01310006959'}
 };
 
 const AREA_LABELS = {noakhali_sadar:BRANCH_INFO.noakhali_sadar.label, begumganj:BRANCH_INFO.begumganj.label};
@@ -86,7 +86,7 @@ document.addEventListener('load', function(e){
 }, true);
 
 /* কিছু ইমেজ এই লিসেনার অ্যাটাচ হওয়ার আগেই cache থেকে সাথে সাথে লোড হয়ে যায়,
-   ফলে তাদের load ইভেন্ট মিস হয়ে যেতে পারে। সেফটির জন্য প্রতি ৫০০ms পর
+   ফলে তাদের load ইভেন্ট মিস হয়ে যেতে পারে। সেফটির জন্য প্রতি ৪০০ms পর
    .complete চেক করে বাকি থাকা ইমেজগুলোকেও visible করে দেওয়া হয়। */
 setInterval(function(){
   document.querySelectorAll('img[loading="lazy"]:not(.loaded)').forEach(img=>{
