@@ -188,9 +188,10 @@
 picture source{display:none}
 .no-webp img[src$=".webp"]{display:none}
 
-/* Lazy load fade-in */
-img[loading="lazy"]{opacity:0;transition:opacity .3s}
-img[loading="lazy"].loaded{opacity:1}
+/* Lazy load fade-in — .loaded ক্লাস যোগ হয় utils.js থেকে */
+img[loading="lazy"]{opacity:0;transition:opacity .35s ease}
+img[loading="lazy"].loaded,
+img[loading="lazy"].force-visible{opacity:1}
 
 /* Notification badge pulse */
 @keyframes pulse-badge{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
