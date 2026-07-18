@@ -82,7 +82,6 @@ main{padding-bottom:calc(80px + env(safe-area-inset-bottom))}
 .dot{width:8px;height:8px;background:#22c55e;border-radius:50%;animation:pulseRing 2s infinite}
 h1.hero-h{font-family:'Tiro Bangla';font-size:clamp(28px,4.6vw,52px);line-height:1.55;margin-bottom:20px;padding:6px 0;color:var(--gold);
   background:linear-gradient(135deg,var(--gold),var(--gold-light),var(--rose));-webkit-background-clip:text;-webkit-text-fill-color:transparent;overflow:visible}
-/* Bangla matra/kar need generous line-height or top/bottom get visually clipped, especially with gradient-clip text */
 h1,h2,h3,.tiro{line-height:1.5}
 .hero-p{color:var(--ink-soft);font-size:16px;max-width:520px;margin-bottom:28px}
 .btn-row{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:26px}
@@ -328,54 +327,32 @@ footer a:hover{color:var(--gold)}
 
 /* ---------- Mobile responsiveness fixes ---------- */
 @media(max-width:480px){
-  /* Input font 16px — iOS zoom prevent কর */
   input,select,textarea{font-size:16px!important}
-
-  /* Header compact */
   .header-row{padding:0 10px;gap:8px;height:56px}
   .logo .word{font-size:13px}
   .search-wrap{max-width:none}
-
-  /* Hero */
   .hero{min-height:auto}
   .hero-inner{padding:40px 14px}
   h1.hero-h{font-size:clamp(22px,6vw,36px)}
-
-  /* Product grid */
   .grid-row{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
   .pcard{flex:0 0 148px}
-
-  /* সব ফর ২-কলাম গ্রিড মোবাইলে ১ কলাম হবে (checkout, custom-bazar, account, modals সবখানে) */
   [style*="grid-template-columns:1fr 1fr"]{
     display:flex!important;flex-direction:column!important;gap:0!important
   }
-  /* মবাইলে টপবার মার্কি লুকানো */
   .topbar{display:none}
-
-  /* Modal full screen */
   .modal{padding:0;align-items:flex-end}
   .modal-box{max-width:100%!important;border-radius:20px 20px 0 0;max-height:95vh}
-
-  /* Product form grid */
   #productModal [style*="grid-template-columns:1fr 1fr"]{
     display:flex!important;flex-direction:column!important;gap:0!important
   }
   #productModal [style*="grid-template-columns:1fr 1fr;gap:12px"]{
     display:flex!important;flex-direction:column!important
   }
-
-  /* Dashboard */
   .stat-grid{grid-template-columns:1fr 1fr}
   .data-table{font-size:11px}
-
-  /* Footer */
   .footer-grid{grid-template-columns:1fr!important}
   .footer-bottom{flex-direction:column;text-align:center}
-
-  /* Section padding */
   section.sec{padding:28px 14px}
-
-  /* Cart drawer */
   .drawer{max-width:100%}
 }
 
@@ -386,7 +363,6 @@ html, body {
 }
 
 @media(max-width:768px){
-  /* Hero — পুরো section fix */
   .hero { min-height: auto !important; }
   .hero-inner { padding: 32px 16px !important; width: 100% !important; }
   .hero-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
@@ -396,40 +372,22 @@ html, body {
   .btn-row { gap: 10px !important; }
   .btn { padding: 11px 18px !important; font-size: 13px !important; }
   .badges { gap: 7px !important; }
-
-  /* Header fix */
   .header-row { padding: 0 10px !important; height: 54px !important; gap: 6px !important; }
   .logo .word { font-size: 13px !important; }
   .logo .tag { display: none; }
   .header-actions .icon-btn:not(#langBtn):not(#cartBtn):not(#loginBtn) { display: none; }
   .search-wrap { flex: 1 !important; }
-
-  /* Section */
   section.sec { padding: 24px 14px !important; }
   .sec-head h2 { font-size: 19px !important; }
-
-  /* Product grid */
   .grid-row { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
   .scroll-row .pcard { flex: 0 0 155px !important; }
-
-  /* Highlights */
   .hl-flex { flex-direction: column !important; gap: 12px !important; }
   .hl-icon { width: 56px !important; height: 56px !important; }
-
-  /* Card box */
   .card-box { padding: 16px !important; }
-
-  /* Categories */
   .cat-grid { grid-template-columns: repeat(4, 1fr) !important; gap: 10px !important; }
   .cat-item { padding: 12px 6px !important; }
-
-  /* Trust */
   .trust-grid { grid-template-columns: repeat(2, 1fr) !important; }
-
-  /* Checkout grid — single column */
   .checkout-grid-2col { display: flex !important; flex-direction: column !important; }
-
-  /* Modal */
   .modal { padding: 8px 0 0 !important; align-items: flex-end !important; }
   .modal-box {
     max-width: 100% !important;
@@ -437,19 +395,11 @@ html, body {
     max-height: 92vh !important;
     padding: 20px 16px !important;
   }
-
-  /* Footer */
   .footer-grid { grid-template-columns: 1fr 1fr !important; gap: 20px !important; }
   .footer-bottom { flex-direction: column !important; text-align: center !important; }
-
-  /* Input font size — iOS zoom prevent */
   input, select, textarea { font-size: 16px !important; }
-
-  /* Dashboard */
   .dash-layout { grid-template-columns: 1fr !important; }
   .stat-grid { grid-template-columns: repeat(2, 1fr) !important; }
-
-  /* Driver/Zone portal */
   .pdp-layout { grid-template-columns: 1fr !important; }
   .listing-layout { grid-template-columns: 1fr !important; }
 }
@@ -464,7 +414,6 @@ body {
   width: 100% !important;
 }
 
-/* Orbs — absolute positioned, mobile-এ hide করো */
 @media(max-width:480px){
   .orb { display: none !important; }
   .hero { overflow: hidden !important; width: 100% !important; }
@@ -494,26 +443,18 @@ body {
   }
   .btn-row .btn { width: 100% !important; }
   .badges { gap: 6px !important; flex-wrap: wrap !important; }
-
-  /* Section padding */
   section.sec, .sec {
     padding-left: 14px !important;
     padding-right: 14px !important;
     width: 100% !important;
     box-sizing: border-box !important;
   }
-
-  /* Topbar marquee width fix */
   .topbar { width: 100% !important; overflow: hidden !important; }
-
-  /* Header */
   .header-row {
     padding: 0 10px !important;
     width: 100% !important;
     box-sizing: border-box !important;
   }
-
-  /* Highlight sections */
   .highlight { width: 100% !important; box-sizing: border-box !important; }
   .hl-flex { flex-wrap: wrap !important; }
 }
@@ -523,3 +464,14 @@ body {
 .live-map-badge{position:absolute;top:8px;left:8px;z-index:401;background:rgba(5,8,16,.85);backdrop-filter:blur(6px);border:1px solid var(--gold-line);color:var(--gold);font-size:10.5px;font-weight:600;padding:4px 10px;border-radius:20px;display:flex;align-items:center;gap:5px}
 .live-map-badge .dot{width:6px;height:6px;background:#22c55e;border-radius:50%;animation:pulseRing 2s infinite}
 .leaflet-container{background:var(--bg2)!important;font-family:'Hind Siliguri',sans-serif!important}
+
+/* ---------- Brand Seal (প্রোডাক্ট ছবির কোণায় লোগো) ---------- */
+.brand-seal{
+  position:absolute; bottom:8px; right:8px; width:30px; height:30px;
+  border-radius:50%; overflow:hidden; z-index:5;
+  border:1.5px solid rgba(212,175,55,.6);
+  box-shadow:0 2px 8px rgba(0,0,0,.4);
+  background:rgba(5,8,16,.55); backdrop-filter:blur(2px);
+}
+.brand-seal img{width:100%;height:100%;object-fit:cover;opacity:.92}
+.pdp-seal{width:42px;height:42px;bottom:12px;right:12px}
