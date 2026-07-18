@@ -71,6 +71,7 @@ function pcardHTML(p){
       ${discount?`<span class="pbadge">-${bn(discount)}%</span>`:''}
       ${p.isFeatured?`<span class="pbadge gold" style="left:auto;right:8px;top:${discount?'40px':'8px'}">★</span>`:''}
       <button class="wish" onclick="event.stopPropagation();Wishlist.toggle('${p.id}')">🤍</button>
+      <span class="brand-seal"><img src="icons/head_logo.webp" alt="Golapi Shop"></span>
     </div>
     <div class="pbody">
       ${p.fastDelivery?'<span class="fast-tag">🚴 লোকাল ডেলিভারি</span>':''}${p.cod?'<span class="cod-tag">✓ COD</span>':''}
