@@ -580,6 +580,70 @@ const ProductForm = {
   mode:'add', editId:null, imgBase64:null,
   processedBlob: null,
 
+  /* ---------- Auto Category Detection ---------- */
+  categoryTouched: false,
+
+  CATEGORY_KEYWORDS: {
+    medicine: ['প্যারাসিটামল','নাপা','এন্টাসিড','ট্যাবলেট','ক্যাপসুল','সিরাপ','ইনজেকশন','মলম','ওরস্যালাইন','ঔষধ','মেডিসিন','এন্টিবায়োটিক','ফ্লাজিল','এলাট্রল','ভিটামিন','ব্যান্ডেজ','থার্মোমিটার','মাস্ক','স্যাভলন','ডেটল'],
+    rice_pulses: ['চাল','মিনিকেট','নাজিরশাইল','বাসমতি','আটাশ','স্বর্ণা','ডাল','মসুর','মুগ','ছোলা','মাসকলাই','বুটের ডাল'],
+    spices: ['মরিচের গুঁড়া','হলুদ','জিরা','ধনিয়া','এলাচ','দারুচিনি','লবঙ্গ','গরম মসলা','মসলা','আদা','রসুন','তেজপাতা','মেথি'],
+    edible_oil: ['সয়াবিন তেল','সরিষার তেল','ভোজ্য তেল','রাইস ব্রান','অলিভ অয়েল','ঘি','নারিকেল তেল'],
+    fish_meat: ['ইলিশ','রুই','কাতলা','চিংড়ি','মুরগি','গরুর মাংস','খাসির মাংস','মাংস','ব্রয়লার','পাঙ্গাস','তেলাপিয়া','মাছ'],
+    vegetables: ['আলু','পেঁয়াজ','টমেটো','বেগুন','শসা','কাঁচা মরিচ','লাউ','কুমড়া','ফুলকপি','বাঁধাকপি','লেবু','আম','কলা','আপেল','কমলা','পেয়ারা','সবজি','ফল'],
+    dairy_bakery: ['দুধ','ডানো','মার্কস','পাউডার দুধ','দই','পনির','মাখন','পাউরুটি','কেক','ব্রেড'],
+    frozen_food: ['ফ্রোজেন','নাগেট','পরোটা','সমুচা','আইসক্রিম'],
+    snacks: ['চিপস','চানাচুর','মুড়ি','বিস্কুট','নুডুলস','প্রাণ চানাচুর'],
+    beverages: ['জুস','কোমল পানীয়','কোল্ড ড্রিংক','মিনারেল ওয়াটার','চা পাতা','কফি','ড্রিংক','হরলিক্স'],
+    confectionery: ['চকলেট','চকোলেট','ক্যান্ডি','লজেন্স','টফি'],
+    stationery: ['কলম','খাতা','পেন্সিল','রাবার','স্কেল','নোটবুক','মার্কার'],
+    gas: ['গ্যাস সিলিন্ডার','সিলিন্ডার','এলপিজি','বসুন্ধরা গ্যাস','যমুনা গ্যাস'],
+    mobile: ['মোবাইল চার্জার','ইয়ারফোন','হেডফোন','পাওয়ার ব্যাংক','স্ক্রিন প্রটেক্টর','মোবাইল কভার','সিম','মেমোরি কার্ড'],
+    electronics: ['ইলেকট্রনিক্স','ফ্যান','লাইট','বাল্ব','মাল্টিপ্লাগ','এক্সটেনশন','চার্জার লাইট','আয়রন'],
+    watch: ['ঘড়ি','সেল ব্যাটারি','wristwatch'],
+    personal_care: ['শ্যাম্পু','সাবান','পারফিউম','বডি স্প্রে','টুথপেস্ট','টুথব্রাশ','ক্রিম','লোশন','শেভিং'],
+    cosmetics: ['লিপস্টিক','ফাউন্ডেশন','মেকআপ','কাজল','কসমেটিক্স','নেইল পলিশ'],
+    clothing: ['শাড়ি','পাঞ্জাবি','শার্ট','প্যান্ট','থ্রি পিস','জামা','লুঙ্গি','গেঞ্জি'],
+    footwear: ['জুতা','স্যান্ডেল','স্লিপার','সু'],
+    jewelry: ['গহনা','চুড়ি','কানের দুল','নেকলেস','রিং','গলার হার'],
+    furniture: ['চেয়ার','টেবিল','সোফা','খাট','আলমারি','ফার্নিচার'],
+    kitchen_tools: ['হাঁড়ি','পাতিল','প্লেট','গ্লাস','চামচ','কড়াই','রান্নাঘর'],
+    toys: ['খেলনা','পুতুল','খেলনা গাড়ি'],
+    baby_care: ['ডায়াপার','বেবি','ফিডার','শিশুর'],
+    home_care: ['ডিটারজেন্ট','সাবান পাউডার','ব্লিচ','ফিনাইল','ক্লিনার','হারপিক'],
+    pet_care: ['পোষা প্রাণী','ক্যাট ফুড','ডগ ফুড'],
+    sports_fitness: ['জিম','ফিটনেস','ফুটবল','ক্রিকেট ব্যাট'],
+    books_gifts: ['বই','উপহার','গিফট'],
+    religious: ['টুপি','জায়নামাজ','তসবিহ','আতর'],
+    automobile: ['হেলমেট','মোটরসাইকেল','বাইক পার্টস'],
+    garden: ['গাছের চারা','সার','বীজ','টব'],
+    grocery: ['মুদি','লবণ','চিনি']
+  },
+
+  guessCategory(name){
+    if(!name || !name.trim()) return null;
+    const n = name.trim().toLowerCase();
+    for(const [catId, keywords] of Object.entries(this.CATEGORY_KEYWORDS)){
+      for(const kw of keywords){
+        if(n.includes(kw.toLowerCase())) return catId;
+      }
+    }
+    return null;
+  },
+
+  autoDetectCategory(name){
+    if(this.categoryTouched) return;
+    const guess = this.guessCategory(name);
+    if(guess){
+      const sel = document.getElementById('pfCategory');
+      if(sel && sel.value !== guess){
+        sel.value = guess;
+        sel.style.transition = 'background .4s';
+        sel.style.background = 'rgba(212,175,55,.15)';
+        setTimeout(()=>{ sel.style.background = ''; }, 500);
+      }
+    }
+  },
+
   /* ছবির ভেতরেই Golapi Shop সিল বসিয়ে দেয় (Canvas দিয়ে), আসল ফাইলেই স্থায়ীভাবে থাকবে */
   compositeSeal(file){
     return new Promise((resolve, reject)=>{
@@ -680,6 +744,7 @@ const ProductForm = {
   },
   openAdd(){
     this.mode='add'; this.editId=null; this.imgBase64=null;
+    this.categoryTouched = false;
     const t=document.getElementById('pfTitle'); if(t) t.textContent='নতুন প্রোডাক্ট যুক্ত করুন';
     const b=document.getElementById('pfSubmitBtn'); if(b) b.textContent='প্রোডাক্ট সংরক্ষণ করুন';
     ['pfName','pfPrice','pfSalePrice','pfStock','pfDescription','pfCostPrice'].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';});
@@ -718,6 +783,7 @@ const ProductForm = {
   openEdit(id){
     const p = ALL_PRODUCTS.find(x=>x.id===id); if(!p){ toast('প্রোডাক্ট পাওয়া যায়নি','error'); return; }
     this.mode='edit'; this.editId=id;
+    this.categoryTouched = true;
     const t=document.getElementById('pfTitle'); if(t) t.textContent='প্রোডাক্ট সম্পাদনা করুন';
     const b=document.getElementById('pfSubmitBtn'); if(b) b.textContent='পরিবর্তন সংরক্ষণ করুন';
     const n=document.getElementById('pfName'); if(n) n.value=p.name;
