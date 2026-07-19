@@ -48,6 +48,52 @@
     </div>
   </section>
 
+  <!-- আমরা কেন আলাদা — ট্রাস্ট সেকশন (নতুন ব্যবসার জন্য honesty-based) -->
+  <section class="sec">
+    <h2 class="tiro" style="text-align:center;font-size:20px;margin-bottom:6px">আমরা কেন আলাদা</h2>
+    <p style="text-align:center;font-size:12.5px;color:var(--ink-muted);margin-bottom:20px">আমরা নতুন শুরু করেছি — তাই লুকানোর কিছু নেই, প্রতিটা অর্ডার আমরা নিজেরা হাতে ধরে দেখি</p>
+    <div class="trust-grid">
+      <div class="card trust-item">
+        <div class="em">💵</div>
+        <h4>টাকা আগে না, পরে</h4>
+        <p>পণ্য হাতে পাওয়ার আগে এক টাকাও দিতে হয় না — নতুন শপ বলেই এই গ্যারান্টি সবচেয়ে জরুরি মনে করি আমরা</p>
+      </div>
+      <div class="card trust-item">
+        <div class="em">📍</div>
+        <h4>সত্যিকারের ঠিকানায় অফিস</h4>
+        <p>মাইজদী বাজার (সদর) ও চৌরাস্তা (বেগমগঞ্জ) — সরাসরি এসে দেখে যেতে পারেন, কোনো ভার্চুয়াল অফিস না</p>
+      </div>
+      <div class="card trust-item">
+        <div class="em">👤</div>
+        <h4>ড্রাইভারের নাম-নম্বর জানবেন</h4>
+        <p>অর্ডার করার সাথে সাথে কে আপনার বাজার করছে, তার নাম ও ফোন নম্বর দেখতে পাবেন — অচেনা কেউ না</p>
+      </div>
+      <div class="card trust-item">
+        <div class="em"><img src="icons/dr_logo.webp" style="width:40px;height:40px;object-fit:cover;border-radius:10px"></div>
+        <h4>৬ জন প্রকৃত চিকিৎসক</h4>
+        <p>ফ্রী স্বাস্থ্য সেবায় নাম-পরিচয় যাচাইযোগ্য ৬ জন চিকিৎসক — কেউ ভুয়া না, <a href="#" onclick="Router.go('medical')" style="color:var(--emerald)">তালিকা দেখুন</a></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- টিম প্রিভিউ — রিয়েল মুখ দেখিয়ে ট্রাস্ট বাড়ানো -->
+  <section class="sec" style="padding-top:6px">
+    <div class="highlight hl-gold" onclick="Router.go('about-app')">
+      <div class="hl-flex" style="align-items:center;gap:16px">
+        <div style="display:flex">
+          <img src="icons/team-mahsin.webp" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid var(--bg);margin-right:-14px;z-index:3;position:relative">
+          <img src="icons/team-hridoy.webp" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid var(--bg);margin-right:-14px;z-index:2;position:relative">
+          <img src="icons/team-rimon.webp" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid var(--bg);margin-right:-14px;z-index:2;position:relative">
+          <img src="icons/team-srijon.webp" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid var(--bg);z-index:1;position:relative">
+        </div>
+        <div style="flex:1;min-width:200px">
+          <h3 style="font-size:15px;color:#fff;margin-bottom:3px">যাদের সাথে কথা বলছেন, তাদের চিনে নিন</h3>
+          <p style="font-size:12px;color:var(--ink-muted)">নাম, ছবি, সরাসরি ফোন নম্বর — অচেনা কেউ না →</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section class="sec" style="padding-top:6px"><div class="highlight hl-emerald" onclick="Router.go('medical')"><div class="hl-flex">
     <div class="hl-icon" style="overflow:hidden;border-radius:18px"><img src="icons/dr_logo.webp" alt="স্বাস্থ্য" style="width:100%;height:100%;object-fit:cover"></div>
     <div style="flex:1;min-width:200px"><span class="badge b-emerald" style="margin-bottom:8px">✨ বিশেষ সেবা — সম্পূর্ণ ফ্রি</span>
@@ -68,14 +114,4 @@
   <div class="scroll-row" id="bestRow"></div></section>
   <section class="sec"><div class="sec-head"><h2 class="tiro">🆕 নতুন এসেছে</h2></div>
   <div class="grid-row" id="newGrid"></div></section>
-
-  <section class="sec">
-    <h2 class="tiro" style="text-align:center;font-size:20px;margin-bottom:20px">কেন নোয়াখালীর মানুষ আমাদের বিশ্বাস করে</h2>
-    <div class="trust-grid">
-      <div class="card trust-item"><div class="em">📍</div><h4>২ শাখায় আমাদের অফিস</h4><p>সদর — মাইজদী বাজার · বেগমগঞ্জ — চৌরাস্তা, দুটোই সরাসরি ভিজিট করতে পারবেন</p></div>
-      <div class="card trust-item"><div class="em">👤</div><h4>নাম-পরিচয় জানা ড্রাইভার</h4><p>প্রতিটা ডেলিভারিতে নির্দিষ্ট, ভেরিফাইড লোকাল ড্রাইভার — অচেনা কেউ না</p></div>
-      <div class="card trust-item"><div class="em">💵</div><h4>আগে দেখুন, পরে টাকা দিন</h4><p>বেশিরভাগ অর্ডারে ক্যাশ অন ডেলিভারি — পণ্য না দেখে টাকা লাগে না</p></div>
-      <div class="card trust-item"><div class="em"><img src="icons/dr_logo.webp" style="width:40px;height:40px;object-fit:cover;border-radius:10px"></div><h4>ফ্রী স্বাস্থ্য সেবা</h4><p>প্রকৃত চিকিৎসকদের সাথে সরাসরি এপয়েন্টমেন্ট, নাম-ছবি সবই যাচাইযোগ্য</p></div>
-    </div>
-  </section>
 </div>
