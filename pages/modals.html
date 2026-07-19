@@ -44,7 +44,7 @@
     <h3 class="tiro" id="pfTitle" style="font-size:18px;margin-bottom:14px">নতুন প্রোডাক্ট যুক্ত করুন</h3>
     <div id="pfMsg" class="form-msg"></div>
 
-    <div class="field"><label>প্রোডাক্টের নাম *</label><input type="text" id="pfName" onblur="ProductForm.maybeAutoGenerate()"></div>
+    <div class="field"><label>প্রোডাক্টের নাম *</label><input type="text" id="pfName" oninput="ProductForm.autoDetectCategory(this.value)" onblur="ProductForm.maybeAutoGenerate()"></div>
 
     <div class="field"><label>শাখা/জোন *</label>
       <div style="display:flex;gap:16px;margin-top:4px">
@@ -53,31 +53,8 @@
       </div>
     </div>
 
-    <div class="field"><label>ক্যাটাগরি *</label>
-      <select id="pfCategory">
-        <option value="medicine">💊 ঔষধ</option>
-        <option value="grocery">🛒 মুদি বাজার</option>
-        <option value="vegetables">🥦 শাকসবজি ও ফল</option>
-        <option value="dairy_bakery">🥛 দুধ ও বেকারি</option>
-        <option value="confectionery">🍬 কনফেকশনারি</option>
-        <option value="stationery">📒 স্টেশনারি</option>
-        <option value="gas">🔥 গ্যাস সিলিন্ডার</option>
-        <option value="mobile">📱 মোবাইল এক্সেসরিজ</option>
-        <option value="electronics">🔌 ইলেকট্রনিক্স</option>
-        <option value="watch">⌚ ঘড়ি ও ব্যাটারি</option>
-        <option value="cosmetics">💄 কসমেটিকস</option>
-        <option value="clothing">👕 জামা-কাপড়</option>
-        <option value="footwear">👞 জুতা</option>
-        <option value="furniture">🪑 ফার্নিচার</option>
-        <option value="toys">🧸 খেলনা</option>
-        <option value="baby_care">🍼 শিশু যত্ন</option>
-        <option value="home_care">🧴 গৃহস্থালি ও পরিষ্কার</option>
-        <option value="others">🎁 অন্যান্য</option>
-      </select>
-    </div>
-
-    <div class="field"><label>ক্যাটাগরি *</label>
-      <select id="pfCategory">
+    <div class="field"><label>ক্যাটাগরি * <span style="font-size:10.5px;color:var(--ink-dim);font-weight:400">(নাম লিখলে অটো সাজেস্ট হবে, চাইলে বদলে দিন)</span></label>
+      <select id="pfCategory" onchange="ProductForm.categoryTouched=true">
         <option value="medicine">💊 ঔষধ</option>
         <option value="grocery">🛒 মুদি বাজার</option>
         <option value="rice_pulses">🌾 চাল-ডাল</option>
@@ -112,6 +89,41 @@
         <option value="automobile">🏍️ বাইক/গাড়ি এক্সেসরিজ</option>
         <option value="garden">🌱 বাগান ও কৃষি</option>
         <option value="others">🎁 অন্যান্য</option>
+      </select>
+    </div>
+
+    <div class="field"><label>একক (unit) *</label>
+      <select id="pfUnit">
+        <option value="পিস">পিস</option>
+        <option value="কেজি">কেজি</option>
+        <option value="৫০০ গ্রাম">৫০০ গ্রাম</option>
+        <option value="২৫০ গ্রাম">২৫০ গ্রাম</option>
+        <option value="গ্রাম">গ্রাম</option>
+        <option value="লিটার">লিটার</option>
+        <option value="৫০০ মিলি">৫০০ মিলি</option>
+        <option value="মিলি">মিলি</option>
+        <option value="ডজন">ডজন</option>
+        <option value="হালি">হালি</option>
+        <option value="প্যাকেট">প্যাকেট</option>
+        <option value="বোতল">বোতল</option>
+        <option value="বক্স">বক্স</option>
+        <option value="কার্টুন">কার্টুন</option>
+        <option value="বস্তা">বস্তা</option>
+        <option value="পাতা">পাতা (স্ট্রিপ)</option>
+        <option value="টিউব">টিউব</option>
+        <option value="জার">জার</option>
+        <option value="ক্যান">ক্যান</option>
+        <option value="সেট">সেট</option>
+        <option value="জোড়া">জোড়া</option>
+        <option value="গজ">গজ</option>
+        <option value="থান">থান</option>
+        <option value="মিটার">মিটার</option>
+        <option value="ফুট">ফুট</option>
+        <option value="রিম">রিম</option>
+        <option value="রোল">রোল</option>
+        <option value="শীট">শীট</option>
+        <option value="বান্ডিল">বান্ডিল</option>
+        <option value="কম্বো প্যাক">🎁 কম্বো প্যাক</option>
       </select>
     </div>
 
