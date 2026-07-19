@@ -2,7 +2,7 @@
   <section class="sec" style="max-width:640px">
     <div class="crumb"><a href="#" onclick="Router.go('home')">হোম</a> &gt; কাস্টম বাজার অর্ডার</div>
     <h2 class="tiro" style="font-size:24px;margin-bottom:6px">📝 আপনার বাজারের লিস্ট দিন</h2>
-    <p style="color:var(--ink-muted);font-size:13.5px;margin-bottom:16px">সাপ্তাহিক মুদি, মাসিক বাজার, বিয়ের বাজার, রমজানের বাজার, কুরবানির বাজার — যেকোনো লিস্ট লিখে দিন। আমাদের ড্রাইভার বাজার করে বাসায় পৌঁছে দেবে।</p>
+    <p style="color:var(--ink-muted);font-size:13.5px;margin-bottom:16px">সাপ্তাহিক মুদি, মাসিক বাজার, বিয়ের বাজার, রমজানের বাজার, কুরবানির বাজার — যেকোনো লিস্ট লিখে দিন। আমাদের ড্রাইভার বাজার করে বাসায় পৌঁছে দেবে। ফর্মটা পূরণ করতে ২-৩ মিনিট লাগবে।</p>
     <div id="cbPastOrdersBox" style="display:none;margin-bottom:16px"></div>
     <div class="card-box">
       <div class="field"><label>আপনার নাম *</label><input type="text" id="cbName"></div>
@@ -26,8 +26,8 @@
         <p style="font-size:12px;color:var(--ink-soft);margin-top:4px;line-height:1.7">ড্রাইভার বাজার করার পর মোট বিলের পরিমাণ জানিয়ে বিলের স্পষ্ট ছবি অ্যাপে আপলোড করবে — আপনি সেটা দেখে টাকা রেডি রাখতে পারবেন। ডেলিভারির সময় ক্যাশে পরিশোধ করুন। ড্রাইভারের সাথে সরাসরি চ্যাটও করতে পারবেন অর্ডার পেজ থেকে।</p>
       </div>
       <div style="background:rgba(212,175,55,.06);border:1px solid var(--gold-line);border-radius:12px;padding:14px;margin-bottom:16px">
-        <strong style="color:var(--gold);font-size:13px">⚠️ গুরুত্বপূর্ণ:</strong>
-        <p style="font-size:12.5px;color:var(--ink-soft);line-height:1.7;margin-top:4px">অর্ডার কনফার্ম করতে <strong style="color:#fff">১০০ টাকা বিকাশ পে বাধ্যতামূলক</strong>। বিকাশ নম্বর: <strong id="cbBkashNum" style="color:var(--gold)">উপজেলা বেছে নিলে দেখাবে</strong><br>বাকি টাকা সম্পূর্ণ ক্যাশ অন ডেলিভারি।</p>
+        <strong style="color:var(--gold);font-size:13px">⚠️ কেন ১০০ টাকা ভেরিফিকেশন ফি লাগে:</strong>
+        <p style="font-size:12.5px;color:var(--ink-soft);line-height:1.7;margin-top:4px">কাস্টম বাজারে আমাদের ড্রাইভার আগে থেকে টাকা খরচ করে বাজার করে আনে, তাই ভুয়া বা মিথ্যা অর্ডার ঠেকাতে <strong style="color:#fff">১০০ টাকা বিকাশ পে বাধ্যতামূলক</strong> — এটা আপনার মোট বিল থেকে বাদ যাবে। বিকাশ নম্বর: <strong id="cbBkashNum" style="color:var(--gold)">উপজেলা বেছে নিলে দেখাবে</strong><br>বাকি সম্পূর্ণ টাকা ক্যাশ অন ডেলিভারি — পণ্য হাতে পাওয়ার পর।</p>
       </div>
       <div class="field"><label>বিকাশ ট্রানজেকশন ID *</label><input type="text" id="cbTrxId" placeholder="পেমেন্টের পর ট্রানজেকশন ID"></div>
       <div id="cbMsg" class="form-msg"></div>
