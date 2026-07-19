@@ -8,9 +8,12 @@
       <input type="search" id="searchInput" placeholder="প্রোডাক্ট, ব্র্যান্ড বা ক্যাটাগরি খুঁজুন..." oninput="doSearch(this.value)" onfocus="doSearch(this.value)" onblur="setTimeout(()=>document.getElementById('searchSuggestBox').style.display='none',200)">
       <button onclick="toggleVoiceSearch()" id="voiceSearchBtn" style="right:44px;position:absolute;top:50%;transform:translateY(-50%);width:32px;height:32px;background:none">🎤</button>
       <button onclick="submitSearch()">🔍</button>
-      <div id="searchSuggestBox" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:6px;background:var(--card);border:1px solid var(--line-l);border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.4);z-index:250;max-height:340px;overflow-y:auto"></div>
+      <div id="searchSuggestBox" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:6px;background:var(--card);border:1px solid var(--line-l);border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.15);z-index:250;max-height:340px;overflow-y:auto"></div>
     </div>
     <div class="header-actions">
+      <button class="theme-toggle" onclick="ThemeToggle.toggle()" title="থিম: অটো / লাইট / ডার্ক (ট্যাপ করে পাল্টান)">
+        <span class="mode-auto">🌗</span><span class="mode-light">☀️</span><span class="mode-dark">🌙</span>
+      </button>
       <button class="icon-btn" onclick="toggleLang()" id="langBtn" title="Change language / ভাষা পরিবর্তন">🌐 <span id="langBtnLabel">EN</span></button>
       <button class="icon-btn" id="loginBtn" onclick="AccountPage.openOrLogin()"><span>👤</span><span id="accLabel" class="hide-sm">লগইন</span></button>
       <button class="icon-btn" id="cartBtn" onclick="Cart.open()" style="position:relative"><span>🛍️</span><span class="hide-sm">কার্ট</span><span class="cart-badge" id="cartBadge" style="display:none">0</span></button>
