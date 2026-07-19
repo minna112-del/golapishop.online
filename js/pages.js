@@ -27,9 +27,15 @@ const Medical = {
     el.innerHTML = MED_LIST.map(m=>`
       <div class="card" style="padding:18px">
         <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px"><span style="font-size:28px">${m.icon}</span><div><div style="font-weight:600;color:#fff;font-size:13.5px">${m.name}</div><div style="font-size:12px;color:var(--emerald)">${m.spec}</div></div></div>
-        <div style="font-size:12px;color:var(--ink-muted);margin-bottom:12px">🗓️ ${m.sched}<br>📞 ভিজিট ফি: <span style="color:var(--gold);font-weight:600">ফ্রী</span></div>
-        <a href="tel:+8801612057371" class="btn btn-medical btn-block" style="font-size:12.5px;padding:9px">📅 এপয়েন্টমেন্ট নিন</a>
+        <div style="font-size:11.5px;color:var(--ink-muted);margin-bottom:8px">🗓️ ${m.sched}</div>
+        <div style="font-size:11px;color:var(--ink-dim);margin-bottom:12px">📍 ${m.addr||'চেম্বার তথ্যের জন্য কল করুন'}</div>
+        <a href="tel:+880${(m.serial||'1612057371').split(',')[0].trim().replace(/^0/,'')}" class="btn btn-medical btn-block" style="font-size:12.5px;padding:9px" onclick="Medical.trackCall('${m.name.replace(/'/g,"\\'")}')">📞 সিরিয়াল: ${m.serial||'01612-057371'}</a>
       </div>`).join('');
+  },
+  trackCall(doctorName){
+    if(typeof dataLayer!=='undefined'){
+      dataLayer.push({event:'doctor_call_click', doctor_name: doctorName});
+    }
   }
 };
 
@@ -132,9 +138,9 @@ const PDP = {
     if(stock) stock.textContent = p.stock>5?'✓ স্টক আছে':`⚠ মাত্র ${bn(p.stock)}টি বাকি`;
     const qtyEl=document.getElementById('pdpQty'); if(qtyEl) qtyEl.textContent = '১';
     const desc=document.getElementById('pdpDesc');
-    if(desc) desc.textContent = p.description || `${p.name} — উচ্চমানের প্রোডাক্ট, নিজস্ব লোকাল ডেলিভারি সুবিধা সহ। ১০০% অরিজিনাল নিশ্চয়তা।`;
+    if(desc) desc.textContent = p.description || `${p.name} — উচ্চমানের প্রোডাক্ট, নিজস্ব লোকাল ডেলিভারি সুবিধা সহ।`;
     const spec=document.getElementById('pdpSpec');
-    if(spec) spec.innerHTML = `<tr><td>ব্র্যান্ড</td><td>Golapi Selection</td></tr><tr><td>ওয়ারেন্টি</td><td>৭ দিন রিপ্লেসমেন্ট</td></tr><tr><td>উৎপত্তি</td><td>বাংলাদেশ</td></tr>`;
+    if(spec) spec.innerHTML = `<tr><td>ব্র্যান্ড</td><td>Golapi Selection</td></tr><tr><td>রিটার্ন/রিপ্লেসমেন্ট</td><td>৩ দিনের মধ্যে</td></tr><tr><td>উৎপত্তি</td><td>বাংলাদেশ</td></tr>`;
     const rel=document.getElementById('relatedRow');
     if(rel) rel.innerHTML = zp.filter(x=>x.category===p.category && x.id!==p.id).slice(0,8).map(pcardHTML).join('');
     this.tab(null,'desc');
