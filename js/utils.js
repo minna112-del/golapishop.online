@@ -127,3 +127,31 @@ setInterval(function(){
     if(img.complete && img.naturalWidth > 0) img.classList.add('loaded');
   });
 }, 400);
+/* ---------- Dark Mode Toggle (auto = system অনুযায়ী, ম্যানুয়াল হলে override) ---------- */
+const ThemeToggle = {
+  KEY: 'golapi_theme', // মান: 'light' | 'dark' | 'auto' (ডিফল্ট auto)
+  mq: window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null,
+  init(){
+    const saved = localStorage.getItem(this.KEY) || 'auto';
+    this.apply(saved);
+    if(this.mq){
+      const listener = () => { if((localStorage.getItem(this.KEY)||'auto')==='auto') this.apply('auto'); };
+      if(this.mq.addEventListener) this.mq.addEventListener('change', listener);
+      else if(this.mq.addListener) this.mq.addListener(listener); // পুরনো Safari ফলব্যাক
+    }
+  },
+  apply(mode){
+    let resolved = mode;
+    if(mode==='auto') resolved = (this.mq && this.mq.matches) ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', resolved);
+    document.documentElement.setAttribute('data-theme-mode', mode); // 'auto'/'light'/'dark' — বাটনের আইকনের জন্য
+  },
+  toggle(){
+    // চক্র: auto → light → dark → auto...
+    const current = localStorage.getItem(this.KEY) || 'auto';
+    const next = current==='auto' ? 'light' : current==='light' ? 'dark' : 'auto';
+    localStorage.setItem(this.KEY, next);
+    this.apply(next);
+  }
+};
+ThemeToggle.init();
