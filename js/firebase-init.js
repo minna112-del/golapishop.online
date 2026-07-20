@@ -41,8 +41,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
   window.dispatchEvent(new Event('firebase-ready'));
 
   /* ---------- FCM: customer push token capture ---------- */
-  /* 🔴 এখানে তোমার VAPID key বসাও — Firebase Console > Project Settings > Cloud Messaging > Web Push certificates */
-  const VAPID_KEY = 'YOUR_VAPID_KEY_HERE';
+  /* VAPID key — Firebase Console > Project Settings > Cloud Messaging > Web Push certificates */
+  const VAPID_KEY = 'BPRxIznMoYaznW3dnf-OcB-MSplrzV6xA2bWWbPENH37-iAelbKjcwO50XbGMirLpNu6w4XZBr7kwZLPepf9KRQ';
 
   async function registerPushToken(userId){
     try{
