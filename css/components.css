@@ -241,3 +241,42 @@ img[loading="lazy"].force-visible{opacity:1}
 .ic-pencil{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7'/%3E%3Cpath d='M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7'/%3E%3Cpath d='M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z'/%3E%3C/svg%3E")}
 
 .ic-heart-pulse{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z'/%3E%3Cpath d='M3.22 8.5h3l2-3 4 6 2-3h5.06'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z'/%3E%3Cpath d='M3.22 8.5h3l2-3 4 6 2-3h5.06'/%3E%3C/svg%3E")}
+
+/* ═══════════════════════════════════════════════════════════
+   HOME v5 — bold hero, stat strip, colorful quick-category row
+   ═══════════════════════════════════════════════════════════ */
+.hero-v5{position:relative;padding:28px 20px 8px;overflow:hidden}
+.hero-v5-blob{position:absolute;top:-60px;right:-60px;width:220px;height:220px;background:#FFE5EE;border-radius:50%;z-index:0}
+.hero-v5-blob2{position:absolute;bottom:0;left:-80px;width:160px;height:160px;background:#FFF3D6;border-radius:50%;z-index:0}
+.hero-v5-content{position:relative;z-index:1;max-width:640px}
+.kicker-pill{display:inline-flex;align-items:center;gap:6px;background:var(--ink-band);color:#fff;font-size:11.5px;font-weight:700;padding:6px 14px;border-radius:99px;margin-bottom:18px}
+.kicker-pill .dot{width:6px;height:6px;background:#7CE38B;border-radius:50%}
+.hero-v5-h{font-family:'Hind Siliguri';font-weight:700;font-size:clamp(26px,5.2vw,38px);line-height:1.32;letter-spacing:-.4px;margin-bottom:14px;color:var(--ink)}
+.hero-v5-h .hl{color:var(--rose)}
+.hero-v5-p{color:var(--ink-soft);font-size:14px;margin:14px 0 22px;max-width:38ch;line-height:1.7}
+.hero-v5-btnrow{display:flex;gap:10px;margin-bottom:22px}
+.hero-v5-btnrow .btn-main{flex:1}
+.btn-cart-icon{width:52px;height:52px;border-radius:14px;border:2px solid var(--ink);background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative}
+
+.stat-strip{display:flex;border-top:1px solid var(--line);padding-top:16px;gap:0}
+.stat-strip .stat{flex:1;padding-right:10px}
+.stat-strip .stat b{display:block;font-family:'Poppins';font-weight:800;font-size:22px;color:var(--ink);line-height:1}
+.stat-strip .stat span{font-size:10.5px;color:var(--ink-muted);font-weight:600}
+
+.quick-cat-row{display:flex;gap:12px;padding:22px 20px 6px;overflow-x:auto;scrollbar-width:none}
+.quick-cat-row::-webkit-scrollbar{display:none}
+.quick-cat{flex-shrink:0;width:84px;text-align:center;cursor:pointer}
+.quick-cat .box{width:100%;aspect-ratio:1;border-radius:20px;display:flex;align-items:center;justify-content:center;margin-bottom:8px;transition:.2s}
+.quick-cat:active .box{transform:scale(.94)}
+.quick-cat .box .ic{width:26px;height:26px}
+.quick-cat span{font-size:11.5px;font-weight:700;color:var(--ink)}
+.qc1{background:var(--rose)}.qc1 .ic{color:#fff}
+.qc2{background:var(--ink-band)}.qc2 .ic{color:#fff}
+.qc3{background:#B8F23C}.qc3 .ic{color:var(--ink)}
+.qc4{background:#F0B429}.qc4 .ic{color:var(--ink)}
+
+/* Dark mode adjustments for the v5 hero */
+html[data-theme="dark"] .hero-v5-blob{background:rgba(255,92,135,.12)}
+html[data-theme="dark"] .hero-v5-blob2{background:rgba(240,180,41,.1)}
+html[data-theme="dark"] .btn-cart-icon{background:var(--card);border-color:var(--ink)}
+html[data-theme="dark"] .btn-cart-icon svg{stroke:var(--ink)}
