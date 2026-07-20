@@ -409,7 +409,7 @@ const Checkout = {
       if(summary){
         summary.style.display='block';
         summary.innerHTML = `<strong style="color:var(--ink)">📍 ${data.address}</strong><br>
-          দূরত্ব: ${data.distanceKm.toFixed(1)} কিমি · ETA: ~${data.etaMin} মিনিট · ডেলিভারি চার্জ: ${data.deliveryFee===0?'ফ্রি':'৳'+data.deliveryFee}`;
+          ${data.zone?data.zone.label+' · ':''}দূরত্ব: ${data.distanceKm.toFixed(1)} কিমি · ETA: ~${data.etaMin} মিনিট · ডেলিভারি চার্জ: ${data.deliveryFee===0?'ফ্রি':'৳'+data.deliveryFee}`;
       }
       this.renderSummary();
       toast('✓ লোকেশন সেভ হয়েছে','success');
@@ -462,8 +462,8 @@ const Checkout = {
     const nidRe = /^\d{10}$|^\d{13}$/;
     const nidOk = nid.length===0 || nidRe.test(nid);
     if(!this.locationData){ toast('⚠ প্রথমে "ম্যাপে সঠিক লোকেশন পিন করুন" বাটনে ট্যাপ করে আপনার লোকেশন নির্বাচন করুন — এটা ছাড়া অর্ডার করা যাবে না','error'); return false; }
-    if(this.locationData.distanceKm > DELIVERY_SETTINGS.maxDistanceKm){
-      toast(`⚠ দুঃখিত, আপনার লোকেশন আমাদের ডেলিভারি এলাকার বাইরে (${this.locationData.distanceKm.toFixed(1)} কিমি, সর্বোচ্চ ${DELIVERY_SETTINGS.maxDistanceKm} কিমি পর্যন্ত ডেলিভারি করি)`, 'error');
+    if(!this.locationData.zone){
+      toast('⚠ দুঃখিত, আপনার লোকেশন আমাদের ডেলিভারি জোনের বাইরে — এই মুহূর্তে সেখানে ডেলিভারি করা হয় না', 'error');
       return false;
     }
     return name.length>0 && phoneRe.test(phone) && nidOk && addr.length>=5 && upazila && zone && village.length>0 && instructions.length>0;
@@ -511,7 +511,7 @@ const Checkout = {
       return `<div class="row-between"><span>${p.name} × ${bn(q)}</span><span>${money(p.salePrice*q)}</span></div>`;
     }).join('');
     const sub = Cart.totalPrice();
-    const ship = calcDeliveryCharge(itemCount, sub, this.locationData?.distanceKm ?? null);
+    const ship = (this.locationData?.deliveryFee != null) ? this.locationData.deliveryFee : calcDeliveryCharge(itemCount, sub, this.locationData?.distanceKm ?? null);
     const couponDiscount = this.getCouponDiscount(sub);
     const couponRow=document.getElementById('ckCouponRow');
     if(couponRow) couponRow.style.display = couponDiscount>0 ? 'flex' : 'none';
@@ -530,7 +530,7 @@ const Checkout = {
   },
   async placeOrder(){
     if(!this.locationData){ toast('⚠ লোকেশন নির্বাচন করা হয়নি — "ম্যাপে সঠিক লোকেশন পিন করুন" বাটনে ট্যাপ করুন','error'); this.goStep(1); return; }
-    if(this.locationData.distanceKm > DELIVERY_SETTINGS.maxDistanceKm){ toast('⚠ এই লোকেশন আমাদের ডেলিভারি এলাকার বাইরে','error'); this.goStep(1); return; }
+    if(!this.locationData.zone){ toast('⚠ এই লোকেশন ডেলিভারি জোনের বাইরে','error'); this.goStep(1); return; }
     const name=document.getElementById('ckName').value.trim();
     const phone=document.getElementById('ckPhone').value.trim();
     const addr=document.getElementById('ckAddress').value.trim();
@@ -548,7 +548,7 @@ const Checkout = {
     const orderNo = 'GS-'+new Date().getFullYear()+'-'+String(Math.floor(Math.random()*900000)+100000);
     const sub = Cart.totalPrice();
     const itemCount = Object.values(Cart.items).reduce((a,b)=>a+b,0);
-    const ship = calcDeliveryCharge(itemCount, sub, this.locationData?.distanceKm ?? null);
+    const ship = (this.locationData?.deliveryFee != null) ? this.locationData.deliveryFee : calcDeliveryCharge(itemCount, sub, this.locationData?.distanceKm ?? null);
     const walletUsed = this.getWalletUsed(sub, ship);
     const couponDiscount = this.getCouponDiscount(sub);
     try{
@@ -556,6 +556,7 @@ const Checkout = {
         orderNumber:orderNo, customerName:name, customerPhone:phone, customerNid:nid, address:addr, village,
         branchZone:upazila, district:AREA_LABELS[upazila]||'', zone,
         customerLat: this.locationData?.lat ?? null, customerLng: this.locationData?.lng ?? null,
+        deliveryZoneId: this.locationData?.zone?.id ?? null, deliveryZoneLabel: this.locationData?.zone?.label ?? null,
         distanceKm: this.locationData?.distanceKm ?? null, etaMinutes: this.locationData?.etaMin ?? null,
         instructions, paymentMethod:this.pay, paymentStatus:this.pay==='cod'?'cod':'pending_submission', deliverySlot:'express',
         items:Object.entries(Cart.items).map(([id,qty])=>({productId:id,qty})),
