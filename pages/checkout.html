@@ -14,6 +14,10 @@
         <div class="field"><label>উপজেলা *</label><select id="ckDistrict" onchange="onUpazilaChange('ck')"><option value="">বেছে নিন</option><option value="noakhali_sadar">নোয়াখালী সদর</option><option value="begumganj">বেগমগঞ্জ</option></select></div>
         <div class="field"><label>ইউনিয়ন *</label><select id="ckZone"><option value="">প্রথমে উপজেলা বেছে নিন</option></select></div>
       </div>
+      <button type="button" class="btn btn-outline btn-block" style="margin-bottom:14px;font-size:12.5px" onclick="Checkout.openLocationPicker()">
+        <span class="ic ic-pin" style="width:14px;height:14px"></span> ম্যাপে সঠিক লোকেশন পিন করুন (দ্রুত ডেলিভারির জন্য সুপারিশকৃত)
+      </button>
+      <div id="ckLocationSummary" style="display:none;background:rgba(240,53,107,.05);border:1px solid var(--gold-line);border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:var(--ink-soft)"></div>
       <div class="field"><label>গ্রাম / এলাকার নাম *</label><input type="text" id="ckVillage" placeholder="যেমন: পশ্চিম নাজিরপুর, ৩নং ওয়ার্ড"></div>
       <div class="field"><label>সম্পূর্ণ ঠিকানা (বাড়ি/রোড নম্বর) *</label><textarea id="ckAddress" rows="2" placeholder="বাড়ি নম্বর, রোড নম্বর, ল্যান্ডমার্ক"></textarea></div>
       <div class="field"><label>জাতীয় পরিচয়পত্র নম্বর (NID) <span style="color:var(--ink-dim);font-weight:400">(ঐচ্ছিক)</span></label><input type="text" id="ckNid" placeholder="থাকলে দিতে পারেন — বাধ্যতামূলক নয়" inputmode="numeric"></div>
