@@ -57,8 +57,8 @@ const AREA_ZONES = {
 };
 
 const BRANCH_INFO = {
-  noakhali_sadar:{label:'নোয়াখালী সদর',address:'মাইজদী বাজার, সদর, নোয়াখালী',managerName:'রিমন',managerPhone:'+880 1627-010060',bkashNumber:'01627010060',nagadNumber:'01627010060'},
-  begumganj:{label:'বেগমগঞ্জ',address:'চৌরাস্তা, বেগমগঞ্জ, নোয়াখালী',managerName:'সৃজন',managerPhone:'+880 1310-006959',bkashNumber:'01612057371',nagadNumber:'01310006959'}
+  noakhali_sadar:{label:'নোয়াখালী সদর',address:'মাইজদী বাজার, সদর, নোয়াখালী',managerName:'রিমন',managerPhone:'+880 1627-010060',bkashNumber:'01627010060',nagadNumber:'01627010060',lat:22.8710,lng:91.0996},
+  begumganj:{label:'বেগমগঞ্জ',address:'চৌরাস্তা, বেগমগঞ্জ, নোয়াখালী',managerName:'সৃজন',managerPhone:'+880 1310-006959',bkashNumber:'01612057371',nagadNumber:'01310006959',lat:22.9412,lng:91.1119}
 };
 
 const AREA_LABELS = {noakhali_sadar:BRANCH_INFO.noakhali_sadar.label, begumganj:BRANCH_INFO.begumganj.label};
