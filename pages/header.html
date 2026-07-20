@@ -6,8 +6,11 @@
     </a>
     <div class="search-wrap" id="searchWrapDesktop" style="position:relative">
       <input type="search" id="searchInput" placeholder="প্রোডাক্ট, ব্র্যান্ড বা ক্যাটাগরি খুঁজুন..." oninput="doSearch(this.value)" onfocus="doSearch(this.value)" onblur="setTimeout(()=>document.getElementById('searchSuggestBox').style.display='none',200)">
-      <button onclick="toggleVoiceSearch()" id="voiceSearchBtn" style="right:44px;position:absolute;top:50%;transform:translateY(-50%);width:32px;height:32px;background:none">🎤</button>
-      <button onclick="submitSearch()">🔍</button>
+      <div class="search-icon-pair">
+        <button class="search-icon-btn" onclick="toggleVoiceSearch()" id="voiceSearchBtn" title="ভয়েস সার্চ"><span class="ic ic-mic"></span></button>
+        <span class="search-icon-divider"></span>
+        <button class="search-icon-btn" onclick="submitSearch()" title="সার্চ করুন"><span class="ic ic-search"></span></button>
+      </div>
       <div id="searchSuggestBox" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:6px;background:var(--card);border:1px solid var(--line-l);border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.15);z-index:250;max-height:340px;overflow-y:auto"></div>
     </div>
     <div class="header-actions">
