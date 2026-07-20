@@ -63,6 +63,47 @@ const BRANCH_INFO = {
 
 const AREA_LABELS = {noakhali_sadar:BRANCH_INFO.noakhali_sadar.label, begumganj:BRANCH_INFO.begumganj.label};
 
+/* ============================================================
+   DELIVERY ZONES — প্রতিটা শাখার নিচে Zone A/B/C (বৃত্তাকার — কেন্দ্র + radius)
+   Admin Panel থেকে edit হয় ('setting'/'delivery_zones' ডকুমেন্টে সেভ থাকে),
+   এখানে যেগুলো আছে সেগুলো ডিফল্ট (কখনো Firestore-এ কিছু না থাকলে এটাই ব্যবহার হবে)।
+   ============================================================ */
+const DELIVERY_ZONES = {
+  noakhali_sadar: [
+    { id:'sadar_a', label:'Zone A — কাছাকাছি এলাকা', radiusKm:3, fee:30 },
+    { id:'sadar_b', label:'Zone B — মাঝারি দূরত্ব',   radiusKm:7, fee:50 },
+    { id:'sadar_c', label:'Zone C — দূরবর্তী এলাকা',  radiusKm:12, fee:80 }
+  ],
+  begumganj: [
+    { id:'begum_a', label:'Zone A — কাছাকাছি এলাকা', radiusKm:3, fee:30 },
+    { id:'begum_b', label:'Zone B — মাঝারি দূরত্ব',   radiusKm:7, fee:50 },
+    { id:'begum_c', label:'Zone C — দূরবর্তী এলাকা',  radiusKm:12, fee:80 }
+  ]
+};
+async function loadLiveDeliveryZones(){
+  if(!FB) return;
+  try{
+    const snap = await FB.getDoc(FB.doc(FB.db,'setting','delivery_zones'));
+    if(snap.exists() && snap.data().zones){
+      Object.assign(DELIVERY_ZONES, snap.data().zones);
+    }
+  }catch(e){ devWarn('delivery zones load failed', e.message); }
+}
+loadLiveDeliveryZones();
+
+/* একটা GPS পয়েন্ট কোন zone-এ পড়ে সেটা বের করে — সবচেয়ে ছোট radius-এর zone প্রাধান্য পায়
+   (যেমন Zone A ও Zone B দুটোর মধ্যেই পড়লে, বেশি নির্দিষ্ট/কাছের Zone A ধরা হয়) */
+function findDeliveryZone(branchId, lat, lng){
+  const branch = BRANCH_INFO[branchId];
+  const zones = DELIVERY_ZONES[branchId];
+  if(!branch || !zones) return null;
+  const distKm = haversineKm(lat, lng, branch.lat, branch.lng);
+  const matched = zones
+    .filter(z => distKm <= z.radiusKm)
+    .sort((a,b) => a.radiusKm - b.radiusKm)[0];
+  return matched ? { ...matched, distanceKm: distKm, branchId } : null;
+}
+
 const ORDER_STATUS = {
   pending:{label:'পেন্ডিং',cls:'pending'}, confirmed:{label:'কনফার্মড',cls:'confirmed'},
   packed:{label:'প্যাকিং সম্পন্ন',cls:'confirmed'}, assigned:{label:'ড্রাইভার অ্যাসাইনড',cls:'confirmed'},
