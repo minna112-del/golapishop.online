@@ -271,7 +271,7 @@ img[loading="lazy"].force-visible{opacity:1}
 .quick-cat .box .ic{width:26px;height:26px}
 .quick-cat span{font-size:11.5px;font-weight:700;color:var(--ink)}
 .qc1{background:var(--rose)}.qc1 .ic{color:#fff}
-.qc2{background:var(--ink-band)}.qc2 .ic{color:#fff}
+.qc2{background:#E63946}.qc2 .ic{color:#fff}
 .qc3{background:#B8F23C}.qc3 .ic{color:var(--ink)}
 .qc4{background:#F0B429}.qc4 .ic{color:var(--ink)}
 
