@@ -360,7 +360,15 @@ function onUpazilaChange(prefix){
 }
 
 /* ---------- Delivery charge ---------- */
-const DELIVERY_SETTINGS = { baseFee: 30, perKmFee: 8, perItemFee: 3, avgDistanceKm: 3, freeAboveSubtotal: 1000 };
+const DELIVERY_SETTINGS = { baseFee: 30, perKmFee: 8, perItemFee: 3, avgDistanceKm: 3, freeAboveSubtotal: 1000, deliveryRadiusKm: 12, maxDistanceKm: 20 };
+async function loadLiveDeliverySettings(){
+  if(!FB) return;
+  try{
+    const snap = await FB.getDoc(FB.doc(FB.db,'setting','delivery'));
+    if(snap.exists()) Object.assign(DELIVERY_SETTINGS, snap.data());
+  }catch(e){ devWarn('live delivery settings load failed', e.message); }
+}
+loadLiveDeliverySettings();
 function calcDeliveryCharge(itemCount, subtotal=0, distanceKm=null){
   if(subtotal >= DELIVERY_SETTINGS.freeAboveSubtotal) return 0;
   const km = distanceKm ?? DELIVERY_SETTINGS.avgDistanceKm;
@@ -453,6 +461,11 @@ const Checkout = {
     const phoneRe = /^(?:\+880|880|0)1[3-9]\d{8}$/;
     const nidRe = /^\d{10}$|^\d{13}$/;
     const nidOk = nid.length===0 || nidRe.test(nid);
+    if(!this.locationData){ toast('⚠ প্রথমে "ম্যাপে সঠিক লোকেশন পিন করুন" বাটনে ট্যাপ করে আপনার লোকেশন নির্বাচন করুন — এটা ছাড়া অর্ডার করা যাবে না','error'); return false; }
+    if(this.locationData.distanceKm > DELIVERY_SETTINGS.maxDistanceKm){
+      toast(`⚠ দুঃখিত, আপনার লোকেশন আমাদের ডেলিভারি এলাকার বাইরে (${this.locationData.distanceKm.toFixed(1)} কিমি, সর্বোচ্চ ${DELIVERY_SETTINGS.maxDistanceKm} কিমি পর্যন্ত ডেলিভারি করি)`, 'error');
+      return false;
+    }
     return name.length>0 && phoneRe.test(phone) && nidOk && addr.length>=5 && upazila && zone && village.length>0 && instructions.length>0;
   },
   getWalletUsed(sub, ship){
@@ -516,6 +529,8 @@ const Checkout = {
     const totEl=document.getElementById('ckTotal'); if(totEl) totEl.textContent = money(Math.max(0, sub+ship-walletUsed-couponDiscount));
   },
   async placeOrder(){
+    if(!this.locationData){ toast('⚠ লোকেশন নির্বাচন করা হয়নি — "ম্যাপে সঠিক লোকেশন পিন করুন" বাটনে ট্যাপ করুন','error'); this.goStep(1); return; }
+    if(this.locationData.distanceKm > DELIVERY_SETTINGS.maxDistanceKm){ toast('⚠ এই লোকেশন আমাদের ডেলিভারি এলাকার বাইরে','error'); this.goStep(1); return; }
     const name=document.getElementById('ckName').value.trim();
     const phone=document.getElementById('ckPhone').value.trim();
     const addr=document.getElementById('ckAddress').value.trim();
@@ -716,9 +731,12 @@ function orderTrackHTML(o){
       <span style="font-size:12.5px;color:${done?'var(--ink)':'var(--ink-dim)'}">${st.label}</span>
     </div>`;
   }).join('');
+  const etaBox = (o.status==='in_transit' && o.etaMinutes)
+    ? `<div style="text-align:center;background:rgba(240,53,107,.06);border:1px solid var(--gold-line);border-radius:10px;padding:8px;margin-top:6px;font-size:12.5px;color:var(--ink)">⏱️ আনুমানিক পৌঁছাবে <strong style="color:var(--rose)">${o.etaMinutes} মিনিটে</strong></div>`
+    : '';
   const liveBtn = (o.status==='in_transit' && o.driverLat && o.driverLng)
     ? `<div class="live-map-box" id="liveMapBox-${o.id}"><span class="live-map-badge"><span class="dot"></span> লাইভ ট্র্যাকিং</span></div>
-       <a href="https://www.google.com/maps?q=${o.driverLat},${o.driverLng}" target="_blank" rel="noopener" style="display:block;text-align:center;margin-top:6px;font-size:11.5px;color:var(--ink-muted)">Google Maps-এ বড় করে দেখুন ↗</a>`
+       <a href="https://www.google.com/maps?q=${o.driverLat},${o.driverLng}" target="_blank" rel="noopener" style="display:block;text-align:center;margin-top:6px;font-size:11.5px;color:var(--ink-muted)">Google Maps-এ বড় করে দেখুন ↗</a>${etaBox}`
     : '';
   const memoBtn = (o.orderType==='custom-bazar')
     ? `<button class="btn btn-outline btn-block" style="margin-top:8px;font-size:12.5px" onclick='BazarMemo.open(${JSON.stringify(o).replace(/'/g,"&#39;")})'>🧾 মেমো দেখুন / প্রিন্ট করুন</button>` : '';
