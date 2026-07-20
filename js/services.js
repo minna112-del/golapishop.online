@@ -116,20 +116,21 @@ const ReviewService = {
 
   /* কাস্টমার এই প্রোডাক্টটা সত্যিই ডেলিভারি নিয়েছে কিনা চেক করে */
   async checkVerifiedPurchase(productId, userId){
-    if(!FB || !userId) return false;
+    if(!FB || !userId) return null;
     try{
       const snap = await FB.getDocs(FB.query(
         FB.collection(FB.db,'orders'),
         FB.where('userId','==',userId),
         FB.where('status','==','delivered')
       ));
-      let found = false;
+      let matchedOrderId = null;
       snap.forEach(d=>{
         const items = d.data().items || [];
-        if(items.some(it=>it.productId===productId)) found = true;
+        if(!matchedOrderId && items.some(it=>it.productId===productId)) matchedOrderId = d.id;
       });
-      return found;
-    }catch(e){ devWarn('verified purchase check failed', e.message); return false; }
+      return matchedOrderId; // এখন orderId (বা null) রিটার্ন হয় — শুধু true/false না, কারণ Firestore rule-এ
+                              // verified:true দাবি যাচাই করতে ঠিক কোন orderId-এর বিপরীতে সেটা লাগবে
+    }catch(e){ devWarn('verified purchase check failed', e.message); return null; }
   },
 
   async submitReview(productId, rating, text, userName, photoFile){
@@ -137,17 +138,20 @@ const ReviewService = {
     if(!rating || !text.trim()){ toast('রেটিং ও মন্তব্য দিন','error'); return false; }
     try{
       const userId = Auth.currentUser?.uid || null;
-      const verified = await this.checkVerifiedPurchase(productId, userId);
+      const matchedOrderId = await this.checkVerifiedPurchase(productId, userId);
+      const verified = !!matchedOrderId;
       let photoUrl = null;
       if(photoFile){
         const fileRef = FB.storageRef(FB.storage, `review_photos/${productId}_${Date.now()}_${photoFile.name}`);
         await FB.uploadBytes(fileRef, photoFile);
         photoUrl = await FB.getDownloadURL(fileRef);
       }
-      await FB.addDoc(FB.collection(FB.db,'reviews'),{
+      const reviewDoc = {
         productId, rating:Number(rating), text:text.trim(), userName:userName||'গ্রাহক',
         userId, verified, photoUrl, createdAt:FB.serverTimestamp()
-      });
+      };
+      if(verified) reviewDoc.orderId = matchedOrderId; // rule এই orderId খুলে সত্যিই delivered+এই ইউজারের কিনা যাচাই করে
+      await FB.addDoc(FB.collection(FB.db,'reviews'), reviewDoc);
       toast(verified ? '✓ যাচাইকৃত রিভিউ সাবমিট হয়েছে' : '✓ রিভিউ সাবমিট হয়েছে','success');
       return true;
     }catch(e){ toast('রিভিউ সাবমিট ব্যর্থ: '+e.message,'error'); return false; }
