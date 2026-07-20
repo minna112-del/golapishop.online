@@ -1,10 +1,10 @@
-# netlify.toml â€” Golapi Shop SPA Rewrites
+# netlify.toml — Golapi Shop SPA Rewrites + Security Headers
 # Place this file in the ROOT of your golapishop.online repository
 
 [build]
   publish = "."
 
-# â”€â”€â”€ SPA Rewrites â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ─── SPA Rewrites ─────────────────────────────────────────────
 # All unknown paths serve index.html so the JS router can handle them
 
 [[redirects]]
@@ -31,14 +31,22 @@
   status = 200
   force = false
 
-# SPA fallback â€” any path that doesn't match a real file
+# SPA fallback — any path that doesn't match a real file
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
   force = false
 
-# â”€â”€â”€ Security Headers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ─── Security Headers ──────────────────────────────────────────
+# ⚠️ CSP নোট: এই সাইট প্রচুর inline onclick="..." attribute ও inline <script>
+# ব্যবহার করে (GTM snippet, JSON-LD, theme-detection)। তাই script-src/style-src-এ
+# 'unsafe-inline' রাখা বাধ্যতামূলক — নইলে পুরো সাইটের বাটন/ইন্টারঅ্যাকশন ভেঙে যাবে।
+# এটা CSP-এর XSS-বিরোধী সর্বোচ্চ সুরক্ষা কিছুট কমায়, কিন্তু তারপরও কোন ডোমেইন থেকে
+# script/style/connection আসতে পারবে তা কড়াকডভাবে সীমাবদ্ধ রাখে (data exfiltration,
+# অননুমোদিত iframe embedding, অচেনা third-party script injection আটকায়)।
+# ভবিষ্যতে সব onclick-কে addEventListener-এ রূপান্তর করলে 'unsafe-inline' সরিয়ে
+# আরও কড়া nonce-based CSP কর সম্ভব হবে।
 
 [[headers]]
   for = "/*"
@@ -47,8 +55,10 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "geolocation=(self)"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://maps.googleapis.com https://unpkg.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.googleapis.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebasestorage.googleapis.com https://golapi-chat-proxy.studiomt46.workers.dev https://www.google-analytics.com https://analytics.google.com https://api.sslwireless.com https://api.bdbulksms.net wss://*.firebaseio.com; frame-src 'self' https://www.googletagmanager.com; object-src 'none'; base-uri 'self'; frame-ancestors 'self'; upgrade-insecure-requests"
 
-# Asset Links â€” required for TWA deep linking
+# Asset Links — required for TWA deep linking
 [[headers]]
   for = "/.well-known/assetlinks.json"
   [headers.values]
