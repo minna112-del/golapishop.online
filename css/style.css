@@ -60,8 +60,8 @@ nav.catnav::-webkit-scrollbar{display:none}
 nav.catnav .inner{max-width:1280px;margin:0 auto;padding:0 16px;display:flex;gap:4px;align-items:center}
 nav.catnav a{display:block;padding:10px 13px;font-size:12.5px;color:var(--ink-muted);white-space:nowrap;transition:.2s}
 nav.catnav a:hover,nav.catnav a.active{color:var(--rose)}
-nav.catnav a.flash{background:var(--rose);color:#fff!important;border-radius:9px;font-weight:600;margin:6px 2px;padding:8px 15px}
-nav.catnav a.medical{background:var(--emerald);color:#fff!important;border-radius:9px;font-weight:600;margin:6px 2px;padding:8px 15px}
+nav.catnav a.flash{background:var(--rose);color:#fff!important;border-radius:9px;font-weight:600;margin:6px 2px;padding:8px 15px;display:inline-flex;align-items:center;line-height:1}
+nav.catnav a.medical{background:var(--emerald);color:#fff!important;border-radius:9px;font-weight:600;margin:6px 2px;padding:8px 15px;display:inline-flex;align-items:center;line-height:1}
 nav.catnav a.gold{background:var(--gold);color:#fff!important;border-radius:9px;font-weight:700;margin:6px 2px;padding:8px 15px}
 
 /* ---------- pages ---------- */
