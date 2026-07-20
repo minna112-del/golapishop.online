@@ -537,6 +537,29 @@ const AdminDash = {
     }catch(e){ devWarn(e.message); }
   },
 
+  async loadDeliverySettings(){
+    if(!FB) return;
+    try{
+      const snap = await FB.getDoc(FB.doc(FB.db,'setting','delivery'));
+      const d = snap.exists() ? snap.data() : DELIVERY_SETTINGS;
+      const map = {ds_baseFee:'baseFee', ds_perKmFee:'perKmFee', ds_perItemFee:'perItemFee', ds_freeAboveSubtotal:'freeAboveSubtotal', ds_deliveryRadiusKm:'deliveryRadiusKm', ds_maxDistanceKm:'maxDistanceKm'};
+      Object.entries(map).forEach(([elId,key])=>{ const el=document.getElementById(elId); if(el) el.value = d[key] ?? DELIVERY_SETTINGS[key] ?? ''; });
+    }catch(e){ devWarn('delivery settings load failed', e.message); }
+  },
+
+  async saveDeliverySettings(){
+    if(!FB){ toast('সংযোগ সমস্যা','error'); return; }
+    try{
+      const map = {ds_baseFee:'baseFee', ds_perKmFee:'perKmFee', ds_perItemFee:'perItemFee', ds_freeAboveSubtotal:'freeAboveSubtotal', ds_deliveryRadiusKm:'deliveryRadiusKm', ds_maxDistanceKm:'maxDistanceKm'};
+      const data = {};
+      Object.entries(map).forEach(([elId,key])=>{ const el=document.getElementById(elId); if(el) data[key]=Number(el.value)||0; });
+      await FB.setDoc(FB.doc(FB.db,'setting','delivery'), {...data, updatedAt:FB.serverTimestamp()});
+      // লাইভ অ্যাপ্লাই করা — পেজ রিফ্রেশ ছাড়াই এখন থেকে নতুন মূল্য ব্যবহার হবে
+      Object.assign(DELIVERY_SETTINGS, data);
+      toast('✓ ডেলিভারি প্রাইসিং সংরক্ষণ ও সাথে সাথে চালু হয়েছে','success');
+    }catch(e){ toast('সমস্যা: '+e.message,'error'); }
+  },
+
   async saveZmPins(){
     if(!FB){ toast('সংযোগ সমস্যা','error'); return; }
     try{
@@ -572,6 +595,7 @@ const AdminDash = {
     if(name==='customers') this.renderCustomers(this._allOrders);
     if(name==='coupons') CouponManage.render();
     if(name==='payments') PaymentVerify.render();
+    if(name==='settings'){ this.loadStoreSettings(); this.loadZmPins(); this.loadDeliverySettings(); }
   }
 };
 
