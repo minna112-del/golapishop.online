@@ -819,18 +819,18 @@ const ProductForm = {
     if(loadEl) loadEl.style.display = 'block';
     const aiBtn=document.getElementById('pfDescAiBtn'); if(aiBtn) aiBtn.style.display = 'none';
     try{
-      const messages = [{role:'user', content:[
-        {type:'text', text:`তুমি একটি বাংলাদেশি ই-কমার্স দোকানের জন্য পণ্যের বিবরণ লিখবে। পণ্যের নাম: "${name || 'পণ্য'}", ক্যাটাগরি: "${cat}". সংক্ষিপ্ত, আকর্ষণীয় বাংলা বিবরণ লিখো (৩-৫ লাইন)।`}
-      ]}];
-      const res = await fetch('https://api.anthropic.com/v1/messages',{
+      const userMsg = `তুমি একটি বাংলাদেশি ই-কমার্স দোকানের জন্য পণ্যের বিবরণ লিখবে। পণ্যের নাম: "${name || 'পণ্য'}", ক্যাটাগরি: "${cat}". সংক্ষিপ্ত, আকর্ষণীয় বাংলা বিবরণ লিখো (৩-৫ লাইন)।`;
+      /* ⚠️ Anthropic API browser থেকে সরাসরি কল করা যায় না (CORS + API key ব্রাউজারে expose হয়ে যায়) —
+         তাই ChatWidget-এর মতোই একই Cloudflare Worker proxy ব্যবহার করা হচ্ছে, যেটা ইতিমধ্যে কাজ করছে */
+      const res = await fetch(ChatWidget.workerUrl,{
         method:'POST', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({model:'claude-sonnet-4-6', max_tokens:300, messages})
+        body:JSON.stringify({model:'claude-sonnet-4-6', max_tokens:300, messages:[{role:'user', content:userMsg}]})
       });
       const data = await res.json();
       const text = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
       if(text && descEl) descEl.value = text;
       else toast('বিবরণ তৈরি হয়নি','error');
-    }catch(e){ toast('AI সংযোগ সমস্যা','error'); }
+    }catch(e){ toast('AI সংযোগ সমস্যা','error'); devWarn('generateDesc failed', e.message); }
     finally{ if(loadEl) loadEl.style.display='none'; if(aiBtn) aiBtn.style.display='inline-block'; }
   },
   openAdd(){
