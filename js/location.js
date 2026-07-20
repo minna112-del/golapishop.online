@@ -81,6 +81,7 @@ const LocationPicker = {
       <div id="lpMapDiv" style="width:100%;height:280px;border-radius:14px;overflow:hidden;border:1px solid var(--line);margin-bottom:12px"></div>
       <div id="lpInfoBox" style="display:none;background:rgba(240,53,107,.05);border:1px solid var(--gold-line);border-radius:12px;padding:14px;margin-bottom:14px">
         <div style="font-size:13px;color:var(--ink);margin-bottom:8px" id="lpAddressText"></div>
+        <div id="lpZoneText" style="font-size:12.5px;margin-bottom:8px"></div>
         <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--ink-muted)">
           <span id="lpDistanceText"></span>
           <span id="lpEtaText"></span>
@@ -185,6 +186,25 @@ const LocationPicker = {
 
     document.getElementById('lpDistanceText').innerHTML = `📏 ${nearest.label} শাখা থেকে <strong>${nearest.distanceKm.toFixed(1)} কিমি</strong>`;
 
+    // ── Zone সিস্টেম: কোন zone-এ পড়ছে বের করা, এর বাইরে হলে ব্লক ──
+    const zone = findDeliveryZone(nearest.id, lat, lng);
+    this.selected.zone = zone;
+    const zoneBox = document.getElementById('lpZoneText');
+    if(zoneBox){
+      zoneBox.innerHTML = zone
+        ? `🗺️ <strong style="color:var(--rose)">${zone.label}</strong>`
+        : `<span style="color:#DC2626">⚠️ আমাদের ডেলিভারি জোনের বাইরে — অর্ডার করা যাবে না</span>`;
+    }
+    if(!zone){
+      this.selected.deliveryFee = null;
+      document.getElementById('lpFeeText').textContent = '';
+      document.getElementById('lpEtaText').textContent = '';
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = 'জোনের বাইরে — কনফার্ম করা যাবে না';
+      return; // zone-এর বাইরে হলে ETA/fee হিসাব করারও দরকার নেই
+    }
+    confirmBtn.textContent = 'এই লোকেশন কনফার্ম করুন';
+
     // ETA: Distance Matrix (রাস্তার ভিত্তিতে, ট্রাফিক-সচেতন) — ব্যর্থ হলে সরল distanceKm-ভিত্তিক আনুমানিক সময়ে fallback
     this.distanceService.getDistanceMatrix({
       origins: [{ lat: nearest.lat, lng: nearest.lng }],
@@ -202,15 +222,17 @@ const LocationPicker = {
       document.getElementById('lpEtaText').innerHTML = `⏱️ আনুমানিক <strong>${etaMin} মিনিট</strong>`;
       const itemCount = (typeof Cart !== 'undefined') ? Cart.totalCount() : 1;
       const subtotal = (typeof Cart !== 'undefined') ? Cart.totalPrice() : 0;
-      const fee = calcDeliveryCharge(itemCount, subtotal, nearest.distanceKm);
+      // zone-ভিত্তিক ফ্ল্যাট ফি প্রাধান্য পায়; subtotal ফ্রি-ডেলিভারি থ্রেশহোল্ড ছাড়ালে zone fee-ও মাফ
+      const fee = (subtotal >= DELIVERY_SETTINGS.freeAboveSubtotal) ? 0 : zone.fee;
       this.selected.deliveryFee = fee;
-      document.getElementById('lpFeeText').textContent = fee === 0 ? '💰 ফ্রি ডেলিভারি' : `💰 ডেলিভারি চার্জ ৳${fee}`;
+      document.getElementById('lpFeeText').textContent = fee === 0 ? '💰 ফ্রি ডেলিভারি' : `💰 ডেলিভারি চার্জ ৳${fee} (${zone.label})`;
       confirmBtn.disabled = false;
     });
   },
 
   confirm(){
     if(this.selected.lat === null) return;
+    if(!this.selected.zone){ toast('⚠ এই লোকেশন ডেলিভারি জোনের বাইরে','error'); return; }
     if(typeof this.onConfirmCallback === 'function') this.onConfirmCallback({ ...this.selected });
     this.close();
   }
