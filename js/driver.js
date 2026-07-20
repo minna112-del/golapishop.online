@@ -151,12 +151,22 @@ const DriverPortal = {
         else if(o.status==='in_transit') nextBtn=`<button class="btn btn-gold btn-block" onclick="DriverPortal.advance('${o.id}','delivered')">✅ ডেলিভারি সম্পন্ন</button>`;
       }
       const chatBtn = this.tab==='active' ? `<button class="btn btn-outline btn-block" style="margin-top:6px;font-size:12px" onclick="OrderChat.open('${o.id}','driver')">💬 কাস্টমারের সাথে চ্যাট</button>` : '';
+      const smsBtn = this.tab==='active' ? `<a class="btn btn-outline btn-block" style="margin-top:6px;font-size:12px" href="sms:${o.customerPhone}">✉️ SMS পাঠান</a>` : '';
+      const gpsPanel = (this.tab==='active' && o.status==='in_transit')
+        ? `<div id="driverGpsPanel" style="background:rgba(255,255,255,.03);border-radius:8px;padding:8px 10px;margin-top:8px;display:flex;flex-direction:column;gap:3px"></div>` : '';
       return `<div class="card-box"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><strong>${o.orderNumber||o.id}</strong><span class="status-pill ${s.cls}">${s.label}</span></div>
         <div style="font-size:12.5px;margin-bottom:4px">👤 ${o.customerName} — <a href="tel:${o.customerPhone}">${o.customerPhone}</a></div>
         <div style="font-size:12.5px;color:var(--ink-muted);margin-bottom:8px">📍 ${fullAddress}</div>
         ${o.instructions?`<div style="font-size:12px;background:rgba(255,255,255,.03);padding:8px;border-radius:8px;margin-bottom:8px;color:var(--ink-soft)">💬 ${o.instructions}</div>`:''}
-        <div style="font-size:13px;font-weight:600;margin-bottom:8px">মোট: ${money(o.subtotal||o.billAmount||0)}</div>${navBtn}${bazarBox}${nextBtn}${chatBtn}</div>`;
+        <div style="font-size:13px;font-weight:600;margin-bottom:8px">মোট: ${money(o.subtotal||o.billAmount||0)}</div>${navBtn}${bazarBox}${nextBtn}${gpsPanel}${chatBtn}${smsBtn}</div>`;
     }).join('');
+    const inTransitOrder = mine.find(o=>o.status==='in_transit');
+    if(inTransitOrder && !LocationService.isWatching()){
+      LocationService.watchDriver(inTransitOrder.id, ()=>this._refreshGpsPanel());
+      if(this._battTimer) clearInterval(this._battTimer);
+      this._battTimer = setInterval(()=>this._refreshGpsPanel(), 20000);
+      this._refreshGpsPanel();
+    }
   },
 
   liveWatchId:null,
@@ -179,12 +189,25 @@ const DriverPortal = {
     }catch(e){ toast('সমস্যা: '+e.message,'error'); }
   },
   startTransit(orderId){
-    if(!navigator.geolocation){ toast('এই ব্রাউজারে লোকেশন সাপোর্ট নেই','error'); this.advance(orderId,'in_transit'); return; }
-    if(this.liveWatchId) navigator.geolocation.clearWatch(this.liveWatchId);
-    this.liveWatchId = navigator.geolocation.watchPosition(pos=>{
-      if(FB) FB.updateDoc(FB.doc(FB.db,'orders',orderId),{driverLat:pos.coords.latitude, driverLng:pos.coords.longitude}).catch(()=>{});
-    }, ()=>{}, {enableHighAccuracy:true, maximumAge:15000});
+    const ok = LocationService.watchDriver(orderId, ()=>{ this._refreshGpsPanel(); });
+    if(!ok){ this.advance(orderId,'in_transit'); return; }
+    this._refreshGpsPanel();
+    if(this._battTimer) clearInterval(this._battTimer);
+    this._battTimer = setInterval(()=>this._refreshGpsPanel(), 20000);
     this.advance(orderId,'in_transit');
+  },
+  async _refreshGpsPanel(){
+    const el = document.getElementById('driverGpsPanel');
+    if(!el) return;
+    const batt = await LocationService.getBattery();
+    const gps = await LocationService.getGpsStatus();
+    const gpsLabel = {granted:'✅ সক্রিয়', denied:'❌ বন্ধ', prompt:'⚠️ অনুমতি বাকি', unknown:'', unsupported:'সাপোর্ট নেই'}[gps]||gps;
+    const battLabel = batt.supported ? `${batt.level}%${batt.charging?' ⚡':''}` : 'অজানা';
+    const lastLabel = LocationService.timeSince(LocationService.lastUpdate);
+    el.innerHTML = `
+      <div class="row-between" style="font-size:11.5px"><span>📍 GPS স্ট্যাটাস</span><strong>${gpsLabel}</strong></div>
+      <div class="row-between" style="font-size:11.5px"><span>🔋 ব্যাটারি</span><strong>${battLabel}</strong></div>
+      <div class="row-between" style="font-size:11.5px"><span>📡 সর্বশেষ আপডেট</span><strong>${lastLabel}</strong></div>`;
   }
 };
 
