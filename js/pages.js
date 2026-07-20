@@ -329,14 +329,14 @@ function toggleVoiceSearch(){
   rec.lang = 'bn-BD';
   rec.interimResults = false;
   rec.maxAlternatives = 1;
-  btn.textContent = '🔴';
+  btn.classList.add('listening');
   rec.onresult = (e) => {
     const text = e.results[0][0].transcript;
     document.getElementById('searchInput').value = text;
     submitSearch();
   };
   rec.onerror = () => { toast('ভয়েস শোনা যায়নি, আবার চেষ্টা করুন','error'); };
-  rec.onend = () => { btn.textContent = '🎤'; };
+  rec.onend = () => { btn.classList.remove('listening'); };
   rec.start();
 }
 document.addEventListener('DOMContentLoaded', ()=>{
