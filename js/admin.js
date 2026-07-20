@@ -594,6 +594,39 @@ const AdminDash = {
     }catch(e){ toast('সমস্যা: '+e.message,'error'); }
   },
 
+  generateSitemap(){
+    const BASE = 'https://www.golapishop.online';
+    const today = new Date().toISOString().split('T')[0];
+    const urls = [];
+    // স্ট্যাটিক পাবলিক পেজ
+    const staticPaths = ['/', '/medical', '/custom-bazar', '/contact', '/about', '/terms', '/privacy'];
+    staticPaths.forEach(p => urls.push({ loc: BASE+p, priority: p==='/' ? '1.0' : '0.7' }));
+    // ক্যাটাগরি পেজ
+    CATEGORIES.forEach(c => urls.push({ loc: `${BASE}/category/${c.id}`, priority: '0.6' }));
+    // লাইভ প্রোডাক্ট (Firestore থেকে যা এখন ব্রাউজারে লোড আছে)
+    if(!ALL_PRODUCTS.length){
+      toast('⚠ প্রোডাক্ট এখনো লোড হয়নি — একটু পর আবার চেষ্টা করো','error');
+      return;
+    }
+    ALL_PRODUCTS.forEach(p => urls.push({ loc: `${BASE}/product/${p.id}`, priority: '0.8' }));
+
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
+      urls.map(u => `  <url>\n    <loc>${u.loc}</loc>\n    <lastmod>${today}</lastmod>\n    <priority>${u.priority}</priority>\n  </url>`).join('\n') +
+      `\n</urlset>`;
+
+    const box = document.getElementById('sitemapOutput');
+    box.value = xml;
+    box.style.display = 'block';
+    document.getElementById('sitemapCopyBtn').style.display = 'block';
+    toast(`✓ ${urls.length}টা URL সহ sitemap তৈরি হয়েছে — এখন কপি করে GitHub-এ আপলোড করো`, 'success');
+  },
+  copySitemap(){
+    const box = document.getElementById('sitemapOutput');
+    box.select();
+    document.execCommand('copy');
+    toast('✓ কপি হয়েছে — এখন GitHub-এ sitemap.xml ফাইলে পেস্ট করো','success');
+  },
+
   async saveZmPins(){
     if(!FB){ toast('সংযোগ সমস্যা','error'); return; }
     try{
