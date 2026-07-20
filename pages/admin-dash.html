@@ -213,6 +213,19 @@
             </div>
             <button class="btn btn-gold" onclick="AdminDash.saveStoreSettings()">সংরক্ষণ করুন</button>
           </div>
+          <div class="card-box" style="margin-bottom:16px">
+            <h3 style="font-size:14px;margin-bottom:12px;color:#fff">🚚 ডেলিভারি প্রাইসিং</h3>
+            <p style="font-size:11.5px;color:var(--ink-muted);margin-bottom:12px">এখানে যা বদলাবে, সেভ করার সাথে সাথে পুরো সাইটে সরাসরি চালু হয়ে যাবে — কোনো ডিপ্লয় লাগবে না।</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div class="field"><label>Base Charge — শুরুর চার্জ (৳)</label><input type="number" id="ds_baseFee" min="0"></div>
+              <div class="field"><label>Per KM Charge — প্রতি কিমি (৳)</label><input type="number" id="ds_perKmFee" min="0"></div>
+              <div class="field"><label>প্রতি আইটেম চার্জ (৳)</label><input type="number" id="ds_perItemFee" min="0"></div>
+              <div class="field"><label>Free Delivery — এর উপরে ফ্রি (৳)</label><input type="number" id="ds_freeAboveSubtotal" min="0"></div>
+              <div class="field"><label>Delivery Radius — স্বাভাবিক সীমা (কিমি)</label><input type="number" id="ds_deliveryRadiusKm" min="0" step="0.5"></div>
+              <div class="field"><label>Max Distance — এর বাইরে অর্ডার ব্লক (কিমি)</label><input type="number" id="ds_maxDistanceKm" min="0" step="0.5"></div>
+            </div>
+            <button class="btn btn-gold" onclick="AdminDash.saveDeliverySettings()">ডেলিভারি প্রাইসিং সংরক্ষণ করুন</button>
+          </div>
           <div class="card-box">
             <h3 style="font-size:14px;margin-bottom:12px;color:#fff">🏢 জোন ম্যানেজার পিন</h3>
             <div class="field"><label>নোয়াখালী সদর — পিন</label><input type="text" id="zmPinSadar" placeholder="যেমন 1111"></div>
