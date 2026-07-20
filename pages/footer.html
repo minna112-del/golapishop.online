@@ -1,53 +1,73 @@
-<footer class="main" id="custFooter">
-  <div class="footer-grid">
+<footer class="main" id="custFooter" style="padding:0;margin-top:40px;background:none;border:none">
 
-    <div>
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px"><div class="mark" style="width:36px;height:36px"><img src="icons/head_logo.webp" alt="Golapi" style="width:100%;height:100%;object-fit:cover;border-radius:10px"></div><span class="word" style="font-size:14px">Golapi<span class="g">Shop</span>.online</span></div>
-      <p class="ftr-blurb">নোয়াখালী সদর ও বেগমগঞ্জের মানুষের দৈনন্দিন প্রয়োজনীয় পণ্য ঘরে বসে পাওয়ার জন্য আমরা কাজ করি।</p>
-      <a href="https://facebook.com/golapishoponline" target="_blank" rel="noopener" class="ftr-social">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="#fff"><path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c5.05-.5 9-4.76 9-9.95z"/></svg>
-      </a>
+  <!-- CTA স্ট্রিপ — footer শুরুতেই একটা action prompt, শুধু link-list না -->
+  <div class="ftr-cta">
+    <div class="ftr-cta-inner">
+      <div>
+        <h3>আজই আপনার বাজারের লিস্ট পাঠান</h3>
+        <p>২ মিনিটে অর্ডার, টাকা দিন পণ্য হাতে পাওয়ার পর</p>
+      </div>
+      <button class="ftr-cta-btn" onclick="Router.go('custom-bazar')">লিস্ট পাঠান →</button>
     </div>
-
-    <div>
-      <div class="ftr-head">দ্রুত লিংক</div>
-      <a href="#" onclick="Router.go('custom-bazar')" class="ftr-row"><span class="ftr-chip"><span class="ic ic-pencil"></span></span><span class="ftr-link-text">কাস্টম বাজার</span></a>
-      <a href="#" onclick="Router.go('medical')" class="ftr-row"><span class="ftr-chip"><img src="icons/dr_logo.webp"></span><span class="ftr-link-text">ফ্রী স্বাস্থ্য সেবা</span></a>
-      <a href="#" onclick="Router.go('myorders')" class="ftr-row"><span class="ftr-chip"><span class="ic ic-cart"></span></span><span class="ftr-link-text">আমার অর্ডার</span></a>
-      <a href="#" onclick="Router.go('contact')" class="ftr-row"><span class="ftr-chip"><span class="ic ic-phone"></span></span><span class="ftr-link-text">যোগাযোগ</span></a>
-    </div>
-
-    <div>
-      <div class="ftr-head">যোগাযোগ</div>
-      <div class="ftr-contact-card">
-        <span class="ftr-chip"><span class="ftr-dot-red"></span></span>
-        <div><div class="ftr-contact-name">হটলাইন — হৃদয়</div><a href="tel:+8801612057371" class="ftr-contact-num">+880 1612-057371</a></div>
-      </div>
-      <div class="ftr-contact-card">
-        <span class="ftr-chip"><span class="ic ic-pin"></span></span>
-        <div><div class="ftr-contact-name">সদর — রিমন</div><a href="tel:+8801627010060" class="ftr-contact-num">+880 1627-010060</a></div>
-      </div>
-      <div class="ftr-contact-card">
-        <span class="ftr-chip"><span class="ic ic-pin"></span></span>
-        <div><div class="ftr-contact-name">বেগমগঞ্জ — সৃজন</div><a href="tel:+8801310006959" class="ftr-contact-num">+880 1310-006959</a></div>
-      </div>
-      <div class="ftr-divider"></div>
-      <div class="ftr-contact-card">
-        <span class="ftr-chip"><span class="ic ic-phone" style="width:12px;height:12px"></span></span>
-        <div><div class="ftr-contact-name">ইমেইল</div><a href="mailto:golapishoponline.bd@gmail.com" class="ftr-contact-num" style="font-size:12px;word-break:break-all">golapishoponline.bd@gmail.com</a></div>
-      </div>
-    </div>
-
-    <div>
-      <div class="ftr-head">পেমেন্ট মাধ্যম</div>
-      <div class="pay-icons" style="margin-bottom:0">
-        <span>bKash</span><span>Nagad</span><span>Cash on Delivery</span>
-      </div>
-    </div>
-
   </div>
-  <div class="footer-bottom">
-    <span>© ২০২৫ Golapi Shop Online — সর্বস্বত্ব সংরক্ষিত</span>
-    <span style="display:flex;gap:14px"><a href="#" onclick="Router.go('contact')">যোগাযোগ</a><a href="#" onclick="Router.go('admin-dash')" style="opacity:.35">শপ ম্যানেজমেন্ট</a><a href="#" onclick="Router.go('zone-manager')" style="opacity:.35">শাখা ব্যবস্থাপনা</a></span>
+
+  <div class="ftr-main">
+    <div class="ftr-grid-v3">
+
+      <div>
+        <div class="ftr-brand-lockup">Golapi<span class="pink">Shop</span>.online</div>
+        <p class="ftr-tagline">নোয়াখালী সদর ও বেগমগঞ্জের মানুষের দৈনন্দিন প্রয়োজনীয় পণ্য ঘরে বসে পাওয়ার জন্য আমরা কাজ করি — নিজস্ব ড্রাইভার, নিজস্ব শাখা।</p>
+        <div>
+          <span class="ftr-branch-pill"><span class="dot"></span> সদর শাখা</span>
+          <span class="ftr-branch-pill"><span class="dot"></span> বেগমগঞ্জ শাখা</span>
+        </div>
+      </div>
+
+      <div>
+        <span class="ftr-head-v3">দ্রুত লিংক</span>
+        <a href="#" onclick="Router.go('custom-bazar')" class="ftr-row-v3"><span class="ic ic-pencil"></span>কাস্টম বাজার</a>
+        <a href="#" onclick="Router.go('medical')" class="ftr-row-v3"><span class="ic ic-heart-pulse"></span>ফ্রী স্বাস্থ্য সেবা</a>
+        <a href="#" onclick="Router.go('myorders')" class="ftr-row-v3"><span class="ic ic-cart"></span>আমার অর্ডার</a>
+        <a href="#" onclick="Router.go('contact')" class="ftr-row-v3"><span class="ic ic-phone"></span>যোগাযোগ</a>
+      </div>
+
+      <div>
+        <span class="ftr-head-v3">যাদের কল করবেন</span>
+        <div class="ftr-person-card">
+          <div class="ftr-person-avatar">হৃ</div>
+          <div class="ftr-person-info"><div class="name">হটলাইন — হৃদয়</div><a href="tel:+8801612057371" class="num">+880 1612-057371</a></div>
+        </div>
+        <div class="ftr-person-card">
+          <div class="ftr-person-avatar">রি</div>
+          <div class="ftr-person-info"><div class="name">সদর — রিমন</div><a href="tel:+8801627010060" class="num">+880 1627-010060</a></div>
+        </div>
+        <div class="ftr-person-card">
+          <div class="ftr-person-avatar">সৃ</div>
+          <div class="ftr-person-info"><div class="name">বেগমগঞ্জ — সৃজন</div><a href="tel:+8801310006959" class="num">+880 1310-006959</a></div>
+        </div>
+      </div>
+
+      <div>
+        <span class="ftr-head-v3">পেমেন্ট ও সোশ্যাল</span>
+        <div class="pay-icons" style="margin-bottom:16px"><span>bKash</span><span>Nagad</span><span>COD</span></div>
+        <a href="https://facebook.com/golapishoponline" target="_blank" rel="noopener" class="ftr-row-v3" style="margin-bottom:14px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="#1877F2"><path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c5.05-.5 9-4.76 9-9.95z"/></svg>
+          Facebook-এ ফলো করুন
+        </a>
+        <a href="mailto:golapishoponline.bd@gmail.com" class="ftr-row-v3" style="font-size:11.5px;word-break:break-all"><span class="ic ic-phone" style="width:12px;height:12px"></span>golapishoponline.bd@gmail.com</a>
+      </div>
+
+    </div>
+
+    <div class="ftr-bottom-v3">
+      <span style="font-size:11.5px;color:rgba(255,255,255,.4)">© ২০২৫ Golapi Shop Online — সর্বস্বত্ব সংরক্ষিত</span>
+      <span style="display:flex;gap:16px;font-size:11.5px">
+        <a href="#" onclick="Router.go('privacy-info')" style="color:rgba(255,255,255,.4)">প্রাইভেসি</a>
+        <a href="#" onclick="Router.go('terms')" style="color:rgba(255,255,255,.4)">শর্তাবলী</a>
+        <a href="#" onclick="Router.go('admin-dash')" style="color:rgba(255,255,255,.2)">শপ ম্যানেজমেন্ট</a>
+        <a href="#" onclick="Router.go('zone-manager')" style="color:rgba(255,255,255,.2)">শাখা ব্যবস্থাপনা</a>
+      </span>
+    </div>
+    <div style="height:24px"></div>
   </div>
 </footer>
