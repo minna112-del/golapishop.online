@@ -131,7 +131,9 @@ const DriverPortal = {
       const isCustomBazar = o.orderType==='custom-bazar';
       const fullAddress = `${o.village?o.village+', ':''}${o.zone||''}, ${o.district||''} — ${o.address||''}`;
       const navBtn = this.tab==='active'
-        ? `<a class="btn btn-outline btn-block" style="margin-top:6px;font-size:12px" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(fullAddress)}">🧭 নেভিগেট করুন</a>`
+        ? (o.customerLat && o.customerLng
+            ? `<button class="btn btn-outline btn-block" style="margin-top:6px;font-size:12px" onclick="openDriverNavigation(${o.customerLat},${o.customerLng},'${(o.customerName||'').replace(/'/g,"")}')">🧭 নেভিগেট করুন (সঠিক পিন)</button>`
+            : `<a class="btn btn-outline btn-block" style="margin-top:6px;font-size:12px" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(fullAddress)}">🧭 নেভিগেট করুন</a>`)
         : '';
       let nextBtn='';
       let bazarBox='';
