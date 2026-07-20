@@ -560,6 +560,40 @@ const AdminDash = {
     }catch(e){ toast('সমস্যা: '+e.message,'error'); }
   },
 
+  loadDeliveryZonesEditor(){
+    const box = document.getElementById('zoneEditorBox');
+    if(!box) return;
+    box.innerHTML = Object.entries(DELIVERY_ZONES).map(([branchId, zones])=>{
+      const branchLabel = BRANCH_INFO[branchId]?.label || branchId;
+      return `<div style="margin-bottom:14px">
+        <div style="font-size:12.5px;font-weight:700;color:var(--gold);margin-bottom:8px">${branchLabel}</div>
+        ${zones.map(z=>`
+          <div style="display:grid;grid-template-columns:1.4fr .8fr .8fr;gap:8px;align-items:center;margin-bottom:6px">
+            <span style="font-size:12px;color:var(--ink-soft)">${z.label}</span>
+            <input type="number" id="zn_${z.id}_radius" value="${z.radiusKm}" min="0" step="0.5" placeholder="কিমি" style="padding:7px 9px;border-radius:8px;background:var(--bg2);border:1px solid var(--line);color:#fff;font-size:12px">
+            <input type="number" id="zn_${z.id}_fee" value="${z.fee}" min="0" placeholder="৳ চার্জ" style="padding:7px 9px;border-radius:8px;background:var(--bg2);border:1px solid var(--line);color:#fff;font-size:12px">
+          </div>`).join('')}
+      </div>`;
+    }).join('') + `<div style="font-size:10.5px;color:var(--ink-dim);display:grid;grid-template-columns:1.4fr .8fr .8fr;gap:8px;margin-top:-4px"><span></span><span>radius (কিমি)</span><span>চার্জ (৳)</span></div>`;
+  },
+
+  async saveDeliveryZones(){
+    if(!FB){ toast('সংযোগ সমস্যা','error'); return; }
+    try{
+      const updated = {};
+      Object.entries(DELIVERY_ZONES).forEach(([branchId, zones])=>{
+        updated[branchId] = zones.map(z=>{
+          const radiusEl = document.getElementById(`zn_${z.id}_radius`);
+          const feeEl = document.getElementById(`zn_${z.id}_fee`);
+          return { ...z, radiusKm: Number(radiusEl?.value)||z.radiusKm, fee: Number(feeEl?.value)||z.fee };
+        });
+      });
+      await FB.setDoc(FB.doc(FB.db,'setting','delivery_zones'), { zones: updated, updatedAt: FB.serverTimestamp() });
+      Object.assign(DELIVERY_ZONES, updated);
+      toast('✓ ডেলিভারি জোন সংরক্ষণ ও সাথে সাথে চালু হয়েছে','success');
+    }catch(e){ toast('সমস্যা: '+e.message,'error'); }
+  },
+
   async saveZmPins(){
     if(!FB){ toast('সংযোগ সমস্যা','error'); return; }
     try{
@@ -595,7 +629,7 @@ const AdminDash = {
     if(name==='customers') this.renderCustomers(this._allOrders);
     if(name==='coupons') CouponManage.render();
     if(name==='payments') PaymentVerify.render();
-    if(name==='settings'){ this.loadStoreSettings(); this.loadZmPins(); this.loadDeliverySettings(); }
+    if(name==='settings'){ this.loadStoreSettings(); this.loadZmPins(); this.loadDeliverySettings(); this.loadDeliveryZonesEditor(); }
   }
 };
 
