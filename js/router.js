@@ -55,10 +55,10 @@ const Router = {
      private/checkout-ধরনের পেজ (checkout, account, myorders, order-success)
      ইচ্ছাকৃতভাবে বাদ — সেগুলোর URL বদলানোর দরকার নেই, index-ও হওয়া উচিত না */
   seoMeta: {
-    home: { path: '/', title: 'Golapi Shop Online — নোয়াখালী সদর ও বেগমগঞ্জের অনলাইন শপ', desc: 'মুদি, ঔষধ, গ্যাস, কসমেটিকস — bKash, Nagad, COD পেমেন্টে ঘরে বসে অর্ডার করুন। নিজস্ব লোকাল ড্রাইভার, ফ্রী স্বাস্থ্য সেবা।' },
+    home: { path: '/', title: 'Golapi Shop Online — নোয়াখালী সদর ও বেগমগঞ্জের অনলাইন শপ', desc: 'মুদি, ঔষধ, গ্যাস, কসমেটিকস — bKash, Nagad, COD পেমেন্টে ঘরে বসে অর্ডার করুন। নিজস্ব লোকাল ড্রাইভার, ডাক্তার এপয়েন্টমেন্ট বুকিং সেবা।' },
     listing: { path: p => `/category/${p.cat||'all'}`, title: p => `${CATEGORIES.find(c=>c.id===p.cat)?.label || 'সব প্রোডাক্ট'} — Golapi Shop Online`, desc: p => `${CATEGORIES.find(c=>c.id===p.cat)?.label || 'সব প্রোডাক্ট'} কিনুন Golapi Shop Online থেকে — নোয়াখালী সদর ও বেগমগঞ্জে হোম ডেলিভারি।` },
     product: { path: p => `/product/${p.id}`, title: p => { const pr=ALL_PRODUCTS.find(x=>x.id===p.id); return pr ? `${pr.name} — ৳${pr.salePrice} | Golapi Shop Online` : 'প্রোডাক্ট — Golapi Shop Online'; }, desc: p => { const pr=ALL_PRODUCTS.find(x=>x.id===p.id); return pr ? (pr.description || `${pr.name} — Golapi Shop Online থেকে হোম ডেলিভারিতে কিনুন।`) : ''; } },
-    medical: { path: '/medical', title: 'ফ্রী স্বাস্থ্য সেবা — Golapi Shop Online', desc: '১৫ জন বিশেষজ্ঞ চিকিৎসকের ফ্রী ভিজিট শিডিউলিং — নোয়াখালী সদর ও বেগমগঞ্জ।' },
+    medical: { path: '/medical', title: 'ডাক্তার এপয়েন্টমেন্ট — Golapi Shop Online', desc: '১৫ জন বিশেষজ্ঞ চিকিৎসকের ভিজিট শিডিউলিং সহায়তা — নোয়াখালী সদর ও বেগমগঞ্জ।' },
     'custom-bazar': { path: '/custom-bazar', title: 'কাস্টম বাজার — Golapi Shop Online', desc: 'নিজের বাজারের লিস্ট পাঠান, আমাদের ড্রাইভার বাজার করে বাসায় পৌঁছে দেবে।' },
     contact: { path: '/contact', title: 'যোগাযোগ — Golapi Shop Online', desc: 'হটলাইন, শাখা ম্যানেজারের নম্বর ও ইমেইল — Golapi Shop Online.' },
     'about-app': { path: '/about', title: 'আমাদের গল্প — Golapi Shop Online', desc: 'Golapi Shop Online কীভাবে শুরু হলো, আমাদের টিমের সাথে পরিচিত হন।' },
