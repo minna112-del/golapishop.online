@@ -371,10 +371,13 @@ function calcDeliveryCharge(itemCount, subtotal=0, distanceKm=null){
 /* ---------- Checkout ---------- */
 const Checkout = {
   pay:'cod', currentStep:1, walletAvailable:0, couponCode:null, couponData:null,
+  locationData:null, // LocationPicker থেকে আসা {lat,lng,address,branchZone,distanceKm,etaMin,deliveryFee}
   async init(){
     const d=document.getElementById('ckDistrict'); if(d) d.value='';
     const z=document.getElementById('ckZone'); if(z) z.innerHTML='<option value="">প্রথমে উপজেলা বেছে নিন</option>';
     const v=document.getElementById('ckVillage'); if(v) v.value='';
+    this.locationData = null;
+    const ls=document.getElementById('ckLocationSummary'); if(ls){ ls.style.display='none'; ls.innerHTML=''; }
     this.walletAvailable = 0;
     this.couponCode = null; this.couponData = null;
     const cc=document.getElementById('ckCouponCode'); if(cc) cc.value='';
@@ -387,6 +390,22 @@ const Checkout = {
       }catch(e){ devWarn('wallet fetch failed', e.message); }
     }
     this.goStep(1);
+  },
+  openLocationPicker(){
+    LocationPicker.open((data)=>{
+      this.locationData = data;
+      // ম্যাপ থেকে পাওয়া নিকটতম শাখা অনুযায়ী উপজেলা ড্রপডাউন auto-select করে দেয়
+      const d = document.getElementById('ckDistrict');
+      if(d && data.branchZone){ d.value = data.branchZone; onUpazilaChange('ck'); }
+      const summary = document.getElementById('ckLocationSummary');
+      if(summary){
+        summary.style.display='block';
+        summary.innerHTML = `<strong style="color:var(--ink)">📍 ${data.address}</strong><br>
+          দূরত্ব: ${data.distanceKm.toFixed(1)} কিমি · ETA: ~${data.etaMin} মিনিট · ডেলিভারি চার্জ: ${data.deliveryFee===0?'ফ্রি':'৳'+data.deliveryFee}`;
+      }
+      this.renderSummary();
+      toast('✓ লোকেশন সেভ হয়েছে','success');
+    });
   },
   selectPay(el,method){
     el.parentElement.querySelectorAll('.radio-card').forEach(c=>{c.classList.remove('selected');c.querySelector('input').checked=false;});
@@ -479,7 +498,7 @@ const Checkout = {
       return `<div class="row-between"><span>${p.name} × ${bn(q)}</span><span>${money(p.salePrice*q)}</span></div>`;
     }).join('');
     const sub = Cart.totalPrice();
-    const ship = calcDeliveryCharge(itemCount, sub);
+    const ship = calcDeliveryCharge(itemCount, sub, this.locationData?.distanceKm ?? null);
     const couponDiscount = this.getCouponDiscount(sub);
     const couponRow=document.getElementById('ckCouponRow');
     if(couponRow) couponRow.style.display = couponDiscount>0 ? 'flex' : 'none';
@@ -514,13 +533,15 @@ const Checkout = {
     const orderNo = 'GS-'+new Date().getFullYear()+'-'+String(Math.floor(Math.random()*900000)+100000);
     const sub = Cart.totalPrice();
     const itemCount = Object.values(Cart.items).reduce((a,b)=>a+b,0);
-    const ship = calcDeliveryCharge(itemCount, sub);
+    const ship = calcDeliveryCharge(itemCount, sub, this.locationData?.distanceKm ?? null);
     const walletUsed = this.getWalletUsed(sub, ship);
     const couponDiscount = this.getCouponDiscount(sub);
     try{
       const orderRef = await FB.addDoc(FB.collection(FB.db,'orders'),{
         orderNumber:orderNo, customerName:name, customerPhone:phone, customerNid:nid, address:addr, village,
         branchZone:upazila, district:AREA_LABELS[upazila]||'', zone,
+        customerLat: this.locationData?.lat ?? null, customerLng: this.locationData?.lng ?? null,
+        distanceKm: this.locationData?.distanceKm ?? null, etaMinutes: this.locationData?.etaMin ?? null,
         instructions, paymentMethod:this.pay, paymentStatus:this.pay==='cod'?'cod':'pending_submission', deliverySlot:'express',
         items:Object.entries(Cart.items).map(([id,qty])=>({productId:id,qty})),
         subtotal:Math.max(0, sub+ship-walletUsed-couponDiscount), shippingCost:ship, walletUsed, couponCode:this.couponCode||null, couponDiscount,
