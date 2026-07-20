@@ -138,7 +138,12 @@ const DriverPortal = {
       let nextBtn='';
       let bazarBox='';
       if(this.tab==='active'){
-        if(isCustomBazar && o.status==='assigned'){
+        if(o.status==='assigned' && !o.driverAccepted){
+          nextBtn=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px">
+            <button class="btn btn-gold" onclick="DriverPortal.acceptOrder('${o.id}')">✅ Accept</button>
+            <button class="btn btn-outline" style="color:#f87171;border-color:rgba(239,68,68,.3)" onclick="DriverPortal.rejectOrder('${o.id}')">❌ Reject</button>
+          </div>`;
+        } else if(isCustomBazar && o.status==='assigned'){
           bazarBox = bazarShopHTML(o);
         } else if(o.status==='assigned') nextBtn=`<button class="btn btn-gold btn-block" onclick="DriverPortal.advance('${o.id}','packed')">📦 প্যাকিং সম্পন্ন</button>`;
         else if(o.status==='packed') nextBtn=`<button class="btn btn-gold btn-block" onclick="DriverPortal.advance('${o.id}','picked_up')">✓ পিকআপ সম্পন্ন</button>`;
@@ -156,6 +161,23 @@ const DriverPortal = {
 
   liveWatchId:null,
   async advance(orderId,status){ const ok=await OrdersService.updateStatus(orderId,status); if(ok){ toast('✓ স্ট্যাটাস আপডেট হয়েছে','success'); this.render(); } },
+  async acceptOrder(orderId){
+    if(!FB) return;
+    try{
+      await FB.updateDoc(FB.doc(FB.db,'orders',orderId),{driverAccepted:true, acceptedAt:FB.serverTimestamp()});
+      toast('✓ অর্ডার Accept করা হয়েছে','success');
+      this.render();
+    }catch(e){ toast('সমস্যা: '+e.message,'error'); }
+  },
+  async rejectOrder(orderId){
+    if(!FB) return;
+    if(!confirm('এই অর্ডারটা Reject করলে এটা আবার admin-এর কাছে ফিরে যাবে। নিশ্চিত?')) return;
+    try{
+      await FB.updateDoc(FB.doc(FB.db,'orders',orderId),{status:'confirmed', driverId:null, driverName:null, driverAccepted:false, rejectedAt:FB.serverTimestamp()});
+      toast('অর্ডার Reject করা হয়েছে, admin-কে জানানো হয়েছে','success');
+      this.render();
+    }catch(e){ toast('সমস্যা: '+e.message,'error'); }
+  },
   startTransit(orderId){
     if(!navigator.geolocation){ toast('এই ব্রাউজারে লোকেশন সাপোর্ট নেই','error'); this.advance(orderId,'in_transit'); return; }
     if(this.liveWatchId) navigator.geolocation.clearWatch(this.liveWatchId);
