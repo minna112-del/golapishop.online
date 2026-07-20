@@ -50,6 +50,37 @@ const OwnerAuth = {
 
 const Router = {
   current:'home', params:{},
+
+  /* ── SEO: প্রতিটা পাবলিক পেজের জন্য রিয়েল, শেয়ারযোগ্য URL + টাইটেল ──
+     private/checkout-ধরনের পেজ (checkout, account, myorders, order-success)
+     ইচ্ছাকৃতভাবে বাদ — সেগুলোর URL বদলানোর দরকার নেই, index-ও হওয়া উচিত না */
+  seoMeta: {
+    home: { path: '/', title: 'Golapi Shop Online — নোয়াখালী সদর ও বেগমগঞ্জের অনলাইন শপ', desc: 'মুদি, ঔষধ, গ্যাস, কসমেটিকস — bKash, Nagad, COD পেমেন্টে ঘরে বসে অর্ডার করুন। নিজস্ব লোকাল ড্রাইভার, ফ্রী স্বাস্থ্য সেবা।' },
+    listing: { path: p => `/category/${p.cat||'all'}`, title: p => `${CATEGORIES.find(c=>c.id===p.cat)?.label || 'সব প্রোডাক্ট'} — Golapi Shop Online`, desc: p => `${CATEGORIES.find(c=>c.id===p.cat)?.label || 'সব প্রোডাক্ট'} কিনুন Golapi Shop Online থেকে — নোয়াখালী সদর ও বেগমগঞ্জে হোম ডেলিভারি।` },
+    product: { path: p => `/product/${p.id}`, title: p => { const pr=ALL_PRODUCTS.find(x=>x.id===p.id); return pr ? `${pr.name} — ৳${pr.salePrice} | Golapi Shop Online` : 'প্রোডাক্ট — Golapi Shop Online'; }, desc: p => { const pr=ALL_PRODUCTS.find(x=>x.id===p.id); return pr ? (pr.description || `${pr.name} — Golapi Shop Online থেকে হোম ডেলিভারিতে কিনুন।`) : ''; } },
+    medical: { path: '/medical', title: 'ফ্রী স্বাস্থ্য সেবা — Golapi Shop Online', desc: '১৫ জন বিশেষজ্ঞ চিকিৎসকের ফ্রী ভিজিট শিডিউলিং — নোয়াখালী সদর ও বেগমগঞ্জ।' },
+    'custom-bazar': { path: '/custom-bazar', title: 'কাস্টম বাজার — Golapi Shop Online', desc: 'নিজের বাজারের লিস্ট পাঠান, আমাদের ড্রাইভার বাজার করে বাসায় পৌঁছে দেবে।' },
+    contact: { path: '/contact', title: 'যোগাযোগ — Golapi Shop Online', desc: 'হটলাইন, শাখা ম্যানেজারের নম্বর ও ইমেইল — Golapi Shop Online.' },
+    'about-app': { path: '/about', title: 'আমাদের গল্প — Golapi Shop Online', desc: 'Golapi Shop Online কীভাবে শুরু হলো, আমাদের টিমের সাথে পরিচিত হন।' },
+    terms: { path: '/terms', title: 'শর্তাবলী — Golapi Shop Online', desc: 'Golapi Shop Online ব্যবহারের শর্তাবলী।' },
+    'privacy-info': { path: '/privacy', title: 'প্রাইভেসি পলিসি — Golapi Shop Online', desc: 'Golapi Shop Online-এর গোপনীয়তা নীতি।' }
+  },
+  updateSeoTags(page, params, skipHistory){
+    const meta = this.seoMeta[page];
+    if(!meta) return; // private পেজ — URL/title অপরিবর্তিত থাকবে
+    const path = typeof meta.path==='function' ? meta.path(params) : meta.path;
+    const title = typeof meta.title==='function' ? meta.title(params) : meta.title;
+    const desc = typeof meta.desc==='function' ? meta.desc(params) : meta.desc;
+    if(title) document.title = title; // টাইটেল/মেটা সবসময় আপডেট হয় — direct URL হিট বা ক্লিক-নেভিগেশন দুই ক্ষেত্রেই
+    if(desc){
+      let m = document.querySelector('meta[name="description"]');
+      if(m) m.setAttribute('content', desc);
+    }
+    if(!skipHistory && path && window.location.pathname !== path){
+      history.pushState({ page, params }, '', path); // শুধু ক্লিক-নেভিগেশনে নতুন URL পুশ হয়; direct URL হিটে URL ইতিমধ্যেই সঠিক
+    }
+  },
+
   async go(page, params={}, opts={}){
     if(page==='admin-dash' && !OwnerAuth.isUnlocked()){
       const restored = await OwnerAuth._restoreSession();
@@ -60,6 +91,7 @@ const Router = {
       await new Promise(resolve => window.__ensureLazyPage(page, resolve));
     }
     this.current = page; this.params = params;
+    this.updateSeoTags(page, params, !!opts.skipHistory);
     if(typeof dataLayer!=='undefined') dataLayer.push({event:'page_view', page_title: page, page_path: '/#'+page});
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
     const el=document.getElementById('page-'+page);
