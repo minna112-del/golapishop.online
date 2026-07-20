@@ -321,6 +321,21 @@ function submitSearch(){
   const box = document.getElementById('searchSuggestBox'); if(box) box.style.display='none';
   Router.go('listing',{cat:'all', q});
 }
+/* iOS Safari-তে Web Speech API নির্ভরযোগ্যভাবে কাজ করে না (Apple-এর সীমাবদ্ধতা,
+   আমাদের কোডের সমস্যা না) — তাই মাইক বাটনটাই লুকিয়ে ফেলা হয়, বিভ্রান্তিকর error না দেখিয়ে */
+(function hideMicOnUnsupportedIOS(){
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+  const hasSpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(isIOS || !hasSpeechRec){
+    let tries = 0;
+    const hide = ()=>{
+      const btn = document.getElementById('voiceSearchBtn');
+      if(btn){ btn.style.display='none'; return; }
+      if(++tries < 20) setTimeout(hide, 300); // header slot-এ async লোড হয়, তাই কয়েকবার চেষ্টা
+    };
+    hide();
+  }
+})();
 function toggleVoiceSearch(){
   const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
   if(!SpeechRec){ toast('এই ব্রাউজারে ভয়েস সার্চ সাপোর্ট নেই','error'); return; }
@@ -335,10 +350,28 @@ function toggleVoiceSearch(){
     document.getElementById('searchInput').value = text;
     submitSearch();
   };
-  rec.onerror = () => { toast('ভয়েস শোনা যায়নি, আবার চেষ্টা করুন','error'); };
+  rec.onerror = (e) => {
+    // iOS Safari-তে Web Speech API নির্ভরযোগ্যভাবে কাজ করে না (Apple-এর সীমাবদ্ধতা,
+    // আমাদের কোডের বাগ না) — তাই এই ব্রাউজারে বারবার fail করলে মাইক আইকনটাই
+    // চিরতরে লুকিয়ে ফেলি, যাতে ভবিষ্যতে ইউজার আর বিভ্রান্তিকর error না দেখে
+    if(e.error === 'not-allowed' || e.error === 'service-not-allowed' || e.error === 'audio-capture'){
+      toast('মাইক্রোফোন পারমিশন দিন, অথবা টাইপ করে সার্চ করুন','error');
+    } else {
+      localStorage.setItem('golapi_voice_unsupported','1');
+      if(btn) btn.style.display = 'none';
+      toast('এই ডিভাইসে ভয়েস সার্চ কাজ করছে না — টাইপ করে সার্চ করুন','error');
+    }
+  };
   rec.onend = () => { btn.classList.remove('listening'); };
   rec.start();
 }
+document.addEventListener('DOMContentLoaded', ()=>{
+  // আগে একবার fail করে থাকলে মাইক বাটন শুরু থেকেই লুকানো থাকবে
+  if(localStorage.getItem('golapi_voice_unsupported')==='1'){
+    const btn = document.getElementById('voiceSearchBtn');
+    if(btn) btn.style.display = 'none';
+  }
+});
 document.addEventListener('DOMContentLoaded', ()=>{
   document.getElementById('searchInput')?.addEventListener('keydown', e=>{ if(e.key==='Enter') submitSearch(); });
 });
@@ -391,6 +424,11 @@ const Checkout = {
     const cc=document.getElementById('ckCouponCode'); if(cc) cc.value='';
     const cm=document.getElementById('ckCouponMsg'); if(cm) cm.textContent='';
     const useWalletEl=document.getElementById('ckUseWallet'); if(useWalletEl) useWalletEl.checked=false;
+    // কার্টে ঔষধ ক্যাটাগরির প্রোডাক্ট থাকলে প্রেসক্রিপশন-আপলোড বক্স দেখানো হয়
+    const hasMedicine = Object.keys(Cart.items).some(id=>ALL_PRODUCTS.find(p=>p.id===id)?.category==='medicine');
+    const presBox = document.getElementById('ckPrescriptionBox');
+    if(presBox) presBox.style.display = hasMedicine ? 'block' : 'none';
+    const presFile = document.getElementById('ckPrescriptionFile'); if(presFile) presFile.value='';
     if(Auth.currentUser && FB){
       try{
         const snap = await FB.getDoc(FB.doc(FB.db,'users',Auth.currentUser.uid));
@@ -551,6 +589,16 @@ const Checkout = {
     const ship = (this.locationData?.deliveryFee != null) ? this.locationData.deliveryFee : calcDeliveryCharge(itemCount, sub, this.locationData?.distanceKm ?? null);
     const walletUsed = this.getWalletUsed(sub, ship);
     const couponDiscount = this.getCouponDiscount(sub);
+    // প্রেসক্রিপশন ছবি (থাকলে) আগে আপলোড করে নেওয়া হয়, যাতে অর্ডার ডকুমেন্টে সাথে সাথে URL যুক্ত করা যায়
+    let prescriptionUrl = null;
+    const presFile = document.getElementById('ckPrescriptionFile')?.files[0];
+    if(presFile){
+      try{
+        const fileRef = FB.storageRef(FB.storage, `prescriptions/${Date.now()}_${presFile.name}`);
+        await FB.uploadBytes(fileRef, presFile);
+        prescriptionUrl = await FB.getDownloadURL(fileRef);
+      }catch(e){ devWarn('prescription upload failed', e.message); }
+    }
     try{
       const orderRef = await FB.addDoc(FB.collection(FB.db,'orders'),{
         orderNumber:orderNo, customerName:name, customerPhone:phone, customerNid:nid, address:addr, village,
@@ -558,6 +606,7 @@ const Checkout = {
         customerLat: this.locationData?.lat ?? null, customerLng: this.locationData?.lng ?? null,
         deliveryZoneId: this.locationData?.zone?.id ?? null, deliveryZoneLabel: this.locationData?.zone?.label ?? null,
         distanceKm: this.locationData?.distanceKm ?? null, etaMinutes: this.locationData?.etaMin ?? null,
+        prescriptionUrl,
         instructions, paymentMethod:this.pay, paymentStatus:this.pay==='cod'?'cod':'pending_submission', deliverySlot:'express',
         items:Object.entries(Cart.items).map(([id,qty])=>({productId:id,qty})),
         subtotal:Math.max(0, sub+ship-walletUsed-couponDiscount), shippingCost:ship, walletUsed, couponCode:this.couponCode||null, couponDiscount,
