@@ -65,6 +65,12 @@
 
     <div class="ftr-bottom-v3">
       <span style="font-size:11.5px;color:rgba(255,255,255,.4)">© ২০২৫ Golapi Shop Online — সর্বস্বত্ব সংরক্ষিত</span>
+      <div class="ftr-utility-row">
+        <button class="ftr-utility-btn" onclick="ThemeToggle.toggle()" title="থিম: অটো / লাইট / ডার্ক (ট্যাপ করে পাল্টান)">
+          <span class="mode-auto">🌗</span><span class="mode-light">☀️</span><span class="mode-dark">🌙</span> থিম
+        </button>
+        <button class="ftr-utility-btn" onclick="toggleLang()" id="langBtn">🌐 <span id="langBtnLabel">EN</span></button>
+      </div>
       <span style="display:flex;gap:16px;font-size:11.5px">
         <a href="#" onclick="Router.go('privacy-info')" style="color:rgba(255,255,255,.4)">প্রাইভেসি</a>
         <a href="#" onclick="Router.go('terms')" style="color:rgba(255,255,255,.4)">শর্তাবলী</a>
