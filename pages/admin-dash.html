@@ -191,6 +191,13 @@
         </div>
         <div id="adminSettingsPane" style="display:none">
           <div class="card-box" style="margin-bottom:16px">
+            <h3 style="font-size:14px;margin-bottom:4px;color:#fff">🔎 SEO Sitemap</h3>
+            <p style="font-size:11.5px;color:var(--ink-muted);margin-bottom:12px">সব পাবলিক পেজ ও লাইভ প্রোডাক্টের URL সহ একটা sitemap.xml তৈরি করে দেবে। নিচে দেখানো টেক্সট পুরোটা কপি করে GitHub-এ <code>sitemap.xml</code> ফাইলে (রুট ফোল্ডারে) পেস্ট করে দাও — প্রতি সপ্তাহে বা নতুন অনেক প্রোডাক্ট যোগ করলে আবার জেনারেট করে আপডেট করে দিও।</p>
+            <button class="btn btn-outline btn-block" style="margin-bottom:10px" onclick="AdminDash.generateSitemap()">Sitemap.xml তৈরি করুন</button>
+            <textarea id="sitemapOutput" rows="8" readonly style="width:100%;font-family:monospace;font-size:10.5px;background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:10px;color:var(--ink-soft);display:none"></textarea>
+            <button class="btn btn-gold btn-block" id="sitemapCopyBtn" style="display:none;margin-top:8px" onclick="AdminDash.copySitemap()">📋 পুরোটা কপি করুন</button>
+          </div>
+          <div class="card-box" style="margin-bottom:16px">
             <h3 style="font-size:14px;margin-bottom:12px;color:#fff">🚴 ড্রাইভার ম্যানেজমেন্ট</h3>
             <div style="display:flex;justify-content:flex-end;margin-bottom:10px"><button class="btn btn-outline" style="padding:7px 14px;font-size:12.5px" onclick="DriverManage.openAdd()">+ নতুন ড্রাইভার</button></div>
             <div class="table-scroll"><table class="data-table"><thead><tr><th>নাম</th><th>শাখা</th><th>মোবাইল</th><th>স্ট্যাটাস</th></tr></thead><tbody id="driverManageTable"></tbody></table></div>
@@ -225,6 +232,12 @@
               <div class="field"><label>Max Distance — এর বাইরে অর্ডার ব্লক (কিমি)</label><input type="number" id="ds_maxDistanceKm" min="0" step="0.5"></div>
             </div>
             <button class="btn btn-gold" onclick="AdminDash.saveDeliverySettings()">ডেলিভারি প্রাইসিং সংরক্ষণ করুন</button>
+          </div>
+          <div class="card-box" style="margin-bottom:16px">
+            <h3 style="font-size:14px;margin-bottom:4px;color:#fff">🗺️ ডেলিভারি জোন</h3>
+            <p style="font-size:11.5px;color:var(--ink-muted);margin-bottom:12px">শাখার কেন্দ্র থেকে বৃত্তাকার দূরত্ব ভিত্তিতে জোন — Zone A সবচেয়ে কাছের, Zone C সবচেয়ে দূরের। এই radius-এর বাইরে অর্ডার ব্লক হয়ে যাবে।</p>
+            <div id="zoneEditorBox"></div>
+            <button class="btn btn-gold" onclick="AdminDash.saveDeliveryZones()">জোন সংরক্ষণ করুন</button>
           </div>
           <div class="card-box">
             <h3 style="font-size:14px;margin-bottom:12px;color:#fff">🏢 জোন ম্যানেজার পিন</h3>
