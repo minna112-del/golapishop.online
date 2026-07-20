@@ -16,6 +16,9 @@
         <div class="stat"><b>১৫</b><span>বিশেষজ্ঞ ডাক্তার</span></div>
         <div class="stat"><b>০৳</b><span>অগ্রিম ছাড়াই</span></div>
       </div>
+      <button class="btn btn-outline btn-block" style="margin-top:14px;font-size:12.5px" onclick="LocationPicker.open(d=>{ toast(d.zone ? '✓ আপনার এলাকা কভার করি — '+d.zone.label : '⚠ দুঃখিত, এই এলাকায় এখনো ডেলিভারি নেই', d.zone?'success':'error') })">
+        <span class="ic ic-pin" style="width:13px;height:13px"></span> আপনার এলাকায় ডেলিভারি হয় কিনা চেক করুন
+      </button>
     </div>
   </section>
 
