@@ -7,25 +7,15 @@ function startFirebaseFeatures() {
   firebaseStarted = true;
   FB = window.__fb;
 
-  try {
-    Auth.init();
-  } catch (error) {
-    console.error('Auth initialization failed:', error);
-  }
-
-  try {
-    ProductStore.startLiveSync();
-  } catch (error) {
-    console.error('Product sync initialization failed:', error);
-  }
+  Auth.init();
+  ProductStore.startLiveSync();
 }
 
-window.addEventListener('firebase-ready', startFirebaseFeatures);
+window.addEventListener(
+  'firebase-ready',
+  startFirebaseFeatures
+);
 
-/*
- * firebase-init.js আগে লোড হয়ে event পাঠিয়ে দিলে
- * window.__fb থেকে সরাসরি Firebase চালু করবে।
- */
 if (window.__fb) {
   startFirebaseFeatures();
 }
