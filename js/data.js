@@ -78,17 +78,65 @@ const ProductStore = {
       toast('⚠ প্রোডাক্ট সংযোগ শুরু করা যায়নি: ' + e.message, 'error');
     }
   },
-  async refreshAndRerender(){
-    if(!FB) return false;
-    try{
-      const snap = await FB.getDocs(FB.collection(FB.db,'products'));
-      const real=[]; snap.forEach(d=>real.push(this.mapDoc(d.id, d.data())));
-      ALL_PRODUCTS = real.filter(p=>p.status==='active');
-      this.loaded = true;
-    }catch(e){ devWarn('refresh failed', e.message); }
+async refreshAndRerender() {
+  if (!FB) {
+    console.error('Firebase is not initialized.');
+    return false;
+  }
+
+  try {
+    const snap = await FB.getDocs(
+      FB.collection(FB.db, 'products')
+    );
+
+    const real = [];
+
+    snap.forEach(documentSnapshot => {
+      real.push(
+        this.mapDoc(
+          documentSnapshot.id,
+          documentSnapshot.data()
+        )
+      );
+    });
+
+    ALL_PRODUCTS = real.filter(
+      product => product.status === 'active'
+    );
+
+    this.loaded = true;
+
     Home.render();
-    if(Router.current==='listing') Listing.render();
+
+    if (Router.current === 'listing') {
+      Listing.render();
+    }
+
     return true;
+
+  } catch (error) {
+    console.error(
+      'Product loading failed:',
+      error.code,
+      error.message
+    );
+
+    this.loaded = true;
+    ALL_PRODUCTS = [];
+
+    Home.render();
+
+    if (Router.current === 'listing') {
+      Listing.render();
+    }
+
+    toast(
+      'প্রোডাক্ট লোড করা যায়নি: ' +
+      (error.code || error.message || 'অজানা সমস্যা'),
+      'error'
+    );
+
+    return false;
   }
 };
 
