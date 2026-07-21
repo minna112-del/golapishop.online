@@ -24,7 +24,7 @@ const ProductStore = {
   loaded:false, unsubscribe:null,
   mapDoc(id,d){
     return {
-      id, name:d.name||'নামহীন প্রোডাক্ট', category:d.category||'grocery', zone:d.zone||'noakhali_sadar',
+      id, name:d.name||'নামহন প্রোডাক্ট', category:d.category||'grocery', zone:d.zone||'noakhali_sadar',
       unit:d.unit||'পিস', price:Number(d.price)||0, salePrice:Number(d.salePrice ?? d.price)||0,
       rating:d.rating||'৫.০', reviews:d.reviews||0, sold:d.sold||0, cod:d.cod!==false,
       img:d.imageUrl||`https://picsum.photos/seed/${id}/400/400`, isFlash:!!d.isFlash, isFeatured:!!d.isFeatured,
@@ -35,8 +35,26 @@ const ProductStore = {
   },
   startLiveSync(){
     if(!FB || this.unsubscribe) return;
+    // ⚠️ onSnapshot একটা persistent streaming connection ব্যবহার করে, যেটা কিছু
+    // ad-blocker/privacy extension/নেটওয়ার্ক ফিল্টার ট্র্যাকার ভেবে ব্লক করে দেয় —
+    // যদও একই ডেটা সাধারণ one-time request (getDocs) দিয়ে ঠিকই পড়া যায়। তাই ৫ সেকেন্ডর
+    // মধ্যে streaming থেকে ডেটা না এলে, সরাসরি getDocs() fallback দিয়ে অন্তত প্রথমবার
+    // ডেটা দেখানো নিশ্চিত করা হচ্ছে — লাইভ আপডেট না পেলেও পণ্য অন্তত দেখা যাবে।
+    let delivered = false;
+    const fallbackTimer = setTimeout(async ()=>{
+      if(delivered) return;
+      devWarn('onSnapshot timeout — falling back to getDocs()');
+      const ok = await this.refreshAndRerender();
+      if(ok && this.loaded){
+        toast('✓ পণ্য লোড হয়েছে (লাইভ সংযোগে দরি হচ্ছিল, তাই এক-বারের জন্য সরাসরি লোড করা হল)','success');
+      } else {
+        toast('⚠ প্রোডাক্ট লোড হতে সমস্যা হচ্ছে — ইন্টারনেট সংযোগ চেক করুন বা পেজ রিফ্রেশ করুন','error');
+      }
+    }, 5000);
     try{
       this.unsubscribe = FB.onSnapshot(FB.collection(FB.db,'products'), snap=>{
+        delivered = true;
+        clearTimeout(fallbackTimer);
         const real=[];
         snap.forEach(d=>real.push(this.mapDoc(d.id, d.data())));
         ALL_PRODUCTS = real.filter(p=>p.status==='active');
@@ -44,8 +62,21 @@ const ProductStore = {
         if(Router.current==='home') Home.render();
         if(Router.current==='listing') Listing.render();
         if(Router.current==='product' && PDP.product) PDP.load(PDP.product.id);
-      }, err=>devWarn('live sync error', err.message));
-    }catch(e){ devWarn('sync start failed', e.message); }
+      }, err=>{
+        clearTimeout(fallbackTimer);
+        devWarn('live sync error', err.message);
+        // ⚠️ এতদিন এই error শুধু devWarn-এ (production-এ invisible) লগ হতো, ইউজর
+        // কখনো জানতোই না কেন পণ্য দেখাচ্ছে না। এখন সরাসরি toast-এ আসল কারণ দেখান হয়
+        // (permission-denied মানে Firestore Security Rules ব্লক করছে, ইত্যাদি)।
+        toast('⚠ প্রোডাক্ট লোড ব্যর্থ: ' + (err.code || err.message || 'অজানা কারণ'), 'error');
+        // onSnapshot সরাসরি error দিলেও (যেমন blocked), getDocs() দিয়ে একবার চেষ্টা করা হয
+        this.refreshAndRerender();
+      });
+    }catch(e){
+      clearTimeout(fallbackTimer);
+      devWarn('sync start failed', e.message);
+      toast('⚠ প্রোডাক্ট সংযোগ শুরু করা যায়নি: ' + e.message, 'error');
+    }
   },
   async refreshAndRerender(){
     if(!FB) return false;
@@ -77,7 +108,7 @@ function pcardHTML(p){
     <div class="imgwrap">
       <img src="${p.img}" alt="${p.name}" loading="lazy" decoding="async">
       <div class="product-badges">
-        ${discount?`<span class="pbadge">${bn(discount)}% ছাড়</span>`:''}
+        ${discount?`<span class="pbadge">${bn(discount)}% ছাড়</span>`:''}
         ${p.isFeatured?`<span class="pbadge gold">নির্বাচিত</span>`:''}
       </div>
       <button class="wish${wished?' is-active':''}" type="button" data-product-id="${p.id}" aria-label="${wished?'উইশলিস্ট থেকে সরান':'উইশলিস্টে যোগ করুন'}" aria-pressed="${wished?'true':'false'}" onclick="event.stopPropagation();Wishlist.toggle('${p.id}')">${wished?'❤️':'🤍'}</button>
