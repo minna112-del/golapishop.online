@@ -2,6 +2,20 @@
 const isDev = location.hostname==='localhost' || location.hostname==='127.0.0.1';
 function devWarn(...a){ if(isDev) console.warn(...a); }
 
+/* ⚠️ Security audit finding: customer-controllable ডেটা (নাম, ঠিকানা, ফোন, মেসেজ ইত্যাদি)
+   admin.js-এর অনেক জায়গায় innerHTML দিয়ে সরাসরি বসানো হতো, escape ছাড়াই — কেউ যদি
+   checkout ফর্মে নামের জায়গায় HTML/script ঢুকিয়ে দেয়, admin panel-এ সেটা execute হয়ে
+   যেতে পারতো (stored XSS)। এই ফাংশনটা ব্যবহার করে সব user-input এখন escape করা হয়। */
+function esc(str){
+  if(str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function toast(msg,type='info'){
   const wrap = document.getElementById('toastWrap');
   if(!wrap) return;
