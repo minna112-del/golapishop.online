@@ -121,8 +121,16 @@ const Listing = {
     if(sort==='rating') items.sort((a,b)=>parseFloat(b.rating)-parseFloat(a.rating));
     if(sort==='sold') items.sort((a,b)=>b.sold-a.sold);
     const titleEl=document.getElementById('listTitle'); if(titleEl) titleEl.textContent = title;
-    const countEl=document.getElementById('listCount'); if(countEl) countEl.textContent = `${bn(items.length)} টি প্রোডাক্ট পাওয়া গেছে`;
     const grid=document.getElementById('listingGrid');
+    // ⚠️ আগে ProductStore.loaded চেক না থাকায়, ডেটা এখনো না এলেও সরাসরি
+    // "কোনো প্রোডাক্ট পাওয়া যায়নি" দেখাতো — বিভ্রান্তিকর, মনে হতো সত্যিই কোনো পণ্য নেই।
+    // এখন লোড না হওয়া পর্যন্ত স্পষ্ট "লোড হচ্ছে" অবস্থা দেখানো হয়।
+    if(!ProductStore.loaded){
+      const countEl=document.getElementById('listCount'); if(countEl) countEl.textContent = 'লোড হচ্ছে...';
+      if(grid) grid.innerHTML = skeletonCards(6);
+      return;
+    }
+    const countEl=document.getElementById('listCount'); if(countEl) countEl.textContent = `${bn(items.length)} টি প্রোডাক্ট পাওয়া গেছে`;
     if(grid) grid.innerHTML = items.map(pcardHTML).join('') || `<div class="empty-state" style="grid-column:1/-1"><div class="em">🔍</div><h3>কোনো প্রোডাক্ট পাওয়া যায়নি</h3><button class="btn btn-outline" style="margin-top:10px" onclick="Listing.clearFilters()">ফিল্টার রিসেট করুন</button></div>`;
   }
 };
