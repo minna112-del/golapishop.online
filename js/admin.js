@@ -105,8 +105,8 @@ const AdminDash = {
       const s = ORDER_STATUS[o.status]||ORDER_STATUS.pending;
       return `<tr>
         <td style="font-size:11px">${o.orderNumber||o.id.slice(-6)}</td>
-        <td>${o.customerName||'—'}<br><span style="font-size:10.5px;color:var(--ink-muted)">${o.customerPhone||''}</span></td>
-        <td style="color:var(--gold)">${moneythis.orderTotal(o)}</td>
+        <td>${esc(o.customerName)||'—'}<br><span style="font-size:10.5px;color:var(--ink-muted)">${esc(o.customerPhone)}</span></td>
+        <td style="color:var(--gold)">${money(this.orderTotal(o))}</td>
         <td><span class="status-pill ${s.cls}">${s.label}</span></td>
         <td><a href="#" onclick="event.preventDefault();AdminDash.openOrderDetail('${o.id}')" style="color:var(--gold);font-size:11px;display:block;margin-bottom:4px">বিস্তারিত</a>
           <select onchange="AdminDash.quickStatus('${o.id}',this.value)" style="padding:3px 6px;border-radius:6px;background:var(--bg2);border:1px solid var(--line);color:#fff;font-size:11px">
@@ -198,9 +198,9 @@ const AdminDash = {
         <td><input type="checkbox" class="orderCheck" value="${o.id}" onchange="AdminDash.onCheckChange()"></td>
         <td style="font-size:11px;white-space:normal">${o.orderNumber||o.id.slice(-6)}</td>
         <td style="font-size:11px">${date}</td>
-        <td>${o.customerName||'—'}</td>
-        <td>${o.customerPhone||'—'}</td>
-        <td style="color:var(--gold)">${moneythis.orderTotal(o)}</td>
+        <td>${esc(o.customerName)||'—'}</td>
+        <td>${esc(o.customerPhone)||'—'}</td>
+        <td style="color:var(--gold)">${money(this.orderTotal(o))}</td>
         <td><select onchange="AdminDash.assignDriver('${o.id}',this.value)" style="padding:3px 6px;border-radius:6px;background:var(--bg2);border:1px solid var(--line);color:#fff;font-size:11px;max-width:120px"><option value="">বেছে নিন</option>${opts}</select></td>
         <td><span class="status-pill ${s.cls}">${s.label}</span></td>
         <td><a href="#" onclick="event.preventDefault();AdminDash.openOrderDetail('${o.id}')" style="color:var(--gold);font-size:11px;display:block;margin-bottom:4px">বিস্তারিত</a>
@@ -380,7 +380,7 @@ const AdminDash = {
     if(listEl) listEl.innerHTML = orders.map(o=>{
       const s=ORDER_STATUS[o.status]||ORDER_STATUS.pending;
       const date=o.createdAt?.seconds?new Date(o.createdAt.seconds*1000).toLocaleDateString('bn-BD'):'—';
-      return `<div style="padding:12px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span style="font-size:12px;font-weight:600;color:var(--gold)">${o.orderNumber||o.id.slice(-6)}</span><span class="status-pill ${s.cls}">${s.label}</span></div><div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink-muted)"><span>${date}</span><span style="color:var(--gold);font-weight:600">${moneythis.orderTotal(o)}</span></div><div style="margin-top:6px"><a href="#" onclick="event.preventDefault();document.getElementById('customerOrdersModal').classList.remove('show');OrderDetail.open(${JSON.stringify(o).replace(/"/g,'&quot;')})" style="font-size:12px;color:var(--gold)">বিস্তারিত দেখুন →</a></div></div>`;
+      return `<div style="padding:12px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span style="font-size:12px;font-weight:600;color:var(--gold)">${o.orderNumber||o.id.slice(-6)}</span><span class="status-pill ${s.cls}">${s.label}</span></div><div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink-muted)"><span>${date}</span><span style="color:var(--gold);font-weight:600">${money(this.orderTotal(o))}</span></div><div style="margin-top:6px"><a href="#" onclick="event.preventDefault();document.getElementById('customerOrdersModal').classList.remove('show');OrderDetail.open(${JSON.stringify(o).replace(/"/g,'&quot;')})" style="font-size:12px;color:var(--gold)">বিস্তারিত দেখুন →</a></div></div>`;
     }).join('');
     document.getElementById('customerOrdersModal').classList.add('show');
   },
@@ -416,7 +416,7 @@ const AdminDash = {
       bell.textContent = `🔔 ${count}`;
       bell.style.display='inline-block';
     }
-    toast(`🚨 নতুন অর্ডার! ${order.customerName||'কাস্টমার'} — ${moneythis.orderTotal(order)}`,'success');
+    toast(`🚨 নতুন অর্ডার! ${order.customerName||'কাস্টমার'} — ${money(this.orderTotal(order))}`,'success');
     try{
       const ctx = new(window.AudioContext||window.webkitAudioContext)();
       const osc = ctx.createOscillator();
@@ -1044,7 +1044,7 @@ const OrderDetail = {
   print(){
     const o = this.current; if(!o) return;
     const w = window.open('', '_blank');
-    w.document.write(`<html><head><title>${o.orderNumber||o.id}</title><style>body{font-family:sans-serif;padding:30px;max-width:600px;margin:0 auto}h1{color:#C2185B}.row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee}table{width:100%;margin-top:14px}.tot{font-size:18px;font-weight:700;margin-top:14px}</style></head><body><h1>Golapi Shop Online</h1><p>অর্ডার: ${o.orderNumber||o.id}</p><p>তারিখ: ${o.createdAt?.seconds?new Date(o.createdAt.seconds*1000).toLocaleString('bn-BD'):'—'}</p><hr><h3>কাস্টমার</h3><p>${o.customerName||''}<br>${o.customerPhone||''}<br>${o.village||''}, ${AREA_LABELS[o.branchZone]||''}<br>${o.address||''}</p><h3>আইটেম</h3><table><tr><th>পণ্য</th><th>মোট</th></tr>${(o.items||[]).map(it=>{const p=ALL_PRODUCTS.find(x=>x.id===it.productId);return `<tr><td>${p?.name||it.productId} × ${it.qty}</td><td>${money((p?.salePrice||0)*it.qty)}</td></tr>`}).join('')}</table><div class="tot"><div class="row"><span>মোট</span><span>${moneyNumber(o?.total ?? o?.payableTotal ?? o?.subtotal ?? 0)}</span></div></div><p style="margin-top:20px;font-size:12px;color:#888">Golapi Shop Online — নোয়াখালী</p></body></html>`);
+    w.document.write(`<html><head><title>${o.orderNumber||o.id}</title><style>body{font-family:sans-serif;padding:30px;max-width:600px;margin:0 auto}h1{color:#C2185B}.row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee}table{width:100%;margin-top:14px}.tot{font-size:18px;font-weight:700;margin-top:14px}</style></head><body><h1>Golapi Shop Online</h1><p>অর্ডার: ${o.orderNumber||o.id}</p><p>তারিখ: ${o.createdAt?.seconds?new Date(o.createdAt.seconds*1000).toLocaleString('bn-BD'):'—'}</p><hr><h3>কাস্টমার</h3><p>${esc(o.customerName)}<br>${esc(o.customerPhone)}<br>${esc(o.village)}, ${esc(AREA_LABELS[o.branchZone])}<br>${esc(o.address)}</p><h3>আইটেম</h3><table><tr><th>পণ্য</th><th>মোট</th></tr>${(o.items||[]).map(it=>{const p=ALL_PRODUCTS.find(x=>x.id===it.productId);return `<tr><td>${p?.name||it.productId} × ${it.qty}</td><td>${money((p?.salePrice||0)*it.qty)}</td></tr>`}).join('')}</table><div class="tot"><div class="row"><span>মোট</span><span>${moneyNumber(o?.total ?? o?.payableTotal ?? o?.subtotal ?? 0)}</span></div></div><p style="margin-top:20px;font-size:12px;color:#888">Golapi Shop Online — নোয়াখালী</p></body></html>`);
     w.document.close(); w.print();
   }
 };
@@ -1179,7 +1179,7 @@ const PaymentVerify = {
         const isOverdue = hoursWaiting > 2;
         return `<tr style="${isDupe?'background:rgba(239,68,68,.05)':''}">
           <td style="font-size:11px">${o.orderNumber||o.id.slice(-6)}</td>
-          <td>${o.customerName||'—'}<br><span style="font-size:10.5px;color:var(--ink-muted)">${o.customerPhone||''}</span></td>
+          <td>${esc(o.customerName)||'—'}<br><span style="font-size:10.5px;color:var(--ink-muted)">${esc(o.customerPhone)}</span></td>
           <td>${o.paymentMethod==='bkash'?'📱 bKash':'📱 Nagad'}</td>
           <td style="color:var(--gold);font-weight:600">${moneyNumber(o?.total ?? o?.payableTotal ?? o?.subtotal ?? 0)}</td>
           <td style="font-family:monospace;font-size:12px;${isDupe?'color:#f87171;font-weight:700':''}">${o.paymentTrxId||'—'}${isDupe?' ⚠️':''}</td>
