@@ -11,12 +11,7 @@
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
         </button>
       </div>
-      <div class="stat-strip">
-        <div class="stat"><b>২</b><span>সক্রিয় শাখা</span></div>
-        <div class="stat"><b>১৫</b><span>বিশেষজ্ঞ ডাক্তার</span></div>
-        <div class="stat"><b>০৳</b><span>অগ্রিম ছাড়াই</span></div>
-      </div>
-      <button class="btn btn-outline btn-block" style="margin-top:14px;font-size:12.5px" onclick="LocationPicker.open(d=>{ toast(d.zone ? '✓ আপনার এলাকা কভার করি — '+d.zone.label : '⚠ দুঃখিত, এই এলাকায় এখনো ডেলিভারি নেই', d.zone?'success':'error') })">
+      <button class="btn btn-outline btn-block" style="margin-top:8px;font-size:12.5px" onclick="LocationPicker.open(d=>{ toast(d.zone ? '✓ আপনার এলাকা কভার করি — '+d.zone.label : '⚠ দুঃখিত, এই এলাকায় এখনো ডেলিভারি নেই', d.zone?'success':'error') })">
         <span class="ic ic-pin" style="width:13px;height:13px"></span> আপনার এলাকায় ডেলিভারি হয় কিনা চেক করুন
       </button>
     </div>
