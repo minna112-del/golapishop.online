@@ -57,7 +57,10 @@ const ProductStore = {
         clearTimeout(fallbackTimer);
         const real=[];
         snap.forEach(d=>real.push(this.mapDoc(d.id, d.data())));
-        ALL_PRODUCTS = real.filter(p=>p.status==='active');
+        ALL_PRODUCTS = real.filter(p => {
+  const status = String(p.status || 'active').trim().toLowerCase();
+  return status !== 'inactive' && status !== 'deleted';
+});
         this.loaded = true;
         if(Router.current==='home') Home.render();
         if(Router.current==='listing') Listing.render();
