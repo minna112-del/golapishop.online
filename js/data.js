@@ -27,7 +27,13 @@ const ProductStore = {
       id, name:d.name||'নামহন প্রোডাক্ট', category:d.category||'grocery', zone:d.zone||'noakhali_sadar',
       unit:d.unit||'পিস', price:Number(d.price)||0, salePrice:Number(d.salePrice ?? d.price)||0,
       rating:d.rating||'৫.০', reviews:d.reviews||0, sold:d.sold||0, cod:d.cod!==false,
-      img:d.imageUrl||`https://picsum.photos/seed/${id}/400/400`, isFlash:!!d.isFlash, isFeatured:!!d.isFeatured,
+      img:
+  d.imageUrl ||
+  d.image ||
+  d.img ||
+  d.photoURL ||
+  d.thumbnail ||
+  'icons/head_logo.webp',
       fastDelivery:d.fastDelivery!==false, stock:Number(d.stock)||0, description:d.description||'',
       status:d.status||'active', groupId:d.groupId||null, costPrice:d.costPrice||0, extraCost:d.extraCost||0,
       deliveryPercent:d.deliveryPercent||0, profitPercent:d.profitPercent||20
@@ -155,7 +161,13 @@ function pcardHTML(p){
 
   return `<article class="pcard${inStock?'':' is-out-of-stock'}" onclick="Router.go('product',{id:'${p.id}'})" tabindex="0" role="link" aria-label="${p.name} দেখুন" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();Router.go('product',{id:'${p.id}'})}">
     <div class="imgwrap">
-      <img src="${p.img}" alt="${p.name}" loading="lazy" decoding="async">
+      <img
+  src="${p.img}"
+  alt="${p.name}"
+  loading="lazy"
+  decoding="async"
+  onerror="this.onerror=null;this.src='icons/head_logo.webp';"
+>
       <div class="product-badges">
         ${discount?`<span class="pbadge">${bn(discount)}% ছাড়</span>`:''}
         ${p.isFeatured?`<span class="pbadge gold">নির্বাচিত</span>`:''}
