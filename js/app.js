@@ -51,7 +51,10 @@ function initApp(){
     Router.go('home',{},{skipHash:true});
   }
 
-  if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/firebase-messaging-sw.js').catch(e=>console.warn(e)));
+    if('serviceWorker' in navigator)window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('/sw.js').catch(e=>console.warn('offline SW:',e));
+    navigator.serviceWorker.register('/firebase-messaging-sw.js').catch(e=>console.warn('push SW:',e));
+  });
 
   checkCartAbandonment();
 }
