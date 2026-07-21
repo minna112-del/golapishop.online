@@ -54,7 +54,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
       }
       if(Notification.permission !== 'granted') return;
       const messaging = getMessaging(app);
-      const swReg = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js');
+      const swReg = await navigator.serviceWorker.getRegistration('/');
       const token = await getToken(messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: swReg });
       if(token){
         await setDoc(doc(db,'fcmTokens', userId), { token, updatedAt: serverTimestamp() }, { merge:true });

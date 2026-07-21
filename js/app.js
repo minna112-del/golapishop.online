@@ -51,10 +51,28 @@ function initApp(){
     Router.go('home',{},{skipHash:true});
   }
 
-    if('serviceWorker' in navigator)window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('/sw.js').catch(e=>console.warn('offline SW:',e));
-    navigator.serviceWorker.register('/firebase-messaging-sw.js').catch(e=>console.warn('push SW:',e));
-  });
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', async () => {
+      try {
+        const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+          scope: '/',
+          updateViaCache: 'none'
+        });
+
+        // প্রতিবার page load-এ Service Worker-এর নতুন version পরীক্ষা করুন।
+        await registration.update();
+
+        // নতুন worker control নিলে একবার reload করে latest files দেখান।
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (sessionStorage.getItem('golapi_sw_reloaded') === '1') return;
+          sessionStorage.setItem('golapi_sw_reloaded', '1');
+          window.location.reload();
+        });
+      } catch (error) {
+        console.warn('Service worker registration failed:', error);
+      }
+    });
+  }
 
   checkCartAbandonment();
 }
