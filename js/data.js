@@ -80,7 +80,7 @@ const ProductStore = {
   },
 async refreshAndRerender() {
   if (!FB) {
-    console.error('Firebase is not initialized.');
+    devWarn('Firebase is not initialized');
     return false;
   }
 
@@ -91,19 +91,24 @@ async refreshAndRerender() {
 
     const real = [];
 
-    snap.forEach(documentSnapshot => {
+    snap.forEach(docSnap => {
       real.push(
         this.mapDoc(
-          documentSnapshot.id,
-          documentSnapshot.data()
+          docSnap.id,
+          docSnap.data()
         )
       );
     });
 
-    ALL_PRODUCTS = real.filter(
+    const activeProducts = real.filter(
       product => product.status === 'active'
     );
 
+    /*
+     * Firebase থেকে সফলভাবে ডেটা এলে তবেই
+     * বর্তমান পণ্যের তালিকা পরিবর্তন করবে।
+     */
+    ALL_PRODUCTS = activeProducts;
     this.loaded = true;
 
     Home.render();
@@ -115,30 +120,23 @@ async refreshAndRerender() {
     return true;
 
   } catch (error) {
-    console.error(
-      'Product loading failed:',
-      error.code,
-      error.message
+    /*
+     * Error হলে আগের পণ্য মুছবে না।
+     * loaded=true-ও করবে না।
+     */
+    devWarn(
+      'refresh failed',
+      error.code || error.message
     );
 
-    this.loaded = true;
-    ALL_PRODUCTS = [];
-
-    Home.render();
-
-    if (Router.current === 'listing') {
-      Listing.render();
-    }
-
-    toast(
-      'প্রোডাক্ট লোড করা যায়নি: ' +
-      (error.code || error.message || 'অজানা সমস্যা'),
-      'error'
+    console.error(
+      'Product refresh failed:',
+      error
     );
 
     return false;
   }
-};
+}
 
 function pcardHTML(p){
   const discount = p.price>p.salePrice ? Math.round((1-p.salePrice/p.price)*100) : 0;
