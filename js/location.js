@@ -32,6 +32,13 @@ const LocationPicker = {
         reject(new Error('Missing Google Maps API key'));
         return;
       }
+      /* Google Maps auth ব্যর্থ হলে (ভুল key, billing বন্ধ, referrer restriction, API enable না থাকা)
+         Google নিজেই এই গ্লোবাল কলব্যাক ডাকে — iPhone-এ console না থাকায় এটাই একমাত্র উপায়
+         আসল কারণ ধরার। এখানে ধরে সরাসরি toast-এ দেখানো হচ্ছে, যাতে console ছাড়াই বোঝা যায়। */
+      window.gm_authFailure = () => {
+        toast('⚠ Google Maps authentication ব্যর্থ — সম্ভাব্য কারণ: API key ভুল/মুছে গেছে, billing বন্ধ, website restriction ভুল, বা API enable হয়নি', 'error');
+        reject(new Error('gm_authFailure'));
+      };
       window.__onGMapsLoaded = () => { this._apiLoaded = true; resolve(); };
       const script = document.createElement('script');
       script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places&callback=__onGMapsLoaded&language=bn&region=BD`;
