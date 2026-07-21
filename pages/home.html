@@ -1,127 +1,528 @@
 <div class="page" id="page-home">
-  <section class="hero-v5">
-    <div class="hero-v5-blob"></div><div class="hero-v5-blob2"></div>
-    <div class="hero-v5-content">
-      <div class="kicker-pill"><span class="dot"></span> সদর ও বেগমগঞ্জে সরাসরি ডেলিভারি</div>
-      <h1 class="hero-v5-h">আপনার হয়ে বাজার করি আমরা, <span class="hl">টাকা দিন পরে</span></h1>
-      <p class="hero-v5-p">মুদি, সবজি, গ্যাস ও ঔষধ — নিজস্ব ড্রাইভার সরাসরি বাসায় পৌঁছে দেয়। পণ্য হাতে না পাওয়া পর্যন্ত একটা টাকাও লাগে না।</p>
-      <div class="hero-v5-btnrow">
-        <button class="btn btn-gold btn-main" onclick="Router.go('custom-bazar')">আজকের বাজারের লিস্ট পাঠান</button>
-        <button class="btn-cart-icon" onclick="Cart.open()">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+  <section class="home-hero" aria-labelledby="homeHeroTitle">
+    <div class="home-hero-glow home-hero-glow-one" aria-hidden="true"></div>
+    <div class="home-hero-glow home-hero-glow-two" aria-hidden="true"></div>
+
+    <div class="home-hero-content">
+      <div class="home-eyebrow">
+        <span class="home-live-dot" aria-hidden="true"></span>
+        নোয়াখালী সদর ও বেগমগঞ্জে স্থানীয় ডেলিভারি
+      </div>
+
+      <h1 id="homeHeroTitle" class="home-hero-title">
+        আপনার দৈনন্দিন বাজার,<br>
+        <span>আমরা পৌঁছে দিই দরজায়</span>
+      </h1>
+
+      <p class="home-hero-copy">
+        মুদি, ঔষধ, গ্যাস ও প্রয়োজনীয় পণ্য বেছে অর্ডার করুন—অথবা নিজের বাজারের লিস্ট পাঠান। স্থানীয় টিম অর্ডার নিশ্চিত করে ডেলিভারির ব্যবস্থা করবে।
+      </p>
+
+      <div class="home-hero-actions">
+        <button
+          type="button"
+          class="btn btn-gold home-primary-cta"
+          onclick="Router.go('listing',{cat:'all'})"
+        >
+          <span class="ic ic-cart" aria-hidden="true"></span>
+          পণ্য দেখে অর্ডার করুন
+        </button>
+
+        <button
+          type="button"
+          class="btn btn-outline home-secondary-cta"
+          onclick="Router.go('custom-bazar')"
+        >
+          <span class="ic ic-pencil" aria-hidden="true"></span>
+          বাজারের লিস্ট পাঠান
         </button>
       </div>
-      <button class="btn btn-outline btn-block" style="margin-top:8px;font-size:12.5px" onclick="LocationPicker.open(d=>{ toast(d.zone ? '✓ আপনার এলাকা কভার করি — '+d.zone.label : '⚠ দুঃখিত, এই এলাকায় এখনো ডেলিভারি নেই', d.zone?'success':'error') })">
-        <span class="ic ic-pin" style="width:13px;height:13px"></span> আপনার এলাকায় ডেলিভারি হয় কিনা চেক করুন
+
+      <button
+        type="button"
+        class="home-location-check"
+        onclick="LocationPicker.open(d=>{ toast(d.zone ? '✓ আপনার এলাকা কভার করি — '+d.zone.label : '⚠ দুঃখিত, এই এলাকায় এখনো ডেলিভারি নেই', d.zone?'success':'error') })"
+      >
+        <span class="ic ic-pin" aria-hidden="true"></span>
+        <span>আপনার এলাকায় ডেলিভারি হয় কি না দেখুন</span>
+        <span class="ic ic-arrow-r" aria-hidden="true"></span>
       </button>
     </div>
   </section>
 
-  <div class="quick-cat-row">
-    <div class="quick-cat" onclick="Router.go('listing',{cat:'grocery'})">
-      <div class="box qc1"><span class="ic ic-cart" style="width:26px;height:26px"></span></div>
+  <section class="home-trust-strip" aria-label="সেবার গুরুত্বপূর্ণ সুবিধা">
+    <div class="home-trust-point">
+      <span class="ic ic-cash" aria-hidden="true"></span>
+      <div>
+        <strong>Cash on Delivery</strong>
+        <small>সাধারণ অর্ডারে পণ্য পেয়ে মূল্য দিন</small>
+      </div>
+    </div>
+
+    <div class="home-trust-point">
+      <span class="ic ic-phone" aria-hidden="true"></span>
+      <div>
+        <strong>ফোনে নিশ্চিতকরণ</strong>
+        <small>অর্ডার যাচাই করে কাজ শুরু করা হয়</small>
+      </div>
+    </div>
+
+    <div class="home-trust-point">
+      <span class="ic ic-truck" aria-hidden="true"></span>
+      <div>
+        <strong>স্থানীয় ডেলিভারি টিম</strong>
+        <small>সদর ও বেগমগঞ্জ এলাকাকে কেন্দ্র করে</small>
+      </div>
+    </div>
+  </section>
+
+  <nav class="quick-cat-row" aria-label="দ্রুত ক্যাটাগরি">
+    <button
+      type="button"
+      class="quick-cat"
+      onclick="Router.go('listing',{cat:'grocery'})"
+    >
+      <span class="box qc1">
+        <span class="ic ic-cart" aria-hidden="true"></span>
+      </span>
       <span>মুদি বাজার</span>
-    </div>
-    <div class="quick-cat" onclick="Router.go('listing',{cat:'medicine'})">
-      <div class="box qc2"><span class="ic ic-heart-pulse" style="width:26px;height:26px"></span></div>
+    </button>
+
+    <button
+      type="button"
+      class="quick-cat"
+      onclick="Router.go('listing',{cat:'medicine'})"
+    >
+      <span class="box qc2">
+        <span class="ic ic-heart-pulse" aria-hidden="true"></span>
+      </span>
       <span>ঔষধ</span>
-    </div>
-    <div class="quick-cat" onclick="Router.go('medical')">
-      <div class="box qc3"><span class="ic ic-clock" style="width:26px;height:26px"></span></div>
+    </button>
+
+    <button
+      type="button"
+      class="quick-cat"
+      onclick="Router.go('medical')"
+    >
+      <span class="box qc3">
+        <span class="ic ic-clock" aria-hidden="true"></span>
+      </span>
       <span>ডাক্তার</span>
-    </div>
-    <div class="quick-cat" onclick="Router.go('listing',{cat:'gas'})">
-      <div class="box qc4"><span class="ic ic-flame" style="width:26px;height:26px"></span></div>
+    </button>
+
+    <button
+      type="button"
+      class="quick-cat"
+      onclick="Router.go('listing',{cat:'gas'})"
+    >
+      <span class="box qc4">
+        <span class="ic ic-flame" aria-hidden="true"></span>
+      </span>
       <span>গ্যাস</span>
-    </div>
-  </div>
+    </button>
+  </nav>
 
-  <!-- কীভাবে কাজ করে — নতুন ভিজিটরের জন্য ৩ ধাপ -->
-  <section class="sec" style="padding-top:30px;padding-bottom:10px">
-    <h2 class="tiro" style="text-align:center;font-size:22px;margin-bottom:26px">কীভাবে কাজ করে — ৩ ধাপ</h2>
-    <div class="grid-row" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
-      <div class="card" style="padding:22px;text-align:center">
-        <div style="width:44px;height:44px;margin:0 auto 12px;border-radius:12px;background:rgba(240,53,107,.1);display:flex;align-items:center;justify-content:center"><span class="ic ic-pencil" style="width:20px;height:20px;color:var(--rose)"></span></div>
-        <h4 style="font-size:14px;color:var(--ink);margin-bottom:6px">১. লিস্ট বা প্রোডাক্ট বাছুন</h4>
-        <p style="font-size:12px;color:var(--ink-muted)">নিজে প্রোডাক্ট বেছে অর্ডার করুন, অথবা কাস্টম বাজারে হাতে লেখা লিস্ট পাঠান</p>
-      </div>
-      <div class="card" style="padding:22px;text-align:center">
-        <div style="width:44px;height:44px;margin:0 auto 12px;border-radius:12px;background:rgba(240,53,107,.1);display:flex;align-items:center;justify-content:center"><span class="ic ic-truck" style="width:20px;height:20px;color:var(--rose)"></span></div>
-        <h4 style="font-size:14px;color:var(--ink);margin-bottom:6px">২. আমাদের ড্রাইভার বাজার করে</h4>
-        <p style="font-size:12px;color:var(--ink-muted)">নিজস্ব ড্রাইভার সরাসরি দোকান থেকে কিনে আনে — সময় ও চার্জ আপনার পরিমাণ ও দূরত্ব দেখে ঠিক হয়, লাইভ ট্র্যাক করতে পারবেন</p>
-      </div>
-      <div class="card" style="padding:22px;text-align:center">
-        <div style="width:44px;height:44px;margin:0 auto 12px;border-radius:12px;background:rgba(240,53,107,.1);display:flex;align-items:center;justify-content:center"><span class="ic ic-cash" style="width:20px;height:20px;color:var(--rose)"></span></div>
-        <h4 style="font-size:14px;color:var(--ink);margin-bottom:6px">৩. হাতে পেয়ে টাকা দিন</h4>
-        <p style="font-size:12px;color:var(--ink-muted)">পণ্য চেক করে তারপর ক্যাশ, bKash বা Nagad-এ পরিশোধ। শুধু কাস্টম বাজার অর্ডারে ভুয়া অর্ডার ঠেকাতে ১০০ টাকা ভেরিফিকেশন ফি লাগে — বাকি সম্পূর্ণ ক্যাশ অন ডেলিভারি</p>
-      </div>
+  <section class="sec home-section" aria-labelledby="howItWorksTitle">
+    <div class="home-section-heading">
+      <span class="home-section-kicker">সহজ অর্ডার</span>
+      <h2 id="howItWorksTitle" class="tiro">
+        তিন ধাপেই বাজার পৌঁছাবে
+      </h2>
+      <p>
+        প্রথমবার অর্ডার করলেও প্রতিটি ধাপ পরিষ্কারভাবে জানতে পারবেন।
+      </p>
     </div>
-  </section>
 
-  <!-- আমরা কেন আলাদা — ট্রাস্ট সেকশন (নতুন ব্যবসার জন্য honesty-based) -->
-  <section class="sec">
-    <h2 class="tiro" style="text-align:center;font-size:20px;margin-bottom:6px">আমরা কেন আলাদা</h2>
-    <p style="text-align:center;font-size:12.5px;color:var(--ink-muted);margin-bottom:20px">আমরা নতুন শুরু করেছি — তাই লুকানোর কিছু নেই, প্রতিটা অর্ডার আমরা নিজেরা হাতে ধরে দেখি</p>
-    <div class="trust-grid">
-      <div class="card trust-item">
-        <div class="em"><span class="ic ic-cash" style="width:28px;height:28px;color:var(--rose)"></span></div>
-        <h4>টাকা আগে না, পরে</h4>
-        <p>পণ্য হাতে পাওয়ার আগে এক টাকাও দিতে হয় না — নতুন শপ বলেই এই গ্যারান্টি সবচেয়ে জরুরি মনে করি আমরা</p>
-      </div>
-      <div class="card trust-item">
-        <div class="em"><span class="ic ic-pin" style="width:28px;height:28px;color:var(--rose)"></span></div>
-        <h4>সত্যিকারের ঠিকানায় অফিস</h4>
-        <p>মাইজদী বাজার (সদর) ও চৌরাস্তা (বেগমগঞ্জ) — সরাসরি এসে দেখে যেতে পারেন, কোনো ভার্চুয়াল অফিস না</p>
-      </div>
-      <div class="card trust-item">
-        <div class="em"><span class="ic ic-user" style="width:28px;height:28px;color:var(--rose)"></span></div>
-        <h4>ড্রাইভারের নাম-নম্বর জানবেন</h4>
-        <p>অর্ডার করার সাথে সাথে কে আপনার বাজার করছে, তার নাম ও ফোন নম্বর দেখতে পাবেন — অচেনা কেউ না</p>
-      </div>
-      <div class="card trust-item">
-        <div class="em"><img src="icons/dr_logo.webp" style="width:40px;height:40px;object-fit:cover;border-radius:10px"></div>
-        <h4>১৫ জন প্রকৃত চিকিৎসক</h4>
-        <p>নাম-পরিচয় যাচাইযোগ্য ১৫ জন বিশেষজ্ঞ চিকিৎসক — কেউ ভুয়া না, <a href="#" onclick="Router.go('medical')" style="color:var(--rose)">তালিকা দেখুন</a></p>
-      </div>
-    </div>
-  </section>
+    <div class="home-steps">
+      <article class="home-step-card">
+        <span class="home-step-number">১</span>
 
-  <!-- টিম প্রিভিউ — রিয়েল মুখ দেখিয়ে ট্রাস্ট বাড়ানো -->
-  <section class="sec" style="padding-top:6px">
-    <div class="highlight hl-gold" onclick="Router.go('about-app')">
-      <div class="hl-flex" style="align-items:center;gap:16px">
-        <div style="display:flex">
-          <img src="icons/team-mahsin.webp" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid var(--card);margin-right:-14px;z-index:3;position:relative">
-          <img src="icons/team-hridoy.webp" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid var(--card);margin-right:-14px;z-index:2;position:relative">
-          <img src="icons/team-rimon.webp" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid var(--card);margin-right:-14px;z-index:2;position:relative">
-          <img src="icons/team-srijon.webp" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid var(--card);z-index:1;position:relative">
+        <div class="home-step-icon">
+          <span class="ic ic-cart" aria-hidden="true"></span>
         </div>
-        <div style="flex:1;min-width:200px">
-          <h3 style="font-size:15px;color:var(--ink);margin-bottom:3px;font-weight:700">যাদের সাথে কথা বলছেন, তাদের চিনে নিন</h3>
-          <p style="font-size:12px;color:var(--ink-muted);display:flex;align-items:center;gap:5px">নাম, ছবি, সরাসরি ফোন নম্বর — অচেনা কেউ না <span class="ic ic-arrow-r" style="width:12px;height:12px;color:var(--rose)"></span></p>
+
+        <h3>পণ্য বাছুন বা লিস্ট দিন</h3>
+
+        <p>
+          সাইট থেকে পণ্য যোগ করুন, অথবা কাস্টম বাজারে আপনার লেখা লিস্ট পাঠান।
+        </p>
+      </article>
+
+      <article class="home-step-card">
+        <span class="home-step-number">২</span>
+
+        <div class="home-step-icon">
+          <span class="ic ic-phone" aria-hidden="true"></span>
         </div>
+
+        <h3>আমরা অর্ডার নিশ্চিত করি</h3>
+
+        <p>
+          প্রয়োজনে ফোন করে পণ্য, ঠিকানা, সম্ভাব্য সময় ও প্রযোজ্য চার্জ নিশ্চিত করা হবে।
+        </p>
+      </article>
+
+      <article class="home-step-card">
+        <span class="home-step-number">৩</span>
+
+        <div class="home-step-icon">
+          <span class="ic ic-truck" aria-hidden="true"></span>
+        </div>
+
+        <h3>ডেলিভারি গ্রহণ করুন</h3>
+
+        <p>
+          পণ্য বুঝে নিয়ে Cash, bKash বা Nagad-এ বাকি মূল্য পরিশোধ করুন।
+        </p>
+      </article>
+    </div>
+
+    <div class="home-fee-note" role="note">
+      <span class="ic ic-shield" aria-hidden="true"></span>
+
+      <p>
+        <strong>কাস্টম বাজার সম্পর্কে পরিষ্কার তথ্য:</strong>
+        ভুয়া অর্ডার প্রতিরোধে কাস্টম বাজারের ক্ষেত্রে ৳১০০ অগ্রিম verification fee প্রযোজ্য। এই টাকা অর্ডারের মোট হিসাবের সঙ্গে সমন্বয় করা হয়। সাধারণ product order-এর payment নিয়ম checkout-এ দেখানো হবে।
+      </p>
+    </div>
+  </section>
+
+  <section
+    class="sec home-section home-about-section"
+    aria-labelledby="aboutGolapiTitle"
+  >
+    <div class="home-about-card">
+      <div class="home-about-content">
+        <span class="home-section-kicker">নতুন, তবে দায়বদ্ধ</span>
+
+        <h2 id="aboutGolapiTitle" class="tiro">
+          বড় দাবি নয়—প্রতিটি অর্ডার যত্ন নিয়ে সামলানোই আমাদের শুরু
+        </h2>
+
+        <p>
+          Golapi Shop Online নোয়াখালী সদর ও বেগমগঞ্জের মানুষের দৈনন্দিন কেনাকাটা সহজ করার লক্ষ্য নিয়ে তৈরি একটি নতুন স্থানীয় উদ্যোগ। আমরা এখনো বড় কোনো সংখ্যা দেখানোর পর্যায়ে নেই। তাই আমাদের পরিচয় হবে পরিষ্কার যোগাযোগ, বাস্তব স্থানীয় টিম এবং প্রতিটি অর্ডারের প্রতি দায়িত্বশীলতা।
+        </p>
+
+        <button
+          type="button"
+          class="home-text-link"
+          onclick="Router.go('about-app')"
+        >
+          আমাদের গল্প ও টিম দেখুন
+          <span class="ic ic-arrow-r" aria-hidden="true"></span>
+        </button>
+      </div>
+
+      <div class="home-team-preview" aria-label="Golapi Shop Online টিম">
+        <div class="home-team-photos">
+          <img
+            src="icons/team-mahsin.webp"
+            alt="মহসিন, প্রতিষ্ঠাতা"
+            loading="lazy"
+          >
+
+          <img
+            src="icons/team-hridoy.webp"
+            alt="হৃদয়, হটলাইন ইনচার্জ"
+            loading="lazy"
+          >
+
+          <img
+            src="icons/team-rimon.webp"
+            alt="রিমন, সদর শাখা ম্যানেজার"
+            loading="lazy"
+          >
+
+          <img
+            src="icons/team-srijon.webp"
+            alt="সৃজন, বেগমগঞ্জ শাখা ম্যানেজার"
+            loading="lazy"
+          >
+        </div>
+
+        <strong>বাস্তব মানুষের সঙ্গে সরাসরি যোগাযোগ</strong>
+        <span>নাম, ছবি ও ফোন নম্বরসহ টিম পরিচিতি</span>
       </div>
     </div>
   </section>
 
-  <section class="sec" style="padding-top:6px"><div class="highlight hl-emerald" onclick="Router.go('medical')"><div class="hl-flex">
-    <div class="hl-icon" style="overflow:hidden;border-radius:18px"><img src="icons/dr_logo.webp" alt="স্বাস্থ্য" style="width:100%;height:100%;object-fit:cover"></div>
-    <div style="flex:1;min-width:200px"><span class="badge b-emerald" style="margin-bottom:8px">বিশেষ সেবা — এপয়েন্টমেন্ট সহায়তা</span>
-    <h2 class="tiro" style="font-size:22px;color:var(--ink);margin:6px 0">গোলাপী স্বাস্থ্য সেবা</h2>
-    <p style="font-size:13.5px;color:var(--ink-muted);max-width:560px">১৫ জন অভিজ্ঞ বিশেষজ্ঞ চিকিৎসক (মেডিসিন, গাইনী, শিশু, সার্জারী, ইএনটি, চর্ম ও আরও অনেক বিভাগ) — প্রত্যেকের নাম, বিশেষত্ব ও সাপ্তাহিক সময়সূচি নিচে দেখুন। আমরা শুধু এপয়েন্টমেন্ট/সিরিয়াল বুকিংয়ে সহায়তা করি — ভিজিট ফি সংশ্লিষ্ট ডাক্তারের নিজস্ব নিয়ম অনুযায়ী নির্ধারিত।</p>
-    <div style="color:var(--emerald);font-size:13px;font-weight:600;margin-top:8px;display:flex;align-items:center;gap:5px">চিকিৎসকদের তালিকা দেখুন <span class="ic ic-arrow-r" style="width:13px;height:13px"></span></div></div>
-  </div></div></section>
+  <section class="sec home-section" aria-labelledby="whyGolapiTitle">
+    <div class="home-section-heading">
+      <span class="home-section-kicker">আপনার নিশ্চয়তার জন্য</span>
 
-  <section class="sec"><div class="cat-grid" id="catGrid"></div></section>
-
-  <section class="sec" style="padding:0"><div class="flash-strip"><div class="sec" style="padding:0 20px">
-    <div class="sec-head"><h2 class="tiro" style="display:flex;align-items:center;gap:8px;color:#fff"><span class="ic ic-flame" style="color:var(--rose);width:18px;height:18px"></span> ফ্ল্যাশ সেল</h2>
-      <div class="timer" id="flashTimer"><span id="t-h">০৩</span><span style="color:var(--gold);opacity:.5">:</span><span id="t-m">৪৫</span><span style="color:var(--gold);opacity:.5">:</span><span id="t-s">১২</span></div>
+      <h2 id="whyGolapiTitle" class="tiro">
+        কেন Golapi Shop ব্যবহার করবেন?
+      </h2>
     </div>
-    <div class="scroll-row" id="flashRow"></div>
-  </div></div></section>
-  <section class="sec"><div class="sec-head"><h2 class="tiro" style="display:flex;align-items:center;gap:8px"><span class="ic ic-star" style="color:var(--gold);width:18px;height:18px"></span> বেস্ট সেলার</h2><a href="#" class="see-all" onclick="Router.go('listing',{cat:'bestseller'})">সব দেখুন →</a></div>
-  <div class="scroll-row" id="bestRow"></div></section>
-  <section class="sec"><div class="sec-head"><h2 class="tiro">নতুন এসেছে</h2></div>
-  <div class="grid-row" id="newGrid"></div></section>
+
+    <div class="home-benefit-grid">
+      <article class="home-benefit-card">
+        <div class="home-benefit-icon">
+          <span class="ic ic-pin" aria-hidden="true"></span>
+        </div>
+
+        <h3>এলাকাভিত্তিক সেবা</h3>
+
+        <p>
+          সেবা এলাকা আগে যাচাই করতে পারবেন। কভারেজ না থাকলে অর্ডারের আগেই সেটিও পরিষ্কারভাবে জানানো হবে।
+        </p>
+      </article>
+
+      <article class="home-benefit-card">
+        <div class="home-benefit-icon">
+          <span class="ic ic-phone" aria-hidden="true"></span>
+        </div>
+
+        <h3>সহজে যোগাযোগ</h3>
+
+        <p>
+          হটলাইন ও স্থানীয় শাখা ম্যানেজারের নম্বর প্রকাশিত। অর্ডার নিয়ে প্রশ্ন থাকলে সরাসরি কথা বলতে পারবেন।
+        </p>
+      </article>
+
+      <article class="home-benefit-card">
+        <div class="home-benefit-icon">
+          <span class="ic ic-cash" aria-hidden="true"></span>
+        </div>
+
+        <h3>পরিষ্কার পেমেন্ট</h3>
+
+        <p>
+          Cash, bKash ও Nagad সমর্থিত। অগ্রিম বা delivery charge প্রযোজ্য হলে confirm করার আগেই দেখানো হবে।
+        </p>
+      </article>
+
+      <article class="home-benefit-card">
+        <div class="home-benefit-icon">
+          <span class="ic ic-shield" aria-hidden="true"></span>
+        </div>
+
+        <h3>অতিরঞ্জিত দাবি নয়</h3>
+
+        <p>
+          আমরা নতুন। তাই কৃত্রিম review বা অবাস্তব সংখ্যা নয়; বাস্তব সেবা দিয়েই আস্থা অর্জন করতে চাই।
+        </p>
+      </article>
+    </div>
+  </section>
+
+  <section class="sec home-section" aria-labelledby="categoriesTitle">
+    <div class="sec-head">
+      <div>
+        <span class="home-section-kicker">প্রয়োজনীয় সবকিছু</span>
+
+        <h2 id="categoriesTitle" class="tiro">
+          ক্যাটাগরি থেকে বেছে নিন
+        </h2>
+      </div>
+    </div>
+
+    <div class="cat-grid" id="catGrid"></div>
+  </section>
+
+  <section class="sec home-section home-medical-wrap">
+    <div class="home-medical-card">
+      <div class="home-medical-logo">
+        <img
+          src="icons/dr_logo.webp"
+          alt="গোলাপী স্বাস্থ্য সেবা"
+          loading="lazy"
+        >
+      </div>
+
+      <div class="home-medical-content">
+        <span class="badge b-emerald">এপয়েন্টমেন্ট সহায়তা</span>
+
+        <h2 class="tiro">
+          চিকিৎসকের সিরিয়াল নিতে সহায়তা
+        </h2>
+
+        <p>
+          তালিকাভুক্ত চিকিৎসকদের বিশেষত্ব, সাপ্তাহিক সময়সূচি ও যোগাযোগের তথ্য দেখুন। Golapi Shop কেবল appointment বা serial booking-এ সহায়তা করে; চিকিৎসা পরামর্শ ও visit fee সংশ্লিষ্ট চিকিৎসকের নিয়ম অনুযায়ী।
+        </p>
+
+        <button
+          type="button"
+          class="home-text-link home-medical-link"
+          onclick="Router.go('medical')"
+        >
+          চিকিৎসকদের তালিকা দেখুন
+          <span class="ic ic-arrow-r" aria-hidden="true"></span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <section
+    class="sec home-section home-first-order"
+    aria-labelledby="firstOrderTitle"
+  >
+    <div>
+      <span class="home-section-kicker">প্রথম অর্ডার?</span>
+
+      <h2 id="firstOrderTitle" class="tiro">
+        কোনো কিছু অস্পষ্ট লাগলে অর্ডারের আগেই কথা বলুন
+      </h2>
+
+      <p>
+        পণ্য, ডেলিভারি এলাকা, charge বা payment নিয়ে প্রশ্ন থাকলে আমাদের হটলাইনে সরাসরি যোগাযোগ করুন।
+      </p>
+    </div>
+
+    <div class="home-first-order-actions">
+      <a class="btn btn-gold" href="tel:+8801612057371">
+        <span class="ic ic-phone" aria-hidden="true"></span>
+        হটলাইনে কল করুন
+      </a>
+
+      <button
+        type="button"
+        class="btn btn-outline"
+        onclick="Router.go('contact')"
+      >
+        সব যোগাযোগ দেখুন
+      </button>
+    </div>
+  </section>
+
+  <section class="sec home-section" aria-labelledby="faqTitle">
+    <div class="home-section-heading">
+      <span class="home-section-kicker">সাধারণ প্রশ্ন</span>
+
+      <h2 id="faqTitle" class="tiro">
+        অর্ডারের আগে যা জানতে পারেন
+      </h2>
+    </div>
+
+    <div class="home-faq-list">
+      <details class="home-faq-item">
+        <summary>কোন কোন এলাকায় ডেলিভারি হয়?</summary>
+
+        <p>
+          বর্তমানে নোয়াখালী সদর ও বেগমগঞ্জের নির্ধারিত delivery zone-এ সেবা দেওয়া হচ্ছে। উপরের “এলাকায় ডেলিভারি হয় কি না দেখুন” বাটন থেকে আপনার location যাচাই করুন।
+        </p>
+      </details>
+
+      <details class="home-faq-item">
+        <summary>পেমেন্ট কীভাবে করব?</summary>
+
+        <p>
+          Cash, bKash ও Nagad-এ পেমেন্ট করা যায়। আপনার অর্ডারে কোন payment option প্রযোজ্য, checkout ও order confirmation-এর সময় সেটি দেখানো হবে।
+        </p>
+      </details>
+
+      <details class="home-faq-item">
+        <summary>কাস্টম বাজারে ৳১০০ কেন দিতে হয়?</summary>
+
+        <p>
+          ড্রাইভারকে সরাসরি বাজারে পাঠানোর আগে ভুয়া অর্ডার প্রতিরোধে ৳১০০ verification fee নেওয়া হয়। এই টাকা অর্ডারের মোট হিসাবের সঙ্গে সমন্বয় করা হয়; এটি অতিরিক্ত গোপন charge নয়।
+        </p>
+      </details>
+
+      <details class="home-faq-item">
+        <summary>ডেলিভারি চার্জ কত?</summary>
+
+        <p>
+          দূরত্ব, delivery zone, order size ও চলমান নিয়মের ভিত্তিতে charge নির্ধারিত হতে পারে। অর্ডার নিশ্চিত করার আগে প্রযোজ্য charge দেখানো বা জানানো হবে।
+        </p>
+      </details>
+
+      <details class="home-faq-item">
+        <summary>অর্ডারের পর কী হবে?</summary>
+
+        <p>
+          অর্ডারের তথ্য যাচাই করা হবে, প্রয়োজন হলে ফোনে যোগাযোগ করা হবে, এরপর পণ্য প্রস্তুত ও delivery assignment করা হবে। Order tracking page থেকে অগ্রগতি দেখা যাবে।
+        </p>
+      </details>
+    </div>
+  </section>
+
+  <section
+    class="sec home-section home-product-section"
+    aria-labelledby="flashTitle"
+  >
+    <div class="flash-strip">
+      <div class="sec home-flash-inner">
+        <div class="sec-head">
+          <h2 id="flashTitle" class="tiro home-flash-title">
+            <span class="ic ic-flame" aria-hidden="true"></span>
+            ফ্ল্যাশ সেল
+          </h2>
+
+          <div
+            class="timer"
+            id="flashTimer"
+            aria-label="ফ্ল্যাশ সেল শেষ হওয়ার সময়"
+          >
+            <span id="t-h">০৩</span>
+            <span>:</span>
+            <span id="t-m">৪৫</span>
+            <span>:</span>
+            <span id="t-s">১২</span>
+          </div>
+        </div>
+
+        <div class="scroll-row" id="flashRow"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec home-section home-product-section">
+    <div class="sec-head">
+      <h2 class="tiro">
+        <span class="ic ic-star" aria-hidden="true"></span>
+        জনপ্রিয় পণ্য
+      </h2>
+
+      <button
+        type="button"
+        class="see-all home-see-all"
+        onclick="Router.go('listing',{cat:'bestseller'})"
+      >
+        সব দেখুন →
+      </button>
+    </div>
+
+    <div class="scroll-row" id="bestRow"></div>
+  </section>
+
+  <section class="sec home-section home-product-section">
+    <div class="sec-head">
+      <h2 class="tiro">নতুন এসেছে</h2>
+    </div>
+
+    <div class="grid-row" id="newGrid"></div>
+  </section>
+
+  <section class="sec home-final-cta" aria-label="কেনাকাটা শুরু করুন">
+    <div>
+      <span class="home-section-kicker">প্রস্তুত?</span>
+
+      <h2 class="tiro">
+        আজকের প্রয়োজনীয় পণ্য খুঁজে নিন
+      </h2>
+
+      <p>
+        পণ্য বেছে অর্ডার করুন, অথবা আপনার সম্পূর্ণ বাজারের লিস্ট আমাদের পাঠান।
+      </p>
+    </div>
+
+    <div class="home-final-actions">
+      <button
+        type="button"
+        class="btn btn-gold"
+        onclick="Router.go('listing',{cat:'all'})"
+      >
+        কেনাকাটা শুরু করুন
+      </button>
+
+      <button
+        type="button"
+        class="btn btn-outline"
+        onclick="Router.go('custom-bazar')"
+      >
+        লিস্ট পাঠান
+      </button>
+    </div>
+  </section>
 </div>
