@@ -1,10 +1,11 @@
-/* sw.js — Golapi Shop Offline Service Worker (network-first, so live fixes always reach users) */
-const CACHE = 'golapi-v4';
+/* sw.js — Golapi Shop Offline Service Worker (network-first) */
+const CACHE = 'golapi-v6';
+const OFFLINE_URL = '/offline.html';
 const ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/offline.html',
+  OFFLINE_URL,
   '/css/style.css',
   '/css/components.css',
   '/js/utils.js',
@@ -34,6 +35,7 @@ const ASSETS = [
   '/pages/myorders.html',
   '/pages/account.html',
   '/pages/account-addresses.html',
+  '/pages/wishlist.html',
   '/pages/about-app.html',
   '/pages/privacy-info.html',
   '/pages/terms.html',
@@ -55,40 +57,95 @@ const ASSETS = [
   '/icons/dr_logo.webp',
   '/icons/chat_logo.webp',
   '/icons/driver_logo.webp',
-  '/icons/zone_manager_logo.webp',
-  'https://fonts.googleapis.com/css2?family=Tiro+Bangla:ital@0;1&family=Hind+Siliguri:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700;800&display=swap'
+  '/icons/zone_manager_logo.webp'
 ];
 
-self.addEventListener('install', e => {
+self.addEventListener('install', event => {
   self.skipWaiting();
-  e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(ASSETS)).catch(() => {})
+  event.waitUntil(
+    caches.open(CACHE).then(cache => cache.addAll(ASSETS))
   );
 });
 
-self.addEventListener('activate', e => {
-  e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-    )
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    Promise.all([
+      caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key)))),
+      self.clients.claim()
+    ]).then(() => self.clients.matchAll({ type: 'window' }))
+      .then(clientsArr => clientsArr.forEach(c => c.postMessage({ type: 'SW_UPDATED', version: CACHE })))
   );
-  self.clients.claim();
 });
 
-/* NETWORK-FIRST: সবসময় আগে নেটওয়ার্ক থেকে নতুন ভার্সন আনার চেষ্টা করে,
-   ব্যর হলে (অফলাইন) তখনই ক্যাশ থেকে দেখায়। এতে নতুন ডিপ্লয়মন্ট সাথে সাথে সব ইউজার পাবে। */
-self.addEventListener('fetch', e => {
-  if (e.request.method !== 'GET') return;
-  e.respondWith(
-    fetch(e.request)
-      .then(res => {
-        if (res.ok && (e.request.url.startsWith(self.location.origin) || e.request.url.startsWith('https://fonts'))) {
-          const clone = res.clone();
-          caches.open(CACHE).then(c => c.put(e.request, clone));
+self.addEventListener('fetch', event => {
+  const { request } = event;
+  if (request.method !== 'GET') return;
+
+  event.respondWith(
+    fetch(request)
+      .then(response => {
+        if (response && response.ok && request.url.startsWith(self.location.origin)) {
+          const copy = response.clone();
+          caches.open(CACHE).then(cache => cache.put(request, copy)).catch(() => {});
         }
-        return res;
+        return response;
       })
-      .catch(() => {
-        return caches.match(e.request).then(cached => {
-          if (cached) return cached;
-          if (e.request.mode === 'navigate') return caches.match('/off
+      .catch(async () => {
+        const cached = await caches.match(request);
+        if (cached) return cached;
+        if (request.mode === 'navigate') return caches.match(OFFLINE_URL);
+        return Response.error();
+      })
+  );
+});
+
+/* ═══════════════════════════════════════════════════════════
+   Firebase Cloud Messaging — ব্যাকগ্রাউন্ড push notification
+   (আগে firebase-messaging-sw.js-এ আলাদা register হতো, একই origin-এ
+   দুটো আলাদা SW একসাথে থাকতে পারে না বলে এখানেই merge করে দেওয়া হলো —
+   এখন শুধু এই একটা sw.js-ই register হবে, নিচে js/app.js-এ)
+   ═══════════════════════════════════════════════════════════ */
+importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js');
+
+firebase.initializeApp({
+  apiKey: "AIzaSyBdtIlcoPFFqzkI6X9KOIH-f4QAyEfH4o8",
+  authDomain: "golapishoponline.firebaseapp.com",
+  projectId: "golapishoponline",
+  storageBucket: "golapishoponline.firebasestorage.app",
+  messagingSenderId: "871653454194",
+  appId: "1:871653454194:web:67e207a7df46503169edeb"
+});
+
+const messaging = firebase.messaging();
+
+messaging.onBackgroundMessage(payload => {
+  self.registration.showNotification(
+    payload.notification?.title || 'নতুন অর্ডার!',
+    {
+      body: payload.notification?.body || 'নতুন অর্ডার এসেছে',
+      icon: '/icons/head_logo.webp',
+      badge: '/icons/head_logo.webp',
+      tag: 'order-' + Date.now(),
+      renotify: true,
+      vibrate: [300, 100, 300],
+      requireInteraction: true,
+      data: payload.data || {}
+    }
+  );
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      for (const c of list) {
+        if (c.url.startsWith(self.location.origin) && 'focus' in c) {
+          c.postMessage({ type: 'OPEN_ZM' });
+          return c.focus();
+        }
+      }
+      return clients.openWindow(self.location.origin + '#zone-manager');
+    })
+  );
+});
