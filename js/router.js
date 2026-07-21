@@ -1,131 +1,716 @@
 /* router.js — Owner Auth (Firebase Auth secured) + page router */
+
 const OwnerAuth = {
-  currentUid:null,
-  isUnlocked(){ return !!this.currentUid || (FB && FB.auth && FB.auth.currentUser && this._verifiedThisSession); },
-  _verifiedThisSession:false,
-  requestAccess(){
-    document.getElementById('ownerEmail').value='';
-    document.getElementById('ownerPassword').value='';
-    document.getElementById('ownerGateMsg').className='form-msg';
-    document.getElementById('ownerGateModal').classList.add('show');
+  currentUid: null,
+  _verifiedThisSession: false,
+
+  isUnlocked() {
+    return Boolean(
+      this.currentUid ||
+      (
+        typeof FB !== 'undefined' &&
+        FB &&
+        FB.auth &&
+        FB.auth.currentUser &&
+        this._verifiedThisSession
+      )
+    );
   },
-  cancel(){ document.getElementById('ownerGateModal').classList.remove('show'); },
-  async unlock(){
-    const email = document.getElementById('ownerEmail').value.trim();
-    const pass = document.getElementById('ownerPassword').value;
-    const msgEl = document.getElementById('ownerGateMsg');
-    if(!email||!pass){ msgEl.textContent='ইমেইল ও পাসওয়ার্ড দিন'; msgEl.className='form-msg err'; return; }
-    if(!FB){ msgEl.textContent='সংযোগ সমস্যা'; msgEl.className='form-msg err'; return; }
-    try{
-      const cred = await FB.signInWithEmailAndPassword(FB.auth, email, pass);
-      const staffSnap = await FB.getDoc(FB.doc(FB.db,'staff',cred.user.uid));
-      if(!staffSnap.exists() || staffSnap.data().role!=='admin'){
-        await FB.signOut(FB.auth).catch(()=>{});
-        msgEl.textContent='এই অ্যাকাউন্ট অ্যাডমিন হিসেবে অনুমোদিত নয়'; msgEl.className='form-msg err'; return;
+
+  requestAccess() {
+    const emailInput = document.getElementById('ownerEmail');
+    const passwordInput = document.getElementById('ownerPassword');
+    const messageElement = document.getElementById('ownerGateMsg');
+    const modal = document.getElementById('ownerGateModal');
+
+    if (emailInput) {
+      emailInput.value = '';
+    }
+
+    if (passwordInput) {
+      passwordInput.value = '';
+    }
+
+    if (messageElement) {
+      messageElement.textContent = '';
+      messageElement.className = 'form-msg';
+    }
+
+    if (modal) {
+      modal.classList.add('show');
+    }
+  },
+
+  cancel() {
+    const modal = document.getElementById('ownerGateModal');
+
+    if (modal) {
+      modal.classList.remove('show');
+    }
+  },
+
+  async unlock() {
+    const emailInput = document.getElementById('ownerEmail');
+    const passwordInput = document.getElementById('ownerPassword');
+    const messageElement = document.getElementById('ownerGateMsg');
+
+    const email = emailInput
+      ? emailInput.value.trim()
+      : '';
+
+    const password = passwordInput
+      ? passwordInput.value
+      : '';
+
+    if (!messageElement) {
+      return;
+    }
+
+    if (!email || !password) {
+      messageElement.textContent = 'ইমেইল ও পাসওয়ার্ড দিন';
+      messageElement.className = 'form-msg err';
+      return;
+    }
+
+    if (typeof FB === 'undefined' || !FB) {
+      messageElement.textContent = 'সংযোগ সমস্যা';
+      messageElement.className = 'form-msg err';
+      return;
+    }
+
+    try {
+      const credential = await FB.signInWithEmailAndPassword(
+        FB.auth,
+        email,
+        password
+      );
+
+      const staffSnapshot = await FB.getDoc(
+        FB.doc(
+          FB.db,
+          'staff',
+          credential.user.uid
+        )
+      );
+
+      const isAdmin =
+        staffSnapshot.exists() &&
+        staffSnapshot.data().role === 'admin';
+
+      if (!isAdmin) {
+        await FB.signOut(FB.auth).catch(() => {});
+
+        messageElement.textContent =
+          'এই অ্যাকাউন্ট অ্যাডমিন হিসেবে অনুমোদিত নয়';
+
+        messageElement.className = 'form-msg err';
+        return;
       }
-      this.currentUid = cred.user.uid;
+
+      this.currentUid = credential.user.uid;
       this._verifiedThisSession = true;
-      document.getElementById('ownerGateModal').classList.remove('show');
+
+      const modal = document.getElementById('ownerGateModal');
+
+      if (modal) {
+        modal.classList.remove('show');
+      }
+
       Router.go('admin-dash');
-    }catch(e){ msgEl.textContent='লগইন ব্যর্থ: ইমেইল বা পাসওয়ার্ড সঠিক নয়'; msgEl.className='form-msg err'; }
+    } catch (error) {
+      messageElement.textContent =
+        'লগইন ব্যর্থ: ইমেইল বা পাসওয়ার্ড সঠিক নয়';
+
+      messageElement.className = 'form-msg err';
+    }
   },
-  async _restoreSession(){
-    if(this.currentUid || !FB || !FB.auth.currentUser) return false;
-    try{
-      const staffSnap = await FB.getDoc(FB.doc(FB.db,'staff',FB.auth.currentUser.uid));
-      if(staffSnap.exists() && staffSnap.data().role==='admin'){
+
+  async _restoreSession() {
+    if (
+      this.currentUid ||
+      typeof FB === 'undefined' ||
+      !FB ||
+      !FB.auth ||
+      !FB.auth.currentUser
+    ) {
+      return false;
+    }
+
+    try {
+      const staffSnapshot = await FB.getDoc(
+        FB.doc(
+          FB.db,
+          'staff',
+          FB.auth.currentUser.uid
+        )
+      );
+
+      const isAdmin =
+        staffSnapshot.exists() &&
+        staffSnapshot.data().role === 'admin';
+
+      if (isAdmin) {
         this.currentUid = FB.auth.currentUser.uid;
         this._verifiedThisSession = true;
         return true;
       }
-    }catch(e){ devWarn('owner session restore failed', e.message); }
+    } catch (error) {
+      if (typeof devWarn === 'function') {
+        devWarn(
+          'owner session restore failed',
+          error.message
+        );
+      }
+    }
+
     return false;
   },
-  async lock(){
-    if(FB) await FB.signOut(FB.auth).catch(()=>{});
-    this.currentUid=null; this._verifiedThisSession=false;
-    toast('🔒 লক করা হয়েছে'); Router.go('home');
+
+  async lock() {
+    if (
+      typeof FB !== 'undefined' &&
+      FB
+    ) {
+      await FB.signOut(FB.auth).catch(() => {});
+    }
+
+    this.currentUid = null;
+    this._verifiedThisSession = false;
+
+    if (typeof toast === 'function') {
+      toast('🔒 লক করা হয়েছে');
+    }
+
+    Router.go('home');
   }
 };
 
 const Router = {
-  current:'home', params:{},
+  current: 'home',
+  params: {},
 
-  /* ── SEO: প্রতিটা পাবলিক পেজের জন্য রিয়েল, শেয়ারযোগ্য URL + টাইটেল ──
-     private/checkout-ধরনের পেজ (checkout, account, myorders, order-success)
-     ইচ্ছাকৃতভাবে বাদ — সেগুলোর URL বদলানোর দরকার নেই, index-ও হওয়া উচিত না */
+  /*
+   * SEO metadata
+   *
+   * Private বা checkout ধরনের page এখানে রাখা হয়নি।
+   * যেমন:
+   * checkout
+   * account
+   * myorders
+   * order-success
+   */
+
   seoMeta: {
-    home: { path: '/', title: 'Golapi Shop Online — নোয়াখালী সদর ও বেগমগঞ্জের অনলাইন শপ', desc: 'মুদি, ঔষধ, গ্যাস, কসমেটিকস — bKash, Nagad, COD পেমেন্টে ঘরে বসে অর্ডার করুন। নিজস্ব লোকাল ড্রাইভার, স্বাস্থ্য সেবা।' },
-    listing: { path: p => `/category/${p.cat||'all'}`, title: p => `${CATEGORIES.find(c=>c.id===p.cat)?.label || 'সব প্রোডাক্ট'} — Golapi Shop Online`, desc: p => `${CATEGORIES.find(c=>c.id===p.cat)?.label || 'সব প্রোডাক্ট'} কিনুন Golapi Shop Online থেকে — নোয়াখালী সদর ও বেগমগঞ্জে হোম ডেলিভারি।` },
-    product: { path: p => `/product/${p.id}`, title: p => { const pr=ALL_PRODUCTS.find(x=>x.id===p.id); return pr ? `${pr.name} — ৳${pr.salePrice} | Golapi Shop Online` : 'প্রোডাক্ট — Golapi Shop Online'; }, desc: p => { const pr=ALL_PRODUCTS.find(x=>x.id===p.id); return pr ? (pr.description || `${pr.name} — Golapi Shop Online থেকে হোম ডেলিভারিতে কিনুন।`) : ''; } },
-    medical: { path: '/medical', title: 'স্বাস্থ্য সেবা — Golapi Shop Online', desc: '১৫ জন বিশেষজ্ঞ চিকিৎসকের ভিজিট শিডিউলিং সহায়তা — নোয়াখালী সদর ও বেগমগঞ্জ।' },
-    'custom-bazar': { path: '/custom-bazar', title: 'কাস্টম বাজার — Golapi Shop Online', desc: 'নিজের বাজারের লিস্ট পাঠান, আমাদের ড্রাইভার বাজার করে বাসায় পৌঁছে দেবে।' },
-    contact: { path: '/contact', title: 'যোগাযোগ — Golapi Shop Online', desc: 'হটলাইন, শাখা ম্যানেজারের নম্বর ও ইমেইল — Golapi Shop Online.' },
-    'about-app': { path: '/about', title: 'আমাদের গল্প — Golapi Shop Online', desc: 'Golapi Shop Online কীভাবে শুরু হলো, আমাদের টিমের সাথে পরিচিত হন।' },
-    terms: { path: '/terms', title: 'শর্তাবলী — Golapi Shop Online', desc: 'Golapi Shop Online ব্যবহারের শর্তাবলী।' },
-    'privacy-info': { path: '/privacy', title: 'প্রাইভেসি পলিসি — Golapi Shop Online', desc: 'Golapi Shop Online-এর গোপনীয়তা নীতি।' }
+    home: {
+      path: '/',
+
+      title:
+        'Golapi Shop Online — নোয়াখালী সদর ও বেগমগঞ্জের অনলাইন শপ',
+
+      desc:
+        'নোয়াখালী সদর ও বেগমগঞ্জে মুদি, ঔষধ, গ্যাস ও দৈনন্দিন প্রয়োজনীয় পণ্য অর্ডার করুন অথবা নিজের বাজারের লিস্ট পাঠান। স্থানীয় ডেলিভারি ও সহজ পেমেন্ট।'
+    },
+
+    listing: {
+      path: params => {
+        return `/category/${params.cat || 'all'}`;
+      },
+
+      title: params => {
+        const category = CATEGORIES.find(
+          item => item.id === params.cat
+        );
+
+        const categoryName = category
+          ? category.label
+          : 'সব প্রোডাক্ট';
+
+        return `${categoryName} — Golapi Shop Online`;
+      },
+
+      desc: params => {
+        const category = CATEGORIES.find(
+          item => item.id === params.cat
+        );
+
+        const categoryName = category
+          ? category.label
+          : 'সব প্রোডাক্ট';
+
+        return `${categoryName} কিনুন Golapi Shop Online থেকে — নোয়াখালী সদর ও বেগমগঞ্জে হোম ডেলিভারি।`;
+      }
+    },
+
+    product: {
+      path: params => {
+        return `/product/${params.id}`;
+      },
+
+      title: params => {
+        const product = ALL_PRODUCTS.find(
+          item => item.id === params.id
+        );
+
+        if (!product) {
+          return 'প্রোডাক্ট — Golapi Shop Online';
+        }
+
+        return `${product.name} — ৳${product.salePrice} | Golapi Shop Online`;
+      },
+
+      desc: params => {
+        const product = ALL_PRODUCTS.find(
+          item => item.id === params.id
+        );
+
+        if (!product) {
+          return '';
+        }
+
+        return (
+          product.description ||
+          `${product.name} — Golapi Shop Online থেকে হোম ডেলিভারিতে কিনুন।`
+        );
+      }
+    },
+
+    medical: {
+      path: '/medical',
+
+      title:
+        'স্বাস্থ্য সেবা — Golapi Shop Online',
+
+      desc:
+        'বিশেষজ্ঞ চিকিৎসকদের তথ্য ও সিরিয়াল নেওয়ার সহায়তা দেখুন — নোয়াখালী সদর ও বেগমগঞ্জ।'
+    },
+
+    'custom-bazar': {
+      path: '/custom-bazar',
+
+      title:
+        'কাস্টম বাজার — Golapi Shop Online',
+
+      desc:
+        'নিজের বাজারের লিস্ট পাঠান। আমাদের স্থানীয় টিম বাজার প্রস্তুত করে ডেলিভারির ব্যবস্থা করবে।'
+    },
+
+    contact: {
+      path: '/contact',
+
+      title:
+        'যোগাযোগ — Golapi Shop Online',
+
+      desc:
+        'Golapi Shop Online-এর হটলাইন, শাখা ম্যানেজারের নম্বর ও ইমেইল দেখুন।'
+    },
+
+    'about-app': {
+      path: '/about',
+
+      title:
+        'আমাদের গল্প — Golapi Shop Online',
+
+      desc:
+        'Golapi Shop Online কীভাবে শুরু হলো এবং আমাদের স্থানীয় টিমের সঙ্গে পরিচিত হন।'
+    },
+
+    terms: {
+      path: '/terms',
+
+      title:
+        'শর্তাবলী — Golapi Shop Online',
+
+      desc:
+        'Golapi Shop Online ব্যবহারের শর্তাবলী দেখুন।'
+    },
+
+    'privacy-info': {
+      path: '/privacy',
+
+      title:
+        'প্রাইভেসি পলিসি — Golapi Shop Online',
+
+      desc:
+        'Golapi Shop Online-এর গোপনীয়তা নীতি দেখুন।'
+    }
   },
-  updateSeoTags(page, params, skipHistory){
+
+  updateSeoTags(page, params, skipHistory) {
     const meta = this.seoMeta[page];
-    if(!meta) return; // private পেজ — URL/title অপরিবর্তিত থাকবে
-    const path = typeof meta.path==='function' ? meta.path(params) : meta.path;
-    const title = typeof meta.title==='function' ? meta.title(params) : meta.title;
-    const desc = typeof meta.desc==='function' ? meta.desc(params) : meta.desc;
-    if(title) document.title = title; // টাইটেল/মেটা সবসময় আপডেট হয় — direct URL হিট বা ক্লিক-নেভিগেশন দুই ক্ষেত্রেই
-    if(desc){
-      let m = document.querySelector('meta[name="description"]');
-      if(m) m.setAttribute('content', desc);
+
+    if (!meta) {
+      return;
     }
-    if(!skipHistory && path && window.location.pathname !== path){
-      history.pushState({ page, params }, '', path); // শুধু ক্লিক-নেভিগেশনে নতুন URL পুশ হয়; direct URL হিটে URL ইতিমধ্যেই সঠিক
+
+    const path =
+      typeof meta.path === 'function'
+        ? meta.path(params)
+        : meta.path;
+
+    const title =
+      typeof meta.title === 'function'
+        ? meta.title(params)
+        : meta.title;
+
+    const description =
+      typeof meta.desc === 'function'
+        ? meta.desc(params)
+        : meta.desc;
+
+    if (title) {
+      document.title = title;
+    }
+
+    if (description) {
+      let descriptionMeta = document.querySelector(
+        'meta[name="description"]'
+      );
+
+      if (descriptionMeta) {
+        descriptionMeta.setAttribute(
+          'content',
+          description
+        );
+      }
+    }
+
+    const canonical = document.querySelector(
+      'link[rel="canonical"]'
+    );
+
+    if (canonical && path) {
+      canonical.setAttribute(
+        'href',
+        `${window.location.origin}${path}`
+      );
+    }
+
+    const openGraphTitle = document.querySelector(
+      'meta[property="og:title"]'
+    );
+
+    if (openGraphTitle && title) {
+      openGraphTitle.setAttribute(
+        'content',
+        title
+      );
+    }
+
+    const openGraphDescription = document.querySelector(
+      'meta[property="og:description"]'
+    );
+
+    if (openGraphDescription && description) {
+      openGraphDescription.setAttribute(
+        'content',
+        description
+      );
+    }
+
+    const openGraphUrl = document.querySelector(
+      'meta[property="og:url"]'
+    );
+
+    if (openGraphUrl && path) {
+      openGraphUrl.setAttribute(
+        'content',
+        `${window.location.origin}${path}`
+      );
+    }
+
+    const twitterTitle = document.querySelector(
+      'meta[name="twitter:title"]'
+    );
+
+    if (twitterTitle && title) {
+      twitterTitle.setAttribute(
+        'content',
+        title
+      );
+    }
+
+    const twitterDescription = document.querySelector(
+      'meta[name="twitter:description"]'
+    );
+
+    if (twitterDescription && description) {
+      twitterDescription.setAttribute(
+        'content',
+        description
+      );
+    }
+
+    if (
+      !skipHistory &&
+      path &&
+      window.location.pathname !== path
+    ) {
+      history.pushState(
+        {
+          page,
+          params
+        },
+        '',
+        path
+      );
     }
   },
 
-  async go(page, params={}, opts={}){
-    if(page==='admin-dash' && !OwnerAuth.isUnlocked()){
-      const restored = await OwnerAuth._restoreSession();
-      if(!restored){ OwnerAuth.requestAccess(); return; }
-    }
-    /* স্টাফ পেজ (admin-dash/driver/zone-manager) হলে আগে ফ্র্যাগমেন্ট লোড করে নিতে হবে */
-    if(window.__lazyPages && window.__lazyPages.includes(page) && !window.__loadedLazyPages[page]){
-      await new Promise(resolve => window.__ensureLazyPage(page, resolve));
-    }
-    this.current = page; this.params = params;
-    this.updateSeoTags(page, params, !!opts.skipHistory);
-    if(typeof dataLayer!=='undefined') dataLayer.push({event:'page_view', page_title: page, page_path: '/#'+page});
-    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-    const el=document.getElementById('page-'+page);
-    if(el) el.classList.add('active');
-    window.scrollTo({top:0,behavior:'smooth'});
-    const navMap = {home:0, listing:1, checkout:2, myorders:3, product:1};
-    document.querySelectorAll('#custMobNav a').forEach((a,i)=>a.classList.toggle('active', i===(navMap[page]??-1)));
-    if(page==='listing') Listing.render();
-    if(page==='product') PDP.load(params.id);
-    if(page==='checkout') Checkout.init();
-    if(page==='myorders') MyOrders.render();
-    if(page==='admin-dash') AdminDash.render();
-    if(page==='driver') DriverPortal.render();
-    if(page==='zone-manager') ZoneManagerDash.render();
-    if(page==='home') Home.render();
-    if(page==='medical') Medical.render();
-    if(page==='custom-bazar') CustomBazar.init();
-    if(page==='account') AccountPage.render();
-    if(page==='account-addresses') AccountPage.renderAddresses();
+  async go(page, params = {}, options = {}) {
+    if (
+      page === 'admin-dash' &&
+      !OwnerAuth.isUnlocked()
+    ) {
+      const restored =
+        await OwnerAuth._restoreSession();
 
-    const staff = ['admin-dash','zone-manager','driver'].includes(page);
-    const chatBtn = document.getElementById('chatBtn');
-    if(chatBtn) chatBtn.style.display = staff?'none':'flex';
-    const chatWin = document.getElementById('chatWin');
-    if(chatWin) chatWin.classList.remove('show');
-    ['custTopbar','custHeader','custMobNav','custFooter'].forEach(id=>{ const e=document.getElementById(id); if(e) e.style.display = staff?'none':''; });
-    document.body.style.paddingBottom = staff?'0':'';
+      if (!restored) {
+        OwnerAuth.requestAccess();
+        return;
+      }
+    }
+
+    const isLazyPage =
+      window.__lazyPages &&
+      window.__lazyPages.includes(page);
+
+    const isLazyPageLoaded =
+      window.__loadedLazyPages &&
+      window.__loadedLazyPages[page];
+
+    if (
+      isLazyPage &&
+      !isLazyPageLoaded &&
+      typeof window.__ensureLazyPage === 'function'
+    ) {
+      await new Promise(resolve => {
+        window.__ensureLazyPage(
+          page,
+          resolve
+        );
+      });
+    }
+
+    this.current = page;
+    this.params = params;
+
+    this.updateSeoTags(
+      page,
+      params,
+      Boolean(options.skipHistory)
+    );
+
+    if (typeof dataLayer !== 'undefined') {
+      dataLayer.push({
+        event: 'page_view',
+        page_title: page,
+        page_path: window.location.pathname
+      });
+    }
+
+    document
+      .querySelectorAll('.page')
+      .forEach(pageElement => {
+        pageElement.classList.remove('active');
+      });
+
+    const targetPage = document.getElementById(
+      `page-${page}`
+    );
+
+    if (targetPage) {
+      targetPage.classList.add('active');
+    }
+
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+
+    const navMap = {
+      home: 0,
+      listing: 1,
+      checkout: 2,
+      myorders: 3,
+      product: 1
+    };
+
+    document
+      .querySelectorAll('#custMobNav a')
+      .forEach((navItem, index) => {
+        navItem.classList.toggle(
+          'active',
+          index === (navMap[page] ?? -1)
+        );
+      });
+
+    if (
+      page === 'listing' &&
+      typeof Listing !== 'undefined'
+    ) {
+      Listing.render();
+    }
+
+    if (
+      page === 'product' &&
+      typeof PDP !== 'undefined'
+    ) {
+      PDP.load(params.id);
+    }
+
+    if (
+      page === 'checkout' &&
+      typeof Checkout !== 'undefined'
+    ) {
+      Checkout.init();
+    }
+
+    if (
+      page === 'myorders' &&
+      typeof MyOrders !== 'undefined'
+    ) {
+      MyOrders.render();
+    }
+
+    if (
+      page === 'admin-dash' &&
+      typeof AdminDash !== 'undefined'
+    ) {
+      AdminDash.render();
+    }
+
+    if (
+      page === 'driver' &&
+      typeof DriverPortal !== 'undefined'
+    ) {
+      DriverPortal.render();
+    }
+
+    if (
+      page === 'zone-manager' &&
+      typeof ZoneManagerDash !== 'undefined'
+    ) {
+      ZoneManagerDash.render();
+    }
+
+    if (
+      page === 'home' &&
+      typeof Home !== 'undefined'
+    ) {
+      Home.render();
+    }
+
+    if (
+      page === 'medical' &&
+      typeof Medical !== 'undefined'
+    ) {
+      Medical.render();
+    }
+
+    if (
+      page === 'custom-bazar' &&
+      typeof CustomBazar !== 'undefined'
+    ) {
+      CustomBazar.init();
+    }
+
+    if (
+      page === 'account' &&
+      typeof AccountPage !== 'undefined'
+    ) {
+      AccountPage.render();
+    }
+
+    if (
+      page === 'account-addresses' &&
+      typeof AccountPage !== 'undefined'
+    ) {
+      AccountPage.renderAddresses();
+    }
+
+    const isStaffPage = [
+      'admin-dash',
+      'zone-manager',
+      'driver'
+    ].includes(page);
+
+    const chatButton =
+      document.getElementById('chatBtn');
+
+    if (chatButton) {
+      chatButton.style.display =
+        isStaffPage ? 'none' : 'flex';
+    }
+
+    const chatWindow =
+      document.getElementById('chatWin');
+
+    if (chatWindow) {
+      chatWindow.classList.remove('show');
+    }
+
+    [
+      'custTopbar',
+      'custHeader',
+      'custMobNav',
+      'custFooter'
+    ].forEach(id => {
+      const element =
+        document.getElementById(id);
+
+      if (element) {
+        element.style.display =
+          isStaffPage ? 'none' : '';
+      }
+    });
+
+    document.body.style.paddingBottom =
+      isStaffPage ? '0' : '';
   }
 };
 
 Router.navigate = function(path) {
-  window.history.pushState({}, '', path);
-  const p = path.toLowerCase();
-  if (p === '/driver') Router.go('driver');
-  else if (p === '/manager' || p === '/zone-manager') Router.go('zone-manager');
-  else Router.go('home');
+  window.history.pushState(
+    {},
+    '',
+    path
+  );
+
+  const normalizedPath =
+    path.toLowerCase();
+
+  if (normalizedPath === '/driver') {
+    Router.go(
+      'driver',
+      {},
+      {
+        skipHistory: true
+      }
+    );
+
+    return;
+  }
+
+  if (
+    normalizedPath === '/manager' ||
+    normalizedPath === '/zone-manager'
+  ) {
+    Router.go(
+      'zone-manager',
+      {},
+      {
+        skipHistory: true
+      }
+    );
+
+    return;
+  }
+
+  Router.go(
+    'home',
+    {},
+    {
+      skipHistory: true
+    }
+  );
 };
