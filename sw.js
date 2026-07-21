@@ -26,6 +26,9 @@ const ASSETS = [
   '/js/update-check.js',
   '/js/deep-links.js',
   '/js/firebase-init.js',
+  '/js/memo.js',
+  '/js/livemap.js',
+  '/js/location.js',
   '/pages/home.html',
   '/pages/listing.html',
   '/pages/product.html',
@@ -76,7 +79,7 @@ self.addEventListener('activate', e => {
 });
 
 /* NETWORK-FIRST: সবসময় আগে নেটওয়ার্ক থেকে নতুন ভার্সন আনার চেষ্টা করে,
-   ব্যর হলে (অফলাইন) তখনই ক্যাশ থেকে দেখায়। এতে নতুন ডিপ্লয়মন্ট সাথে সাথে সব ইউজার পাবে। */
+   ব্যর্থ হলে (অফলাইন) তখনই ক্যাশ থেকে দেখায়। এতে নতুন ডিপ্লয়মেন্ট সাথে সাথে সব ইউজার পাবে। */
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   e.respondWith(
@@ -91,4 +94,9 @@ self.addEventListener('fetch', e => {
       .catch(() => {
         return caches.match(e.request).then(cached => {
           if (cached) return cached;
-          if (e.request.mode === 'navigate') return caches.match('/off
+          if (e.request.mode === 'navigate') return caches.match('/offline.html');
+          if (e.request.destination === 'image') return caches.match('/icons/head_logo.webp');
+        });
+      })
+  );
+});
