@@ -1,5 +1,34 @@
-let FB=null;
-window.addEventListener('firebase-ready',()=>{FB=window.__fb;Auth.init();ProductStore.startLiveSync();});
+let FB = null;
+let firebaseStarted = false;
+
+function startFirebaseFeatures() {
+  if (firebaseStarted || !window.__fb) return;
+
+  firebaseStarted = true;
+  FB = window.__fb;
+
+  try {
+    Auth.init();
+  } catch (error) {
+    console.error('Auth initialization failed:', error);
+  }
+
+  try {
+    ProductStore.startLiveSync();
+  } catch (error) {
+    console.error('Product sync initialization failed:', error);
+  }
+}
+
+window.addEventListener('firebase-ready', startFirebaseFeatures);
+
+/*
+ * firebase-init.js আগে লোড হয়ে event পাঠিয়ে দিলে
+ * window.__fb থেকে সরাসরি Firebase চালু করবে।
+ */
+if (window.__fb) {
+  startFirebaseFeatures();
+}
 let currentLang=localStorage.getItem('golapi_lang')||'bn';
 function applyLang(){document.querySelectorAll('[data-bn][data-en]').forEach(el=>{el.innerHTML=el.dataset[currentLang];});document.documentElement.lang=currentLang;const l=document.getElementById('langBtnLabel');if(l)l.textContent=currentLang==='bn'?'EN':'বাং';}
 function toggleLang(){currentLang=currentLang==='bn'?'en':'bn';localStorage.setItem('golapi_lang',currentLang);applyLang();}
