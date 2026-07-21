@@ -12,9 +12,9 @@
   .gs-footer {
     width: 100%;
     max-width: 100%;
-    margin-top: 44px;
+    margin-top: clamp(48px, 7vw, 88px);
     overflow: hidden;
-    background: #100d10;
+    background: #171316;
     color: #ffffff;
   }
 
@@ -39,12 +39,8 @@
       28px
       max(20px, env(safe-area-inset-left));
     background:
-      linear-gradient(
-        135deg,
-        #f0356b 0%,
-        #d82961 55%,
-        #b91d4d 100%
-      );
+      radial-gradient(circle at 92% 8%, rgba(255, 255, 255, 0.16), transparent 28%),
+      #c92f5f;
   }
 
   .gs-footer-cta::before,
@@ -75,7 +71,7 @@
     position: relative;
     z-index: 1;
     width: 100%;
-    max-width: 1180px;
+    max-width: 1240px;
     margin: 0 auto;
     display: grid;
     grid-template-columns: 1fr;
@@ -133,7 +129,7 @@
     justify-content: center;
     gap: 8px;
     padding: 12px 18px;
-    border-radius: 13px;
+    border-radius: 14px;
     font-family: inherit;
     font-size: 13px;
     font-weight: 700;
@@ -165,7 +161,7 @@
 
   .gs-footer-grid {
     width: 100%;
-    max-width: 1180px;
+    max-width: 1240px;
     margin: 0 auto;
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -207,7 +203,7 @@
   }
 
   .gs-footer-brand-name span {
-    color: #ff5c89;
+    color: #ff7ba1;
   }
 
   .gs-footer-brand-type {
@@ -259,7 +255,7 @@
     display: inline-block;
     margin: 0 0 16px;
     padding-bottom: 8px;
-    border-bottom: 2px solid #f0356b;
+    border-bottom: 2px solid #e94b79;
     color: #ffffff;
     font-size: 13px;
     font-weight: 700;
@@ -321,8 +317,8 @@
     gap: 11px;
     padding: 11px;
     border: 1px solid rgba(255, 255, 255, 0.07);
-    border-radius: 13px;
-    background: rgba(255, 255, 255, 0.04);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.045);
   }
 
   .gs-footer-avatar {
@@ -420,7 +416,7 @@
     padding: 11px 12px;
     border: 1px solid rgba(255, 255, 255, 0.07);
     border-radius: 12px;
-    background: rgba(255, 255, 255, 0.04);
+    background: rgba(255, 255, 255, 0.045);
     color: rgba(255, 255, 255, 0.78);
     font-size: 12px;
     transition:
@@ -491,11 +487,63 @@
     font-size: 16px;
   }
 
+  /* Service assurances */
+
+  .gs-footer-assurances {
+    width: 100%;
+    max-width: 1240px;
+    margin: 34px auto 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .gs-footer-assurance {
+    min-width: 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+    padding: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .gs-footer-assurance-icon {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: rgba(233, 75, 121, 0.14);
+    color: #ff83a7;
+    font-size: 15px;
+  }
+
+  .gs-footer-assurance strong,
+  .gs-footer-assurance small {
+    display: block;
+  }
+
+  .gs-footer-assurance strong {
+    margin-bottom: 3px;
+    color: #fff;
+    font-size: 12.5px;
+  }
+
+  .gs-footer-assurance small {
+    color: rgba(255, 255, 255, 0.48);
+    font-size: 10.5px;
+    line-height: 1.55;
+  }
+
   /* Bottom */
 
   .gs-footer-bottom {
     width: 100%;
-    max-width: 1180px;
+    max-width: 1240px;
     margin: 34px auto 0;
     padding-top: 22px;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
@@ -593,6 +641,10 @@
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
+    .gs-footer-assurances {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
     .gs-footer-bottom-row {
       display: flex;
       align-items: flex-end;
@@ -651,16 +703,16 @@
       <div>
         <span class="gs-footer-cta-label">
           <span class="gs-footer-cta-dot" aria-hidden="true"></span>
-          সহজ স্থানীয় কেনাকাটা
+          নোয়াখালীর দৈনন্দিন কেনাকাটা
         </span>
 
         <h2 id="footerCtaTitle">
-          আজকের বাজার এখনই শুরু করুন
+          দৈনন্দিন প্রয়োজন, এক জায়গায়
         </h2>
 
         <p>
-          পণ্য বেছে অর্ডার করুন অথবা নিজের সম্পূর্ণ বাজারের লিস্ট পাঠান।
-          অর্ডারের প্রয়োজনীয় তথ্য আমরা নিশ্চিত করে নেব।
+          প্রয়োজনীয় পণ্য বেছে অর্ডার করুন, অথবা আপনার সম্পূর্ণ বাজারের তালিকা পাঠান।
+          স্থানীয় ডেলিভারি টিম অর্ডারের প্রয়োজনীয় তথ্য নিশ্চিত করবে।
         </p>
       </div>
 
@@ -706,7 +758,7 @@
             </strong>
 
             <span class="gs-footer-brand-type">
-              স্থানীয় অনলাইন শপ
+              নোয়াখালীর স্থানীয় অনলাইন শপ
             </span>
           </div>
         </div>
@@ -1087,6 +1139,33 @@
       </section>
     </div>
 
+
+    <section class="gs-footer-assurances" aria-label="সেবার নিশ্চয়তা">
+      <div class="gs-footer-assurance">
+        <span class="gs-footer-assurance-icon" aria-hidden="true">✓</span>
+        <span>
+          <strong>নিজস্ব ডেলিভারি টিম</strong>
+          <small>বর্তমান সেবা এলাকার অর্ডার স্থানীয় টিম পরিচালনা করে।</small>
+        </span>
+      </div>
+
+      <div class="gs-footer-assurance">
+        <span class="gs-footer-assurance-icon" aria-hidden="true">৳</span>
+        <span>
+          <strong>ক্যাশ অন ডেলিভারি</strong>
+          <small>প্রযোজ্য অর্ডারে পণ্য গ্রহণের সময় মূল্য পরিশোধ করুন।</small>
+        </span>
+      </div>
+
+      <div class="gs-footer-assurance">
+        <span class="gs-footer-assurance-icon" aria-hidden="true">☎</span>
+        <span>
+          <strong>সরাসরি সহায়তা</strong>
+          <small>অর্ডার বা সেবা সংক্রান্ত প্রয়োজনে হটলাইনে যোগাযোগ করুন।</small>
+        </span>
+      </div>
+    </section>
+
     <!-- Bottom -->
     <div class="gs-footer-bottom">
       <div class="gs-footer-bottom-row">
@@ -1137,7 +1216,7 @@
           </nav>
 
           <small class="gs-footer-copyright">
-            © ২০২৬ Golapi Shop Online — সর্বস্বত্ব সংরক্ষিত
+            © ২০২৬ Golapi Shop Online. সর্বস্বত্ব সংরক্ষিত।
           </small>
         </div>
 

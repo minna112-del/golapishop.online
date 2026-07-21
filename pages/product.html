@@ -1,51 +1,100 @@
 <div class="page" id="page-product">
-  <section class="sec" style="padding-top:12px">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
-      <button onclick="history.back()||Router.go('home')" style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.06);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">‹</button>
-      <div class="crumb" id="pdpCrumb" style="margin:0;font-size:12px"></div>
-    </div>
-    <div id="pdpGalleryWrap" style="position:relative;border-radius:16px;overflow:hidden;background:var(--card);border:1px solid var(--line);margin-bottom:18px;cursor:zoom-in" onclick="PDP.openFullImg()">
-      <img id="pdpImg" loading="lazy" alt="" style="width:100%;aspect-ratio:1/1;object-fit:cover;display:block">
-      <span class="brand-seal pdp-seal"><img src="icons/head_logo.webp" alt="Golapi Shop"></span>
-      <div style="position:absolute;bottom:10px;left:10px;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);padding:4px 10px;border-radius:20px;font-size:11px;color:#fff"><span class="ic ic-search" style="width:13px;height:13px;vertical-align:-2px;margin-right:3px"></span>বড় দেখুন</div>
-    </div>
-    <div id="pdpImgOverlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.95);align-items:center;justify-content:center;flex-direction:column" onclick="this.style.display='none'">
-      <button style="position:absolute;top:16px;right:16px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.1);color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center">✕</button>
-      <img id="pdpImgFull" src="" style="max-width:100%;max-height:90vh;object-fit:contain">
-    </div>
-    <h1 class="tiro" style="font-size:20px;margin-bottom:8px;line-height:1.5" id="pdpName"></h1>
-    <div style="font-size:12.5px;color:var(--ink-muted);margin-bottom:12px" id="pdpMeta"></div>
-    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:12px;flex-wrap:wrap">
-      <span class="price-now" style="font-size:28px" id="pdpPrice"></span>
-      <span class="price-old" id="pdpOld"></span>
-      <span id="pdpDisc" style="display:none;font-size:11px;font-weight:700;color:#f87171;background:rgba(239,68,68,.1);padding:2px 8px;border-radius:6px"></span>
-      <span style="font-size:13px;color:var(--ink-muted)" id="pdpUnit"></span>
-    </div>
-    <div style="margin-bottom:10px" id="pdpTags"></div>
-    <p style="color:#22c55e;font-size:13px;margin-bottom:16px" id="pdpStock"></p>
-    <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px">
-      <span style="font-size:13.5px;font-weight:600">পরিমাণ:</span>
-      <div class="qty-ctrl"><button onclick="PDP.changeQty(-1)">−</button><span id="pdpQty">১</span><button onclick="PDP.changeQty(1)">+</button></div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px">
-      <button class="btn btn-gold" onclick="PDP.addToCart()"><span class="ic ic-cart" style="width:13px;height:13px;vertical-align:-2px;margin-right:3px"></span>কার্টে যুক্ত করুন</button>
-      <button class="btn btn-rose" onclick="PDP.buyNow()">এখনই কিনুন</button>
-    </div>
-    <div class="card" style="padding:12px;display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
-      <div style="display:flex;align-items:center;gap:10px">
-        <img src="icons/head_logo.webp" style="width:32px;height:32px;border-radius:8px;object-fit:cover">
-        <div><div style="color:var(--rose);font-size:13px;font-weight:600">Golapi Shop Online</div><div style="font-size:11px;color:var(--ink-muted)">নিজস্ব শাখা থেকে সরাসরি সংগ্রহ করা পণ্য</div></div>
+  <section class="sec pdp-page" aria-labelledby="pdpName">
+    <nav class="pdp-topline" aria-label="পণ্যের নেভিগেশন">
+      <button class="pdp-back" type="button" aria-label="পেছনে যান" onclick="if(history.length>1){history.back()}else{Router.go('home')}">‹</button>
+      <div class="crumb" id="pdpCrumb"></div>
+    </nav>
+
+    <div class="pdp-layout pdp-premium-layout">
+      <div class="pdp-media-column">
+        <button id="pdpGalleryWrap" class="pdp-gallery" type="button" onclick="PDP.openFullImg()" aria-label="পণ্যের ছবি বড় করে দেখুন">
+          <img id="pdpImg" loading="eager" decoding="async" alt="">
+          <span class="brand-seal pdp-seal"><img src="icons/head_logo.webp" alt="" aria-hidden="true"></span>
+          <span class="pdp-zoom-hint"><span class="ic ic-search" aria-hidden="true"></span>বড় করে দেখুন</span>
+        </button>
+
+        <div class="pdp-assurance" aria-label="কেনাকাটার সুবিধা">
+          <div><span aria-hidden="true">✓</span><strong>স্টক যাচাই</strong><small id="pdpAssuranceStock">বর্তমান তথ্য</small></div>
+          <div><span aria-hidden="true">৳</span><strong>মূল্য স্বচ্ছতা</strong><small>চেকআউটে পূর্ণ হিসাব</small></div>
+          <div><span aria-hidden="true">⌖</span><strong>লোকাল ডেলিভারি</strong><small>এলাকা অনুযায়ী চার্জ</small></div>
+        </div>
       </div>
-      <span class="badge b-green">✓ ৩ দিন রিটার্ন</span>
+
+      <div class="pdp-content-column">
+        <div class="pdp-eyebrow" id="pdpCategoryLabel">পণ্য</div>
+        <h1 class="tiro pdp-title" id="pdpName"></h1>
+        <div class="pdp-meta" id="pdpMeta"></div>
+
+        <div class="pdp-price-panel">
+          <div class="pdp-price-line">
+            <span class="price-now" id="pdpPrice"></span>
+            <span class="price-old" id="pdpOld"></span>
+            <span class="pdp-discount" id="pdpDisc"></span>
+          </div>
+          <span class="pdp-unit" id="pdpUnit"></span>
+        </div>
+
+        <div class="pdp-tag-row" id="pdpTags"></div>
+        <p class="pdp-stock" id="pdpStock" role="status"></p>
+
+        <div class="pdp-purchase-card">
+          <div class="pdp-quantity-row">
+            <div><strong>পরিমাণ</strong><small id="pdpQtyHelp">স্টক সীমার মধ্যে নির্বাচন করুন</small></div>
+            <div class="qty-ctrl" aria-label="পণ্যের পরিমাণ">
+              <button type="button" aria-label="পরিমাণ কমান" onclick="PDP.changeQty(-1)">−</button>
+              <span id="pdpQty" aria-live="polite">১</span>
+              <button type="button" aria-label="পরিমাণ বাড়ান" onclick="PDP.changeQty(1)">+</button>
+            </div>
+          </div>
+          <div class="pdp-actions">
+            <button class="btn btn-outline pdp-wishlist-btn" id="pdpWishlistBtn" type="button" onclick="PDP.toggleWishlist()" aria-pressed="false">♡ সংরক্ষণ</button>
+            <button class="btn btn-gold" id="pdpCartBtn" type="button" onclick="PDP.addToCart()"><span class="ic ic-cart" aria-hidden="true"></span>কার্টে যোগ করুন</button>
+            <button class="btn btn-rose" id="pdpBuyBtn" type="button" onclick="PDP.buyNow()">এখনই কিনুন</button>
+          </div>
+        </div>
+
+        <div class="pdp-seller-card">
+          <img src="icons/head_logo.webp" alt="Golapi Shop Online">
+          <div><strong>Golapi Shop Online</strong><span>চেকআউটের আগে পণ্য, ঠিকানা ও ডেলিভারি হিসাব পুনরায় যাচাই করতে পারবেন।</span></div>
+        </div>
+      </div>
     </div>
-    <div class="pdp-tabs">
-      <button class="active" onclick="PDP.tab(this,'desc')">বিবরণ</button>
-      <button onclick="PDP.tab(this,'spec')">স্পেসিফিকেশন</button>
-      <button onclick="PDP.tab(this,'ship')">শিপিং ও রিটার্ন</button>
+
+    <div class="pdp-information">
+      <div class="pdp-tabs" role="tablist" aria-label="পণ্যের বিস্তারিত তথ্য">
+        <button class="active" type="button" role="tab" aria-selected="true" onclick="PDP.tab(this,'desc')">বিবরণ</button>
+        <button type="button" role="tab" aria-selected="false" onclick="PDP.tab(this,'spec')">পণ্যের তথ্য</button>
+        <button type="button" role="tab" aria-selected="false" onclick="PDP.tab(this,'ship')">ডেলিভারি</button>
+      </div>
+      <div class="tab-pane active" id="tab-desc" role="tabpanel"><p id="pdpDesc" class="pdp-description"></p></div>
+      <div class="tab-pane" id="tab-spec" role="tabpanel"><table class="spec-table" id="pdpSpec"></table></div>
+      <div class="tab-pane" id="tab-ship" role="tabpanel">
+        <div class="pdp-delivery-note">
+          <h3>ডেলিভারি কীভাবে নির্ধারিত হয়</h3>
+          <p>আপনার নির্বাচিত ঠিকানা, সেবাযোগ্য এলাকা, অর্ডারের পরিমাণ এবং দূরত্ব অনুযায়ী চেকআউটে প্রযোজ্য ডেলিভারি চার্জ ও তথ্য দেখানো হবে। অর্ডার নিশ্চিত করার আগে সম্পূর্ণ হিসাব পর্যালোচনা করুন।</p>
+        </div>
+      </div>
     </div>
-    <div class="tab-pane active" id="tab-desc"><p id="pdpDesc" style="font-size:13.5px;color:var(--ink-soft);line-height:1.8"></p></div>
-    <div class="tab-pane" id="tab-spec"><table class="spec-table" id="pdpSpec"></table></div>
-    <div class="tab-pane" id="tab-ship"><p style="font-size:13.5px;color:var(--ink-soft);line-height:1.9">🚚 নোয়াখালী সদর ও বেগমগঞ্জে নিজস্ব ড্রাইভার দিয়ে হোম ডেলিভারি।<br>⏱️ ডেলিভারি সময় ও চার্জ নির্ভর করে অর্ডারের পরিমাণ ও আপনার দূরত্বের (মাইলেজ) উপর — চেকআউটে সঠিক সময়-চার্জ দেখানো হবে।<br>↩️ ৩ দিনের মধ্যে রিটার্ন/রিপ্লেসমেন্ট</p></div>
-    <div style="margin-top:36px"><h2 class="tiro" style="font-size:19px;margin-bottom:14px">আপনার পছন্দ হতে পারে</h2><div class="scroll-row" id="relatedRow"></div></div>
+
+    <section class="pdp-review-section" aria-labelledby="pdpReviewTitle">
+      <div class="section-heading"><div><span class="section-kicker">গ্রাহকের অভিজ্ঞতা</span><h2 class="tiro" id="pdpReviewTitle">রিভিউ</h2></div></div>
+      <div class="pdp-review-grid"><div id="pdpReviews"></div><div class="card pdp-review-form" id="pdpReviewForm"></div></div>
+    </section>
+
+    <section class="pdp-related" aria-labelledby="relatedTitle">
+      <div class="section-heading"><div><span class="section-kicker">একই ধরনের আরও পণ্য</span><h2 class="tiro" id="relatedTitle">আপনার পছন্দ হতে পারে</h2></div><button class="section-link" type="button" id="pdpRelatedLink">সব দেখুন →</button></div>
+      <div class="scroll-row" id="relatedRow"></div>
+    </section>
   </section>
+
+  <div id="pdpImgOverlay" class="pdp-image-overlay" role="dialog" aria-modal="true" aria-label="পণ্যের বড় ছবি" onclick="if(event.target===this)PDP.closeFullImg()">
+    <button type="button" aria-label="ছবি বন্ধ করুন" onclick="PDP.closeFullImg()">✕</button>
+    <img id="pdpImgFull" src="" alt="">
+  </div>
+
+  <div class="pdp-mobile-bar" id="pdpMobileBar">
+    <div><small>মোট</small><strong id="pdpMobilePrice"></strong></div>
+    <button class="btn btn-gold" id="pdpMobileCartBtn" type="button" onclick="PDP.addToCart()">কার্টে যোগ করুন</button>
+    <button class="btn btn-rose" id="pdpMobileBuyBtn" type="button" onclick="PDP.buyNow()">কিনুন</button>
+  </div>
 </div>

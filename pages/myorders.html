@@ -1,12 +1,27 @@
 <div class="page" id="page-myorders">
-  <section style="padding:12px 14px">
-    <h2 class="tiro" style="font-size:22px;margin-bottom:14px"><span class="ic ic-package" style="width:13px;height:13px;vertical-align:-2px;margin-right:3px"></span>আমার অর্ডার</h2>
-    <div style="display:flex;gap:16px;margin-bottom:16px;border-bottom:1px solid var(--line);padding-bottom:10px">
-      <button id="ordersTabActive" onclick="MyOrders.switchTab('active')" style="background:none;border:none;border-bottom:2px solid var(--gold);color:var(--gold);font-size:14px;font-weight:600;padding:4px 0;cursor:pointer;font-family:inherit">নতুন অর্ডার</button>
-      <button id="ordersTabPast" onclick="MyOrders.switchTab('past')" style="background:none;border:none;border-bottom:2px solid transparent;color:var(--ink-muted);font-size:14px;font-weight:600;padding:4px 0;cursor:pointer;font-family:inherit">আগের অর্ডার</button>
-      <button id="ordersTabSaved" onclick="MyOrders.switchTab('saved')" style="background:none;border:none;border-bottom:2px solid transparent;color:var(--ink-muted);font-size:14px;font-weight:600;padding:4px 0;cursor:pointer;font-family:inherit">📑 সেভড লিস্ট</button>
-    </div>
-    <div id="myOrdersList"></div>
-    <div id="savedListsBox" style="display:none"></div>
-  </section>
+  <main class="orders-page" aria-labelledby="ordersTitle">
+    <header class="orders-hero">
+      <div>
+        <span class="orders-eyebrow">অ্যাকাউন্ট</span>
+        <h1 id="ordersTitle">আমার অর্ডার</h1>
+        <p>চলমান অর্ডার ট্র্যাক করুন, আগের অর্ডার দেখুন এবং সংরক্ষিত বাজারের লিস্ট ব্যবহার করুন।</p>
+      </div>
+      <button class="btn btn-outline orders-shop-btn" type="button" onclick="Router.go('listing',{cat:'all'})">পণ্য দেখুন</button>
+    </header>
+
+    <nav class="orders-tabs" aria-label="অর্ডার বিভাগ" role="tablist">
+      <button id="ordersTabActive" class="orders-tab active" type="button" role="tab" aria-selected="true" aria-controls="myOrdersList" onclick="MyOrders.switchTab('active')">
+        <span>চলমান</span><b id="activeOrdersCount">0</b>
+      </button>
+      <button id="ordersTabPast" class="orders-tab" type="button" role="tab" aria-selected="false" aria-controls="myOrdersList" onclick="MyOrders.switchTab('past')">
+        <span>আগের অর্ডার</span><b id="pastOrdersCount">0</b>
+      </button>
+      <button id="ordersTabSaved" class="orders-tab" type="button" role="tab" aria-selected="false" aria-controls="savedListsBox" onclick="MyOrders.switchTab('saved')">
+        <span>সেভড লিস্ট</span>
+      </button>
+    </nav>
+
+    <section id="myOrdersList" class="orders-list" aria-live="polite"></section>
+    <section id="savedListsBox" class="orders-list" aria-live="polite" hidden></section>
+  </main>
 </div>

@@ -1,45 +1,55 @@
-<div class="page" id="page-driver">
-  <section class="sec" style="max-width:560px">
-    <a href="#" onclick="Router.go('home')" style="font-size:12.5px;color:var(--ink-muted);display:inline-block;margin-bottom:16px">← সাইটে ফিরে যান</a>
-    <div id="driverLoginBox">
-      <h2 class="tiro" style="font-size:20px;margin-bottom:6px">🚴 ড্রাইভার লগইন</h2>
-      <p style="color:var(--ink-muted);font-size:13px;margin-bottom:18px">ইমেইল ও পাসওয়ার্ড দিয়ে লগইন করুন</p>
-      <div id="driverLoginMsg" class="form-msg"></div>
-      <div class="card-box">
-        <div class="field"><label>ইমেইল</label><input type="email" id="driverEmail" autocomplete="username"></div>
-        <div class="field"><label>পাসওয়ার্ড</label><input type="password" id="driverPassword" autocomplete="current-password"></div>
-        <button class="btn btn-gold btn-block" onclick="DriverPortal.login()">লগইন করুন</button>
+<div class="page driver-page" id="page-driver">
+  <section class="driver-shell">
+    <a href="#" class="driver-back" onclick="Router.go('home');return false" aria-label="সাইটে ফিরে যান">← সাইটে ফিরে যান</a>
+
+    <div id="driverLoginBox" class="driver-login-wrap">
+      <div class="driver-login-card">
+        <div class="driver-brandmark" aria-hidden="true">🚴</div>
+        <p class="driver-eyebrow">Golapi Shop Delivery</p>
+        <h1 class="driver-title">ড্রাইভার পোর্টাল</h1>
+        <p class="driver-subtitle">শুধু অনুমোদিত ড্রাইভার অ্যাকাউন্ট দিয়ে প্রবেশ করুন।</p>
+        <div id="driverLoginMsg" class="form-msg" role="status" aria-live="polite"></div>
+        <div class="driver-login-form">
+          <div class="field"><label for="driverEmail">ইমেইল</label><input type="email" id="driverEmail" autocomplete="username" inputmode="email" placeholder="name@example.com"></div>
+          <div class="field"><label for="driverPassword">পাসওয়ার্ড</label><input type="password" id="driverPassword" autocomplete="current-password" placeholder="আপনার পাসওয়ার্ড"></div>
+          <button id="driverLoginBtn" class="btn btn-gold btn-block" onclick="DriverPortal.login()">লগইন করুন</button>
+        </div>
       </div>
     </div>
-    <div id="driverDashBox" style="display:none">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-        <h2 class="tiro" style="font-size:19px">🚴 <span id="driverNameLabel"></span></h2>
-        <button class="btn btn-outline" style="padding:7px 14px;font-size:12px" onclick="DriverPortal.logout()">লগআউট</button>
-      </div>
 
-      <div class="card-box" style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px;margin-bottom:14px" id="driverOnlineBox">
+    <div id="driverDashBox" class="driver-dashboard" style="display:none">
+      <header class="driver-dash-head">
         <div>
-          <div style="font-size:13.5px;font-weight:600;color:#fff" id="driverOnlineLabel">🟢 অনলাইন — অর্ডার নেওয়ার জন্য প্রস্তুত</div>
-          <div style="font-size:11px;color:var(--ink-muted);margin-top:2px">অফলাইন করলে নতুন অর্ডার অ্যাসাইন হবে না</div>
+          <p class="driver-eyebrow">Delivery Operations</p>
+          <h1 class="driver-title"><span id="driverNameLabel"></span></h1>
+          <p id="driverZoneLabel" class="driver-subtitle"></p>
         </div>
-        <label style="position:relative;display:inline-block;width:50px;height:28px;flex-shrink:0">
-          <input type="checkbox" id="driverOnlineToggle" checked onchange="DriverPortal.toggleOnline(this.checked)" style="opacity:0;width:0;height:0">
-          <span id="driverToggleSlider" style="position:absolute;cursor:pointer;inset:0;background:#22c55e;border-radius:28px;transition:.3s"></span>
+        <button class="btn btn-outline driver-logout" onclick="DriverPortal.logout()">লগআউট</button>
+      </header>
+
+      <section class="driver-availability" id="driverOnlineBox" aria-label="ড্রাইভার উপস্থিতি">
+        <div>
+          <div class="driver-online-label" id="driverOnlineLabel">অনলাইন — অর্ডার নেওয়ার জন্য প্রস্তুত</div>
+          <div class="driver-online-help">অফলাইন করলে নতুন অর্ডার অ্যাসাইন হবে না</div>
+        </div>
+        <label class="driver-switch" aria-label="অনলাইন স্ট্যাটাস পরিবর্তন করুন">
+          <input type="checkbox" id="driverOnlineToggle" checked onchange="DriverPortal.toggleOnline(this.checked)">
+          <span id="driverToggleSlider" class="driver-switch-track"></span>
         </label>
-      </div>
+      </section>
 
-      <div class="stat-grid" style="grid-template-columns:repeat(3,1fr)">
-        <div class="stat-card"><div class="lbl">অ্যাসাইনড</div><div class="val" id="dStatAssigned">০</div></div>
-        <div class="stat-card"><div class="lbl">পথে আছে</div><div class="val rose" id="dStatTransit">০</div></div>
-        <div class="stat-card"><div class="lbl">আজ সম্পন্ন</div><div class="val" id="dStatDone">০</div></div>
-      </div>
+      <section class="driver-stat-grid" aria-label="ডেলিভারি সারাংশ">
+        <article class="driver-stat-card"><span>সক্রিয়</span><strong id="dStatAssigned">০</strong></article>
+        <article class="driver-stat-card"><span>পথে আছে</span><strong id="dStatTransit">০</strong></article>
+        <article class="driver-stat-card"><span>আজ সম্পন্ন</span><strong id="dStatDone">০</strong></article>
+      </section>
 
-      <div style="display:flex;border-bottom:1px solid var(--line);margin:16px 0 14px">
-        <button id="driverTabActive" onclick="DriverPortal.switchTab('active')" style="flex:1;padding:10px;font-weight:600;font-size:13px;color:var(--gold);border-bottom:2px solid var(--gold)">🚴 সক্রিয় অর্ডার</button>
-        <button id="driverTabHistory" onclick="DriverPortal.switchTab('history')" style="flex:1;padding:10px;font-weight:600;font-size:13px;color:var(--ink-muted);border-bottom:2px solid transparent">✅ সম্পন্ন</button>
-      </div>
+      <nav class="driver-tabs" aria-label="অর্ডার তালিকা">
+        <button id="driverTabActive" class="driver-tab is-active" onclick="DriverPortal.switchTab('active')" aria-selected="true">সক্রিয় অর্ডার</button>
+        <button id="driverTabHistory" class="driver-tab" onclick="DriverPortal.switchTab('history')" aria-selected="false">ডেলিভারি ইতিহাস</button>
+      </nav>
 
-      <div id="driverOrdersList"></div>
+      <div id="driverOrdersList" class="driver-order-list" aria-live="polite"></div>
     </div>
   </section>
 </div>
