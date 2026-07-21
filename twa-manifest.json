@@ -5,15 +5,15 @@
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "theme_color": "#050810",
-  "background_color": "#050810",
+  "theme_color": "#C92A5A",
+  "background_color": "#FFF8F3",
   "lang": "bn",
   "icons": [
     {
-      "src": "/icons/head_logo.webp",
+      "src": "/icons/head_logo-192.webp",
       "sizes": "192x192",
       "type": "image/webp",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/icons/head_logo.webp",
@@ -22,19 +22,36 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["shopping", "food"],
+  "categories": [
+    "shopping",
+    "food"
+  ],
   "shortcuts": [
     {
       "name": "কাস্টম বাজার অর্ডার",
       "short_name": "কাস্টম বাজার",
       "url": "/#custom-bazar",
-      "icons": [{"src": "/icons/head_logo.webp", "sizes": "192x192"}]
+      "icons": [
+        {
+          "src": "/icons/head_logo-192.webp",
+          "sizes": "192x192",
+          "type": "image/webp"
+        }
+      ]
     },
     {
       "name": "আমার অর্ডার",
       "short_name": "অর্ডার",
       "url": "/#myorders",
-      "icons": [{"src": "/icons/head_logo.webp", "sizes": "192x192"}]
+      "icons": [
+        {
+          "src": "/icons/head_logo-192.webp",
+          "sizes": "192x192",
+          "type": "image/webp"
+        }
+      ]
     }
-  ]
+  ],
+  "id": "/",
+  "scope": "/"
 }

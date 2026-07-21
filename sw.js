@@ -1,5 +1,5 @@
 /* sw.js — Golapi Shop Offline Service Worker (network-first) */
-const CACHE = 'golapi-v6';
+const CACHE = 'golapi-v8';
 const OFFLINE_URL = '/offline.html';
 const ASSETS = [
   '/',
@@ -54,6 +54,7 @@ const ASSETS = [
   '/pages/modals.html',
   '/pages/toast.html',
   '/icons/head_logo.webp',
+  '/icons/head_logo-192.webp',
   '/icons/dr_logo.webp',
   '/icons/chat_logo.webp',
   '/icons/driver_logo.webp',
@@ -63,7 +64,22 @@ const ASSETS = [
 self.addEventListener('install', event => {
   self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE).then(cache => cache.addAll(ASSETS))
+    caches.open(CACHE).then(async cache => {
+      const results = await Promise.allSettled(
+        ASSETS.map(asset => cache.add(asset))
+      );
+
+      const failed = results
+        .map((result, index) => ({ result, asset: ASSETS[index] }))
+        .filter(entry => entry.result.status === 'rejected');
+
+      if (failed.length) {
+        console.warn(
+          '[service-worker] কিছু asset pre-cache করা যায়নি:',
+          failed.map(entry => entry.asset)
+        );
+      }
+    })
   );
 });
 
@@ -103,7 +119,7 @@ self.addEventListener('fetch', event => {
    Firebase Cloud Messaging — ব্যাকগ্রাউন্ড push notification
    (আগে firebase-messaging-sw.js-এ আলাদা register হতো, একই origin-এ
    দুটো আলাদা SW একসাথে থাকতে পারে না বলে এখানেই merge করে দেওয়া হলো —
-   এখন শুধু এই একটা sw.js-ই register হবে, নিচে js/app.js-এ)
+   এখন শুধু এই একটা sw.js-ই register হবে, js/app.js থেকে)
    ═══════════════════════════════════════════════════════════ */
 importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js');
