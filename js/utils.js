@@ -21,7 +21,7 @@ const CATEGORIES = [
   {id:'vegetables',label:'শাকসবজি ও ফল',icon:'🥦'},
   {id:'fish_meat',label:'মাছ-মাংস',icon:'🐟'},
   {id:'dairy_bakery',label:'দুধ ও বেকারি',icon:'🥛'},
-  {id:'frozen_food',label:'ফজেন ফুড',icon:'🧊'},
+  {id:'frozen_food',label:'ফ্রোজেন ফুড',icon:'🧊'},
   {id:'snacks',label:'নাস্তা ও চিপস',icon:'🍿'},
   {id:'beverages',label:'পানীয় ও জুস',icon:'🥤'},
   {id:'confectionery',label:'কনফেকশনারি',icon:'🍬'},
@@ -39,12 +39,12 @@ const CATEGORIES = [
   {id:'kitchen_tools',label:'রান্নাঘরের সরঞ্জাম',icon:'🍳'},
   {id:'toys',label:'খেলনা',icon:'🧸'},
   {id:'baby_care',label:'শিশু যত্ন',icon:'🍼'},
-  {id:'home_care',label:'গৃহস্থালি ও পরিষ্র',icon:'🧹'},
+  {id:'home_care',label:'গৃহস্থালি ও পরিষ্কার-পরিচ্ছন্নতা',icon:'🧹'},
   {id:'pet_care',label:'পোষা প্রাণীর যত্ন',icon:'🐾'},
   {id:'sports_fitness',label:'খেলাধুলা ও ফিটনেস',icon:'🏋️'},
   {id:'books_gifts',label:'বই ও উপহার',icon:'📚'},
   {id:'religious',label:'ধর্মীয় সামগ্রী',icon:'🕌'},
-  {id:'automobile',label:'বইক/গাড়ি এক্সেসরিজ',icon:'🏍️'},
+  {id:'automobile',label:'বাইক ও গাড়ির এক্সেসরিজ',icon:'🏍️'},
   {id:'garden',label:'বাগান ও কৃষি',icon:'🌱'},
   {id:'others',label:'অন্যান্য',icon:'🎁'}
 ];

@@ -1,8 +1,9 @@
 /* zone-manager.js — ZoneManagerDash (Firebase Auth secured) */
 const ZoneManagerDash = {
   currentZone: null, currentUid: null, _orders: [],
+  orderTotal(o){ return Number(o?.total ?? o?.grandTotal ?? o?.payableTotal ?? o?.subtotal ?? 0) || 0; },
   applyHeader(zone){
-    const info = BRANCH_INFO[zone];
+    const info = BRANCH_INFO[zone] || {label: zone || 'নির্ধারিত জোন', managerName:'—'};
     const zl=document.getElementById('zmZoneLabel'); if(zl) zl.textContent = info.label;
     const ml=document.getElementById('zmManagerLabel'); if(ml) ml.textContent = 'ম্যানেজার: '+info.managerName;
   },
@@ -59,8 +60,8 @@ const ZoneManagerDash = {
     const now = new Date();
     const todayStr = now.toDateString();
     const active = orders.filter(o=>o.status!=='cancelled');
-    const sales = active.reduce((s,o)=>s+(o.subtotal||0),0);
-    const todaySales = active.filter(o=>new Date(o.createdAt?.seconds*1000||0).toDateString()===todayStr).reduce((s,o)=>s+(o.subtotal||0),0);
+    const sales = active.reduce((sum,o)=>sum+this.orderTotal(o),0);
+    const todaySales = active.filter(o=>new Date(o.createdAt?.seconds*1000||0).toDateString()===todayStr).reduce((sum,o)=>sum+this.orderTotal(o),0);
     const pending = orders.filter(o=>['pending','confirmed'].includes(o.status)).length;
 
     const st1=document.getElementById('zmStatToday'); if(st1) st1.textContent = money(todaySales);
@@ -97,7 +98,7 @@ const ZoneManagerDash = {
     for(let i=6;i>=0;i--){
       const d=new Date(now); d.setDate(d.getDate()-i);
       const ds=d.toDateString();
-      const rev = orders.filter(o=>new Date(o.createdAt?.seconds*1000||0).toDateString()===ds&&o.status!=='cancelled').reduce((s,o)=>s+(o.subtotal||0),0);
+      const rev = orders.filter(o=>new Date(o.createdAt?.seconds*1000||0).toDateString()===ds&&o.status!=='cancelled').reduce((sum,o)=>sum+this.orderTotal(o),0);
       days.push({rev, label:['রবি','সোম','মঙ্গ','বুধ','বৃহ','শুক্র','শনি'][d.getDay()], isToday:i===0});
     }
     const max = Math.max(...days.map(d=>d.rev),1);
@@ -117,7 +118,7 @@ const ZoneManagerDash = {
       return `<tr>
         <td style="font-size:11px">${o.orderNumber||o.id.slice(-6)}</td>
         <td>${o.customerName||'—'}</td>
-        <td style="color:var(--gold)">${money(o.subtotal||0)}</td>
+        <td style="color:var(--gold)">${money(this.orderTotal(o))}</td>
         <td><span class="status-pill ${s.cls}">${s.label}</span></td>
         <td><a href="#" onclick="event.preventDefault();OrderDetail.open(${JSON.stringify(o).replace(/"/g,'&quot;')})" style="color:var(--gold);font-size:12px">বিস্তারিত</a></td>
       </tr>`;
@@ -156,7 +157,7 @@ const ZoneManagerDash = {
         <td style="font-size:11px">${o.orderNumber||o.id.slice(-6)}</td>
         <td>${o.customerName||'—'}</td>
         <td>${o.customerPhone||'—'}</td>
-        <td style="color:var(--gold)">${money(o.subtotal||0)}</td>
+        <td style="color:var(--gold)">${money(this.orderTotal(o))}</td>
         <td><select onchange="ZoneManagerDash.assignDriver('${o.id}',this.value)" style="padding:3px 6px;border-radius:6px;background:var(--bg2);border:1px solid var(--line);color:#fff;font-size:11px;max-width:110px">
           <option value="">বেছে নিন</option>${opts}
         </select></td>
@@ -176,16 +177,16 @@ const ZoneManagerDash = {
     const todayStr=now.toDateString();
     const weekAgo=new Date(now-7*24*60*60*1000);
     const monthStart=new Date(now.getFullYear(),now.getMonth(),1);
-    const get=(fn)=>active.filter(fn).reduce((s,o)=>s+(o.subtotal||0),0);
+    const get=(fn)=>active.filter(fn).reduce((sum,o)=>sum+this.orderTotal(o),0);
     const t=get(o=>new Date(o.createdAt?.seconds*1000||0).toDateString()===todayStr);
     const w=get(o=>new Date(o.createdAt?.seconds*1000||0)>=weekAgo);
     const m=get(o=>new Date(o.createdAt?.seconds*1000||0)>=monthStart);
     ['zmAnToday','zmAnWeek','zmAnMonth'].forEach((id,i)=>{ const el=document.getElementById(id); if(el) el.textContent=money([t,w,m][i]); });
     const pbEl=document.getElementById('zmPayBreakdown');
     if(pbEl){
-      const total=active.reduce((s,o)=>s+(o.subtotal||0),0);
+      const total=active.reduce((sum,o)=>sum+this.orderTotal(o),0);
       const methods={};
-      active.forEach(o=>{const pm=o.paymentMethod||'cod';methods[pm]=(methods[pm]||0)+(o.subtotal||0);});
+      active.forEach(o=>{const pm=o.paymentMethod||'cod';methods[pm]=(methods[pm]||0)+this.orderTotal(o);});
       const labels={cod:'💰 COD',bkash:'📱 bKash',nagad:'📱 Nagad'};
       pbEl.innerHTML=Object.entries(methods).map(([m,v])=>{
         const pct=total>0?Math.round(v/total*100):0;
@@ -210,7 +211,7 @@ const ZoneManagerDash = {
       const el=document.getElementById('zm'+t.charAt(0).toUpperCase()+t.slice(1)+'Pane');
       if(el) el.style.display=t===name?'block':'none';
     });
-    document.querySelectorAll('#page-zone-manager .dash-side a').forEach(a=>a.classList.remove('active'));
+    document.querySelectorAll('#page-zone-manager .zm-tabs button').forEach(a=>a.classList.remove('active'));
     if(btn) btn.classList.add('active');
     if(name==='products') this.renderProducts(ALL_PRODUCTS.filter(p=>p.zone===this.currentZone));
     if(name==='analytics') this.renderAnalytics(this._orders);

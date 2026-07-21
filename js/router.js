@@ -512,6 +512,14 @@ const Router = {
       MyOrders.render();
     }
 
+    if (page === 'wishlist') {
+      Wishlist.render();
+    }
+
+    if (page === 'order-success') {
+      OrderSuccess.render();
+    }
+
     if (page === 'admin-dash') {
       AdminDash.render();
     }

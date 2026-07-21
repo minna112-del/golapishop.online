@@ -1,5 +1,8 @@
 /* driver.js — DriverPortal (Firebase Auth secured), BazarShop
    আপডেট: অনলাইন/অফলাইন টগল, রিয়েল-টাইম অর্ডার সিঙ্ক + নতুন অর্ডারে ভাইব্রেশন, নেভিগেশন বাটন, হিস্ট্রি ট্যাব */
+const driverEscape = value => String(value ?? '').replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','\"':'&quot;'}[ch]));
+const driverSafePhone = value => String(value || '').replace(/[^+0-9]/g,'');
+
 const DriverPortal = {
   currentDriver:null, currentUid:null, tab:'active', unsub:null, knownOrderIds:new Set(),
 
@@ -9,6 +12,8 @@ const DriverPortal = {
     const msgEl=document.getElementById('driverLoginMsg');
     if(!email||!pass){ msgEl.textContent='ইমেইল ও পাসওয়ার্ড দিন'; msgEl.className='form-msg err'; return; }
     if(!FB){ msgEl.textContent='সংযোগ সমস্যা'; msgEl.className='form-msg err'; return; }
+    const loginBtn=document.getElementById('driverLoginBtn');
+    if(loginBtn){ loginBtn.disabled=true; loginBtn.textContent='লগইন হচ্ছে…'; }
     try{
       const cred = await FB.signInWithEmailAndPassword(FB.auth, email, pass);
       const staffSnap = await FB.getDoc(FB.doc(FB.db,'staff',cred.user.uid));
@@ -26,6 +31,7 @@ const DriverPortal = {
       await this.render();
       this.startRealtimeSync();
     }catch(e){ msgEl.textContent='লগইন ব্যর্থ: ইমেইল বা পাসওয়ার্ড সঠিক নয়'; msgEl.className='form-msg err'; }
+    finally{ if(loginBtn){ loginBtn.disabled=false; loginBtn.textContent='লগইন করুন'; } }
   },
 
   async logout(){
@@ -76,8 +82,8 @@ const DriverPortal = {
   switchTab(t){
     this.tab = t;
     const a=document.getElementById('driverTabActive'), h=document.getElementById('driverTabHistory');
-    if(a){ a.style.color = t==='active'?'var(--gold)':'var(--ink-muted)'; a.style.borderColor = t==='active'?'var(--gold)':'transparent'; }
-    if(h){ h.style.color = t==='history'?'var(--gold)':'var(--ink-muted)'; h.style.borderColor = t==='history'?'var(--gold)':'transparent'; }
+    if(a){ a.classList.toggle('is-active',t==='active'); a.setAttribute('aria-selected',String(t==='active')); }
+    if(h){ h.classList.toggle('is-active',t==='history'); h.setAttribute('aria-selected',String(t==='history')); }
     this.render();
   },
 
@@ -103,7 +109,9 @@ const DriverPortal = {
     if(!this.currentDriver){ document.getElementById('driverLoginBox').style.display='block'; document.getElementById('driverDashBox').style.display='none'; return; }
     document.getElementById('driverLoginBox').style.display='none';
     document.getElementById('driverDashBox').style.display='block';
-    document.getElementById('driverNameLabel').textContent=this.currentDriver.name;
+    document.getElementById('driverNameLabel').textContent=this.currentDriver.name || 'ড্রাইভার';
+    const zoneLabel=document.getElementById('driverZoneLabel');
+    if(zoneLabel) zoneLabel.textContent=this.currentDriver.branchZone ? `কর্মরত এলাকা: ${this.currentDriver.branchZone}` : 'অ্যাসাইন করা ডেলিভারি পরিচালনা করুন';
     const all = await OrdersService.loadAll();
     all.forEach(o=>this.knownOrderIds.add(o.id));
     const mineAll = all.filter(o=>o.driverId===this.currentDriver.id);
@@ -129,36 +137,44 @@ const DriverPortal = {
     listEl.innerHTML = list.map(o=>{
       const s = ORDER_STATUS[o.status]||ORDER_STATUS.assigned;
       const isCustomBazar = o.orderType==='custom-bazar';
-      const fullAddress = `${o.village?o.village+', ':''}${o.zone||''}, ${o.district||''} — ${o.address||''}`;
+      const fullAddress = `${o.village?o.village+', ':''}${o.zone||''}${o.district?', '+o.district:''}${o.address?' — '+o.address:''}`;
+      const safeId=driverEscape(o.id);
+      const safeName=driverEscape(o.customerName||'কাস্টমার');
+      const safePhone=driverSafePhone(o.customerPhone);
+      const safeAddress=driverEscape(fullAddress||'ঠিকানা দেওয়া হয়নি');
+      const safeOrder=driverEscape(o.orderNumber||o.id);
+      const lat=Number(o.customerLat), lng=Number(o.customerLng);
       const navBtn = this.tab==='active'
-        ? (o.customerLat && o.customerLng
-            ? `<button class="btn btn-outline btn-block" style="margin-top:6px;font-size:12px" onclick="openDriverNavigation(${o.customerLat},${o.customerLng},'${(o.customerName||'').replace(/'/g,"")}')">🧭 নেভিগেট করুন (সঠিক পিন)</button>`
-            : `<a class="btn btn-outline btn-block" style="margin-top:6px;font-size:12px" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(fullAddress)}">🧭 নেভিগেট করুন</a>`)
+        ? (Number.isFinite(lat) && Number.isFinite(lng)
+            ? `<button class="btn btn-outline btn-block" onclick="openDriverNavigation(${lat},${lng},'${safeName}')">🧭 সঠিক পিনে নেভিগেট করুন</button>`
+            : `<a class="btn btn-outline btn-block" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(fullAddress)}">🧭 ঠিকানায় নেভিগেট করুন</a>`)
         : '';
       let nextBtn='';
       let bazarBox='';
       if(this.tab==='active'){
         if(o.status==='assigned' && !o.driverAccepted){
-          nextBtn=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px">
-            <button class="btn btn-gold" onclick="DriverPortal.acceptOrder('${o.id}')">✅ Accept</button>
-            <button class="btn btn-outline" style="color:#f87171;border-color:rgba(239,68,68,.3)" onclick="DriverPortal.rejectOrder('${o.id}')">❌ Reject</button>
-          </div>`;
-        } else if(isCustomBazar && o.status==='assigned'){
-          bazarBox = bazarShopHTML(o);
-        } else if(o.status==='assigned') nextBtn=`<button class="btn btn-gold btn-block" onclick="DriverPortal.advance('${o.id}','packed')">📦 প্যাকিং সম্পন্ন</button>`;
-        else if(o.status==='packed') nextBtn=`<button class="btn btn-gold btn-block" onclick="DriverPortal.advance('${o.id}','picked_up')">✓ পিকআপ সম্পন্ন</button>`;
-        else if(o.status==='picked_up') nextBtn=`<button class="btn btn-gold btn-block" onclick="DriverPortal.startTransit('${o.id}')">🚴 রওনা দিন (লাইভ লোকেশন শুরু)</button>`;
-        else if(o.status==='in_transit') nextBtn=`<button class="btn btn-gold btn-block" onclick="DriverPortal.advance('${o.id}','delivered')">✅ ডেলিভারি সম্পন্ন</button>`;
+          nextBtn=`<button class="btn btn-gold" onclick="DriverPortal.acceptOrder('${safeId}')">অর্ডার গ্রহণ</button><button class="btn btn-outline" onclick="DriverPortal.rejectOrder('${safeId}')">অর্ডার ফিরিয়ে দিন</button>`;
+        } else if(isCustomBazar && o.status==='assigned') bazarBox = bazarShopHTML(o);
+        else if(o.status==='assigned') nextBtn=`<button class="btn btn-gold btn-block" onclick="DriverPortal.advance('${safeId}','packed')">প্যাকিং সম্পন্ন</button>`;
+        else if(o.status==='packed') nextBtn=`<button class="btn btn-gold btn-block" onclick="DriverPortal.advance('${safeId}','picked_up')">পিকআপ সম্পন্ন</button>`;
+        else if(o.status==='picked_up') nextBtn=`<button class="btn btn-gold btn-block" onclick="DriverPortal.startTransit('${safeId}')">রওনা দিন ও লাইভ লোকেশন চালু করুন</button>`;
+        else if(o.status==='in_transit') nextBtn=`<button class="btn btn-gold btn-block" onclick="DriverPortal.advance('${safeId}','delivered')">ডেলিভারি সম্পন্ন</button>`;
       }
-      const chatBtn = this.tab==='active' ? `<button class="btn btn-outline btn-block" style="margin-top:6px;font-size:12px" onclick="OrderChat.open('${o.id}','driver')">💬 কাস্টমারের সাথে চ্যাট</button>` : '';
-      const smsBtn = this.tab==='active' ? `<a class="btn btn-outline btn-block" style="margin-top:6px;font-size:12px" href="sms:${o.customerPhone}">✉️ SMS পাঠান</a>` : '';
-      const gpsPanel = (this.tab==='active' && o.status==='in_transit')
-        ? `<div id="driverGpsPanel" style="background:rgba(255,255,255,.03);border-radius:8px;padding:8px 10px;margin-top:8px;display:flex;flex-direction:column;gap:3px"></div>` : '';
-      return `<div class="card-box"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><strong>${o.orderNumber||o.id}</strong><span class="status-pill ${s.cls}">${s.label}</span></div>
-        <div style="font-size:12.5px;margin-bottom:4px">👤 ${o.customerName} — <a href="tel:${o.customerPhone}">${o.customerPhone}</a></div>
-        <div style="font-size:12.5px;color:var(--ink-muted);margin-bottom:8px">📍 ${fullAddress}</div>
-        ${o.instructions?`<div style="font-size:12px;background:rgba(255,255,255,.03);padding:8px;border-radius:8px;margin-bottom:8px;color:var(--ink-soft)">💬 ${o.instructions}</div>`:''}
-        <div style="font-size:13px;font-weight:600;margin-bottom:8px">মোট: ${money(o.subtotal||o.billAmount||0)}</div>${navBtn}${bazarBox}${nextBtn}${gpsPanel}${chatBtn}${smsBtn}</div>`;
+      const contactBtns = this.tab==='active' && safePhone ? `<a class="btn btn-outline" href="tel:${safePhone}">কল করুন</a><a class="btn btn-outline" href="sms:${safePhone}">SMS</a>` : '';
+      const chatBtn = this.tab==='active' ? `<button class="btn btn-outline btn-block" onclick="OrderChat.open('${safeId}','driver')">কাস্টমারের সাথে চ্যাট</button>` : '';
+      const gpsPanel = (this.tab==='active' && o.status==='in_transit') ? `<div id="driverGpsPanel" class="driver-gps-panel"></div>` : '';
+      return `<article class="driver-order-card">
+        <div class="driver-order-head"><strong class="driver-order-number">${safeOrder}</strong><span class="status-pill ${driverEscape(s.cls)}">${driverEscape(s.label)}</span></div>
+        <div class="driver-order-meta">
+          <div class="driver-meta-row"><span>👤</span><div><b>${safeName}</b>${safePhone?`<br><span>${driverEscape(o.customerPhone)}</span>`:''}</div></div>
+          <div class="driver-meta-row"><span>📍</span><div>${safeAddress}</div></div>
+          ${o.instructions?`<div class="driver-note">নির্দেশনা: ${driverEscape(o.instructions)}</div>`:''}
+        </div>
+        <div class="driver-total"><span>আদায়যোগ্য মোট</span><strong>${money(o.total ?? o.subtotal ?? o.billAmount ?? 0)}</strong></div>
+        ${bazarBox}
+        <div class="driver-actions">${navBtn}${nextBtn}${contactBtns}${chatBtn}</div>
+        ${gpsPanel}
+      </article>`;
     }).join('');
     const inTransitOrder = mine.find(o=>o.status==='in_transit');
     if(inTransitOrder && !LocationService.isWatching()){
@@ -214,7 +230,7 @@ const DriverPortal = {
 function bazarShopHTML(o){
   const lines = (o.bazarList||'').split('\n').map(l=>l.trim()).filter(Boolean);
   const rows = lines.map((line,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)">
-    <span class="bazar-line-text" style="font-size:12px;color:var(--ink-soft);flex:1">${line}</span>
+    <span class="bazar-line-text" style="font-size:12px;color:var(--ink-soft);flex:1">${driverEscape(line)}</span>
     <input type="number" placeholder="৳" data-bazar-line="${o.id}:${i}" oninput="BazarShop.recalc('${o.id}', ${lines.length})" style="width:70px;padding:6px;border-radius:6px;background:rgba(255,255,255,.04);border:1px solid var(--line-l);color:#fff;font-size:12px;text-align:right">
   </div>`).join('');
   return `<div style="margin:8px 0;padding:10px;background:rgba(212,175,55,.05);border:1px solid var(--gold-line);border-radius:10px">

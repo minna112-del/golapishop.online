@@ -3,6 +3,11 @@
 const AdminDash = {
   _orders: [], _allOrders: [],
 
+  orderTotal(order){
+    const value = Number(order?.total ?? order?.payableTotal ?? order?.subtotal ?? 0);
+    return Number.isFinite(value) ? value : 0;
+  },
+
   async render(){
     const timeEl=document.getElementById('adminLastUpdated');
     if(timeEl) timeEl.textContent = '🕐 ' + new Date().toLocaleTimeString('bn-BD');
@@ -13,8 +18,8 @@ const AdminDash = {
     const now = new Date();
     const todayStr = now.toDateString();
     const active = orders.filter(o=>o.status!=='cancelled');
-    const sales = active.reduce((s,o)=>s+(o.subtotal||0),0);
-    const todaySales = active.filter(o=>new Date(o.createdAt?.seconds*1000||0).toDateString()===todayStr).reduce((s,o)=>s+(o.subtotal||0),0);
+    const sales = active.reduce((s,o)=>s+this.orderTotal(o),0);
+    const todaySales = active.filter(o=>new Date(o.createdAt?.seconds*1000||0).toDateString()===todayStr).reduce((s,o)=>s+this.orderTotal(o),0);
     const pending = orders.filter(o=>['pending','confirmed'].includes(o.status)).length;
     const customers = [...new Set(orders.map(o=>o.customerPhone).filter(Boolean))];
 
@@ -25,8 +30,8 @@ const AdminDash = {
     const st5=document.getElementById('aStatProducts'); if(st5) st5.textContent = bn(ALL_PRODUCTS.length);
     const st6=document.getElementById('aStatCustomers'); if(st6) st6.textContent = bn(customers.length);
 
-    const cod = orders.filter(o=>o.paymentMethod==='cod'&&!['delivered','cancelled'].includes(o.status)).reduce((s,o)=>s+(o.subtotal||0),0);
-    const online = orders.filter(o=>o.paymentMethod!=='cod').reduce((s,o)=>s+(o.subtotal||0),0);
+    const cod = orders.filter(o=>o.paymentMethod==='cod'&&!['delivered','cancelled'].includes(o.status)).reduce((s,o)=>s+this.orderTotal(o),0);
+    const online = orders.filter(o=>o.paymentMethod!=='cod').reduce((s,o)=>s+this.orderTotal(o),0);
     const fm=document.getElementById('fMonth'); if(fm) fm.textContent = money(sales);
     const fc=document.getElementById('fCod'); if(fc) fc.textContent = money(cod);
     const fo=document.getElementById('fOnline'); if(fo) fo.textContent = money(online);
@@ -75,7 +80,7 @@ const AdminDash = {
       const d = new Date(now); d.setDate(d.getDate()-i);
       const ds = d.toDateString();
       const dayOrders = orders.filter(o=>new Date(o.createdAt?.seconds*1000||0).toDateString()===ds && o.status!=='cancelled');
-      const revenue = dayOrders.reduce((s,o)=>s+(o.subtotal||0),0);
+      const revenue = dayOrders.reduce((s,o)=>s+this.orderTotal(o),0);
       const label = ['রবি','সোম','মঙ্গ','বুধ','বৃহ','শুক্র','শনি'][d.getDay()];
       days.push({revenue, label, isToday: i===0});
     }
@@ -101,7 +106,7 @@ const AdminDash = {
       return `<tr>
         <td style="font-size:11px">${o.orderNumber||o.id.slice(-6)}</td>
         <td>${o.customerName||'—'}<br><span style="font-size:10.5px;color:var(--ink-muted)">${o.customerPhone||''}</span></td>
-        <td style="color:var(--gold)">${money(o.subtotal||0)}</td>
+        <td style="color:var(--gold)">${moneythis.orderTotal(o)}</td>
         <td><span class="status-pill ${s.cls}">${s.label}</span></td>
         <td><a href="#" onclick="event.preventDefault();AdminDash.openOrderDetail('${o.id}')" style="color:var(--gold);font-size:11px;display:block;margin-bottom:4px">বিস্তারিত</a>
           <select onchange="AdminDash.quickStatus('${o.id}',this.value)" style="padding:3px 6px;border-radius:6px;background:var(--bg2);border:1px solid var(--line);color:#fff;font-size:11px">
@@ -117,8 +122,9 @@ const AdminDash = {
     if(!tbody) return;
     const search = document.getElementById('productSearch')?.value.toLowerCase()||'';
     const list = search ? ALL_PRODUCTS.filter(p=>p.name.toLowerCase().includes(search)) : ALL_PRODUCTS;
-    if(!list.length){ tbody.innerHTML=`<tr><td colspan="7" style="text-align:center;color:var(--ink-muted);padding:20px">কোনো প্রোডাক্ট নেই</td></tr>`; return; }
+    if(!list.length){ tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;color:var(--ink-muted);padding:20px">কোনো প্রোডাক্ট নেই</td></tr>`; return; }
     tbody.innerHTML = list.map(p=>`<tr style="${p.stock===0?'opacity:.6':''}">
+      <td><input type="checkbox" class="prodCheck" value="${p.id}" ${this.selectedProducts.has(p.id)?'checked':''} onchange="AdminDash.toggleProductSelect('${p.id}',this.checked)" aria-label="${p.name} নির্বাচন"></td>
       <td><div style="width:38px;height:38px;border-radius:8px;overflow:hidden;background:var(--elevated)"><img src="${p.imageUrl||p.img||''}" style="width:100%;height:100%;object-fit:cover" loading="lazy"></div></td>
       <td><div style="font-size:12.5px;color:#fff;max-width:160px">${p.name}</div><div style="font-size:10.5px;color:var(--ink-muted)">${CATEGORIES.find(c=>c.id===p.category)?.label||''}</div></td>
       <td>${AREA_LABELS[p.zone]||'—'}</td>
@@ -133,6 +139,23 @@ const AdminDash = {
   },
 
   filterProducts(){ this.renderProducts(); },
+
+  toggleSelectAllProducts(cb){
+    const visible = [...document.querySelectorAll('.prodCheck')];
+    visible.forEach(input=>{
+      input.checked = cb.checked;
+      if(cb.checked) this.selectedProducts.add(input.value);
+      else this.selectedProducts.delete(input.value);
+    });
+    const bar = document.getElementById('productBulkBar');
+    const count = document.getElementById('productBulkCount');
+    if(this.selectedProducts.size){
+      if(bar) bar.style.display='flex';
+      if(count) count.textContent = `${this.selectedProducts.size}টি প্রোডাক্ট সিলেক্ট`;
+    }else if(bar){
+      bar.style.display='none';
+    }
+  },
 
   async quickStockUpdate(id, val){
     if(!FB) return;
@@ -177,7 +200,7 @@ const AdminDash = {
         <td style="font-size:11px">${date}</td>
         <td>${o.customerName||'—'}</td>
         <td>${o.customerPhone||'—'}</td>
-        <td style="color:var(--gold)">${money(o.subtotal||0)}</td>
+        <td style="color:var(--gold)">${moneythis.orderTotal(o)}</td>
         <td><select onchange="AdminDash.assignDriver('${o.id}',this.value)" style="padding:3px 6px;border-radius:6px;background:var(--bg2);border:1px solid var(--line);color:#fff;font-size:11px;max-width:120px"><option value="">বেছে নিন</option>${opts}</select></td>
         <td><span class="status-pill ${s.cls}">${s.label}</span></td>
         <td><a href="#" onclick="event.preventDefault();AdminDash.openOrderDetail('${o.id}')" style="color:var(--gold);font-size:11px;display:block;margin-bottom:4px">বিস্তারিত</a>
@@ -266,10 +289,10 @@ const AdminDash = {
     const weekAgo = new Date(now-7*24*60*60*1000);
     const monthStart = new Date(now.getFullYear(),now.getMonth(),1);
 
-    const todayRev = active.filter(o=>new Date(o.createdAt?.seconds*1000||0).toDateString()===todayStr).reduce((s,o)=>s+(o.subtotal||0),0);
-    const weekRev = active.filter(o=>new Date(o.createdAt?.seconds*1000||0)>=weekAgo).reduce((s,o)=>s+(o.subtotal||0),0);
-    const monthRev = active.filter(o=>new Date(o.createdAt?.seconds*1000||0)>=monthStart).reduce((s,o)=>s+(o.subtotal||0),0);
-    const total = active.reduce((s,o)=>s+(o.subtotal||0),0);
+    const todayRev = active.filter(o=>new Date(o.createdAt?.seconds*1000||0).toDateString()===todayStr).reduce((s,o)=>s+this.orderTotal(o),0);
+    const weekRev = active.filter(o=>new Date(o.createdAt?.seconds*1000||0)>=weekAgo).reduce((s,o)=>s+this.orderTotal(o),0);
+    const monthRev = active.filter(o=>new Date(o.createdAt?.seconds*1000||0)>=monthStart).reduce((s,o)=>s+this.orderTotal(o),0);
+    const total = active.reduce((s,o)=>s+this.orderTotal(o),0);
 
     ['anToday','anWeek','anMonth','anTotal'].forEach((id,i)=>{
       const el=document.getElementById(id);
@@ -279,7 +302,7 @@ const AdminDash = {
     const pbEl = document.getElementById('paymentBreakdown');
     if(pbEl){
       const methods = {};
-      active.forEach(o=>{ const m=o.paymentMethod||'cod'; methods[m]=(methods[m]||0)+(o.subtotal||0); });
+      active.forEach(o=>{ const m=o.paymentMethod||'cod'; methods[m]=(methods[m]||0)+this.orderTotal(o); });
       const labels = {cod:'💰 COD',bkash:'📱 bKash',nagad:'📱 Nagad'};
       pbEl.innerHTML = Object.entries(methods).map(([m,v])=>{
         const pct = total>0?Math.round(v/total*100):0;
@@ -290,7 +313,7 @@ const AdminDash = {
     const zbEl = document.getElementById('zoneBreakdown');
     if(zbEl){
       const zones = {};
-      active.forEach(o=>{ const z=o.branchZone||'unknown'; zones[z]=(zones[z]||0)+(o.subtotal||0); });
+      active.forEach(o=>{ const z=o.branchZone||'unknown'; zones[z]=(zones[z]||0)+this.orderTotal(o); });
       zbEl.innerHTML = Object.entries(zones).map(([z,v])=>{
         const pct = total>0?Math.round(v/total*100):0;
         return `<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px"><span>${AREA_LABELS[z]||z}</span><span style="color:var(--rose)">${money(v)} (${pct}%)</span></div><div style="height:6px;border-radius:3px;background:rgba(255,255,255,.06)"><div style="height:100%;width:${pct}%;border-radius:3px;background:var(--rose);transition:.5s"></div></div></div>`;
@@ -322,7 +345,7 @@ const AdminDash = {
         customers[phone] = {name:o.customerName||'—', phone, nid:o.customerNid||'—', orders:[], total:0, lastDate:null};
       }
       customers[phone].orders.push(o);
-      customers[phone].total += (o.subtotal||0);
+      customers[phone].total += this.orderTotal(o);
       const d = o.createdAt?.seconds ? new Date(o.createdAt.seconds*1000) : null;
       if(d && (!customers[phone].lastDate || d > customers[phone].lastDate)) customers[phone].lastDate = d;
     });
@@ -352,12 +375,12 @@ const AdminDash = {
     const c = orders[0];
     const cn=document.getElementById('coCustomerName'); if(cn) cn.textContent = c.customerName||'—';
     const cp=document.getElementById('coCustomerPhone');
-    if(cp) cp.textContent = `📞 ${phone} | NID: ${maskNid(c.customerNid)} | মোট: ${money(orders.reduce((s,o)=>s+(o.subtotal||0),0))}`;
+    if(cp) cp.textContent = `📞 ${phone} | NID: ${maskNid(c.customerNid)} | মোট: ${money(orders.reduce((s,o)=>s+this.orderTotal(o),0))}`;
     const listEl = document.getElementById('coOrdersList');
     if(listEl) listEl.innerHTML = orders.map(o=>{
       const s=ORDER_STATUS[o.status]||ORDER_STATUS.pending;
       const date=o.createdAt?.seconds?new Date(o.createdAt.seconds*1000).toLocaleDateString('bn-BD'):'—';
-      return `<div style="padding:12px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span style="font-size:12px;font-weight:600;color:var(--gold)">${o.orderNumber||o.id.slice(-6)}</span><span class="status-pill ${s.cls}">${s.label}</span></div><div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink-muted)"><span>${date}</span><span style="color:var(--gold);font-weight:600">${money(o.subtotal||0)}</span></div><div style="margin-top:6px"><a href="#" onclick="event.preventDefault();document.getElementById('customerOrdersModal').classList.remove('show');OrderDetail.open(${JSON.stringify(o).replace(/"/g,'&quot;')})" style="font-size:12px;color:var(--gold)">বিস্তারিত দেখুন →</a></div></div>`;
+      return `<div style="padding:12px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span style="font-size:12px;font-weight:600;color:var(--gold)">${o.orderNumber||o.id.slice(-6)}</span><span class="status-pill ${s.cls}">${s.label}</span></div><div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink-muted)"><span>${date}</span><span style="color:var(--gold);font-weight:600">${moneythis.orderTotal(o)}</span></div><div style="margin-top:6px"><a href="#" onclick="event.preventDefault();document.getElementById('customerOrdersModal').classList.remove('show');OrderDetail.open(${JSON.stringify(o).replace(/"/g,'&quot;')})" style="font-size:12px;color:var(--gold)">বিস্তারিত দেখুন →</a></div></div>`;
     }).join('');
     document.getElementById('customerOrdersModal').classList.add('show');
   },
@@ -393,7 +416,7 @@ const AdminDash = {
       bell.textContent = `🔔 ${count}`;
       bell.style.display='inline-block';
     }
-    toast(`🚨 নতুন অর্ডার! ${order.customerName||'কাস্টমার'} — ${money(order.subtotal||0)}`,'success');
+    toast(`🚨 নতুন অর্ডার! ${order.customerName||'কাস্টমার'} — ${moneythis.orderTotal(order)}`,'success');
     try{
       const ctx = new(window.AudioContext||window.webkitAudioContext)();
       const osc = ctx.createOscillator();
@@ -415,7 +438,7 @@ const AdminDash = {
       if(!o.driverId) return;
       if(!stats[o.driverId]) stats[o.driverId] = {name:o.driverName||'—',total:0,delivered:0,cancelled:0,revenue:0};
       stats[o.driverId].total++;
-      if(o.status==='delivered'){ stats[o.driverId].delivered++; stats[o.driverId].revenue+=(o.subtotal||0); }
+      if(o.status==='delivered'){ stats[o.driverId].delivered++; stats[o.driverId].revenue+=this.orderTotal(o); }
       if(o.status==='cancelled') stats[o.driverId].cancelled++;
     });
     const list = Object.values(stats).sort((a,b)=>b.delivered-a.delivered);
@@ -430,6 +453,12 @@ const AdminDash = {
 
   toggleProductSelect(id, checked){
     checked ? this.selectedProducts.add(id) : this.selectedProducts.delete(id);
+    const visible = [...document.querySelectorAll('.prodCheck')];
+    const selectAll = document.getElementById('selectAllProducts');
+    if(selectAll){
+      selectAll.checked = visible.length > 0 && visible.every(input=>input.checked);
+      selectAll.indeterminate = visible.some(input=>input.checked) && !selectAll.checked;
+    }
     const bar = document.getElementById('productBulkBar');
     const count = document.getElementById('productBulkCount');
     if(this.selectedProducts.size > 0){ if(bar) bar.style.display='flex'; if(count) count.textContent = `${this.selectedProducts.size}টি প্রোডাক্ট সিলেক্ট`; }
@@ -485,8 +514,8 @@ const AdminDash = {
         const d=new Date(o.createdAt?.seconds*1000||0);
         return d>=prevFrom && d<=prevTo && o.status!=='cancelled';
       });
-      const currRev=orders.filter(o=>o.status!=='cancelled').reduce((s,o)=>s+(o.subtotal||0),0);
-      const prevRev=prevOrders.reduce((s,o)=>s+(o.subtotal||0),0);
+      const currRev=orders.filter(o=>o.status!=='cancelled').reduce((s,o)=>s+this.orderTotal(o),0);
+      const prevRev=prevOrders.reduce((s,o)=>s+this.orderTotal(o),0);
       const trendEl=document.getElementById('anTrend');
       if(trendEl && prevRev>0){
         const pct=Math.round((currRev-prevRev)/prevRev*100);
@@ -973,10 +1002,10 @@ const OrderDetail = {
       return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line)"><div style="width:36px;height:36px;border-radius:7px;overflow:hidden;background:var(--elevated);flex-shrink:0"><img src="${p?.imageUrl||p?.img||''}" style="width:100%;height:100%;object-fit:cover"></div><div style="flex:1;min-width:0"><div style="font-size:12.5px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p?.name||item.productId}</div><div style="font-size:11px;color:var(--ink-muted)">${money(p?.salePrice||0)} × ${item.qty}</div></div><span style="color:var(--gold);font-weight:600;font-size:13px">${money((p?.salePrice||0)*item.qty)}</span></div>`;
     }).join('') || '<p style="color:var(--ink-muted);font-size:13px">আইটেম তথ্য নেই</p>';
     const ship = order.shippingCost||0;
-    const sub = (order.subtotal||0) - ship;
+    const sub = Number(order?.total ?? order?.payableTotal ?? order?.subtotal ?? 0) - ship;
     document.getElementById('odSubtotal').textContent = money(sub>0?sub:order.subtotal||0);
     document.getElementById('odShipping').textContent = ship>0?money(ship):'ফ্রি';
-    document.getElementById('odTotal').textContent = money(order.subtotal||0);
+    document.getElementById('odTotal').textContent = moneyNumber(order?.total ?? order?.payableTotal ?? order?.subtotal ?? 0);
     const dbox = document.getElementById('odDriverBox');
     const dEl = document.getElementById('odDriver');
     if(order.driverName){ dbox.style.display='block'; dEl.textContent = `${order.driverName} — ${order.customerPhone||''}`; }
@@ -1015,7 +1044,7 @@ const OrderDetail = {
   print(){
     const o = this.current; if(!o) return;
     const w = window.open('', '_blank');
-    w.document.write(`<html><head><title>${o.orderNumber||o.id}</title><style>body{font-family:sans-serif;padding:30px;max-width:600px;margin:0 auto}h1{color:#C2185B}.row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee}table{width:100%;margin-top:14px}.tot{font-size:18px;font-weight:700;margin-top:14px}</style></head><body><h1>Golapi Shop Online</h1><p>অর্ডার: ${o.orderNumber||o.id}</p><p>তারিখ: ${o.createdAt?.seconds?new Date(o.createdAt.seconds*1000).toLocaleString('bn-BD'):'—'}</p><hr><h3>কাস্টমার</h3><p>${o.customerName||''}<br>${o.customerPhone||''}<br>${o.village||''}, ${AREA_LABELS[o.branchZone]||''}<br>${o.address||''}</p><h3>আইটেম</h3><table><tr><th>পণ্য</th><th>মোট</th></tr>${(o.items||[]).map(it=>{const p=ALL_PRODUCTS.find(x=>x.id===it.productId);return `<tr><td>${p?.name||it.productId} × ${it.qty}</td><td>${money((p?.salePrice||0)*it.qty)}</td></tr>`}).join('')}</table><div class="tot"><div class="row"><span>মোট</span><span>${money(o.subtotal||0)}</span></div></div><p style="margin-top:20px;font-size:12px;color:#888">Golapi Shop Online — নোয়াখালী</p></body></html>`);
+    w.document.write(`<html><head><title>${o.orderNumber||o.id}</title><style>body{font-family:sans-serif;padding:30px;max-width:600px;margin:0 auto}h1{color:#C2185B}.row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee}table{width:100%;margin-top:14px}.tot{font-size:18px;font-weight:700;margin-top:14px}</style></head><body><h1>Golapi Shop Online</h1><p>অর্ডার: ${o.orderNumber||o.id}</p><p>তারিখ: ${o.createdAt?.seconds?new Date(o.createdAt.seconds*1000).toLocaleString('bn-BD'):'—'}</p><hr><h3>কাস্টমার</h3><p>${o.customerName||''}<br>${o.customerPhone||''}<br>${o.village||''}, ${AREA_LABELS[o.branchZone]||''}<br>${o.address||''}</p><h3>আইটেম</h3><table><tr><th>পণ্য</th><th>মোট</th></tr>${(o.items||[]).map(it=>{const p=ALL_PRODUCTS.find(x=>x.id===it.productId);return `<tr><td>${p?.name||it.productId} × ${it.qty}</td><td>${money((p?.salePrice||0)*it.qty)}</td></tr>`}).join('')}</table><div class="tot"><div class="row"><span>মোট</span><span>${moneyNumber(o?.total ?? o?.payableTotal ?? o?.subtotal ?? 0)}</span></div></div><p style="margin-top:20px;font-size:12px;color:#888">Golapi Shop Online — নোয়াখালী</p></body></html>`);
     w.document.close(); w.print();
   }
 };
@@ -1152,7 +1181,7 @@ const PaymentVerify = {
           <td style="font-size:11px">${o.orderNumber||o.id.slice(-6)}</td>
           <td>${o.customerName||'—'}<br><span style="font-size:10.5px;color:var(--ink-muted)">${o.customerPhone||''}</span></td>
           <td>${o.paymentMethod==='bkash'?'📱 bKash':'📱 Nagad'}</td>
-          <td style="color:var(--gold);font-weight:600">${money(o.subtotal||0)}</td>
+          <td style="color:var(--gold);font-weight:600">${moneyNumber(o?.total ?? o?.payableTotal ?? o?.subtotal ?? 0)}</td>
           <td style="font-family:monospace;font-size:12px;${isDupe?'color:#f87171;font-weight:700':''}">${o.paymentTrxId||'—'}${isDupe?' ⚠️':''}</td>
           <td style="font-size:11px;${isOverdue?'color:#fbbf24':''}">${o.createdAt?.seconds?new Date(o.createdAt.seconds*1000).toLocaleString('bn-BD'):'—'}${isOverdue?' <br>⏰ '+Math.floor(hoursWaiting)+' ঘণ্টা+':''}</td>
           <td style="display:flex;gap:6px;flex-wrap:wrap">

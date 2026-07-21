@@ -63,22 +63,38 @@ const ProductStore = {
 
 function pcardHTML(p){
   const discount = p.price>p.salePrice ? Math.round((1-p.salePrice/p.price)*100) : 0;
+  const inStock = Number(p.stock)>0;
+  const wished = typeof Wishlist!=='undefined' && Wishlist.has(p.id);
   const ratingLine = p.reviews>0
-    ? `<span class="st">★</span> ${p.rating} (${bn(p.reviews)}) · ${bn(p.sold)} বিক্রি`
-    : `<span style="color:#22c55e;font-weight:600">🆕 নতুন প্রোডাক্ট</span>`;
-  return `<div class="pcard" onclick="Router.go('product',{id:'${p.id}'})">
-    <div class="imgwrap"><img src="${p.img}" alt="${p.name}" loading="lazy">
-      ${discount?`<span class="pbadge">-${bn(discount)}%</span>`:''}
-      ${p.isFeatured?`<span class="pbadge gold" style="left:auto;right:8px;top:${discount?'40px':'8px'}">★</span>`:''}
-      <button class="wish" onclick="event.stopPropagation();Wishlist.toggle('${p.id}')">🤍</button>
-      <span class="brand-seal"><img src="icons/head_logo.webp" alt="Golapi Shop"></span>
+    ? `<span class="st" aria-hidden="true">★</span> <span>${p.rating}</span> <span>(${bn(p.reviews)})</span><span class="rating-sep" aria-hidden="true">·</span><span>${bn(p.sold)} বিক্রি</span>`
+    : `<span class="product-new-label">নতুন প্রোডাক্ট</span>`;
+  const stockLabel = inStock
+    ? `<span class="product-stock is-available">স্টকে আছে</span>`
+    : `<span class="product-stock is-unavailable">স্টক শেষ</span>`;
+  const deliveryTags = `${p.fastDelivery?'<span class="fast-tag">লোকাল ডেলিভারি</span>':''}${p.cod?'<span class="cod-tag">COD</span>':''}`;
+
+  return `<article class="pcard${inStock?'':' is-out-of-stock'}" onclick="Router.go('product',{id:'${p.id}'})" tabindex="0" role="link" aria-label="${p.name} দেখুন" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();Router.go('product',{id:'${p.id}'})}">
+    <div class="imgwrap">
+      <img src="${p.img}" alt="${p.name}" loading="lazy" decoding="async">
+      <div class="product-badges">
+        ${discount?`<span class="pbadge">${bn(discount)}% ছাড়</span>`:''}
+        ${p.isFeatured?`<span class="pbadge gold">নির্বাচিত</span>`:''}
+      </div>
+      <button class="wish${wished?' is-active':''}" type="button" data-product-id="${p.id}" aria-label="${wished?'উইশলিস্ট থেকে সরান':'উইশলিস্টে যোগ করুন'}" aria-pressed="${wished?'true':'false'}" onclick="event.stopPropagation();Wishlist.toggle('${p.id}')">${wished?'❤️':'🤍'}</button>
+      ${!inStock?'<span class="stock-overlay">বর্তমানে নেই</span>':''}
+      <span class="brand-seal"><img src="icons/head_logo.webp" alt="" aria-hidden="true"></span>
     </div>
     <div class="pbody">
-      ${p.fastDelivery?'<span class="fast-tag">🚴 লোকাল ডেলিভারি</span>':''}${p.cod?'<span class="cod-tag">✓ COD</span>':''}
-      <div class="pname">${p.name}</div>
-      <div class="prating">${ratingLine}</div>
-      <div><span class="price-now">${money(p.salePrice)}</span>${discount?`<span class="price-old">${money(p.price)}</span>`:''}<span class="unit-tag"> / ${p.unit}</span></div>
-      <button class="add-btn" onclick="event.stopPropagation();Cart.add('${p.id}')">কার্টে যুক্ত করুন</button>
+      <div class="product-meta-row">${deliveryTags}${stockLabel}</div>
+      <h3 class="pname">${p.name}</h3>
+      <div class="prating" aria-label="পণ্যের রেটিং ও বিক্রির তথ্য">${ratingLine}</div>
+      <div class="product-price-row">
+        <div class="product-price-main"><span class="price-now">${money(p.salePrice)}</span><span class="unit-tag">/ ${p.unit}</span></div>
+        ${discount?`<span class="price-old">${money(p.price)}</span>`:''}
+      </div>
+      <button class="add-btn" type="button" ${inStock?'':'disabled aria-disabled="true"'} onclick="event.stopPropagation();${inStock?`Cart.add('${p.id}')`:''}">
+        <span aria-hidden="true">${inStock?'＋':'—'}</span>${inStock?'কার্টে যোগ করুন':'স্টক শেষ'}
+      </button>
     </div>
-  </div>`;
+  </article>`;
 }

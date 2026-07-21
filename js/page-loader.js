@@ -14,7 +14,7 @@
   ];
 
   /* সব কাস্টমার প্রথম ভিজটেই এগুলো দেখতে পারে — সাথে সাথে লড হবে */
-  const pages = ['home','listing','product','checkout','myorders','account','medical','custom-bazar','order-success','account-addresses','about-app','privacy-info','terms','contact'];
+  const pages = ['home','listing','product','checkout','myorders','wishlist','account','medical','custom-bazar','order-success','account-addresses','about-app','privacy-info','terms','contact'];
 
   /* স্টাফ-অনলি পেজ — শুধু প্রয়োজন হলে (Router.go কল হলে) লোড হবে */
   window.__lazyPages = ['admin-dash','driver','zone-manager'];
