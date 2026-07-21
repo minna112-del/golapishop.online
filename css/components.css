@@ -685,3 +685,135 @@
     display: none;
   }
 }
+
+/* =========================================================
+   iPhone horizontal shift and Bengali text clipping fix
+   ========================================================= */
+
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip !important;
+}
+
+body {
+  position: relative;
+  left: 0;
+  margin: 0;
+}
+
+#pageContainer,
+.page,
+#custFooter,
+.ftr-cta,
+.ftr-main,
+.ftr-grid-v3,
+.ftr-bottom-v3 {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+#pageContainer,
+.page,
+#custFooter {
+  margin-left: 0 !important;
+  transform: none;
+}
+
+.ftr-main {
+  overflow-x: clip;
+}
+
+/* Grid children যেন নিজেদের content-এর কারণে viewport বড় না করে */
+.ftr-grid-v3 > *,
+.ftr-bottom-v3 > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Footer-এর দীর্ঘ utility links মোবাইলে overflow করছিল */
+.ftr-bottom-v3 > span:last-child {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 8px 14px !important;
+  width: 100%;
+  min-width: 0;
+}
+
+.ftr-bottom-v3 > span:last-child a {
+  display: inline-block;
+  margin: 0;
+  white-space: normal;
+}
+
+/* দীর্ঘ email ও অন্য text viewport-এর বাইরে যাবে না */
+.ftr-row-v3,
+.ftr-tagline,
+.ftr-person-info,
+.ftr-person-info .name,
+.ftr-person-info .num {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* Bengali glyph-এর বাঁ-পাশের visual overhang-এর নিরাপদ জায়গা */
+.ftr-main,
+.ftr-cta,
+section.sec {
+  padding-left: max(18px, env(safe-area-inset-left)) !important;
+  padding-right: max(18px, env(safe-area-inset-right)) !important;
+}
+
+/* Nested section-এ double padding যেন না হয় */
+.flash-strip section.sec,
+.flash-strip .sec {
+  padding-left: 18px !important;
+  padding-right: 18px !important;
+}
+
+/* Horizontal category row শুরুতে কাটা পড়া বন্ধ */
+.quick-cat-row {
+  max-width: 100%;
+  padding-left: max(20px, env(safe-area-inset-left)) !important;
+  padding-right: max(20px, env(safe-area-inset-right)) !important;
+  scroll-padding-left: 20px;
+  overscroll-behavior-x: contain;
+}
+
+/* প্রতিটি page ও heading-এ glyph clipping protection */
+.page h1,
+.page h2,
+.page h3,
+.page h4,
+.page p,
+.page span,
+.ftr-main h1,
+.ftr-main h2,
+.ftr-main h3,
+.ftr-main h4,
+.ftr-main p,
+.ftr-main span,
+.ftr-main a {
+  text-rendering: optimizeLegibility;
+}
+
+@media (max-width: 480px) {
+  .ftr-grid-v3 {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .ftr-bottom-v3 {
+    align-items: flex-start;
+    text-align: left !important;
+  }
+
+  .ftr-utility-row {
+    max-width: 100%;
+    flex-wrap: wrap;
+  }
+}
