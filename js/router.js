@@ -5,123 +5,93 @@ const OwnerAuth = {
   _verifiedThisSession: false,
 
   isUnlocked() {
-    return Boolean(
-      this.currentUid ||
+    return !!this.currentUid ||
       (
         typeof FB !== 'undefined' &&
         FB &&
         FB.auth &&
         FB.auth.currentUser &&
         this._verifiedThisSession
-      )
-    );
+      );
   },
 
   requestAccess() {
-    const emailInput = document.getElementById('ownerEmail');
-    const passwordInput = document.getElementById('ownerPassword');
-    const messageElement = document.getElementById('ownerGateMsg');
-    const modal = document.getElementById('ownerGateModal');
-
-    if (emailInput) {
-      emailInput.value = '';
-    }
-
-    if (passwordInput) {
-      passwordInput.value = '';
-    }
-
-    if (messageElement) {
-      messageElement.textContent = '';
-      messageElement.className = 'form-msg';
-    }
-
-    if (modal) {
-      modal.classList.add('show');
-    }
+    document.getElementById('ownerEmail').value = '';
+    document.getElementById('ownerPassword').value = '';
+    document.getElementById('ownerGateMsg').className = 'form-msg';
+    document.getElementById('ownerGateModal').classList.add('show');
   },
 
   cancel() {
-    const modal = document.getElementById('ownerGateModal');
-
-    if (modal) {
-      modal.classList.remove('show');
-    }
+    document.getElementById('ownerGateModal').classList.remove('show');
   },
 
   async unlock() {
-    const emailInput = document.getElementById('ownerEmail');
-    const passwordInput = document.getElementById('ownerPassword');
-    const messageElement = document.getElementById('ownerGateMsg');
+    const email = document
+      .getElementById('ownerEmail')
+      .value
+      .trim();
 
-    const email = emailInput
-      ? emailInput.value.trim()
-      : '';
+    const pass = document
+      .getElementById('ownerPassword')
+      .value;
 
-    const password = passwordInput
-      ? passwordInput.value
-      : '';
+    const msgEl = document.getElementById('ownerGateMsg');
 
-    if (!messageElement) {
-      return;
-    }
-
-    if (!email || !password) {
-      messageElement.textContent = 'ইমেইল ও পাসওয়ার্ড দিন';
-      messageElement.className = 'form-msg err';
+    if (!email || !pass) {
+      msgEl.textContent = 'ইমেইল ও পাসওয়ার্ড দিন';
+      msgEl.className = 'form-msg err';
       return;
     }
 
     if (typeof FB === 'undefined' || !FB) {
-      messageElement.textContent = 'সংযোগ সমস্যা';
-      messageElement.className = 'form-msg err';
+      msgEl.textContent = 'সংযোগ সমস্যা';
+      msgEl.className = 'form-msg err';
       return;
     }
 
     try {
-      const credential = await FB.signInWithEmailAndPassword(
+      const cred = await FB.signInWithEmailAndPassword(
         FB.auth,
         email,
-        password
+        pass
       );
 
-      const staffSnapshot = await FB.getDoc(
+      const staffSnap = await FB.getDoc(
         FB.doc(
           FB.db,
           'staff',
-          credential.user.uid
+          cred.user.uid
         )
       );
 
-      const isAdmin =
-        staffSnapshot.exists() &&
-        staffSnapshot.data().role === 'admin';
-
-      if (!isAdmin) {
+      if (
+        !staffSnap.exists() ||
+        staffSnap.data().role !== 'admin'
+      ) {
         await FB.signOut(FB.auth).catch(() => {});
 
-        messageElement.textContent =
+        msgEl.textContent =
           'এই অ্যাকাউন্ট অ্যাডমিন হিসেবে অনুমোদিত নয়';
 
-        messageElement.className = 'form-msg err';
+        msgEl.className = 'form-msg err';
         return;
       }
 
-      this.currentUid = credential.user.uid;
+      this.currentUid = cred.user.uid;
       this._verifiedThisSession = true;
 
-      const modal = document.getElementById('ownerGateModal');
-
-      if (modal) {
-        modal.classList.remove('show');
-      }
+      document
+        .getElementById('ownerGateModal')
+        .classList
+        .remove('show');
 
       Router.go('admin-dash');
-    } catch (error) {
-      messageElement.textContent =
+    } catch (e) {
+      msgEl.textContent =
         'লগইন ব্যর্থ: ইমেইল বা পাসওয়ার্ড সঠিক নয়';
 
-      messageElement.className = 'form-msg err';
+      msgEl.className = 'form-msg err';
     }
   },
 
@@ -130,14 +100,13 @@ const OwnerAuth = {
       this.currentUid ||
       typeof FB === 'undefined' ||
       !FB ||
-      !FB.auth ||
       !FB.auth.currentUser
     ) {
       return false;
     }
 
     try {
-      const staffSnapshot = await FB.getDoc(
+      const staffSnap = await FB.getDoc(
         FB.doc(
           FB.db,
           'staff',
@@ -145,20 +114,19 @@ const OwnerAuth = {
         )
       );
 
-      const isAdmin =
-        staffSnapshot.exists() &&
-        staffSnapshot.data().role === 'admin';
-
-      if (isAdmin) {
+      if (
+        staffSnap.exists() &&
+        staffSnap.data().role === 'admin'
+      ) {
         this.currentUid = FB.auth.currentUser.uid;
         this._verifiedThisSession = true;
         return true;
       }
-    } catch (error) {
+    } catch (e) {
       if (typeof devWarn === 'function') {
         devWarn(
           'owner session restore failed',
-          error.message
+          e.message
         );
       }
     }
@@ -177,10 +145,7 @@ const OwnerAuth = {
     this.currentUid = null;
     this._verifiedThisSession = false;
 
-    if (typeof toast === 'function') {
-      toast('🔒 লক করা হয়েছে');
-    }
-
+    toast('🔒 লক করা হয়েছে');
     Router.go('home');
   }
 };
@@ -190,16 +155,12 @@ const Router = {
   params: {},
 
   /*
-   * SEO metadata
+   * প্রতিটি public page-এর জন্য shareable URL,
+   * title এবং meta description।
    *
-   * Private বা checkout ধরনের page এখানে রাখা হয়নি।
-   * যেমন:
-   * checkout
-   * account
-   * myorders
-   * order-success
+   * Checkout, account, myorders ও order-success-এর মতো
+   * private page ইচ্ছাকৃতভাবে বাদ রাখা হয়েছে।
    */
-
   seoMeta: {
     home: {
       path: '/',
@@ -208,69 +169,57 @@ const Router = {
         'Golapi Shop Online — নোয়াখালী সদর ও বেগমগঞ্জের অনলাইন শপ',
 
       desc:
-        'নোয়াখালী সদর ও বেগমগঞ্জে মুদি, ঔষধ, গ্যাস ও দৈনন্দিন প্রয়োজনীয় পণ্য অর্ডার করুন অথবা নিজের বাজারের লিস্ট পাঠান। স্থানীয় ডেলিভারি ও সহজ পেমেন্ট।'
+        'নোয়াখালী সদর ও বেগমগঞ্জে মুদি, ঔষধ, গ্যাস ও দৈনন্দিন প্রয়োজনীয় পণ্য অর্ডার করুন অথবা নিজের বাজারের লিস্ট পাঠান। স্থানীয় ডেলিভারি ও সহজ পেমেন্ট।'
     },
 
     listing: {
-      path: params => {
-        return `/category/${params.cat || 'all'}`;
-      },
+      path: p => `/category/${p.cat || 'all'}`,
 
-      title: params => {
+      title: p => {
         const category = CATEGORIES.find(
-          item => item.id === params.cat
+          c => c.id === p.cat
         );
 
-        const categoryName = category
-          ? category.label
-          : 'সব প্রোডাক্ট';
-
-        return `${categoryName} — Golapi Shop Online`;
+        return `${
+          category?.label || 'সব প্রোডাক্ট'
+        } — Golapi Shop Online`;
       },
 
-      desc: params => {
+      desc: p => {
         const category = CATEGORIES.find(
-          item => item.id === params.cat
+          c => c.id === p.cat
         );
 
-        const categoryName = category
-          ? category.label
-          : 'সব প্রোডাক্ট';
-
-        return `${categoryName} কিনুন Golapi Shop Online থেকে — নোয়াখালী সদর ও বেগমগঞ্জে হোম ডেলিভারি।`;
+        return `${
+          category?.label || 'সব প্রোডাক্ট'
+        } কিনুন Golapi Shop Online থেকে — নোয়াখালী সদর ও বেগমগঞ্জে হোম ডেলিভারি।`;
       }
     },
 
     product: {
-      path: params => {
-        return `/product/${params.id}`;
+      path: p => `/product/${p.id}`,
+
+      title: p => {
+        const product = ALL_PRODUCTS.find(
+          item => item.id === p.id
+        );
+
+        return product
+          ? `${product.name} — ৳${product.salePrice} | Golapi Shop Online`
+          : 'প্রোডাক্ট — Golapi Shop Online';
       },
 
-      title: params => {
+      desc: p => {
         const product = ALL_PRODUCTS.find(
-          item => item.id === params.id
+          item => item.id === p.id
         );
 
-        if (!product) {
-          return 'প্রোডাক্ট — Golapi Shop Online';
-        }
-
-        return `${product.name} — ৳${product.salePrice} | Golapi Shop Online`;
-      },
-
-      desc: params => {
-        const product = ALL_PRODUCTS.find(
-          item => item.id === params.id
-        );
-
-        if (!product) {
-          return '';
-        }
-
-        return (
-          product.description ||
-          `${product.name} — Golapi Shop Online থেকে হোম ডেলিভারিতে কিনুন।`
-        );
+        return product
+          ? (
+              product.description ||
+              `${product.name} — Golapi Shop Online থেকে হোম ডেলিভারিতে কিনুন।`
+            )
+          : '';
       }
     },
 
@@ -281,7 +230,7 @@ const Router = {
         'স্বাস্থ্য সেবা — Golapi Shop Online',
 
       desc:
-        'বিশেষজ্ঞ চিকিৎসকদের তথ্য ও সিরিয়াল নেওয়ার সহায়তা দেখুন — নোয়াখালী সদর ও বেগমগঞ্জ।'
+        'বিশেষজ্ঞ চিকিৎসকদের তথ্য, সময়সূচি এবং সিরিয়াল নেওয়ার সহায়তা দেখুন—নোয়াখালী সদর ও বেগমগঞ্জ।'
     },
 
     'custom-bazar': {
@@ -291,7 +240,7 @@ const Router = {
         'কাস্টম বাজার — Golapi Shop Online',
 
       desc:
-        'নিজের বাজারের লিস্ট পাঠান। আমাদের স্থানীয় টিম বাজার প্রস্তুত করে ডেলিভারির ব্যবস্থা করবে।'
+        'নিজের বাজারের লিস্ট পাঠান। আমাদের স্থানীয় টিম বাজার প্রস্তুত করে আপনার ঠিকানায় ডেলিভারির ব্যবস্থা করবে।'
     },
 
     contact: {
@@ -301,7 +250,7 @@ const Router = {
         'যোগাযোগ — Golapi Shop Online',
 
       desc:
-        'Golapi Shop Online-এর হটলাইন, শাখা ম্যানেজারের নম্বর ও ইমেইল দেখুন।'
+        'Golapi Shop Online-এর হটলাইন, শাখা ম্যানেজারের ফোন নম্বর এবং ইমেইল দেখুন।'
     },
 
     'about-app': {
@@ -311,7 +260,7 @@ const Router = {
         'আমাদের গল্প — Golapi Shop Online',
 
       desc:
-        'Golapi Shop Online কীভাবে শুরু হলো এবং আমাদের স্থানীয় টিমের সঙ্গে পরিচিত হন।'
+        'Golapi Shop Online কীভাবে শুরু হলো এবং আমাদের স্থানীয় টিমের সঙ্গে পরিচিত হন।'
     },
 
     terms: {
@@ -331,7 +280,7 @@ const Router = {
         'প্রাইভেসি পলিসি — Golapi Shop Online',
 
       desc:
-        'Golapi Shop Online-এর গোপনীয়তা নীতি দেখুন।'
+        'Golapi Shop Online-এর গোপনীয়তা নীতি দেখুন।'
     }
   },
 
@@ -352,7 +301,7 @@ const Router = {
         ? meta.title(params)
         : meta.title;
 
-    const description =
+    const desc =
       typeof meta.desc === 'function'
         ? meta.desc(params)
         : meta.desc;
@@ -361,83 +310,90 @@ const Router = {
       document.title = title;
     }
 
-    if (description) {
-      let descriptionMeta = document.querySelector(
+    if (desc) {
+      const descriptionMeta = document.querySelector(
         'meta[name="description"]'
       );
 
       if (descriptionMeta) {
         descriptionMeta.setAttribute(
           'content',
-          description
+          desc
+        );
+      }
+
+      const ogDescription = document.querySelector(
+        'meta[property="og:description"]'
+      );
+
+      if (ogDescription) {
+        ogDescription.setAttribute(
+          'content',
+          desc
+        );
+      }
+
+      const twitterDescription = document.querySelector(
+        'meta[name="twitter:description"]'
+      );
+
+      if (twitterDescription) {
+        twitterDescription.setAttribute(
+          'content',
+          desc
         );
       }
     }
 
-    const canonical = document.querySelector(
-      'link[rel="canonical"]'
-    );
-
-    if (canonical && path) {
-      canonical.setAttribute(
-        'href',
-        `${window.location.origin}${path}`
+    if (title) {
+      const ogTitle = document.querySelector(
+        'meta[property="og:title"]'
       );
+
+      if (ogTitle) {
+        ogTitle.setAttribute(
+          'content',
+          title
+        );
+      }
+
+      const twitterTitle = document.querySelector(
+        'meta[name="twitter:title"]'
+      );
+
+      if (twitterTitle) {
+        twitterTitle.setAttribute(
+          'content',
+          title
+        );
+      }
     }
 
-    const openGraphTitle = document.querySelector(
-      'meta[property="og:title"]'
-    );
+    if (path) {
+      const absoluteUrl =
+        `${window.location.origin}${path}`;
 
-    if (openGraphTitle && title) {
-      openGraphTitle.setAttribute(
-        'content',
-        title
+      const canonical = document.querySelector(
+        'link[rel="canonical"]'
       );
-    }
 
-    const openGraphDescription = document.querySelector(
-      'meta[property="og:description"]'
-    );
+      if (canonical) {
+        canonical.setAttribute(
+          'href',
+          absoluteUrl
+        );
+      }
 
-    if (openGraphDescription && description) {
-      openGraphDescription.setAttribute(
-        'content',
-        description
+      const ogUrl = document.querySelector(
+        'meta[property="og:url"]'
       );
-    }
 
-    const openGraphUrl = document.querySelector(
-      'meta[property="og:url"]'
-    );
-
-    if (openGraphUrl && path) {
-      openGraphUrl.setAttribute(
-        'content',
-        `${window.location.origin}${path}`
-      );
-    }
-
-    const twitterTitle = document.querySelector(
-      'meta[name="twitter:title"]'
-    );
-
-    if (twitterTitle && title) {
-      twitterTitle.setAttribute(
-        'content',
-        title
-      );
-    }
-
-    const twitterDescription = document.querySelector(
-      'meta[name="twitter:description"]'
-    );
-
-    if (twitterDescription && description) {
-      twitterDescription.setAttribute(
-        'content',
-        description
-      );
+      if (ogUrl) {
+        ogUrl.setAttribute(
+          'content',
+          absoluteUrl
+        );
+      }
     }
 
     if (
@@ -456,7 +412,7 @@ const Router = {
     }
   },
 
-  async go(page, params = {}, options = {}) {
+  async go(page, params = {}, opts = {}) {
     if (
       page === 'admin-dash' &&
       !OwnerAuth.isUnlocked()
@@ -470,18 +426,14 @@ const Router = {
       }
     }
 
-    const isLazyPage =
-      window.__lazyPages &&
-      window.__lazyPages.includes(page);
-
-    const isLazyPageLoaded =
-      window.__loadedLazyPages &&
-      window.__loadedLazyPages[page];
-
+    /*
+     * Staff page হলে প্রয়োজনীয় HTML fragment
+     * আগে lazy load করা হয়।
+     */
     if (
-      isLazyPage &&
-      !isLazyPageLoaded &&
-      typeof window.__ensureLazyPage === 'function'
+      window.__lazyPages &&
+      window.__lazyPages.includes(page) &&
+      !window.__loadedLazyPages[page]
     ) {
       await new Promise(resolve => {
         window.__ensureLazyPage(
@@ -497,14 +449,14 @@ const Router = {
     this.updateSeoTags(
       page,
       params,
-      Boolean(options.skipHistory)
+      !!opts.skipHistory
     );
 
     if (typeof dataLayer !== 'undefined') {
       dataLayer.push({
         event: 'page_view',
         page_title: page,
-        page_path: window.location.pathname
+        page_path: '/#' + page
       });
     }
 
@@ -515,7 +467,7 @@ const Router = {
       });
 
     const targetPage = document.getElementById(
-      `page-${page}`
+      'page-' + page
     );
 
     if (targetPage) {
@@ -544,109 +496,73 @@ const Router = {
         );
       });
 
-    if (
-      page === 'listing' &&
-      typeof Listing !== 'undefined'
-    ) {
+    if (page === 'listing') {
       Listing.render();
     }
 
-    if (
-      page === 'product' &&
-      typeof PDP !== 'undefined'
-    ) {
+    if (page === 'product') {
       PDP.load(params.id);
     }
 
-    if (
-      page === 'checkout' &&
-      typeof Checkout !== 'undefined'
-    ) {
+    if (page === 'checkout') {
       Checkout.init();
     }
 
-    if (
-      page === 'myorders' &&
-      typeof MyOrders !== 'undefined'
-    ) {
+    if (page === 'myorders') {
       MyOrders.render();
     }
 
-    if (
-      page === 'admin-dash' &&
-      typeof AdminDash !== 'undefined'
-    ) {
+    if (page === 'admin-dash') {
       AdminDash.render();
     }
 
-    if (
-      page === 'driver' &&
-      typeof DriverPortal !== 'undefined'
-    ) {
+    if (page === 'driver') {
       DriverPortal.render();
     }
 
-    if (
-      page === 'zone-manager' &&
-      typeof ZoneManagerDash !== 'undefined'
-    ) {
+    if (page === 'zone-manager') {
       ZoneManagerDash.render();
     }
 
-    if (
-      page === 'home' &&
-      typeof Home !== 'undefined'
-    ) {
+    if (page === 'home') {
       Home.render();
     }
 
-    if (
-      page === 'medical' &&
-      typeof Medical !== 'undefined'
-    ) {
+    if (page === 'medical') {
       Medical.render();
     }
 
-    if (
-      page === 'custom-bazar' &&
-      typeof CustomBazar !== 'undefined'
-    ) {
+    if (page === 'custom-bazar') {
       CustomBazar.init();
     }
 
-    if (
-      page === 'account' &&
-      typeof AccountPage !== 'undefined'
-    ) {
+    if (page === 'account') {
       AccountPage.render();
     }
 
-    if (
-      page === 'account-addresses' &&
-      typeof AccountPage !== 'undefined'
-    ) {
+    if (page === 'account-addresses') {
       AccountPage.renderAddresses();
     }
 
-    const isStaffPage = [
+    const staffPage = [
       'admin-dash',
       'zone-manager',
       'driver'
     ].includes(page);
 
-    const chatButton =
+    const chatBtn =
       document.getElementById('chatBtn');
 
-    if (chatButton) {
-      chatButton.style.display =
-        isStaffPage ? 'none' : 'flex';
+    if (chatBtn) {
+      chatBtn.style.display =
+        staffPage ? 'none' : 'flex';
     }
 
-    const chatWindow =
+    const chatWin =
       document.getElementById('chatWin');
 
-    if (chatWindow) {
-      chatWindow.classList.remove('show');
+    if (chatWin) {
+      chatWin.classList.remove('show');
     }
 
     [
@@ -660,24 +576,18 @@ const Router = {
 
       if (element) {
         element.style.display =
-          isStaffPage ? 'none' : '';
+          staffPage ? 'none' : '';
       }
     });
 
     document.body.style.paddingBottom =
-      isStaffPage ? '0' : '';
+      staffPage ? '0' : '';
   }
 };
 
 Router.navigate = function(path) {
-  window.history.pushState(
-    {},
-    '',
-    path
-  );
-
   const normalizedPath =
-    path.toLowerCase();
+    String(path || '/').toLowerCase();
 
   if (normalizedPath === '/driver') {
     Router.go(
