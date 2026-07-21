@@ -7,7 +7,7 @@
     <div id="pdpGalleryWrap" style="position:relative;border-radius:16px;overflow:hidden;background:var(--card);border:1px solid var(--line);margin-bottom:18px;cursor:zoom-in" onclick="PDP.openFullImg()">
       <img id="pdpImg" loading="lazy" alt="" style="width:100%;aspect-ratio:1/1;object-fit:cover;display:block">
       <span class="brand-seal pdp-seal"><img src="icons/head_logo.webp" alt="Golapi Shop"></span>
-      <div style="position:absolute;bottom:10px;left:10px;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);padding:4px 10px;border-radius:20px;font-size:11px;color:#fff">🔍 বড় দেখুন</div>
+      <div style="position:absolute;bottom:10px;left:10px;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);padding:4px 10px;border-radius:20px;font-size:11px;color:#fff"><span class="ic ic-search" style="width:13px;height:13px;vertical-align:-2px;margin-right:3px"></span>বড় দেখুন</div>
     </div>
     <div id="pdpImgOverlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.95);align-items:center;justify-content:center;flex-direction:column" onclick="this.style.display='none'">
       <button style="position:absolute;top:16px;right:16px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.1);color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center">✕</button>
@@ -28,7 +28,7 @@
       <div class="qty-ctrl"><button onclick="PDP.changeQty(-1)">−</button><span id="pdpQty">১</span><button onclick="PDP.changeQty(1)">+</button></div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px">
-      <button class="btn btn-gold" onclick="PDP.addToCart()">🛍️ কার্টে যুক্ত করুন</button>
+      <button class="btn btn-gold" onclick="PDP.addToCart()"><span class="ic ic-cart" style="width:13px;height:13px;vertical-align:-2px;margin-right:3px"></span>কার্টে যুক্ত করুন</button>
       <button class="btn btn-rose" onclick="PDP.buyNow()">এখনই কিনুন</button>
     </div>
     <div class="card" style="padding:12px;display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">

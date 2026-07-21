@@ -55,8 +55,8 @@
 
     <div class="field"><label>ক্যাটাগরি * <span style="font-size:10.5px;color:var(--ink-dim);font-weight:400">(নাম লিখলে অটো সাজেস্ট হবে, চাইলে বদলে দিন)</span></label>
       <select id="pfCategory" onchange="ProductForm.categoryTouched=true">
-        <option value="medicine">💊 ঔষধ</option>
-        <option value="grocery">🛒 মুদি বাজার</option>
+        <option value="medicine"><span class="ic ic-pill" style="width:13px;height:13px;vertical-align:-2px;margin-right:3px"></span>ঔষধ</option>
+        <option value="grocery"><span class="ic ic-cart" style="width:13px;height:13px;vertical-align:-2px;margin-right:3px"></span>মুদি বাজার</option>
         <option value="rice_pulses">🌾 চাল-ডাল</option>
         <option value="spices">🌶️ মসলা</option>
         <option value="edible_oil">🫙 ভোজ্য তেল</option>
@@ -68,11 +68,11 @@
         <option value="beverages">🥤 পানীয় ও জুস</option>
         <option value="confectionery">🍬 কনফেকশনারি</option>
         <option value="stationery">📒 স্টেশনারি</option>
-        <option value="gas">🔥 গ্যাস সিলিন্ডার</option>
+        <option value="gas"><span class="ic ic-flame" style="width:13px;height:13px;vertical-align:-2px;margin-right:3px"></span>গ্যাস সিলিন্ডার</option>
         <option value="mobile">📱 মোবাইল এক্সেসরিজ</option>
         <option value="electronics">🔌 ইলেকট্রনিক্স</option>
         <option value="watch">⌚ ঘড়ি ও ব্যাটারি</option>
-        <option value="cosmetics">💄 কসমেটিকস</option>
+        <option value="cosmetics"><span class="ic ic-sparkle" style="width:13px;height:13px;vertical-align:-2px;margin-right:3px"></span>কসমেটিকস</option>
         <option value="personal_care">🧴 পার্সোনাল কেয়ার</option>
         <option value="clothing">👕 জামা-কাপড়</option>
         <option value="footwear">👞 জুতা</option>
@@ -276,7 +276,7 @@
     </div>
 
     <div class="card-box" style="margin-bottom:12px">
-      <strong style="font-size:12.5px;color:var(--gold)">👤 কাস্টমার</strong>
+      <strong style="font-size:12.5px;color:var(--gold)"><span class="ic ic-user" style="width:13px;height:13px;vertical-align:-2px;margin-right:3px"></span>কাস্টমার</strong>
       <div style="font-size:12.5px;color:var(--ink-soft);margin-top:6px">নাম: <span id="odName"></span></div>
       <div style="font-size:12.5px;color:var(--ink-soft)">ফোন: <span id="odPhone"></span></div>
       <div style="font-size:12.5px;color:var(--ink-soft)">NID: <span id="odNid"></span></div>
@@ -284,7 +284,7 @@
     </div>
 
     <div class="card-box" style="margin-bottom:12px">
-      <strong style="font-size:12.5px;color:var(--gold)">📍 ঠিকানা</strong>
+      <strong style="font-size:12.5px;color:var(--gold)"><span class="ic ic-pin" style="width:13px;height:13px;vertical-align:-2px;margin-right:3px"></span>ঠিকানা</strong>
       <div id="odAddress" style="font-size:12.5px;color:var(--ink-soft);margin-top:6px"></div>
       <div id="odInstructions" style="font-size:12px;color:var(--ink-muted);margin-top:6px"></div>
     </div>
@@ -307,7 +307,7 @@
     </div>
 
     <div class="card-box" style="margin-bottom:12px">
-      <strong style="font-size:12.5px;color:var(--gold)">🛍️ অর্ডার আইটেম</strong>
+      <strong style="font-size:12.5px;color:var(--gold)"><span class="ic ic-cart" style="width:13px;height:13px;vertical-align:-2px;margin-right:3px"></span>অর্ডার আইটেম</strong>
       <div id="odItems" style="margin-top:6px"></div>
       <div style="display:flex;justify-content:space-between;font-size:12.5px;color:var(--ink-soft);margin-top:8px"><span>সাবটোটাল</span><span id="odSubtotal"></span></div>
       <div style="display:flex;justify-content:space-between;font-size:12.5px;color:var(--ink-soft)"><span>ডেলিভারি চার্জ</span><span id="odShipping"></span></div>
@@ -315,7 +315,7 @@
     </div>
 
     <div class="card-box" style="margin-bottom:12px">
-      <strong style="font-size:12.5px;color:var(--gold)">📝 ইন্টারনাল নোট</strong>
+      <strong style="font-size:12.5px;color:var(--gold)"><span class="ic ic-pencil" style="width:13px;height:13px;vertical-align:-2px;margin-right:3px"></span>ইন্টারনাল নোট</strong>
       <textarea id="odNoteInput" rows="2" style="margin-top:8px;width:100%;background:rgba(255,255,255,.04);border:1px solid var(--line-l);border-radius:8px;padding:8px;color:#fff;font-size:12.5px" placeholder="ইন্টারনাল নোট লিখুন..."></textarea>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
         <span id="odNoteStatus" style="font-size:11px;color:var(--ink-muted)"></span>

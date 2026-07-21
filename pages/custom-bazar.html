@@ -1,7 +1,7 @@
 <div class="page" id="page-custom-bazar">
   <section class="sec" style="max-width:640px">
     <div class="crumb"><a href="#" onclick="Router.go('home')">হোম</a> &gt; কাস্টম বাজার অর্ডার</div>
-    <h2 class="tiro" style="font-size:24px;margin-bottom:6px">📝 আপনার বাজারের লিস্ট দিন</h2>
+    <h2 class="tiro" style="font-size:24px;margin-bottom:6px"><span class="ic ic-pencil" style="width:13px;height:13px;vertical-align:-2px;margin-right:3px"></span>আপনার বাজারের লিস্ট দিন</h2>
     <p style="color:var(--ink-muted);font-size:13.5px;margin-bottom:16px">সাপ্তাহিক মুদি, মাসিক বাজার, বিয়ের বাজার, রমজানের বাজার, কুরবানির বাজার — যেকোনো লিস্ট লিখে দিন। আমাদের ড্রাইভার বাজার করে বাসায় পৌঁছে দেবে। ফর্মটা পূরণ করতে ২-৩ মিনিট লাগবে।</p>
     <div id="cbPastOrdersBox" style="display:none;margin-bottom:16px"></div>
     <div class="card-box">
@@ -22,7 +22,7 @@
       <div class="field"><label>ডেলিভারি ইনস্ট্রাকশন * <span style="color:var(--ink-dim);font-weight:400">(বাধ্যতামূলক)</span></label><textarea id="cbInstructions" rows="2" placeholder="যেমন: বাড়ির সামনে সবুজ গেট, কল করে আসবেন"></textarea></div>
       <div class="field"><label>বিশেষ নির্দেশনা (ঐচ্ছিক)</label><textarea id="cbNotes" rows="2" placeholder="যেমন: সবচেয়ে ভালো মানের চাল নিবেন"></textarea></div>
       <div class="card" style="padding:14px;margin-bottom:16px;border-color:var(--gold-line);background:rgba(212,175,55,.05)">
-        <strong style="font-size:12.5px;color:var(--gold)">🧾 বিল পেমেন্ট নিয়ম</strong>
+        <strong style="font-size:12.5px;color:var(--gold)">বিল পেমেন্ট নিয়ম</strong>
         <p style="font-size:12px;color:var(--ink-soft);margin-top:4px;line-height:1.7">ড্রাইভার বাজার করার পর মোট বিলের পরিমাণ জানিয়ে বিলের স্পষ্ট ছবি অ্যাপে আপলোড করবে — আপনি সেটা দেখে টাকা রেডি রাখতে পারবেন। ডেলিভারির সময় ক্যাশে পরিশোধ করুন। ড্রাইভারের সাথে সরাসরি চ্যাটও করতে পারবেন অর্ডার পেজ থেকে।</p>
       </div>
       <div style="background:rgba(212,175,55,.06);border:1px solid var(--gold-line);border-radius:12px;padding:14px;margin-bottom:16px">
@@ -31,7 +31,7 @@
       </div>
       <div class="field"><label>বিকাশ ট্রানজেকশন ID *</label><input type="text" id="cbTrxId" placeholder="পেমেন্টের পর ট্রানজেকশন ID"></div>
       <div id="cbMsg" class="form-msg"></div>
-      <button class="btn btn-rose btn-block" id="cbSubmitBtn" onclick="CustomBazar.submit()">📝 বাজার অর্ডার জমা দিন</button>
+      <button class="btn btn-rose btn-block" id="cbSubmitBtn" onclick="CustomBazar.submit()"><span class="ic ic-pencil" style="width:13px;height:13px;vertical-align:-2px;margin-right:3px"></span>বাজার অর্ডার জমা দিন</button>
     </div>
   </section>
 </div>
