@@ -66,3 +66,31 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
   onAuthStateChanged(auth, user=>{
     if(user) registerPushToken(user.uid);
   });
+  
+  // ===== DEBUG START =====
+window.addEventListener("firebase-ready", () => {
+  console.log("✅ firebase-ready event");
+
+  if (!window.__fb) {
+    console.error("❌ window.__fb is missing");
+    return;
+  }
+
+  const FB = window.__fb;
+
+  FB.getDocs(FB.collection(FB.db, "products"))
+    .then((snap) => {
+      console.log("✅ Firestore Connected");
+      console.log("Products:", snap.size);
+
+      snap.forEach((doc) => {
+        console.log(doc.id, doc.data());
+      });
+    })
+    .catch((err) => {
+      console.error("❌ Firestore Error");
+      console.error("Code:", err.code);
+      console.error("Message:", err.message);
+    });
+});
+// ===== DEBUG END =====
