@@ -85,6 +85,28 @@ function initApp(){
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', async () => {
       try {
+        // ═══════════════════════════════════════════════════════════
+        // SELF-HEALING: এই ফিক্সের আগে যেসব ভিজিটরের ব্রাউজারে পুরনো/আটকে
+        // থাকা service worker বা cache রয়ে গেছে, তাদের জন্য automatic
+        // পরিষ্কার — Settings-এ গিয়ে ম্যানুয়ালি কিছু করতে হবে না। এটা
+        // localStorage-এ একটা version marker রাখে, marker না মিললে
+        // (মানে এই ব্রাউজার পুরনো কোনো ভার্সন থেকে আসছে) সব service worker
+        // registration ও cache মুছে একবার reload করে, তারপর normal flow।
+        const HEAL_VERSION = 'v2-selfheal';
+        const storedVersion = localStorage.getItem('golapi_heal_version');
+        if (storedVersion !== HEAL_VERSION && !sessionStorage.getItem('golapi_healing_done')) {
+          sessionStorage.setItem('golapi_healing_done', '1');
+          const regs = await navigator.serviceWorker.getRegistrations();
+          for (const reg of regs) { await reg.unregister(); }
+          if (window.caches) {
+            const keys = await caches.keys();
+            await Promise.all(keys.map(k => caches.delete(k)));
+          }
+          localStorage.setItem('golapi_heal_version', HEAL_VERSION);
+          window.location.reload();
+          return; // reload হয়ে যাচ্ছে, নিচের normal registration আর দরকার নেই এই পাসে
+        }
+
         const registration = await navigator.serviceWorker.register('/sw.js', {
           scope: '/',
           updateViaCache: 'none'
