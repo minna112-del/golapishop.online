@@ -13,6 +13,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
   import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
   import { getMessaging, getToken, isSupported as messagingIsSupported } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js";
 
+  window.__pushDebug?.('✓ Firebase SDK imports সফলভাবে লোড হয়েছে, module body শুরু হচ্ছে');
+
   const firebaseConfig = {
     apiKey: "AIzaSyBdtIlcoPFFqzkI6X9KOIH-f4QAyEfH4o8",
     authDomain: "golapishoponline.firebaseapp.com",
