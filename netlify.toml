@@ -43,10 +43,10 @@
 # ব্যবহার করে (GTM snippet, JSON-LD, theme-detection)। তাই script-src/style-src-এ
 # 'unsafe-inline' রাখা বাধ্যতামূলক — নইলে পুরো সাইটের বাটন/ইন্টারঅ্যাকশন ভেঙে যাবে।
 # এটা CSP-এর XSS-বিরোধী সর্বোচ্চ সুরক্ষা কিছুট কমায়, কিন্তু তারপরও কোন ডোমেইন থেকে
-# script/style/connection আসতে পারবে তা কড়াকডভাবে সীমাবদ্ধ রাখে (data exfiltration,
-# অননুমোদিত iframe embedding, অচেনা third-party script injection আটকায়)।
+# script/style/connection আসতে পারবে তা কডকড়িভাবে সীমাবদ্ধ রাখে (data exfiltration,
+# অননুমোদিত iframe embedding, অচেন third-party script injection আটকায়)।
 # ভবিষ্যতে সব onclick-কে addEventListener-এ রূপান্তর করলে 'unsafe-inline' সরিয়ে
-# আরও কড়া nonce-based CSP কর সম্ভব হবে।
+# আরও কড়া nonce-based CSP করা সম্ভব হবে।
 
 [[headers]]
   for = "/*"
@@ -71,6 +71,7 @@
   [headers.values]
     Content-Type = "application/manifest+json"
     Access-Control-Allow-Origin = "*"
+
 # ─── Fresh Deploy / Browser Cache Control ─────────────────────
 # HTML, scripts, styles, page fragments and service workers must always be
 # revalidated so customers receive the latest deployment without manual cache clear.
