@@ -34,7 +34,14 @@ const AuthUI = {
     const email=document.getElementById('loginEmail').value.trim();
     const pass=document.getElementById('loginPass').value;
     if(!email||!pass){ this.showMsg('ইমেইল ও পাসওয়ার্ড দিন','err'); return; }
-    if(!FB){ this.showMsg('সংযোগ সমস্যা','err'); return; }
+    // ⚠️ আগে FB রেডি না থাকলে সাথে সাথেই "সংযোগ সমস্যা" দেখিয়ে দিতো — পেজ খুলেই তাড়াতাড়ি
+    // লগইন করলে এটা ঘটতো, যদিও Firebase আসলে ১-২ সেকেন্ডের মধ্যেই রেডি হয়ে যেতো।
+    // এখন সাথে সাথে ব্যর্থ না হয়ে, সংক্ষিপ্ত সময় অপেক্ষা করে আবার চেষ্টা করে।
+    if(!FB){
+      this.showMsg('সংযোগ স্থাপন হচ্ছে, একটু অপেক্ষা করুন...','info');
+      for(let i=0; i<10 && !FB; i++){ await new Promise(r=>setTimeout(r,300)); }
+      if(!FB){ this.showMsg('সংযোগ সমস্যা — ইন্টারনেট চেক করে আবার চেষ্টা করুন','err'); return; }
+    }
     try{ await FB.signInWithEmailAndPassword(FB.auth,email,pass); this.showMsg('✓ লগইন সফল','ok'); setTimeout(()=>this.close(),700); }
     catch(e){ this.showMsg('লগইন ব্যর্থ: '+e.message,'err'); }
   },
