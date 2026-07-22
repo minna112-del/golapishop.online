@@ -13,7 +13,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
   import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
   import { getMessaging, getToken, isSupported as messagingIsSupported } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js";
 
-  window.__pushDebug?.('✓ Firebase SDK imports সফলভাবে লোড হয়েছে, module body শুরু হচ্ছে');
 
   const firebaseConfig = {
     apiKey: "AIzaSyBdtIlcoPFFqzkI6X9KOIH-f4QAyEfH4o8",
@@ -41,9 +40,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
       query, where, orderBy, limit, onSnapshot, serverTimestamp, increment, runTransaction,
       storageRef, uploadBytes, getDownloadURL
     };
-    window.__pushDebug?.('✓ Firebase initializeApp/getAuth/getFirestore সফল হয়েছে');
     window.dispatchEvent(new Event('firebase-ready'));
-    window.__pushDebug?.('✓ firebase-ready ইভেন্ট dispatch হয়েছে');
 
   /* ---------- FCM: customer push token capture ---------- */
   /* VAPID key — Firebase Console > Project Settings > Cloud Messaging > Web Push certificates */
@@ -74,10 +71,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
   
   // ===== DEBUG START (এখন console-এ না, সরাসরি স্ক্রিনে দেখাবে) =====
 window.addEventListener("firebase-ready", () => {
-  window.__pushDebug?.("✅ firebase-ready event পাওয়া গেছে");
 
   if (!window.__fb) {
-    window.__pushDebug?.("❌ window.__fb পাওয়া যায়নি");
     return;
   }
 
@@ -85,14 +80,11 @@ window.addEventListener("firebase-ready", () => {
 
   FB.getDocs(FB.collection(FB.db, "products"))
     .then((snap) => {
-      window.__pushDebug?.("✅ Firestore সংযোগ সফল — প্রোডাক্ট সংখ্যা: " + snap.size);
     })
     .catch((err) => {
-      window.__pushDebug?.("❌ Firestore Error — code: " + err.code + ", message: " + err.message);
     });
 });
 // ===== DEBUG END =====
   }catch(initErr){
-    window.__pushDebug?.('❌ FIREBASE INIT CATCH: ' + initErr.message);
     console.error('Firebase initialization failed:', initErr);
   }
