@@ -126,7 +126,7 @@ const Listing = {
     // "কোনো প্রোডাক্ট পাওয়া যায়নি" দেখাতো — বিভ্রান্তিকর, মনে হতো সত্যিই কোনো পণ্য নেই।
     // এখন লোড না হওয়া পর্যন্ত স্পষ্ট "লোড হচ্ছে" অবস্থা দেখানো হয়।
     if(!ProductStore.loaded){
-      const countEl=document.getElementById('listCount'); if(countEl) countEl.textContent = 'লোড হচ্ছে...';
+      const countEl=document.getElementById('listCount'); if(countEl) countEl.textContent = 'লোড হচ্ছে... (ধীর নেটওয়ার্কে একটু সময় লাগতে পারে)';
       if(grid) grid.innerHTML = skeletonCards(6);
       return;
     }
