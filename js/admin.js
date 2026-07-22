@@ -993,7 +993,7 @@ const OrderDetail = {
       odNidEl.onclick = order.customerNid ? function(){ this.textContent = this.textContent.includes('•') ? order.customerNid : maskNid(order.customerNid); } : null;
     }
     document.getElementById('odPayment').textContent = {cod:'💰 COD',bkash:'📱 bKash',nagad:'📱 Nagad'}[order.paymentMethod]||order.paymentMethod||'COD';
-    document.getElementById('odAddress').innerHTML = `<strong style="color:#fff">${order.village||''}</strong>${order.village?', ':''}<br>${AREA_LABELS[order.branchZone]||''} — ${order.address||''}`;
+    document.getElementById('odAddress').innerHTML = `<strong style="color:#fff">${esc(order.village)||''}</strong>${order.village?', ':''}<br>${esc(AREA_LABELS[order.branchZone])||''} — ${esc(order.address)||''}`;
     document.getElementById('odInstructions').textContent = '💬 ' + (order.instructions||'কোনো বিশেষ নির্দেশনা নেই');
     const itemsEl = document.getElementById('odItems');
     const items = order.items||[];

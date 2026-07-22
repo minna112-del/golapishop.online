@@ -23,22 +23,25 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
     measurementId: "G-EZX9JH30DB"
   };
 
-  const app = initializeApp(firebaseConfig);
-  analyticsIsSupported().then(ok => { if (ok) getAnalytics(app); }).catch(()=>{});
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-  const storage = getStorage(app);
+  try{
+    const app = initializeApp(firebaseConfig);
+    analyticsIsSupported().then(ok => { if (ok) getAnalytics(app); }).catch(()=>{});
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
 
-  window.__fb = {
-    auth, db, storage, GoogleAuthProvider,
-    onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword,
-    signOut, signInWithPopup, updateProfile,
-    signInWithPhoneNumber, RecaptchaVerifier,
-    collection, doc, setDoc, getDoc, getDocs, addDoc, updateDoc, deleteDoc,
-    query, where, orderBy, limit, onSnapshot, serverTimestamp, increment, runTransaction,
-    storageRef, uploadBytes, getDownloadURL
-  };
-  window.dispatchEvent(new Event('firebase-ready'));
+    window.__fb = {
+      auth, db, storage, GoogleAuthProvider,
+      onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword,
+      signOut, signInWithPopup, updateProfile,
+      signInWithPhoneNumber, RecaptchaVerifier,
+      collection, doc, setDoc, getDoc, getDocs, addDoc, updateDoc, deleteDoc,
+      query, where, orderBy, limit, onSnapshot, serverTimestamp, increment, runTransaction,
+      storageRef, uploadBytes, getDownloadURL
+    };
+    window.__pushDebug?.('✓ Firebase initializeApp/getAuth/getFirestore সফল হয়েছে');
+    window.dispatchEvent(new Event('firebase-ready'));
+    window.__pushDebug?.('✓ firebase-ready ইভেন্ট dispatch হয়েছে');
 
   /* ---------- FCM: customer push token capture ---------- */
   /* VAPID key — Firebase Console > Project Settings > Cloud Messaging > Web Push certificates */
@@ -67,12 +70,12 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
     if(user) registerPushToken(user.uid);
   });
   
-  // ===== DEBUG START =====
+  // ===== DEBUG START (এখন console-এ না, সরাসরি স্ক্রিনে দেখাবে) =====
 window.addEventListener("firebase-ready", () => {
-  console.log("✅ firebase-ready event");
+  window.__pushDebug?.("✅ firebase-ready event পাওয়া গেছে");
 
   if (!window.__fb) {
-    console.error("❌ window.__fb is missing");
+    window.__pushDebug?.("❌ window.__fb পাওয়া যায়নি");
     return;
   }
 
@@ -80,17 +83,14 @@ window.addEventListener("firebase-ready", () => {
 
   FB.getDocs(FB.collection(FB.db, "products"))
     .then((snap) => {
-      console.log("✅ Firestore Connected");
-      console.log("Products:", snap.size);
-
-      snap.forEach((doc) => {
-        console.log(doc.id, doc.data());
-      });
+      window.__pushDebug?.("✅ Firestore সংযোগ সফল — প্রোডাক্ট সংখ্যা: " + snap.size);
     })
     .catch((err) => {
-      console.error("❌ Firestore Error");
-      console.error("Code:", err.code);
-      console.error("Message:", err.message);
+      window.__pushDebug?.("❌ Firestore Error — code: " + err.code + ", message: " + err.message);
     });
 });
 // ===== DEBUG END =====
+  }catch(initErr){
+    window.__pushDebug?.('❌ FIREBASE INIT CATCH: ' + initErr.message);
+    console.error('Firebase initialization failed:', initErr);
+  }

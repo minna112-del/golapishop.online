@@ -12,8 +12,8 @@ const BazarMemo = {
     const orderNo = order.orderNumber || order.id || '—';
 
     const rows = priced
-      ? priced.map((it,i)=>`<tr><td class="idx">${i+1}</td><td>${it.text}</td><td class="amt">৳${(it.price||0).toLocaleString('bn-BD')}</td></tr>`).join('')
-      : items.map((it,i)=>`<tr><td class="idx">${i+1}</td><td colspan="2">${it}</td></tr>`).join('');
+      ? priced.map((it,i)=>`<tr><td class="idx">${i+1}</td><td>${esc(it.text)}</td><td class="amt">৳${(it.price||0).toLocaleString('bn-BD')}</td></tr>`).join('')
+      : items.map((it,i)=>`<tr><td class="idx">${i+1}</td><td colspan="2">${esc(it)}</td></tr>`).join('');
 
     const totalRow = priced
       ? `<tr class="total-row"><td colspan="2">মোট বিল</td><td class="amt">৳${(order.billAmount||0).toLocaleString('bn-BD')}</td></tr>`
@@ -62,16 +62,16 @@ const BazarMemo = {
       <span>তারিখ: <strong>${date}</strong></span>
     </div>
     <div class="cust">
-      <b>👤 ${order.customerName||'—'}</b> · ${order.customerPhone||''}<br>
-      📍 ${order.village?order.village+', ':''}${order.address||''}<br>
-      <span class="badge">${typeLabel}</span>
+      <b>👤 ${esc(order.customerName)||'—'}</b> · ${esc(order.customerPhone)||''}<br>
+      📍 ${order.village?esc(order.village)+', ':''}${esc(order.address)||''}<br>
+      <span class="badge">${esc(typeLabel)}</span>
     </div>
     <table>
       <thead><tr><td>#</td><td>আইটেম</td>${priced?'<td class="amt">দাম</td>':''}</tr></thead>
       <tbody>${rows}${totalRow}</tbody>
     </table>
-    ${order.notes?`<div class="notes"><b>বিশেষ নির্দেশনা:</b> ${order.notes}</div>`:''}
-    ${order.instructions?`<div class="notes"><b>ডেলিভারি নির্দেশনা:</b> ${order.instructions}</div>`:''}
+    ${order.notes?`<div class="notes"><b>বিশেষ নির্দেশনা:</b> ${esc(order.notes)}</div>`:''}
+    ${order.instructions?`<div class="notes"><b>ডেলিভারি নির্দেশনা:</b> ${esc(order.instructions)}</div>`:''}
     <div class="foot">
       অগ্রিম পরিশোধ: <b>৳${(order.advanceAmount||100).toLocaleString('bn-BD')}</b> (বিকাশ) · বাকি ক্যাশ অন ডেলিভারি<br>
       ধন্যবাদ, Golapi Shop Online-এ আস্থা রাখার জন্য 🌹
