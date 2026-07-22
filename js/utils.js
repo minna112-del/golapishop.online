@@ -94,7 +94,13 @@ const DELIVERY_ZONES = {
     { id:'begum_c', label:'Zone C — দূরবর্তী এলাকা',  radiusKm:12, fee:80 }
   ]
 };
+// ⚠️ আগে এটা সরাসরি "if(!FB) return;" (bare variable, যেটা app.js-এ পরে declare হয়) আর
+// সাথে সাথেই "loadLiveDeliveryZones();" কল হতো — তখন FB কোথাও declare-ই হয়নি, তাই
+// "Can't find variable: FB" ReferenceError হতো। এখন window.__fb ব্যবহার করা হচ্ছে
+// (যেটা সবসময় নিরাপদ, undefined হলেও error না দিয়ে falsy রিটার্ন করে) আর firebase-ready
+// event না আসা পর্যন্ত কলই করা হয় না।
 async function loadLiveDeliveryZones(){
+  const FB = window.__fb;
   if(!FB) return;
   try{
     const snap = await FB.getDoc(FB.doc(FB.db,'setting','delivery_zones'));
@@ -103,7 +109,8 @@ async function loadLiveDeliveryZones(){
     }
   }catch(e){ devWarn('delivery zones load failed', e.message); }
 }
-loadLiveDeliveryZones();
+if(window.__fb){ loadLiveDeliveryZones(); }
+else { window.addEventListener('firebase-ready', loadLiveDeliveryZones); }
 
 /* একটা GPS পয়েন্ট কোন zone-এ পড়ে সেটা বের করে — সবচেয়ে ছোট radius-এর zone প্রাধান্য পায়
    (যেমন Zone A ও Zone B দুটোর মধ্যেই পড়লে, বেশি নির্দিষ্ট/কাছের Zone A ধরা হয়) */
@@ -210,3 +217,26 @@ const ThemeToggle = {
   }
 };
 ThemeToggle.init();
+
+/* ═══════════════════════════════════════════════════════════
+   গ্লোবাল ইমেজ auto-retry — ধীর নেটওয়ার্কে (যেমন 2-3 KB/s) পেজ লোডের
+   সময় একসাথে অনেক request (সব পেজ+JS+CSS+ফন্ট+ছবি) পাঠানো হয়, ফলে কিছু
+   ছবির fetch ব্যর্থ/timeout হয়ে যায় — ব্রাউজার নিজে থেকে আর retry করে না,
+   ছবিটা স্থায়ীভাবে ভাঙা থেকে যায়। এটা যেকোনো ভাঙা <img> ধরে, বিরতি দিয়ে
+   সর্বোচ্চ ৩ বার আবার লোড করার চেষ্টা করে (network কম ব্যস্ত হওয়ার পর
+   দ্বিতীয়/তৃতীয় চেষ্টায় সাধারণত সফল হয়)।
+   ═══════════════════════════════════════════════════════════ */
+document.addEventListener('error', function(e){
+  const img = e.target;
+  if(!(img instanceof HTMLImageElement)) return;
+  if(img.dataset.retryCount === undefined) img.dataset.retryCount = '0';
+  const retries = parseInt(img.dataset.retryCount, 10);
+  if(retries >= 3) return; // ৩ বার চেষ্টার পরও ব্যর্থ হলে থেমে যাওয়া, infinite loop এড়াতে
+  img.dataset.retryCount = String(retries + 1);
+  const delay = 1500 * (retries + 1); // ১.৫সে, ৩সে, ৪.৫সে — ক্রমবর্ধমান বিরতি
+  setTimeout(()=>{
+    const originalSrc = img.src;
+    img.src = ''; // cache-বাস্টিং রিলোড ট্রিগার করতে
+    img.src = originalSrc + (originalSrc.includes('?') ? '&' : '?') + 'retry=' + Date.now();
+  }, delay);
+}, true); // capture phase-এ শোনা হয়, কারণ img-এর error ইভেন্ট bubble করে না
