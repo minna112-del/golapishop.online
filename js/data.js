@@ -97,21 +97,18 @@ const ProductStore = {
   },
 
   startLiveSync() {
-    window.__pushDebug?.('startLiveSync() কল হয়েছে, FB=' + (!!FB));
-    if (!FB || this.unsubscribe) { window.__pushDebug?.('থেমে গেছে: FB নেই'); return; }
+    if (!FB || this.unsubscribe) { return; }
 
     let delivered = false;
 
     const fallbackTimer = setTimeout(async () => {
       if (delivered) return;
-      window.__pushDebug?.('৫সে onSnapshot ডেটা দেয়নি, getDocs fallback চেষ্টা');
 
       devWarn(
         'onSnapshot timeout — falling back to getDocs()'
       );
 
       const ok = await this.refreshAndRerender();
-      window.__pushDebug?.('getDocs fallback: ok=' + ok + ', loaded=' + this.loaded + ', products=' + ALL_PRODUCTS.length);
 
       if (ok && this.loaded) {
         toast(
@@ -127,14 +124,12 @@ const ProductStore = {
     }, 5000);
 
     try {
-      window.__pushDebug?.('FB.onSnapshot() কল হচ্ছে');
       this.unsubscribe = FB.onSnapshot(
         FB.collection(FB.db, 'products'),
 
         snap => {
           delivered = true;
           clearTimeout(fallbackTimer);
-          window.__pushDebug?.('onSnapshot ডেটা দিয়েছে, docs=' + snap.size);
 
           const real = [];
 
@@ -171,7 +166,6 @@ const ProductStore = {
 
         error => {
           clearTimeout(fallbackTimer);
-          window.__pushDebug?.('onSnapshot ERROR: code=' + error.code + ', msg=' + error.message);
 
           devWarn(
             'live sync error',
