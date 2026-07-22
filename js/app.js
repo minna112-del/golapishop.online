@@ -130,3 +130,16 @@ function initApp(){
   checkCartAbandonment();
 }
 document.addEventListener('pages-ready',initApp);
+
+/* ⚠️ iOS/Android উভয় ব্রাউজারের back-forward cache (bfcache) — ব্যাক জেসচার/সোয়াইপ
+   করলে ব্রাউজার মাঝে মাঝে আগের "freeze" করা পেজ অবস্থা (স্ক্রিপ্ট আবার না চালিয়েই)
+   ফিরিয়ে আনে। যদি সেই freeze হওয়ার মুহূর্তে পেজ এখনো লোডিং/skeleton অবস্থায়
+   ছিল, bfcache থেকে ফিরে এসেও সেই একই আটকে থাকা অবস্থাই দেখা যায় — যদিও
+   আসল কোড ঠিকই আছে। এটা ধরে, দরকার হলে একবার fresh reload করানো হয়। */
+window.addEventListener('pageshow', (event) => {
+  if (event.persisted) {
+    if (typeof ProductStore !== 'undefined' && !ProductStore.loaded) {
+      window.location.reload();
+    }
+  }
+});
