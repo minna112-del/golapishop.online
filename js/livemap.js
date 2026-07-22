@@ -1,6 +1,28 @@
 /* livemap.js — Golapi Shop Online: এম্বেডেড লাইভ ম্যাপ, বাইক আইকন হেডিং অনুযায়ী ঘোরে */
 const LiveMap = {
   instances: {}, /* orderId -> {map, marker, unsub, lastPos} */
+  _leafletLoadPromise: null,
+
+  /* Leaflet CSS/JS প্রথমবার দরকার হলেই লোড করা হয় (lazy) — প্রতিটা পেজে আগে থেকে
+     লোড করে রাখলে সাধারণ browsing-এর গতি অকারণে কমে যেতো, যেহেতু বেশিরভাগ ভিজিটর
+     কখনো লাইভ ট্র্যাকিং ম্যাপ খোলেই না। */
+  _ensureLeaflet(){
+    if(window.L) return Promise.resolve();
+    if(this._leafletLoadPromise) return this._leafletLoadPromise;
+    this._leafletLoadPromise = new Promise((resolve, reject)=>{
+      const cssLink = document.createElement('link');
+      cssLink.rel = 'stylesheet';
+      cssLink.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+      document.head.appendChild(cssLink);
+
+      const script = document.createElement('script');
+      script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error('Leaflet লোড করা যায়নি'));
+      document.head.appendChild(script);
+    });
+    return this._leafletLoadPromise;
+  },
 
   bearing(lat1, lng1, lat2, lng2){
     const toRad = d => d * Math.PI/180;
@@ -19,8 +41,8 @@ const LiveMap = {
     });
   },
 
-  init(orderId, containerId, lat, lng){
-    if(!window.L) return;
+  async init(orderId, containerId, lat, lng){
+    try{ await this._ensureLeaflet(); }catch(e){ devWarn?.('Leaflet load failed', e.message); return; }
     const el = document.getElementById(containerId);
     if(!el) return;
     this.destroy(orderId);
