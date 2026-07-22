@@ -2,12 +2,10 @@ let FB = null;
 let firebaseStarted = false;
 
 function startFirebaseFeatures() {
-  window.__pushDebug?.('startFirebaseFeatures() কল, firebaseStarted=' + firebaseStarted + ', __fb=' + (!!window.__fb));
   if (firebaseStarted || !window.__fb) return;
 
   firebaseStarted = true;
   FB = window.__fb;
-  window.__pushDebug?.('FB সেট হয়েছে');
 
   /*
    * Auth-এর কোনো সমস্যা হলেও product loading বন্ধ হবে না।
@@ -16,7 +14,6 @@ function startFirebaseFeatures() {
     Auth.init();
   } catch (error) {
     console.error('Auth initialization failed:', error);
-    window.__pushDebug?.('Auth.init CATCH: ' + error.message);
   }
 
   /*
@@ -26,7 +23,6 @@ function startFirebaseFeatures() {
     ProductStore.startLiveSync();
   } catch (error) {
     console.error('Product sync initialization failed:', error);
-    window.__pushDebug?.('ProductStore.startLiveSync CATCH: ' + error.message);
   }
 }
 
