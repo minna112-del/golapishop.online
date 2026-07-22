@@ -7,14 +7,36 @@ function startFirebaseFeatures() {
   firebaseStarted = true;
   FB = window.__fb;
 
-  Auth.init();
-  ProductStore.startLiveSync();
+  /*
+   * Auth-এর কোনো সমস্যা হলেও product loading বন্ধ হবে না।
+   */
+  try {
+    Auth.init();
+  } catch (error) {
+    console.error('Auth initialization failed:', error);
+  }
+
+  /*
+   * Product sync আলাদাভাবে অবশ্যই শুরু হবে।
+   */
+  try {
+    ProductStore.startLiveSync();
+  } catch (error) {
+    console.error('Product sync initialization failed:', error);
+  }
 }
 
 window.addEventListener(
   'firebase-ready',
   startFirebaseFeatures
 );
+
+/*
+ * Firebase module আগে ready হয়ে গেলে সরাসরি শুরু করবে।
+ */
+if (window.__fb) {
+  startFirebaseFeatures();
+}
 
 if (window.__fb) {
   startFirebaseFeatures();
