@@ -1,5 +1,5 @@
 /* sw.js — Golapi Shop Offline Service Worker (network-first) */
-const CACHE = 'golapi-v8';
+const CACHE = 'golapi-v9';
 const OFFLINE_URL = '/offline.html';
 const ASSETS = [
   '/',

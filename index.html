@@ -1,6 +1,45 @@
 <!DOCTYPE html>
 <html lang="bn" class="scroll-smooth">
 <head>
+  <!-- ═══ DEBUG PANEL — সাময়িক, root cause ধরার পর মুছে ফেলা যাবে ═══ -->
+  <script>
+    window.__debugLog = [];
+    window.__pushDebug = function(msg){
+      window.__debugLog.push(msg);
+      window.__renderDebugPanel();
+    };
+    window.__renderDebugPanel = function(){
+      let panel = document.getElementById('__debugPanel');
+      if(!panel){
+        panel = document.createElement('div');
+        panel.id = '__debugPanel';
+        panel.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:999999;background:#000;color:#0f0;font-family:monospace;font-size:11px;padding:10px;max-height:50vh;overflow-y:auto;white-space:pre-wrap;word-break:break-all;border-bottom:3px solid #f0356b';
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = 'বন্ধ করুন X';
+        closeBtn.style.cssText = 'position:sticky;top:0;float:right;background:#f0356b;color:#fff;border:none;padding:6px 12px;border-radius:6px;font-size:12px;margin-bottom:8px';
+        closeBtn.onclick = () => panel.remove();
+        document.documentElement.appendChild(panel);
+        panel.appendChild(closeBtn);
+      }
+      const logDiv = document.createElement('div');
+      logDiv.textContent = new Date().toLocaleTimeString() + ' - ' + window.__debugLog[window.__debugLog.length-1];
+      panel.appendChild(logDiv);
+    };
+    window.addEventListener('error', function(e){
+      window.__pushDebug('JS ERROR: ' + e.message + ' (ফাইল: ' + (e.filename||'?').split('/').pop() + ', লাইন: ' + e.lineno + ')');
+    });
+    window.addEventListener('unhandledrejection', function(e){
+      window.__pushDebug('PROMISE ERROR: ' + (e.reason?.message || e.reason));
+    });
+    window.__pushDebug('পেজ লোড শুরু হয়েছে');
+    let __hbCount = 0;
+    const __hbTimer = setInterval(function(){
+      __hbCount++;
+      window.__pushDebug('হার্টবিট #' + __hbCount + ' - FB=' + (typeof FB!=='undefined' && !!FB) + ', __fb=' + (!!window.__fb) + ', loaded=' + (typeof ProductStore!=='undefined' && ProductStore.loaded) + ', ALL_PRODUCTS=' + (typeof ALL_PRODUCTS!=='undefined' ? ALL_PRODUCTS.length : 'undefined') + ', Router=' + (typeof Router!=='undefined' ? Router.current : 'undefined'));
+      if(__hbCount>=15) clearInterval(__hbTimer);
+    }, 2000);
+  </script>
+
   <!-- Google Tag Manager -->
   <script>
     (function(w, d, s, l, i) {
