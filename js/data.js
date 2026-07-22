@@ -101,27 +101,17 @@ const ProductStore = {
 
     let delivered = false;
 
+    // ⚠️ বাংলাদেশে অনেক কাস্টমারের নেটওয়ার্ক স্পিড খুবই কম (যেমন 2-3 KB/s,
+    // যদিও 4G দেখায়) — এমন নেটওয়ার্কে Firestore সংযোগ স্থাপন করতেই ৫-১০ সেকেন্ড
+    // লেগে যেতে পারে, যেটা কোনো bug না, স্বাভাবিক ধীরগতি। তাই প্রথমে দীর্ঘ সময়
+    // (১২ সেকেন্ড) অপেক্ষা করা হয়, আর fallback ব্যর্থ হলেও ৩ বার পর্যন্ত আবার
+    // চেষ্টা করা হয় (প্রতিবার একটু বেশি সময় দিয়ে) — একবার ব্যর্থ হলেই "সমস্যা
+    // হচ্ছে" বলে থেমে যাওয়া হয় না।
     const fallbackTimer = setTimeout(async () => {
       if (delivered) return;
-
-      devWarn(
-        'onSnapshot timeout — falling back to getDocs()'
-      );
-
-      const ok = await this.refreshAndRerender();
-
-      if (ok && this.loaded) {
-        toast(
-          '✓ পণ্য লোড হয়েছে',
-          'success'
-        );
-      } else {
-        toast(
-          '⚠ প্রোডাক্ট লোড হতে সমস্যা হচ্ছে',
-          'error'
-        );
-      }
-    }, 5000);
+      devWarn('onSnapshot timeout — falling back to getDocs() with retry');
+      await this.refreshWithRetry();
+    }, 12000);
 
     try {
       this.unsubscribe = FB.onSnapshot(
@@ -182,7 +172,7 @@ const ProductStore = {
             'error'
           );
 
-          this.refreshAndRerender();
+          this.refreshWithRetry();
         }
       );
     } catch (error) {
@@ -199,6 +189,25 @@ const ProductStore = {
         'error'
       );
     }
+  },
+
+  async refreshWithRetry() {
+    // ধীর নেটওয়ার্কে একবার getDocs() ব্যর্থ হলেই থেমে না গিয়ে,
+    // ক্রমবর্ধমান বিরতিতে (৩, ৬, ১২ সেকেন্ড) সর্বোচ্চ ৩ বার আবার চেষ্টা করা হয়।
+    const delays = [0, 3000, 6000, 12000];
+    for (let attempt = 0; attempt < delays.length; attempt++) {
+      if (attempt > 0) {
+        toast(`⏳ ইন্টারনেট সংযোগ ধীর মনে হচ্ছে, আবার চেষ্টা করা হচ্ছে (${attempt}/${delays.length - 1})...`, 'info');
+        await new Promise(r => setTimeout(r, delays[attempt]));
+      }
+      const ok = await this.refreshAndRerender();
+      if (ok && this.loaded && ALL_PRODUCTS.length > 0) {
+        if (attempt > 0) toast('✓ পণ্য লোড হয়েছে', 'success');
+        return;
+      }
+    }
+    // সব চেষ্টার পরও ব্যর্থ হলে — স্পষ্টভাবে জানানো, কিন্তু আশ্বস্ত করে
+    toast('⚠ ইন্টারনেট সংযোগ খুবই ধীর — একটু পর আবার পেজ খুলুন, অথবা ওয়াইফাই/ভালো নেটওয়ার্কে চেষ্টা করুন', 'error');
   },
 
   async refreshAndRerender() {
