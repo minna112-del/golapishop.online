@@ -967,10 +967,6 @@ html[data-theme="dark"] .home-benefit-icon{background:rgba(255,92,135,.1);color:
 }
 .home-hero-content{max-width:720px;margin:0}
 .home-hero-title{max-width:760px;text-wrap:balance}
-.home-hero-title span{
-  color:var(--rose);
-  text-shadow:0 10px 34px rgba(233,54,104,.12);
-}
 .home-hero-copy{max-width:650px}
 .home-hero-showcase{
   position:relative;
