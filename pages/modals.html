@@ -49,7 +49,7 @@
     <div class="field"><label>শাখা/জোন *</label>
       <div style="display:flex;gap:16px;margin-top:4px">
         <label class="filter-opt"><input type="checkbox" id="pfZoneSadar" checked> নোয়াখালী সদর</label>
-        <label class="filter-opt"><input type="checkbox" id="pfZoneBegumganj"> বেগমগঞ্জ</label>
+        <label class="filter-opt"><input type="checkbox" id="pfZoneBegumganj" checked> বেগমগঞ্জ</label>
       </div>
     </div>
 
@@ -127,14 +127,14 @@
       </select>
     </div>
 
-    <div class="field"><label>স্টক পরিমাণ *</label><input type="number" id="pfStock" min="0" value="0"></div>
+    <div class="field"><label>স্টক পরিমাণ *</label><input type="text" inputmode="numeric" id="pfStock" value="0" oninput="normalizeDigitInput(this)"></div>
 
     <div class="card-box" style="background:rgba(212,175,55,.04);border-color:var(--gold-line);margin-bottom:14px">
       <div style="font-size:12px;color:var(--gold);font-weight:600;margin-bottom:8px">💰 মূল্য হিসাব (স্বয়ংক্রিয়)</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="field" style="margin-bottom:8px"><label style="font-size:11.5px">কস্ট মূল্য (৳)</label><input type="number" id="pfCostPrice" min="0" oninput="ProductForm.recalc()"></div>
-        <div class="field" style="margin-bottom:8px"><label style="font-size:11.5px">অতিরিক্ত খরচ (৳)</label><input type="number" id="pfExtraCost" min="0" value="0" oninput="ProductForm.recalc()"></div>
-        <div class="field" style="margin-bottom:0;grid-column:1 / -1"><label style="font-size:11.5px">লাভ (%)</label><input type="number" id="pfProfitPercent" min="0" value="5" oninput="ProductForm.recalc()"></div>
+        <div class="field" style="margin-bottom:8px"><label style="font-size:11.5px">কস্ট মূল্য (৳)</label><input type="text" inputmode="decimal" id="pfCostPrice" oninput="normalizeDigitInput(this);ProductForm.recalc()"></div>
+        <div class="field" style="margin-bottom:8px"><label style="font-size:11.5px">অতিরিক্ত খরচ (৳)</label><input type="text" inputmode="decimal" id="pfExtraCost" value="0" oninput="normalizeDigitInput(this);ProductForm.recalc()"></div>
+        <div class="field" style="margin-bottom:0;grid-column:1 / -1"><label style="font-size:11.5px">লাভ (%)</label><input type="text" inputmode="decimal" id="pfProfitPercent" value="5" oninput="normalizeDigitInput(this);ProductForm.recalc()"></div>
       </div>
       <!-- ⚠️ আগে এখানে "ডেলিভারি খরচ (%)" ফিল্ড ছিল যেটা প্রোডাক্টের দামের হিসাবে
            যুক্ত হতো — কিন্তু ডেলিভারি চার্জ checkout-এ আলাদাভাবে ধরা হয়, তাই এটা
@@ -146,8 +146,8 @@
     </div>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <div class="field"><label>মূল মূল্য (৳) *</label><input type="number" id="pfPrice" min="0"></div>
-      <div class="field"><label>বিক্রয় মূল্য (৳) *</label><input type="number" id="pfSalePrice" min="0"></div>
+      <div class="field"><label>মূল মূল্য (৳) *</label><input type="text" inputmode="decimal" id="pfPrice" oninput="normalizeDigitInput(this)"></div>
+      <div class="field"><label>বিক্রয় মূল্য (৳) *</label><input type="text" inputmode="decimal" id="pfSalePrice" oninput="normalizeDigitInput(this)"></div>
     </div>
 
     <div class="field"><label>মেয়াদ উত্তীর্ণের তারিখ (ঐচ্ছিক — ঔষধ/খাবারের জন্য)</label><input type="date" id="pfExpiryDate"></div>
@@ -169,7 +169,7 @@
     <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px">
       <label class="filter-opt"><input type="checkbox" id="pfFlash"> ⚡ ফ্ল্যাশ সেল</label>
       <label class="filter-opt"><input type="checkbox" id="pfFeatured"> ★ ফিচার্ড</label>
-      <label class="filter-opt"><input type="checkbox" id="pfCod" checked> ✔ COD প্রোডাক্ট</label>
+      <label class="filter-opt"><input type="checkbox" id="pfCod"> ✔ COD প্রোডাক্ট</label>
     </div>
 
     <button class="btn btn-gold btn-block" id="pfSubmitBtn" onclick="ProductForm.submit()">প্রোডাক্ট সংরক্ষণ করুন</button>
@@ -223,8 +223,8 @@
     <h3 class="tiro" style="font-size:18px;margin-bottom:6px">🔒 Owner Dashboard</h3>
     <p style="color:var(--ink-muted);font-size:13px;margin-bottom:16px">ইমেইল ও পাসওয়ার্ড দিয়ে আনলক করুন</p>
     <div id="ownerGateMsg" class="form-msg"></div>
-    <input type="email" id="ownerEmail" placeholder="ইমেইল" autocomplete="username" style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--line-l);border-radius:11px;padding:13px;color:#fff;margin-bottom:10px;font-size:14px">
-    <input type="password" id="ownerPassword" placeholder="পাসওয়ার্ড" autocomplete="current-password" style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--line-l);border-radius:11px;padding:13px;color:#fff;margin-bottom:14px;font-size:14px">
+    <input type="email" id="ownerEmail" placeholder="ইমেইল" autocomplete="username" style="width:100%;background:color-mix(in srgb,var(--ink) 4%,transparent);border:1px solid var(--line-l);border-radius:11px;padding:13px;color:var(--ink);margin-bottom:10px;font-size:14px">
+    <input type="password" id="ownerPassword" placeholder="পাসওয়ার্ড" autocomplete="current-password" style="width:100%;background:color-mix(in srgb,var(--ink) 4%,transparent);border:1px solid var(--line-l);border-radius:11px;padding:13px;color:var(--ink);margin-bottom:14px;font-size:14px">
     <button class="btn btn-gold btn-block" onclick="OwnerAuth.unlock()">আনলক করুন</button>
   </div>
 </div>
@@ -232,12 +232,12 @@
 <div class="modal" id="chatOrderModal">
   <div class="modal-box" style="position:relative;padding:0;max-width:380px;display:flex;flex-direction:column;max-height:80vh">
     <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:linear-gradient(120deg,var(--pink),var(--pink-dark));border-radius:20px 20px 0 0">
-      <strong style="color:#fff;font-size:14px">💬 অর্ডার চ্যাট</strong>
-      <button onclick="OrderChat.close()" style="color:#fff;font-size:18px;background:none;border:none">✕</button>
+      <strong style="color:var(--ink);font-size:14px">💬 অর্ডার চ্যাট</strong>
+      <button onclick="OrderChat.close()" style="color:var(--ink);font-size:18px;background:none;border:none">✕</button>
     </div>
     <div id="chatOrderBody" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px;min-height:200px;max-height:340px"></div>
     <div style="display:flex;gap:8px;padding:12px 14px;border-top:1px solid var(--line)">
-      <input type="text" id="chatOrderInput" placeholder="মেসেজ লিখুন..." style="flex:1;background:rgba(255,255,255,.04);border:1px solid var(--line-l);border-radius:20px;padding:10px 15px;color:#fff;font-size:13px" onkeydown="if(event.key==='Enter')OrderChat.send()">
+      <input type="text" id="chatOrderInput" placeholder="মেসেজ লিখুন..." style="flex:1;background:color-mix(in srgb,var(--ink) 4%,transparent);border:1px solid var(--line-l);border-radius:20px;padding:10px 15px;color:var(--ink);font-size:13px" onkeydown="if(event.key==='Enter')OrderChat.send()">
       <button onclick="OrderChat.send()" style="width:38px;height:38px;border-radius:50%;background:var(--gold);color:var(--bg);border:none">➤</button>
     </div>
   </div>
@@ -274,7 +274,7 @@
     <button class="close" onclick="OrderDetail.close()" style="position:absolute;top:14px;right:14px">✕</button>
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;padding-right:30px">
       <div>
-        <h3 class="tiro" style="font-size:17px;color:#fff" id="odOrderNum"></h3>
+        <h3 class="tiro" style="font-size:17px;color:var(--ink)" id="odOrderNum"></h3>
         <div style="font-size:11.5px;color:var(--ink-muted);margin-top:2px" id="odDate"></div>
       </div>
       <span id="odStatus" class="status-pill"></span>
@@ -316,12 +316,12 @@
       <div id="odItems" style="margin-top:6px"></div>
       <div style="display:flex;justify-content:space-between;font-size:12.5px;color:var(--ink-soft);margin-top:8px"><span>সাবটোটাল</span><span id="odSubtotal"></span></div>
       <div style="display:flex;justify-content:space-between;font-size:12.5px;color:var(--ink-soft)"><span>ডেলিভারি চার্জ</span><span id="odShipping"></span></div>
-      <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:#fff;margin-top:6px;padding-top:6px;border-top:1px solid var(--line)"><span>মোট</span><span id="odTotal" style="color:var(--gold)"></span></div>
+      <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;color:var(--ink);margin-top:6px;padding-top:6px;border-top:1px solid var(--line)"><span>মোট</span><span id="odTotal" style="color:var(--gold)"></span></div>
     </div>
 
     <div class="card-box" style="margin-bottom:12px">
       <strong style="font-size:12.5px;color:var(--gold)"><span class="ic ic-pencil" style="width:13px;height:13px;vertical-align:-2px;margin-right:3px"></span>ইন্টারনাল নোট</strong>
-      <textarea id="odNoteInput" rows="2" style="margin-top:8px;width:100%;background:rgba(255,255,255,.04);border:1px solid var(--line-l);border-radius:8px;padding:8px;color:#fff;font-size:12.5px" placeholder="ইন্টারনাল নোট লিখুন..."></textarea>
+      <textarea id="odNoteInput" rows="2" style="margin-top:8px;width:100%;background:color-mix(in srgb,var(--ink) 4%,transparent);border:1px solid var(--line-l);border-radius:8px;padding:8px;color:var(--ink);font-size:12.5px" placeholder="ইন্টারনাল নোট লিখুন..."></textarea>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
         <span id="odNoteStatus" style="font-size:11px;color:var(--ink-muted)"></span>
         <button class="btn btn-outline" style="padding:5px 12px;font-size:11.5px" onclick="AdminDash.saveOrderNote(OrderDetail.current.id)">সেভ করুন</button>
