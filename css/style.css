@@ -463,6 +463,7 @@ html, body {
   section.sec { padding: 24px 14px !important; }
   .sec-head h2 { font-size: 19px !important; }
   .grid-row { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
+  #medGrid { grid-template-columns: 1fr !important; }
   .scroll-row .pcard { flex: 0 0 155px !important; }
   .hl-flex { flex-direction: column !important; gap: 12px !important; }
   .hl-icon { width: 56px !important; height: 56px !important; }
