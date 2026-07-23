@@ -1,5 +1,5 @@
 /* sw.js — Golapi Shop Offline Service Worker (network-first) */
-const CACHE = 'golapi-v35';
+const CACHE = 'golapi-v36';
 const OFFLINE_URL = '/offline.html';
 /* ⚠️ আগে এখানে admin/driver/zone-manager/checkout/account ইত্যাদি সব পেজ+JS
    pre-cache হতো — যদিও page-loader.js/router.js এগুলো lazy করে দিয়েছে, Service
@@ -95,6 +95,20 @@ async function trimCache(cacheName, maxEntries){
 self.addEventListener('fetch', event => {
   const { request } = event;
   if (request.method !== 'GET') return;
+
+  // ⚠️⚠️ CRITICAL FIX: আগে এখানে origin চেক ছিল না — তাই এই fetch handler
+  // same-origin static file-এর পাশাপাশি cross-origin request-ও (firestore.googleapis.com,
+  // gstatic.com ইত্যাদি) ধরে ফেলতো এবং নিচের ৮ সেকেন্ড timeout race-এর ভেতর ঢুকিয়ে দিতো।
+  // Firestore-এর onSnapshot (real-time listener) স্লো/সীমিত নেটওয়ার্কে WebChannel
+  // long-polling ব্যবহার করে — এটা একটা দীর্ঘস্থায়ী (৩০+ সেকেন্ড) খোলা connection,
+  // যেটা সার্ভার থেকে নতুন ডেটা আসার অপেক্ষায় থাকে। আমাদের ৮ সেকেন্ড timeout সেই
+  // connection-টাকেই "ব্যর্থ" ধরে বাতিল করে দিতো বারবার — ফলে নতুন প্রোডাক্ট
+  // যোগ করলে Firestore real-time আপডেট কাস্টমারের কাছে পৌঁছাতোই না (যদিও admin-এর
+  // নিজের one-time getDocs() লোড ঠিকই কাজ করতো, তাই admin panel-এ প্রোডাক্ট
+  // দেখা যেত কিন্তু কাস্টমারের সাইটে যেত না — ঠিক এই উপসর্গটাই রিপোর্ট হয়েছিল)।
+  // এখন cross-origin request একদমই intercept করা হয় না — সরাসরি ব্রাউজারের
+  // native নেটওয়ার্কিং-এ চলে যায়, কোনো cache/timeout logic প্রযোজ্য না।
+  if (new URL(request.url).origin !== self.location.origin) return;
 
   // ⚠️ আগে img retry-এর সময় যোগ করা "?retry=timestamp" প্যারামিটার সহ প্রতিটা
   // চেষ্টা আলাদা cache entry হিসেবে জমা হতো (কখনো মুছতো না)। এখন এই ধরনের
