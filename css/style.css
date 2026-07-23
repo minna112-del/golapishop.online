@@ -550,9 +550,13 @@ body {
 .leaflet-container{background:var(--bg2)!important;font-family:'Hind Siliguri',sans-serif!important}
 
 /* ---------- Savings Ribbon (আগে এখানে brand-seal লোগো ছিল, request অনুযায়ী সরিয়ে
-   "বাঁচলো ৳X" ribbon বসানো হলো — উপরে-ডানে, ফোল্ড-কর্নার স্টাইলে) ---------- */
+   "বাঁচলো ৳X" ribbon বসানো হলো — উপরে-ডানে, ফোল্ড-কর্নার স্টাইলে)
+   ⚠️ প্রোডাক্ট কার্ডে top-right কোণাতেই আগে থেকে উইশলিস্ট হার্ট বাটন (.wish) থাকে
+   (top:8px;right:8px), তাই ribbon-টা তার ঠিক নিচে বসানো হলো যাতে দুটো একে
+   অপরের উপর overlap না করে। PDP গ্যালারিতে ওভারলে হার্ট বাটন নেই, তাই সেখানে
+   ribbon সরাসরি উপরের কোণাতেই বসে। */
 .savings-ribbon{
-  position:absolute; top:10px; right:-6px; z-index:6;
+  position:absolute; top:44px; right:-6px; z-index:6;
   display:flex; flex-direction:column; align-items:center; line-height:1.15;
   background:linear-gradient(135deg,#ef4444,#b91c1c);
   color:#fff; font-weight:800; font-size:10.5px;
