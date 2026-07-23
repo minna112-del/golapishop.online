@@ -41,7 +41,7 @@
           </div>
           <div class="card-box" style="margin-bottom:16px">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-              <h3 style="font-size:14px;color:#fff">গত ৭ দিনের সেল</h3>
+              <h3 style="font-size:14px;color:var(--ink)">গত ৭ দিনের সেল</h3>
               <span id="aChart7Total" style="font-size:12px;color:var(--gold)"></span>
             </div>
             <div id="aRevenueChart" style="display:flex;align-items:flex-end;gap:6px;height:80px"></div>
@@ -49,7 +49,7 @@
           </div>
           <div class="card-box">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-              <h3 style="font-size:14px;color:#fff">সাম্প্রতিক অর্ডার</h3>
+              <h3 style="font-size:14px;color:var(--ink)">সাম্প্রতিক অর্ডার</h3>
               <a href="#" onclick="AdminDash.tab(null,'orders')" style="font-size:12px;color:var(--gold)">সব দেখুন →</a>
             </div>
             <div class="table-scroll">
@@ -63,8 +63,13 @@
         <div id="adminProductsPane" style="display:none">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
             <h2 class="tiro" style="font-size:19px">প্রোডাক্ট ম্যানেজমেন্ট</h2>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;width:100%;max-width:340px">
-              <input id="productSearch" type="text" placeholder="খুঁজুন..." oninput="AdminDash.filterProducts()" style="flex:1;min-width:120px;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid var(--line);color:#fff;font-size:13px">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;width:100%;max-width:480px">
+              <input id="productSearch" type="text" placeholder="খুঁজুন..." oninput="AdminDash.filterProducts()" style="flex:1;min-width:120px;padding:8px 12px;border-radius:10px;background:color-mix(in srgb,var(--ink) 4%,transparent);border:1px solid var(--line);color:var(--ink);font-size:13px">
+              <select id="productZoneFilter" onchange="AdminDash.filterProducts()" style="padding:8px 12px;border-radius:10px;background:color-mix(in srgb,var(--ink) 4%,transparent);border:1px solid var(--line);color:var(--ink);font-size:13px">
+                <option value="">সব শাখা</option>
+                <option value="noakhali_sadar">নোয়াখালী সদর</option>
+                <option value="begumganj">বেগমগঞ্জ</option>
+              </select>
               <button class="btn btn-gold" style="padding:9px 16px;font-size:13px;white-space:nowrap" onclick="ProductForm.openAdd()">+ নতুন প্রোডাক্ট</button>
             </div>
           </div>
@@ -85,7 +90,7 @@
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
             <h2 class="tiro" style="font-size:19px">অর্ডার ম্যানেজমেন্ট</h2>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <select id="orderStatusFilter" onchange="AdminDash.filterOrders()" style="padding:8px 12px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid var(--line);color:#fff;font-size:13px">
+              <select id="orderStatusFilter" onchange="AdminDash.filterOrders()" style="padding:8px 12px;border-radius:10px;background:color-mix(in srgb,var(--ink) 4%,transparent);border:1px solid var(--line);color:var(--ink);font-size:13px">
                 <option value="">সব স্ট্যাটাস</option>
                 <option value="pending">পেন্ডিং</option>
                 <option value="confirmed">কনফার্মড</option>
@@ -95,7 +100,7 @@
                 <option value="delivered">ডেলিভারড</option>
                 <option value="cancelled">বাতিল</option>
               </select>
-              <select id="orderZoneFilter" onchange="AdminDash.filterOrders()" style="padding:8px 12px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid var(--line);color:#fff;font-size:13px">
+              <select id="orderZoneFilter" onchange="AdminDash.filterOrders()" style="padding:8px 12px;border-radius:10px;background:color-mix(in srgb,var(--ink) 4%,transparent);border:1px solid var(--line);color:var(--ink);font-size:13px">
                 <option value="">সব শাখা</option>
                 <option value="noakhali_sadar">নোয়াখালী সদর</option>
                 <option value="begumganj">বেগমগঞ্জ</option>
@@ -104,7 +109,7 @@
           </div>
           <div id="bulkActionsBar" style="display:none;background:rgba(212,175,55,.08);border:1px solid var(--gold-line);border-radius:10px;padding:10px 14px;margin-bottom:12px;align-items:center;gap:12px;flex-wrap:wrap">
             <span id="bulkCount" style="font-size:13px;color:var(--gold);font-weight:600"></span>
-            <select id="bulkStatusSelect" style="padding:6px 10px;border-radius:8px;background:var(--bg2);border:1px solid var(--line);color:#fff;font-size:12.5px">
+            <select id="bulkStatusSelect" style="padding:6px 10px;border-radius:8px;background:var(--bg2);border:1px solid var(--line);color:var(--ink);font-size:12.5px">
               <option value="confirmed">কনফার্মড</option>
               <option value="packed">প্যাকড</option>
               <option value="delivered">ডেলিভারড</option>
@@ -127,10 +132,10 @@
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
             <h2 class="tiro" style="font-size:19px">অ্যানালিটিক্স</h2>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-              <input type="date" id="anDateFrom" onchange="AdminDash.renderAnalyticsWithDateRange()" style="padding:6px 10px;border-radius:9px;background:rgba(255,255,255,.04);border:1px solid var(--line);color:#fff;font-size:12px">
+              <input type="date" id="anDateFrom" onchange="AdminDash.renderAnalyticsWithDateRange()" style="padding:6px 10px;border-radius:9px;background:color-mix(in srgb,var(--ink) 4%,transparent);border:1px solid var(--line);color:var(--ink);font-size:12px">
               <span style="color:var(--ink-muted);font-size:12px">থেকে</span>
-              <input type="date" id="anDateTo" onchange="AdminDash.renderAnalyticsWithDateRange()" style="padding:6px 10px;border-radius:9px;background:rgba(255,255,255,.04);border:1px solid var(--line);color:#fff;font-size:12px">
-              <button onclick="document.getElementById('anDateFrom').value='';document.getElementById('anDateTo').value='';AdminDash.renderAnalytics(AdminDash._allOrders)" style="padding:6px 10px;border-radius:9px;background:rgba(255,255,255,.04);border:1px solid var(--line);color:var(--ink-muted);font-size:12px">রিসেট</button>
+              <input type="date" id="anDateTo" onchange="AdminDash.renderAnalyticsWithDateRange()" style="padding:6px 10px;border-radius:9px;background:color-mix(in srgb,var(--ink) 4%,transparent);border:1px solid var(--line);color:var(--ink);font-size:12px">
+              <button onclick="document.getElementById('anDateFrom').value='';document.getElementById('anDateTo').value='';AdminDash.renderAnalytics(AdminDash._allOrders)" style="padding:6px 10px;border-radius:9px;background:color-mix(in srgb,var(--ink) 4%,transparent);border:1px solid var(--line);color:var(--ink-muted);font-size:12px">রিসেট</button>
             </div>
           </div>
           <div id="anTrend" style="font-size:12.5px;color:var(--ink-muted);margin-bottom:12px"></div>
@@ -141,22 +146,22 @@
             <div class="stat-card"><div class="lbl">মোট</div><div class="val" id="anTotal">৳০</div></div>
           </div>
           <div class="card-box" style="margin-bottom:16px">
-            <h3 style="font-size:14px;color:#fff;margin-bottom:12px">💳 পেমেন্ট পদ্ধতি</h3>
+            <h3 style="font-size:14px;color:var(--ink);margin-bottom:12px">💳 পেমেন্ট পদ্ধতি</h3>
             <div id="paymentBreakdown"></div>
           </div>
           <div class="card-box" style="margin-bottom:16px">
-            <h3 style="font-size:14px;color:#fff;margin-bottom:12px">🏢 শাখাভিত্তিক সেল</h3>
+            <h3 style="font-size:14px;color:var(--ink);margin-bottom:12px">🏢 শাখাভিত্তিক সেল</h3>
             <div id="zoneBreakdown"></div>
           </div>
           <div class="card-box">
-            <h3 style="font-size:14px;color:#fff;margin-bottom:12px">🏆 সেরা বিক্রিত পণ্য</h3>
+            <h3 style="font-size:14px;color:var(--ink);margin-bottom:12px">🏆 সেরা বিক্রিত পণ্য</h3>
             <div id="topProducts"></div>
           </div>
         </div>
         <div id="adminCustomersPane" style="display:none">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
             <h2 class="tiro" style="font-size:19px">কাস্টমার ম্যানেজমেন্ট</h2>
-            <input id="customerSearch" type="text" placeholder="নাম বা ফোন খুঁজুন..." oninput="AdminDash.filterCustomers()" style="padding:8px 12px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid var(--line);color:#fff;font-size:13px;width:200px;max-width:100%">
+            <input id="customerSearch" type="text" placeholder="নাম বা ফোন খুঁজুন..." oninput="AdminDash.filterCustomers()" style="padding:8px 12px;border-radius:10px;background:color-mix(in srgb,var(--ink) 4%,transparent);border:1px solid var(--line);color:var(--ink);font-size:13px;width:200px;max-width:100%">
           </div>
           <div class="table-scroll admin-table-wrap">
             <table class="data-table admin-table">
@@ -192,32 +197,32 @@
         </div>
         <div id="adminSettingsPane" style="display:none">
           <div class="card-box" style="margin-bottom:16px">
-            <h3 style="font-size:14px;margin-bottom:4px;color:#fff">🖼️ পুরনো প্রোডাক্ট ছবি আপডেট</h3>
+            <h3 style="font-size:14px;margin-bottom:4px;color:var(--ink)">🖼️ পুরনো প্রোডাক্ট ছবি আপডেট</h3>
             <p style="font-size:11.5px;color:var(--ink-muted);margin-bottom:12px">নতুন প্রোডাক্টে ছবির ছোট সংস্করণ ও blur placeholder এখন স্বয়ংক্রিয়ভাবে তৈরি হয়। এই বাটনে চাপলে <b>আগে থেকে থাকা সব প্রোডাক্টের</b> ছবিও একই সুবিধা পাবে (ধীর নেটওয়ার্কে দ্রুত লোড হবে)। এতে কয়েক মিনিট লাগতে পারে প্রোডাক্ট সংখ্যা অনুযায়ী — পেজ বন্ধ করো না।</p>
             <button class="btn btn-outline btn-block" id="reprocessImagesBtn" onclick="AdminDash.reprocessAllProductImages()">সব পুরনো প্রোডাক্টের ছবি আপডেট করুন</button>
             <div id="reprocessProgress" style="margin-top:10px;font-size:12px;color:var(--ink-muted);display:none"></div>
           </div>
           <div class="card-box" style="margin-bottom:16px">
-            <h3 style="font-size:14px;margin-bottom:4px;color:#fff">🔎 SEO Sitemap</h3>
+            <h3 style="font-size:14px;margin-bottom:4px;color:var(--ink)">🔎 SEO Sitemap</h3>
             <p style="font-size:11.5px;color:var(--ink-muted);margin-bottom:12px">সব পাবলিক পেজ ও লাইভ প্রোডাক্টের URL সহ একটা sitemap.xml তৈরি করে দেবে। নিচে দেখানো টেক্সট পুরোটা কপি করে GitHub-এ <code>sitemap.xml</code> ফাইলে (রুট ফোল্ডারে) পেস্ট করে দাও — প্রতি সপ্তাহে বা নতুন অনেক প্রোডাক্ট যোগ করলে আবার জেনারেট করে আপডেট করে দিও।</p>
             <button class="btn btn-outline btn-block" style="margin-bottom:10px" onclick="AdminDash.generateSitemap()">Sitemap.xml তৈরি করুন</button>
             <textarea id="sitemapOutput" rows="8" readonly style="width:100%;font-family:monospace;font-size:10.5px;background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:10px;color:var(--ink-soft);display:none"></textarea>
             <button class="btn btn-gold btn-block" id="sitemapCopyBtn" style="display:none;margin-top:8px" onclick="AdminDash.copySitemap()">📋 পুরোটা কপি করুন</button>
           </div>
           <div class="card-box" style="margin-bottom:16px">
-            <h3 style="font-size:14px;margin-bottom:12px;color:#fff">🚴 ড্রাইভার ম্যানেজমেন্ট</h3>
+            <h3 style="font-size:14px;margin-bottom:12px;color:var(--ink)">🚴 ড্রাইভার ম্যানেজমেন্ট</h3>
             <div style="display:flex;justify-content:flex-end;margin-bottom:10px"><button class="btn btn-outline" style="padding:7px 14px;font-size:12.5px" onclick="DriverManage.openAdd()">+ নতুন ড্রাইভার</button></div>
             <div class="table-scroll"><table class="data-table"><thead><tr><th>নাম</th><th>শাখা</th><th>মোবাইল</th><th>স্ট্যাটাস</th></tr></thead><tbody id="driverManageTable"></tbody></table></div>
           </div>
           <div class="card-box" style="margin-bottom:16px">
-            <h3 style="font-size:14px;margin-bottom:12px;color:#fff">📊 ড্রাইভার পারফরম্যান্স</h3>
+            <h3 style="font-size:14px;margin-bottom:12px;color:var(--ink)">📊 ড্রাইভার পারফরম্যান্স</h3>
             <div class="table-scroll"><table class="data-table">
               <thead><tr><th>ড্রাইভার</th><th>মোট</th><th>ডেলিভারড</th><th>সাফল্যের হার</th><th>আয়</th></tr></thead>
               <tbody id="driverPerformanceTable"></tbody>
             </table></div>
           </div>
           <div class="card-box" style="margin-bottom:16px">
-            <h3 style="font-size:14px;margin-bottom:12px;color:#fff">🏪 স্টোর সেটিংস</h3>
+            <h3 style="font-size:14px;margin-bottom:12px;color:var(--ink)">🏪 স্টোর সেটিংস</h3>
             <div class="field"><label>ঘোষণা (Topbar-এ দেখাবে)</label><input type="text" id="ss_storeAnnouncement" placeholder="যেমন: ঈদ অফার চলছে!"></div>
             <div class="field"><label>স্টোর সময়</label><input type="text" id="ss_storeHours" placeholder="যেমন: সকাল ৮টা — রাত ১০টা"></div>
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
@@ -228,7 +233,7 @@
             <button class="btn btn-gold" onclick="AdminDash.saveStoreSettings()">সংরক্ষণ করুন</button>
           </div>
           <div class="card-box" style="margin-bottom:16px">
-            <h3 style="font-size:14px;margin-bottom:12px;color:#fff">🚚 ডেলিভারি প্রাইসিং</h3>
+            <h3 style="font-size:14px;margin-bottom:12px;color:var(--ink)">🚚 ডেলিভারি প্রাইসিং</h3>
             <p style="font-size:11.5px;color:var(--ink-muted);margin-bottom:12px">এখানে যা বদলাবে, সেভ করার সাথে সাথে পুরো সাইটে সরাসরি চালু হয়ে যাবে — কোনো ডিপ্লয় লাগবে না।</p>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
               <div class="field"><label>Base Charge — শুরুর চার্জ (৳)</label><input type="number" id="ds_baseFee" min="0"></div>
@@ -241,13 +246,13 @@
             <button class="btn btn-gold" onclick="AdminDash.saveDeliverySettings()">ডেলিভারি প্রাইসিং সংরক্ষণ করুন</button>
           </div>
           <div class="card-box" style="margin-bottom:16px">
-            <h3 style="font-size:14px;margin-bottom:4px;color:#fff">🗺️ ডেলিভারি জোন</h3>
+            <h3 style="font-size:14px;margin-bottom:4px;color:var(--ink)">🗺️ ডেলিভারি জোন</h3>
             <p style="font-size:11.5px;color:var(--ink-muted);margin-bottom:12px">শাখার কেন্দ্র থেকে বৃত্তাকার দূরত্ব ভিত্তিতে জোন — Zone A সবচেয়ে কাছের, Zone C সবচেয়ে দূরের। এই radius-এর বাইরে অর্ডার ব্লক হয়ে যাবে।</p>
             <div id="zoneEditorBox"></div>
             <button class="btn btn-gold" onclick="AdminDash.saveDeliveryZones()">জোন সংরক্ষণ করুন</button>
           </div>
           <div class="card-box">
-            <h3 style="font-size:14px;margin-bottom:12px;color:#fff">🏢 জোন ম্যানেজার পিন</h3>
+            <h3 style="font-size:14px;margin-bottom:12px;color:var(--ink)">🏢 জোন ম্যানেজার পিন</h3>
             <div class="field"><label>নোয়াখালী সদর — পিন</label><input type="text" id="zmPinSadar" placeholder="যেমন 1111"></div>
             <div class="field"><label>বেগমগঞ্জ — পিন</label><input type="text" id="zmPinBegumganj" placeholder="যেমন 2222"></div>
             <button class="btn btn-gold" onclick="AdminDash.saveZmPins()">পিন সংরক্ষণ করুন</button>
