@@ -91,13 +91,101 @@ const PaymentGateway = {
             <input id="trxIdInput" type="text" placeholder="যেমন: 8N7K4M2X" style="width:100%;padding:12px;background:rgba(255,255,255,0.05);border:1px solid var(--line);border-radius:10px;color:#fff;font-size:15px;font-family:Poppins" oninput="this.value=this.value.toUpperCase()">
           </div>
           <div style="display:flex;gap:8px">
-            <button class="btn btn-outline" style="flex:1" onclick="PaymentGateway.closeModal()">বাতিল</button>
+            <button class="btn btn-outline" style="flex:1" onclick="PaymentGateway.showCancelOptions('${orderId}','${method}',${amount},'${zone}')">বাতিল</button>
             <button class="btn" style="flex:1;background:${color};border:none;color:#fff" onclick="PaymentGateway.confirmPayment('${method}', '${orderId}', ${amount})">কনফার্ম ✅</button>
           </div>
         </div>
       </div>
     `;
     document.body.appendChild(overlay);
+  },
+
+  /* ⚠️ bug #1 fix: আগে "বাতিল" বাটনে চাপলে সরাসরি modal সরিয়ে দেওয়া হতো —
+     Firestore-এ order pending_submission অবস্থায় থেকেই যেতো, cart ইতিমধ্যে
+     খালি হয়ে গেছে, customer-এর কাছে মনে হতো order হারিয়ে গেছে। এখন "বাতিল"
+     চাপলে বাস্তব বিকল্প দেখানো হয়, কোনো অবস্থাতেই চুপচাপ orphan order রেখে
+     modal বন্ধ হয়ে যায় না। */
+  showCancelOptions(orderId, method, amount, zone){
+    const overlay = document.getElementById('paymentModalOverlay');
+    if(!overlay) return;
+    const box = overlay.querySelector('div');
+    if(!box) return;
+    box.innerHTML = `
+      <div style="padding:20px">
+        <div style="font-size:16px;font-weight:700;color:#fff;margin-bottom:6px">পেমেন্ট বাতিল করবেন?</div>
+        <p style="font-size:12.5px;color:var(--ink-muted);margin-bottom:16px">আপনার অর্ডারটি এখনো সংরক্ষিত আছে — হারিয়ে যায়নি। নিচের একটি অপশন বেছে নিন।</p>
+        <div style="display:grid;gap:8px">
+          <button class="btn btn-outline btn-block" onclick="PaymentGateway.reopenModal('${method}',${amount},'${orderId}','${zone}')">↩ পেমেন্ট মোডালে ফিরে যান</button>
+          <button class="btn btn-outline btn-block" onclick="PaymentGateway.payLater('${orderId}')">⏳ পরে পেমেন্ট করুন</button>
+          <button class="btn btn-outline btn-block" onclick="PaymentGateway.switchToCOD('${orderId}')">💵 Cash on Delivery-তে পরিবর্তন করুন</button>
+          <button class="btn btn-block" style="background:#dc2626;border:none;color:#fff" onclick="PaymentGateway.cancelOrder('${orderId}')">✕ অর্ডার সম্পূর্ণ বাতিল করুন</button>
+        </div>
+      </div>
+    `;
+  },
+
+  reopenModal(method, amount, orderId, zone){
+    this.showPaymentModal(method, amount, orderId, zone);
+  },
+
+  /* অর্ডার pending_submission অবস্থায় থেকে যাবে — কাস্টমার My Orders থেকে
+     পরে গিয়ে আবার পেমেন্ট সাবমিট করতে পারবেন। localStorage marker থেকে যাওয়ায়
+     পরের ভিজিটে recovery banner-ও দেখাবে। */
+  payLater(orderId){
+    this.closeModal();
+    toast('অর্ডার সংরক্ষিত আছে — "আমার অর্ডার" থেকে পরে পেমেন্ট সম্পন্ন করতে পারবেন', 'info');
+    Router.go('order-success');
+  },
+
+  async switchToCOD(orderId){
+    if(!FB) return;
+    try{
+      await FB.updateDoc(FB.doc(FB.db,'orders',orderId), { paymentMethod:'cod', paymentStatus:'cod' });
+      try{ localStorage.removeItem('golapi_pending_payment'); }catch(e){}
+      this.closeModal();
+      toast('✓ Cash on Delivery-তে পরিবর্তন হয়েছে — ডেলিভারির সময় মূল্য পরিশোধ করুন', 'success');
+      Router.go('order-success');
+    }catch(e){
+      toast('পরিবর্তন ব্যর্থ: ' + e.message, 'error');
+    }
+  },
+
+  async cancelOrder(orderId){
+    if(!FB) return;
+    try{
+      const snap = await FB.getDoc(FB.doc(FB.db,'orders',orderId));
+      if(!snap.exists()){ this.closeModal(); Router.go('home'); return; }
+      const order = snap.data();
+
+      // ওয়ালেট থেকে কাটা টাকা ফেরত
+      if(order.walletUsed>0 && order.userId){
+        await FB.updateDoc(FB.doc(FB.db,'users',order.userId), { walletBalance: FB.increment(order.walletUsed) }).catch(()=>{});
+      }
+      // কুপনের ব্যবহার-সংখ্যা ফেরত
+      if(order.couponCode){
+        try{
+          const csnap = await FB.getDocs(FB.query(FB.collection(FB.db,'coupons'), FB.where('code','==',order.couponCode)));
+          if(!csnap.empty) await FB.updateDoc(FB.doc(FB.db,'coupons',csnap.docs[0].id), { usedCount: FB.increment(-1) }).catch(()=>{});
+        }catch(e){}
+      }
+      // স্টক ফেরত (bug #2 fix-এর ট্রানজেকশনে যা কমানো হয়েছিল)
+      if(Array.isArray(order.items)){
+        for(const it of order.items){
+          await FB.updateDoc(FB.doc(FB.db,'products',it.productId), { stock: FB.increment(it.qty), sold: FB.increment(-it.qty) }).catch(()=>{});
+        }
+        // কার্টে পণ্যগুলো ফিরিয়ে দেওয়া, যাতে customer-এর মনে না হয় সব হারিয়ে গেছে
+        order.items.forEach(it=>{ Cart.items[it.productId] = (Cart.items[it.productId]||0) + it.qty; });
+        Cart.save();
+      }
+
+      await FB.updateDoc(FB.doc(FB.db,'orders',orderId), { status:'cancelled', paymentStatus:'cancelled', cancelledAt:FB.serverTimestamp() });
+      try{ localStorage.removeItem('golapi_pending_payment'); }catch(e){}
+      this.closeModal();
+      toast('✓ অর্ডার বাতিল হয়েছে, পণ্য আবার কার্টে ফিরিয়ে দেওয়া হয়েছে', 'success');
+      Router.go('cart');
+    }catch(e){
+      toast('বাতিল ব্যর্থ: ' + e.message, 'error');
+    }
   },
 
   closeModal() {
@@ -119,6 +207,7 @@ const PaymentGateway = {
           paymentTrxId: trxId,
           paymentVerifiedAt: null
         });
+        try{ localStorage.removeItem('golapi_pending_payment'); }catch(e){}
         this.closeModal();
         toast('✓ পেমেন্ট সাবমিট হয়েছে! যাচাই হলে অর্ডার কনফার্ম হবে', 'success');
         setTimeout(() => Router.go('order-success'), 1500);
