@@ -198,9 +198,15 @@
         <div id="adminSettingsPane" style="display:none">
           <div class="card-box" style="margin-bottom:16px">
             <h3 style="font-size:14px;margin-bottom:4px;color:var(--ink)">🖼️ পুরনো প্রোডাক্ট ছবি আপডেট</h3>
-            <p style="font-size:11.5px;color:var(--ink-muted);margin-bottom:12px">নতুন প্রোডাক্টে ছবির ছোট সংস্করণ ও blur placeholder এখন স্বয়ংক্রিয়ভাবে তৈরি হয়। এই বাটনে চাপলে <b>আগে থেকে থাকা সব প্রোডাক্টের</b> ছবিও একই সুবিধা পাবে (ধীর নেটওয়ার্কে দ্রুত লোড হবে)। এতে কয়েক মিনিট লাগতে পারে প্রোডাক্ট সংখ্যা অনুযায়ী — পেজ বন্ধ করো না।</p>
+            <p style="font-size:11.5px;color:var(--ink-muted);margin-bottom:12px">নতুন প্রোডাক্টে ছবির ছোট সংস্করণ ও ঝাপসা প্রিভিউ এখন স্বয়ংক্রিয়ভাবে তৈরি হয়। এই বাটনে চাপলে <b>আগে থেকে থাকা সব প্রোডাক্টের</b> ছবিও একই সুবিধা পাবে (ধীর নেটওয়ার্কে দ্রুত লোড হবে)। এতে কয়েক মিনিট লাগতে পারে প্রোডাক্ট সংখ্যা অনুযায়ী — পেজ বন্ধ করো না।</p>
             <button class="btn btn-outline btn-block" id="reprocessImagesBtn" onclick="AdminDash.reprocessAllProductImages()">সব পুরনো প্রোডাক্টের ছবি আপডেট করুন</button>
             <div id="reprocessProgress" style="margin-top:10px;font-size:12px;color:var(--ink-muted);display:none"></div>
+          </div>
+          <div class="card-box" style="margin-bottom:16px">
+            <h3 style="font-size:14px;margin-bottom:4px;color:var(--ink)">📝 খালি বিবরণ পূরণ করুন</h3>
+            <p style="font-size:11.5px;color:var(--ink-muted);margin-bottom:12px">যেসব প্রোডাক্টে এখনো কোনো বিবরণ লেখা হয়নি, সেগুলোর নাম ও ক্যাটাগরি দেখে AI স্বয়ংক্রিয়ভাবে একটা সংক্ষিপ্ত বিবরণ লিখে সেভ করে দেবে। যেসব প্রোডাক্টে ইতিমধ্যে বিবরণ আছে সেগুলো বদলাবে না। প্রোডাক্ট সংখ্যা অনুযায়ী কয়েক মিনিট লাগতে পারে — পেজ বন্ধ করো না।</p>
+            <button class="btn btn-outline btn-block" id="fillDescBtn" onclick="AdminDash.fillMissingDescriptions()">খালি বিবরণগুলো পূরণ করুন</button>
+            <div id="fillDescProgress" style="margin-top:10px;font-size:12px;color:var(--ink-muted);display:none"></div>
           </div>
           <div class="card-box" style="margin-bottom:16px">
             <h3 style="font-size:14px;margin-bottom:4px;color:var(--ink)">🔎 SEO Sitemap</h3>

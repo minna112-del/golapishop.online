@@ -58,8 +58,8 @@
           </div>
           <div class="checkout-payment-list" role="radiogroup" aria-label="পেমেন্ট পদ্ধতি">
             <button type="button" class="radio-card selected" onclick="Checkout.selectPay(this,'cod')" role="radio" aria-checked="true"><input type="radio" name="ckpay" checked tabindex="-1"><span class="payment-mark">৳</span><span><strong>ক্যাশ অন ডেলিভারি</strong><small>পণ্য গ্রহণের সময় মূল্য পরিশোধ করুন</small></span><span class="payment-check">✓</span></button>
-            <button type="button" class="radio-card" onclick="Checkout.selectPay(this,'bkash')" role="radio" aria-checked="false"><input type="radio" name="ckpay" tabindex="-1"><span class="payment-mark">b</span><span><strong>bKash</strong><small>শাখার নম্বরে Send Money করুন</small></span><span class="payment-check">✓</span></button>
-            <button type="button" class="radio-card" onclick="Checkout.selectPay(this,'nagad')" role="radio" aria-checked="false"><input type="radio" name="ckpay" tabindex="-1"><span class="payment-mark">N</span><span><strong>Nagad</strong><small>শাখার নম্বরে Send Money করুন</small></span><span class="payment-check">✓</span></button>
+            <button type="button" class="radio-card" onclick="Checkout.selectPay(this,'bkash')" role="radio" aria-checked="false"><input type="radio" name="ckpay" tabindex="-1"><span class="payment-mark">b</span><span><strong>bKash</strong><small>শাখার নম্বরে টাকা পাঠান</small></span><span class="payment-check">✓</span></button>
+            <button type="button" class="radio-card" onclick="Checkout.selectPay(this,'nagad')" role="radio" aria-checked="false"><input type="radio" name="ckpay" tabindex="-1"><span class="payment-mark">N</span><span><strong>Nagad</strong><small>শাখার নম্বরে টাকা পাঠান</small></span><span class="payment-check">✓</span></button>
           </div>
           <div id="ckPayInfo" class="checkout-pay-info" hidden></div>
           <div class="checkout-actions"><button type="button" class="btn btn-outline" onclick="Checkout.goStep(1)">← পেছনে</button><button type="button" class="btn btn-gold" onclick="Checkout.goStep(3)">রিভিউ করুন →</button></div>

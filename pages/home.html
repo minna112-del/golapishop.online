@@ -3,6 +3,17 @@
     <div class="home-hero-glow home-hero-glow-one" aria-hidden="true"></div>
     <div class="home-hero-glow home-hero-glow-two" aria-hidden="true"></div>
 
+    <!-- ⚠️ আগে হিরো সেকশনের ব্যাকগ্রাউন্ড ছিল শুধু flat gradient — কাস্টমার ছবি
+         দেখেই বুঝতে পারতো না এটা কিসের সাইট। এখন সাইটে যা যা পাওয়া যায়
+         (মুদি বাজার, ওষুধ, গ্যাস সিলিন্ডার, ডেলিভারি) — তার আইকন হালকা/faded
+         আকারে decoration হিসেবে বসানো হলো, প্রকৃত লোগো/টেক্সটের দৃষ্টি না কেড়ে। -->
+    <div class="home-hero-deco" aria-hidden="true">
+      <span class="ic ic-cart home-hero-deco-icon deco-1"></span>
+      <span class="ic ic-pill home-hero-deco-icon deco-2"></span>
+      <span class="ic ic-flame home-hero-deco-icon deco-3"></span>
+      <span class="ic ic-truck home-hero-deco-icon deco-4"></span>
+    </div>
+
     <div class="home-hero-shell">
       <div class="home-hero-content">
         <div class="home-eyebrow">
@@ -26,7 +37,7 @@
             onclick="Router.go('listing',{cat:'all'})"
           >
             <span class="ic ic-cart" aria-hidden="true"></span>
-            এখনই বাজার শুরু করুন
+            আমাদের পণ্যগুলো দেখতে চাইলে এখানে ক্লিক করুন
           </button>
 
           <button
@@ -35,7 +46,7 @@
             onclick="Router.go('custom-bazar')"
           >
             <span class="ic ic-pencil" aria-hidden="true"></span>
-            নিজের লিস্ট পাঠান
+            আপনার বাজারের লিস্ট লিখে দিন
           </button>
         </div>
 
@@ -78,7 +89,7 @@
 
         <div class="home-showcase-assurance">
           <span class="ic ic-cash" aria-hidden="true"></span>
-          <span><strong>Cash on Delivery</strong><small>সাধারণ অর্ডারে পণ্য বুঝে মূল্য দিন</small></span>
+          <span><strong>ক্যাশ অন ডেলিভারি</strong><small>সাধারণ অর্ডারে পণ্য বুঝে মূল্য দিন</small></span>
         </div>
       </aside>
     </div>
@@ -87,7 +98,7 @@
     <div class="home-trust-point">
       <span class="ic ic-cash" aria-hidden="true"></span>
       <div>
-        <strong>Cash on Delivery</strong>
+        <strong>ক্যাশ অন ডেলিভারি</strong>
         <small>সাধারণ অর্ডারে পণ্য পেয়ে মূল্য দিন</small>
       </div>
     </div>
@@ -299,7 +310,7 @@
         </span>
         <span>
           <strong>আপনার এলাকা যাচাই করুন</strong>
-          <small>অর্ডারের আগে delivery coverage দেখুন</small>
+          <small>অর্ডারের আগে ডেলিভারি এলাকা দেখুন</small>
         </span>
         <span class="ic ic-arrow-r" aria-hidden="true"></span>
       </button>
@@ -325,7 +336,7 @@
           <span class="ic ic-cash" aria-hidden="true"></span>
         </div>
         <h3>পেমেন্টের নিয়ম আগে থেকেই দৃশ্যমান</h3>
-        <p>Cash, bKash ও Nagad সমর্থিত। আপনার অর্ডারে অগ্রিম বা delivery charge প্রযোজ্য হলে checkout ও confirmation-এর সময় জানানো হবে।</p>
+        <p>ক্যাশ, বিকাশ ও নগদ সমর্থিত। আপনার অর্ডারে অগ্রিম বা ডেলিভারি চার্জ প্রযোজ্য হলে চেকআউট ও নিশ্চিতকরণের সময় জানানো হবে।</p>
         <button type="button" class="home-trust-link" onclick="Router.go('terms')">
           শর্তগুলো দেখুন
           <span class="ic ic-arrow-r" aria-hidden="true"></span>
@@ -338,7 +349,7 @@
           <span class="ic ic-package" aria-hidden="true"></span>
         </div>
         <h3>অর্ডারের অগ্রগতি দেখার ব্যবস্থা</h3>
-        <p>অর্ডার জমা দেওয়ার পর My Orders থেকে বর্তমান status দেখা যায়। প্রয়োজনে একই জায়গা থেকে অর্ডারের বিস্তারিতও খোলা যাবে।</p>
+        <p>অর্ডার জমা দেওয়ার পর "আমার অর্ডার" থেকে বর্তমান অবস্থা দেখা যায়। প্রয়োজনে একই জায়গা থেকে অর্ডারের বিস্তারিতও খোলা যাবে।</p>
         <button type="button" class="home-trust-link" onclick="Router.go('myorders')">
           আমার অর্ডার দেখুন
           <span class="ic ic-arrow-r" aria-hidden="true"></span>
@@ -351,7 +362,7 @@
           <span class="ic ic-shield" aria-hidden="true"></span>
         </div>
         <h3>কৃত্রিম সামাজিক প্রমাণ নয়</h3>
-        <p>ভুয়া review, অবাস্তব counter বা অযাচাইকৃত “সেরা” দাবি দেখানো হয় না। আমাদের টিম, সেবা এলাকা ও নিয়মগুলো খোলাখুলি দেখা যাবে।</p>
+        <p>ভুয়া রিভিউ, অবাস্তব সংখ্যা বা অযাচাইকৃত “সেরা” দাবি দেখানো হয় না। আমাদের টিম, সেবা এলাকা ও নিয়মগুলো খোলাখুলি দেখা যাবে।</p>
         <button type="button" class="home-trust-link" onclick="Router.go('about-app')">
           টিম পরিচিতি দেখুন
           <span class="ic ic-arrow-r" aria-hidden="true"></span>
@@ -361,7 +372,7 @@
 
     <div class="home-trust-note" role="note">
       <span class="ic ic-check" aria-hidden="true"></span>
-      <p><strong>আপনার নিয়ন্ত্রণে:</strong> অর্ডার confirm করার আগে পণ্য, ঠিকানা, payment option এবং প্রযোজ্য charge পুনরায় দেখে নিন। কোনো তথ্য অস্পষ্ট হলে হটলাইনে যোগাযোগ করুন।</p>
+      <p> অর্ডার নিশ্চিত করার আগে পণ্য, ঠিকানা, পেমেন্ট পদ্ধতি এবং প্রযোজ্য চার্জ পুনরায় দেখে নিন। কোনো তথ্য অস্পষ্ট হলে হটলাইনে যোগাযোগ করুন।</p>
     </div>
   </section>
 
@@ -518,7 +529,7 @@
           <span class="home-service-label">স্থানীয় ডেলিভারি</span>
         </div>
         <h3>গ্যাস সিলিন্ডার</h3>
-        <p>উপলভ্য brand ও cylinder option দেখে অর্ডার করুন। প্রযোজ্য delivery zone ও charge নিশ্চিতকরণের সময় জানানো হবে।</p>
+        <p>উপলভ্য ব্র্যান্ড ও সিলিন্ডার অপশন দেখে অর্ডার করুন। প্রযোজ্য ডেলিভারি জোন ও চার্জ নিশ্চিতকরণের সময় জানানো হবে।</p>
         <button type="button" class="home-service-action" onclick="Router.go('listing',{cat:'gas'})">
           গ্যাসের অপশন দেখুন
           <span class="ic ic-arrow-r" aria-hidden="true"></span>
@@ -528,10 +539,10 @@
       <article class="home-service-card home-service-health">
         <div class="home-service-topline">
           <span class="home-service-icon home-service-logo"><img src="icons/dr_logo.webp" alt="" loading="lazy"></span>
-          <span class="home-service-label">Appointment সহায়তা</span>
+          <span class="home-service-label">অ্যাপয়েন্টমেন্ট সহায়তা</span>
         </div>
         <h3>গোলাপি স্বাস্থ্য সেবা</h3>
-        <p>তালিকাভুক্ত চিকিৎসকদের বিশেষত্ব, সময়সূচি ও যোগাযোগ দেখুন। Golapi Shop চিকিৎসা পরামর্শ নয়, serial booking-এ সহায়তা করে।</p>
+        <p>তালিকাভুক্ত চিকিৎসকদের বিশেষত্ব, সময়সূচি ও যোগাযোগ দেখুন। Golapi Shop চিকিৎসা পরামর্শ দেয় না, সিরিয়াল বুকিং-এ সহায়তা করে।</p>
         <button type="button" class="home-service-action" onclick="Router.go('medical')">
           চিকিৎসকদের তালিকা দেখুন
           <span class="ic ic-arrow-r" aria-hidden="true"></span>
@@ -541,7 +552,7 @@
 
     <div class="home-services-note" role="note">
       <span class="ic ic-info" aria-hidden="true"></span>
-      <p><strong>সেবা ব্যবহারের আগে:</strong> পণ্যের stock, delivery coverage, payment rule, verification fee এবং চিকিৎসকের সময়সূচি সংশ্লিষ্ট page-এ দেখে নিন। প্রয়োজন হলে hotline-এ নিশ্চিত করুন।</p>
+      <p> পণ্যের স্টক, ডেলিভারি এলাকা, পেমেন্ট নিয়ম, ভেরিফিকেশন ফি এবং চিকিৎসকের সময়সূচি সংশ্লিষ্ট পেজে দেখে নিন। প্রয়োজন হলে হটলাইনে নিশ্চিত করুন।</p>
     </div>
   </section>
 

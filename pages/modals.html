@@ -2,7 +2,7 @@
   <div class="modal-box" style="position:relative">
     <button class="close" onclick="AuthUI.close()">✕</button>
     <div style="display:flex;border-bottom:1px solid var(--line);margin-bottom:20px">
-      <button id="tabPhone" class="active" onclick="AuthUI.switchTab('phone')" style="flex:1;padding:11px;font-weight:600;color:var(--gold);border-bottom:2px solid var(--gold);font-size:12.5px">📱 ফোন OTP</button>
+      <button id="tabPhone" class="active" onclick="AuthUI.switchTab('phone')" style="flex:1;padding:11px;font-weight:600;color:var(--gold);border-bottom:2px solid var(--gold);font-size:12.5px">📱 ফোন ওটিপি</button>
       <button id="tabLogin" onclick="AuthUI.switchTab('login')" style="flex:1;padding:11px;font-weight:600;color:var(--ink-muted);font-size:12.5px">ইমেইল লগইন</button>
       <button id="tabRegister" onclick="AuthUI.switchTab('register')" style="flex:1;padding:11px;font-weight:600;color:var(--ink-muted);font-size:12.5px">রেজিস্ট্রেশন</button>
     </div>
@@ -11,11 +11,11 @@
     <form id="phoneForm" onsubmit="event.preventDefault();">
       <div id="phoneStep1">
         <div class="field"><label>মোবাইল নম্বর *</label><input type="tel" id="phoneNumber" placeholder="01XXXXXXXXX"></div>
-        <button type="button" class="btn btn-gold btn-block" onclick="PhoneAuth.sendOtp()" id="sendOtpBtn">📲 OTP পাঠান</button>
+        <button type="button" class="btn btn-gold btn-block" onclick="PhoneAuth.sendOtp()" id="sendOtpBtn">📲 ওটিপি পাঠান</button>
       </div>
       <div id="phoneStep2" style="display:none">
-        <p style="font-size:12.5px;color:var(--ink-muted);margin-bottom:12px">📩 <span id="otpSentTo"></span> নম্বরে OTP পাঠানো হয়েছে</p>
-        <div class="field"><label>৬ সংখ্যার OTP কোড *</label><input type="text" id="otpCode" inputmode="numeric" maxlength="6" placeholder="000000" style="letter-spacing:6px;font-size:20px;text-align:center"></div>
+        <p style="font-size:12.5px;color:var(--ink-muted);margin-bottom:12px">📩 <span id="otpSentTo"></span> নম্বরে ওটিপি পাঠানো হয়েছে</p>
+        <div class="field"><label>৬ সংখ্যার ওটিপি কোড *</label><input type="text" id="otpCode" inputmode="numeric" maxlength="6" placeholder="000000" style="letter-spacing:6px;font-size:20px;text-align:center"></div>
         <button type="button" class="btn btn-gold btn-block" onclick="PhoneAuth.verifyOtp()">✓ ভেরিফাই করুন</button>
         <button type="button" onclick="PhoneAuth.resetPhoneStep()" style="width:100%;text-align:center;margin-top:10px;font-size:12px;color:var(--ink-muted)">← অন্য নম্বর দিন</button>
       </div>
@@ -92,7 +92,7 @@
       </select>
     </div>
 
-    <div class="field"><label>একক (unit) *</label>
+    <div class="field"><label>একক *</label>
       <select id="pfUnit">
         <option value="পিস">পিস</option>
         <option value="কেজি">কেজি</option>
