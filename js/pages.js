@@ -34,7 +34,26 @@ const Home = {
     }else{
       const available = zp.filter(p=>Number(p.stock)>0);
       const special = available.filter(p=>p.isFlash);
-      const popular = available.filter(p=>Number(p.sold)>0).sort((a,b)=>Number(b.sold)-Number(a.sold)).slice(0,10);
+      const popularCandidates = available.filter(p=>Number(p.sold)>0).sort((a,b)=>Number(b.sold)-Number(a.sold));
+      // ⚠️ আগে ১টা মাত্র বিক্রি হওয়া পণ্যকেও "জনপ্রিয় পণ্য"/"গ্রাহকের পছন্দ" বলে
+      // দেখানো হতো — বাস্তব বিক্রির তথ্য যথেষ্ট না থাকলে এই দাবিটা fabricated/
+      // বিভ্রান্তিকর মনে হতে পারে। এখন অন্তত ৩টা পণ্যের প্রতিটাতে অন্তত ৩টা করে
+      // বিক্রি না হলে "জনপ্রিয়" দাবি না করে, নিরাপদ "নতুন যোগ হয়েছে" framing-এ
+      // পড়ে যায় (নতুন পণ্য দেখিয়ে)।
+      const hasEnoughSalesData = popularCandidates.filter(p=>Number(p.sold)>=3).length >= 3;
+      const popular = hasEnoughSalesData
+        ? popularCandidates.slice(0,10)
+        : available.slice().sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0)).slice(0,10);
+      const popularKickerEl = document.getElementById('popularProductsKicker');
+      const popularTitleEl = document.getElementById('popularProductsTitle');
+      const popularDescEl = document.getElementById('popularProductsDesc');
+      if(popularKickerEl) popularKickerEl.textContent = hasEnoughSalesData ? 'গ্রাহকের পছন্দ' : 'সদ্য যোগ হয়েছে';
+      if(popularTitleEl) popularTitleEl.innerHTML = hasEnoughSalesData
+        ? '<span class="ic ic-star" aria-hidden="true"></span>জনপ্রিয় পণ্য'
+        : '<span class="ic ic-sparkle" aria-hidden="true"></span>নতুন যোগ হয়েছে';
+      if(popularDescEl) popularDescEl.textContent = hasEnoughSalesData
+        ? 'বাস্তব বিক্রির তথ্য অনুযায়ী বেশি অর্ডার হওয়া পণ্য।'
+        : 'সম্প্রতি যোগ হওয়া পণ্য দেখুন।';
       const prioritisedIds = new Set([...special,...popular].map(p=>p.id));
       // ⚠️ আগে এলোমেলোভাবে (ডেটাবেজে যেভাবে ছিল সেভাবেই) দেখাতো — মুদি-চা-গ্যাস-ন্যাপকিন
       // মিশে যেতো। এখন CATEGORIES তালিকার ক্রম অনুযায়ী গ্রুপ করে দেখানো হয় (সব মুদি
@@ -83,24 +102,6 @@ const Medical = {
   }
 };
 
-function getAIAdvice(){
-  const s = (document.getElementById('aiSymptom')?.value||'').trim().toLowerCase();
-  if(!s){ toast('লক্ষণ লিখুন','error'); return; }
-  const box = document.getElementById('aiResultBox');
-  if(!box) return;
-  box.style.display='block'; box.textContent='বিশ্লেষণ চলছে...';
-  setTimeout(()=>{
-    let advice = 'আপনার লক্ষণের ভিত্তিতে প্রাথমিক পরামর্শ:<br><br>';
-    if(s.includes('জ্বর')) advice += '• প্রচুর তরল পান করুন<br>• প্যারাসিটামল ৫০০মিগ্রা ১ ক্যাপসুল পরপর খেতে পারেন<br>';
-    if(s.includes('মাথা')) advice += '• বিশ্রাম নিন, কম আলোতে থাকুন<br>';
-    if(s.includes('কাশি')||s.includes('সর্দি')) advice += '• গরম পানিতে মধু মিশিয়ে খান, ভাপ নিন<br>';
-    if(s.includes('পেট')||s.includes('ডায়রিয়া')) advice += '• ওআরএস খান, হালকা খাবার খান<br>';
-    if(!s.includes('জ্বর')&&!s.includes('মাথা')&&!s.includes('কাশি')&&!s.includes('সর্দি')&&!s.includes('পেট')) advice += '• পর্যাপ্ত বিশ্রাম নিন, প্রচুর পানি পান করুন<br>';
-    advice += '<br>• ২-৩ দিনে উন্নতি না হলে অবশ্যই ডাক্তার দেখান।';
-    box.innerHTML = advice;
-  }, 900);
-}
-
 /* ---------- Listing ---------- */
 const Listing = {
   toggleMobile(){ document.getElementById('listingAside')?.classList.toggle('show'); },
@@ -128,6 +129,15 @@ const Listing = {
     const q = (Router.params.q||'').trim().toLowerCase();
     const sortEl=document.getElementById('sortSelect');
     const sort = sortEl?sortEl.value:'relevance';
+    // ⚠️ যথেষ্ট verified review ডেটা না থাকলে "সর্বোচ্চ রেটিং" sort option
+    // দেখানো হচ্ছে না — সামান্য/অস্তিত্বহীন রিভিউ দিয়ে rating দিয়ে সাজানো
+    // fabricated/বিভ্রান্তিকর মনে হতে পারে।
+    const ratingOptEl = sortEl?.querySelector('option[value="rating"]');
+    if(ratingOptEl){
+      const hasEnoughReviews = ALL_PRODUCTS.filter(p=>Number(p.reviews)>=5).length >= 5;
+      ratingOptEl.hidden = !hasEnoughReviews;
+      if(!hasEnoughReviews && sort==='rating' && sortEl){ sortEl.value='relevance'; }
+    }
     if(!document.getElementById('filterCategoryList')?.children.length) this.renderCategoryFilters();
     let items = zoneProducts();
     let title = 'সব প্রোডাক্ট';
