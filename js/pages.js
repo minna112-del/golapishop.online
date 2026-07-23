@@ -57,7 +57,7 @@ const Medical = {
         <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px"><span style="font-size:28px">${m.icon}</span><div><div style="font-weight:600;color:var(--ink);font-size:13.5px">${esc(m.name)}</div><div style="font-size:12px;color:var(--emerald)">${esc(m.spec)}</div></div></div>
         <div style="font-size:11.5px;color:var(--ink-muted);margin-bottom:8px">🗓️ ${esc(m.sched)}</div>
         <div style="font-size:11px;color:var(--ink-dim);margin-bottom:12px">📍 ${esc(m.addr)||'চেম্বার তথ্যের জন্য কল করুন'}</div>
-        <a href="tel:+880${(m.serial||'1612057371').split(',')[0].trim().replace(/^0/,'')}" class="btn btn-medical btn-block" style="font-size:12.5px;padding:9px" onclick="Medical.trackCall('${m.name.replace(/'/g,"\\'")}')">📞 সিরিয়াল: ${esc(m.serial)||'01612-057371'}</a>
+        <a href="tel:+880${(m.serial||'1612057371').split(',')[0].trim().replace(/^0/,'')}" class="btn btn-medical btn-block" style="font-size:12.5px;padding:9px" onclick="Medical.trackCall('${m.name.replace(/'/g,"\\'").replace(/"/g,'&quot;')}')">📞 সিরিয়াল: ${esc(m.serial)||'01612-057371'}</a>
       </div>`).join('');
   },
   trackCall(doctorName){
