@@ -1,5 +1,5 @@
 /* sw.js — Golapi Shop Offline Service Worker (network-first) */
-const CACHE = 'golapi-v30';
+const CACHE = 'golapi-v32';
 const OFFLINE_URL = '/offline.html';
 /* ⚠️ আগে এখানে admin/driver/zone-manager/checkout/account ইত্যাদি সব পেজ+JS
    pre-cache হতো — যদিও page-loader.js/router.js এগুলো lazy করে দিয়েছে, Service
@@ -106,31 +106,36 @@ self.addEventListener('fetch', event => {
   const cacheableAllowlist = /\.(html|js|css|webp|png|jpg|jpeg|svg|json|woff2?)$/i;
   const isCacheableStatic = cacheableAllowlist.test(new URL(request.url).pathname) || request.mode === 'navigate';
 
-  event.respondWith(
-    // ⚠️ আগে বিশুদ্ধ network-first ছিল — নেটওয়ার্ক খুব ধীর (কিন্তু offline না) হলে
-    // cache-এ কপি থাকা সত্ত্বেও অনন্ত অপেক্ষা হতো। এখন ৪ সেকেন্ডে নেটওয়ার্ক সাড়া
-    // না দিলে সাথে সাথে cache থেকে দেখানো হয় — সাইট আর "আটকে" থাকে না।
-    Promise.race([
-      fetch(request),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('sw-timeout')), 4000))
-    ])
-      .then(response => {
-        if (response && response.ok && !isRetryBust && isCacheableStatic && request.url.startsWith(self.location.origin)) {
-          const copy = response.clone();
-          caches.open(CACHE).then(cache => {
-            cache.put(request, copy);
-            trimCache(CACHE, MAX_CACHE_ENTRIES);
-          }).catch(() => {});
-        }
-        return response;
-      })
-      .catch(async () => {
-        const cached = await caches.match(request);
-        if (cached) return cached;
-        if (request.mode === 'navigate') return caches.match(OFFLINE_URL);
-        return Response.error();
-      })
-  );
+  event.respondWith((async () => {
+    // ⚠️ আগে cache-এ কপি থাকা বা না-থাকা নির্বিশেষে সবসময় একই ৪ সেকেন্ড timeout
+    // ব্যবহার হতো। কিন্তু cache থাকলে fallback হিসেবে যথেষ্ট ভালো, তাই দ্রুত
+    // (২ সেকেন্ড) network না পেলেই cache থেকে দেখানো যায় — অন্যদিকে cache-এ
+    // কিছুই না থাকলে (fallback করার কিছু নেই), তাড়াহুড়ো করে request বাতিল না
+    // করে একটু বেশি সময় (৮ সেকেন্ড) network-কে সুযোগ দেওয়া হয়।
+    const cachedMatch = isCacheableStatic ? await caches.match(request) : null;
+    const timeoutMs = cachedMatch ? 2000 : 8000;
+
+    try {
+      const response = await Promise.race([
+        fetch(request),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('sw-timeout')), timeoutMs))
+      ]);
+      if (response && response.ok && !isRetryBust && isCacheableStatic && request.url.startsWith(self.location.origin)) {
+        const copy = response.clone();
+        caches.open(CACHE).then(cache => {
+          cache.put(request, copy);
+          trimCache(CACHE, MAX_CACHE_ENTRIES);
+        }).catch(() => {});
+      }
+      return response;
+    } catch (e) {
+      if (cachedMatch) return cachedMatch;
+      const cached = await caches.match(request);
+      if (cached) return cached;
+      if (request.mode === 'navigate') return caches.match(OFFLINE_URL);
+      return Response.error();
+    }
+  })());
 });
 
 /* ═══════════════════════════════════════════════════════════
