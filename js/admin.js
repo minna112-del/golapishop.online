@@ -1113,7 +1113,17 @@ const ProductForm = {
         msgEl.textContent='✓ প্রোডাক্ট আপডেট হয়েছে'; msgEl.className='form-msg ok';
       }
       await ProductStore.refreshAndRerender();
-      if(ZoneManagerDash.currentZone) ZoneManagerDash.render(); else { AdminDash.renderProducts(); const sp=document.getElementById('aStatProducts'); if(sp) sp.textContent=bn(ALL_PRODUCTS.length); }
+      // ⚠️ আগে সরাসরি "ZoneManagerDash.currentZone" চেক করা হতো — কিন্তু Owner
+      // Dashboard পেজে zone-manager.js লোডই হয় না, তাই ওই variable অস্তিত্বহীন
+      // থাকায় "Can't find variable: ZoneManagerDash" এরর দিয়ে পুরো save/refresh
+      // ধাপ ভেঙে যেতো (যদিও প্রোডাক্ট আসলে সফলভাবে সেভ হয়ে গিয়েছিল)। এখন
+      // typeof দিয়ে নিরাপদে চেক করা হচ্ছে।
+      if(typeof ZoneManagerDash !== 'undefined' && ZoneManagerDash.currentZone){
+        ZoneManagerDash.render();
+      }else{
+        AdminDash.renderProducts();
+        const sp=document.getElementById('aStatProducts'); if(sp) sp.textContent=bn(ALL_PRODUCTS.length);
+      }
       setTimeout(()=>this.close(),900);
     }catch(e){ msgEl.textContent='সমস্যা হয়েছে: '+e.message; msgEl.className='form-msg err'; }
     finally{ btn.textContent=orig; btn.disabled=false; }
