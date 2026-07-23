@@ -26,7 +26,17 @@ const Home = {
       const special = available.filter(p=>p.isFlash);
       const popular = available.filter(p=>Number(p.sold)>0).sort((a,b)=>Number(b.sold)-Number(a.sold)).slice(0,10);
       const prioritisedIds = new Set([...special,...popular].map(p=>p.id));
-      const more = [...available.filter(p=>!prioritisedIds.has(p.id)), ...available.filter(p=>prioritisedIds.has(p.id))].slice(0,10);
+      // ⚠️ আগে এলোমেলোভাবে (ডেটাবেজে যেভাবে ছিল সেভাবেই) দেখাতো — মুদি-চা-গ্যাস-ন্যাপকিন
+      // মিশে যেতো। এখন CATEGORIES তালিকার ক্রম অনুযায়ী গ্রুপ করে দেখানো হয় (সব মুদি
+      // একসাথে, তারপর সব দুধ/বেকারি একসাথে, তারপর ঔষধ, এভাবে ক্যাটাগরি-ধারাবাহিকভাবে)।
+      const remaining = available.filter(p=>!prioritisedIds.has(p.id));
+      const catOrder = CATEGORIES.map(c=>c.id);
+      remaining.sort((a,b)=>{
+        const ai = catOrder.indexOf(a.category), bi = catOrder.indexOf(b.category);
+        if(ai !== bi) return (ai===-1?999:ai) - (bi===-1?999:bi);
+        return 0;
+      });
+      const more = [...remaining, ...available.filter(p=>prioritisedIds.has(p.id))].slice(0,10);
 
       if(specialSection) specialSection.hidden = special.length===0;
       if(popularSection) popularSection.hidden = popular.length===0;
@@ -44,10 +54,10 @@ const Medical = {
     if(!el) return;
     el.innerHTML = MED_LIST.map(m=>`
       <div class="card" style="padding:18px">
-        <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px"><span style="font-size:28px">${m.icon}</span><div><div style="font-weight:600;color:#fff;font-size:13.5px">${m.name}</div><div style="font-size:12px;color:var(--emerald)">${m.spec}</div></div></div>
-        <div style="font-size:11.5px;color:var(--ink-muted);margin-bottom:8px">🗓️ ${m.sched}</div>
-        <div style="font-size:11px;color:var(--ink-dim);margin-bottom:12px">📍 ${m.addr||'চেম্বার তথ্যের জন্য কল করুন'}</div>
-        <a href="tel:+880${(m.serial||'1612057371').split(',')[0].trim().replace(/^0/,'')}" class="btn btn-medical btn-block" style="font-size:12.5px;padding:9px" onclick="Medical.trackCall('${m.name.replace(/'/g,"\\'")}')">📞 সিরিয়াল: ${m.serial||'01612-057371'}</a>
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px"><span style="font-size:28px">${m.icon}</span><div><div style="font-weight:600;color:var(--ink);font-size:13.5px">${esc(m.name)}</div><div style="font-size:12px;color:var(--emerald)">${esc(m.spec)}</div></div></div>
+        <div style="font-size:11.5px;color:var(--ink-muted);margin-bottom:8px">🗓️ ${esc(m.sched)}</div>
+        <div style="font-size:11px;color:var(--ink-dim);margin-bottom:12px">📍 ${esc(m.addr)||'চেম্বার তথ্যের জন্য কল করুন'}</div>
+        <a href="tel:+880${(m.serial||'1612057371').split(',')[0].trim().replace(/^0/,'')}" class="btn btn-medical btn-block" style="font-size:12.5px;padding:9px" onclick="Medical.trackCall('${m.name.replace(/'/g,"\\'")}')">📞 সিরিয়াল: ${esc(m.serial)||'01612-057371'}</a>
       </div>`).join('');
   },
   trackCall(doctorName){
