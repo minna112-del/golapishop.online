@@ -47,14 +47,14 @@
   </section>
 
   <section class="sec">
-    <h2 class="tiro" style="text-align:center;font-size:22px;margin-bottom:10px">🤖 এআই প্রাথমিক চিকিৎসা পরামর্শ</h2>
+    <h2 class="tiro" style="text-align:center;font-size:22px;margin-bottom:10px">🩺 স্বাস্থ্য তথ্য সহায়ক</h2>
     <div class="card-box" style="max-width:640px;margin:0 auto">
       <div style="background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.18);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:11.5px;color:var(--ink-soft);line-height:1.6">
-        ⚠️ <strong>শুধু প্রাথমিক ধারণার জন্য।</strong> এটি রোগ নির্ণয় বা চিকিৎসার বিকল্প নয়। জরুরি বা গুরুতর লক্ষণে সরাসরি ডাক্তার দেখান বা হাসপাতালে যান।
+        ⚠️ <strong>এটি রোগ নির্ণয়, প্রেসক্রিপশন বা চিকিৎসকের পরামর্শের বিকল্প নয়।</strong> নির্দিষ্ট ওষুধ বা ডোজ সংক্রান্ত কোনো পরামর্শ এখানে দেওয়া হয় না। জরুরি বা গুরুতর লক্ষণে সরাসরি ডাক্তার দেখান বা হাসপাতালে যান।
       </div>
-      <div class="field"><label>আপনার লক্ষণ লিখুন</label><textarea id="aiSymptom" rows="3" placeholder="যেমন: জ্বর, মাথা ব্যথা, কাশি..."></textarea></div>
-      <button class="btn btn-medical btn-block" onclick="getAIAdvice()">পরামর্শ নিন</button>
-      <div id="aiResultBox" style="display:none;margin-top:16px;background:rgba(5,150,105,.06);border:1px solid rgba(5,150,105,.2);border-radius:12px;padding:16px;font-size:13.5px;color:var(--ink-soft);line-height:1.8"></div>
+      <p style="font-size:13.5px;color:var(--ink-soft);line-height:1.8;margin-bottom:14px">সাধারণ অসুস্থতায় (জ্বর, সর্দি-কাশি, মাথাব্যথা, পেটের সমস্যা) বিশ্রাম, পর্যাপ্ত পানি/তরল পান এবং হালকা খাবার সহায়ক হতে পারে। কোনো ওষুধ খাওয়ার আগে অবশ্যই ডাক্তার বা ফার্মাসিস্টের পরামর্শ নিন — বয়স, ওজন, অন্য ওষুধ ও শারীরিক অবস্থাভেদে সঠিক ডোজ ভিন্ন হয়।</p>
+      <p style="font-size:13.5px;color:var(--ink-soft);line-height:1.8;margin-bottom:14px">লক্ষণ ২-৩ দিনে না কমলে, বা তীব্র/অস্বাভাবিক মনে হলে, দ্রুত তালিকাভুক্ত চিকিৎসকের সিরিয়াল নিন অথবা হটলাইনে যোগাযোগ করুন।</p>
+      <button class="btn btn-medical btn-block" onclick="Router.go('medical',{},{skipHash:false})">চিকিৎসকদের তালিকা দেখুন</button>
     </div>
   </section>
 
