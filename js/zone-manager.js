@@ -85,7 +85,7 @@ const ZoneManagerDash = {
     if(!low.length||!el){ if(el) el.style.display='none'; return; }
     el.style.display='block';
     listEl.innerHTML = low.map(p=>`<div style="display:flex;justify-content:space-between;font-size:12.5px;padding:5px 0;border-bottom:1px solid rgba(251,191,36,.1)">
-      <span style="color:#fff">${p.name}</span>
+      <span style="color:#fff">${esc(p.name)}</span>
       <span style="color:${p.stock===0?'#f87171':'#fbbf24'};font-weight:600">${p.stock===0?'স্টক আউট':p.stock+' টি বাকি'}</span>
     </div>`).join('');
   },
@@ -117,7 +117,7 @@ const ZoneManagerDash = {
       const s=ORDER_STATUS[o.status]||ORDER_STATUS.pending;
       return `<tr>
         <td style="font-size:11px">${o.orderNumber||o.id.slice(-6)}</td>
-        <td>${o.customerName||'—'}</td>
+        <td>${esc(o.customerName)||'—'}</td>
         <td style="color:var(--gold)">${money(this.orderTotal(o))}</td>
         <td><span class="status-pill ${s.cls}">${s.label}</span></td>
         <td><a href="#" onclick="event.preventDefault();OrderDetail.open(${JSON.stringify(o).replace(/"/g,'&quot;')})" style="color:var(--gold);font-size:12px">বিস্তারিত</a></td>
@@ -130,8 +130,8 @@ const ZoneManagerDash = {
     const search = document.getElementById('zmProductSearch')?.value.toLowerCase()||'';
     const filtered = search ? list.filter(p=>p.name.toLowerCase().includes(search)) : list;
     tbody.innerHTML = filtered.map(p=>`<tr>
-      <td><div style="width:34px;height:34px;border-radius:7px;overflow:hidden;background:var(--elevated)"><img src="${p.img}" style="width:100%;height:100%;object-fit:cover" loading="lazy"></div></td>
-      <td><div style="font-size:12px;color:#fff">${p.name}</div><div style="font-size:10px;color:var(--ink-muted)">${CATEGORIES.find(c=>c.id===p.category)?.label||''}</div></td>
+      <td><div style="width:34px;height:34px;border-radius:7px;overflow:hidden;background:var(--elevated)"><img src="${safeImgSrc(p.img)}" style="width:100%;height:100%;object-fit:cover" loading="lazy" decoding="async" width="34" height="34"></div></td>
+      <td><div style="font-size:12px;color:#fff">${esc(p.name)}</div><div style="font-size:10px;color:var(--ink-muted)">${CATEGORIES.find(c=>c.id===p.category)?.label||''}</div></td>
       <td style="color:var(--gold)">${money(p.salePrice)}</td>
       <td><input type="number" value="${p.stock}" min="0" onchange="ZoneManagerDash.quickStock('${p.id}',this.value)" style="width:55px;padding:3px 5px;border-radius:6px;background:var(--bg2);border:1px solid ${p.stock<=5?'rgba(239,68,68,.4)':'var(--line)'};color:${p.stock===0?'#f87171':p.stock<=5?'#fbbf24':'#fff'};font-size:12px;text-align:center"></td>
       <td><span class="status-pill ${p.stock>0?'delivered':'cancelled'}">${p.stock>0?'লাইভ':'আউট'}</span></td>
@@ -156,7 +156,7 @@ const ZoneManagerDash = {
       return `<tr>
         <td style="font-size:11px">${o.orderNumber||o.id.slice(-6)}</td>
         <td>${o.customerName||'—'}</td>
-        <td>${o.customerPhone||'—'}</td>
+        <td>${esc(o.customerPhone)||'—'}</td>
         <td style="color:var(--gold)">${money(this.orderTotal(o))}</td>
         <td><select onchange="ZoneManagerDash.assignDriver('${o.id}',this.value)" style="padding:3px 6px;border-radius:6px;background:var(--bg2);border:1px solid var(--line);color:#fff;font-size:11px;max-width:110px">
           <option value="">বেছে নিন</option>${opts}

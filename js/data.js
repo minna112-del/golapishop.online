@@ -3,56 +3,24 @@
 let ALL_PRODUCTS = [];
 
 function zoneProducts() {
-  const seenG = new Set();
-  const seenK = new Set();
-  const merged = [];
-
+  /* ⚠️ আগে প্রতিটা প্রোডাক্টের জন্য আবার পুরো তালিকা filter করা হতো (O(n²)) —
+     প্রোডাক্ট বাড়লে ধীর হয়ে যেতো। এখন এক পাসে group করে হিসাব হয় (O(n))। */
+  const byGroup = new Map(), byKey = new Map(), order = [];
   for (const p of ALL_PRODUCTS) {
     if (p.groupId) {
-      if (seenG.has(p.groupId)) continue;
-
-      seenG.add(p.groupId);
-
-      const sibs = ALL_PRODUCTS.filter(
-        x => x.groupId === p.groupId
-      );
-
-      merged.push({
-        ...p,
-        stock: sibs.reduce(
-          (sum, item) => sum + (item.stock || 0),
-          0
-        )
-      });
+      if (!byGroup.has(p.groupId)) { byGroup.set(p.groupId, { first: p, stock: 0 }); order.push({ t: 'g', k: p.groupId }); }
+      byGroup.get(p.groupId).stock += (p.stock || 0);
     } else {
-      const key =
-        `${p.name.trim().toLowerCase()}|${p.category}|${p.salePrice}`;
-
-      if (seenK.has(key)) continue;
-
-      seenK.add(key);
-
-      const sibs = ALL_PRODUCTS.filter(
-        x =>
-          !x.groupId &&
-          `${x.name.trim().toLowerCase()}|${x.category}|${x.salePrice}` === key
-      );
-
-      merged.push(
-        sibs.length > 1
-          ? {
-              ...p,
-              stock: sibs.reduce(
-                (sum, item) => sum + (item.stock || 0),
-                0
-              )
-            }
-          : p
-      );
+      const key = `${p.name.trim().toLowerCase()}|${p.category}|${p.salePrice}`;
+      if (!byKey.has(key)) { byKey.set(key, { first: p, stock: 0, count: 0 }); order.push({ t: 'k', k: key }); }
+      const e = byKey.get(key); e.stock += (p.stock || 0); e.count++;
     }
   }
-
-  return merged;
+  return order.map(o => {
+    if (o.t === 'g') { const e = byGroup.get(o.k); return { ...e.first, stock: e.stock }; }
+    const e = byKey.get(o.k);
+    return e.count > 1 ? { ...e.first, stock: e.stock } : e.first;
+  });
 }
 
 const ProductStore = {
@@ -78,7 +46,9 @@ const ProductStore = {
 
       img:
         d.imageUrl ||
-        `https://picsum.photos/seed/${id}/400/400`,
+        GOLAPI_IMG_PLACEHOLDER,
+      imgSmall: d.imageUrlSmall || null,
+      imgBlur: d.imageBlurDataUrl || null,
 
       isFlash: !!d.isFlash,
       isFeatured: !!d.isFeatured,
@@ -96,8 +66,34 @@ const ProductStore = {
     };
   },
 
+  CACHE_KEY: 'golapi_products_cache_v1',
+
+  /* আগের সফল লোডের প্রোডাক্ট localStorage-এ সেভ করা হয় — পরের ভিজিটে
+     Firestore সংযোগের অপেক্ষা না করেই এগুলো সাথে সাথে দেখানো হয় (skeleton
+     প্রায় দেখাই যায় না), তারপর live ডেটা এলে নীরবে সেটা দিয়ে replace হয়।
+     ধীর নেটওয়ার্কের কাস্টমারদের জন্য এটাই সবচেয়ে বড় গতির উন্নতি। */
+  saveCache(){
+    try{ localStorage.setItem(this.CACHE_KEY, JSON.stringify(ALL_PRODUCTS)); }catch(e){}
+  },
+  loadFromCache(){
+    try{
+      const raw = localStorage.getItem(this.CACHE_KEY);
+      if(!raw) return false;
+      const cached = JSON.parse(raw);
+      if(!Array.isArray(cached) || cached.length === 0) return false;
+      ALL_PRODUCTS = cached;
+      this.loaded = true;
+      if (Router.current === 'home') Home.render();
+      if (Router.current === 'listing') Listing.render();
+      return true;
+    }catch(e){ return false; }
+  },
+
   startLiveSync() {
     if (!FB || this.unsubscribe) { return; }
+
+    // ক্যাশ থেকে সাথে সাথে দেখানো (থাকলে) — নেটওয়ার্কের অপেক্ষা নেই
+    const hadCache = this.loadFromCache();
 
     let delivered = false;
 
@@ -111,11 +107,11 @@ const ProductStore = {
       if (delivered) return;
       devWarn('onSnapshot timeout — falling back to getDocs() with retry');
       await this.refreshWithRetry();
-    }, 12000);
+    }, hadCache ? 15000 : 6000); // ক্যাশ দেখানো থাকলে তাড়া নেই; না থাকলে দ্রুত fallback
 
     try {
       this.unsubscribe = FB.onSnapshot(
-        FB.collection(FB.db, 'products'),
+        FB.query(FB.collection(FB.db, 'products'), FB.limit(300)),
 
         snap => {
           delivered = true;
@@ -137,6 +133,7 @@ const ProductStore = {
           );
 
           this.loaded = true;
+          this.saveCache();
 
           if (Router.current === 'home') {
             Home.render();
@@ -215,7 +212,7 @@ const ProductStore = {
 
     try {
       const snap = await FB.getDocs(
-        FB.collection(FB.db, 'products')
+        FB.query(FB.collection(FB.db, 'products'), FB.limit(300))
       );
 
       const real = [];
@@ -234,6 +231,7 @@ const ProductStore = {
       );
 
       this.loaded = true;
+          this.saveCache();
 
       Home.render();
 
@@ -253,7 +251,11 @@ const ProductStore = {
   }
 };
 
-function pcardHTML(p) {
+function pcardHTML(p, idx) {
+  // ⚠️ আগে সব প্রোডাক্ট ছবিই lazy ছিল, প্রথম row-এর (above-the-fold, সাথে সাথে
+  // দৃশ্যমান) ছবিও — তাই সেগুলোও অকারণে দেরিতে লোড হতো। এখন প্রথম ৪টা কার্ড
+  // (যেকোনো grid-এর শুরুর, index 0-3) eager+fetchpriority="high" পায়।
+  const isPriority = typeof idx === 'number' && idx < 4;
   const discount =
     p.price > p.salePrice
       ? Math.round(
@@ -313,7 +315,7 @@ function pcardHTML(p) {
       onclick="Router.go('product',{id:'${p.id}'})"
       tabindex="0"
       role="link"
-      aria-label="${p.name} দেখুন"
+      aria-label="${esc(p.name)} দেখুন"
       onkeydown="
         if(
           event.key === 'Enter' ||
@@ -324,12 +326,16 @@ function pcardHTML(p) {
         }
       "
     >
-      <div class="imgwrap">
+      <div class="imgwrap"${p.imgBlur ? ` style="background-image:url('${esc(p.imgBlur)}');background-size:cover"` : ''}>
         <img
-          src="${p.img}"
-          alt="${p.name}"
-          loading="lazy"
+          src="${safeImgSrc(p.img)}"
+          ${p.imgSmall ? `srcset="${safeImgSrc(p.imgSmall)} 400w, ${safeImgSrc(p.img)} 800w" sizes="(max-width: 480px) 45vw, 220px"` : ''}
+          alt="${esc(p.name)}"
+          loading="${isPriority ? 'eager' : 'lazy'}"
+          ${isPriority ? 'fetchpriority="high"' : ''}
           decoding="async"
+          width="400"
+          height="400"
         >
 
         <div class="product-badges">
@@ -382,13 +388,7 @@ function pcardHTML(p) {
             : ''
         }
 
-        <span class="brand-seal">
-          <img
-            src="icons/head_logo.webp"
-            alt=""
-            aria-hidden="true"
-          >
-        </span>
+        <span class="brand-seal" aria-hidden="true"></span>
       </div>
 
       <div class="pbody">
@@ -398,7 +398,7 @@ function pcardHTML(p) {
         </div>
 
         <h3 class="pname">
-          ${p.name}
+          ${esc(p.name)}
         </h3>
 
         <div

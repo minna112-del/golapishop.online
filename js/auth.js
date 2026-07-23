@@ -210,7 +210,7 @@ const AccountPage = {
       const snap=await FB.getDoc(FB.doc(FB.db,'users',Auth.currentUser.uid));
       const addrs=snap.exists()?(snap.data().addresses||[]):[];
       if(!addrs.length){ list.innerHTML=`<div class="empty-state"><div class="em">📍</div><h3>কোনো ঠিকানা সংরক্ষিত নেই</h3></div>`; return; }
-      list.innerHTML=addrs.map((a,i)=>`<div class="card-box"><div style="display:flex;justify-content:space-between"><strong style="color:var(--ink)">${escapeHTML(a.label||'ঠিকানা')}</strong><button onclick="AccountPage.deleteAddress(${i})" style="color:var(--danger,#dc2626);font-size:12px">মুছুন</button></div><div style="font-size:12.5px;color:var(--ink-muted);margin-top:4px">${escapeHTML(a.village?a.village+', ':'')}${escapeHTML(AREA_LABELS[a.district]||'')} — ${escapeHTML(a.address||'')}</div></div>`).join('');
+      list.innerHTML=addrs.map((a,i)=>`<div class="card-box"><div style="display:flex;justify-content:space-between"><strong style="color:var(--ink)">${esc(a.label||'ঠিকানা')}</strong><button onclick="AccountPage.deleteAddress(${i})" style="color:var(--danger,#dc2626);font-size:12px">মুছুন</button></div><div style="font-size:12.5px;color:var(--ink-muted);margin-top:4px">${esc(a.village?a.village+', ':'')}${esc(AREA_LABELS[a.district]||'')} — ${esc(a.address||'')}</div></div>`).join('');
     }catch(e){ list.innerHTML=`<p style="color:var(--ink-muted)">লোড করা যায়নি</p>`; }
   },
   openAddAddress(){

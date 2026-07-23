@@ -62,7 +62,7 @@ const AdminDash = {
     if(alertEl) alertEl.style.display='block';
     if(listEl) listEl.innerHTML = low.map(p=>`
       <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(251,191,36,.1);font-size:12.5px">
-        <span style="color:#fff">${p.name}</span>
+        <span style="color:#fff">${esc(p.name)}</span>
         <span style="${p.stock===0?'color:#f87171':'color:#fbbf24'};font-weight:600">${p.stock===0?'স্টক আউট':p.stock+' টি বাকি'}
           <a href="#" onclick="event.preventDefault();ProductForm.openEdit('${p.id}')" style="margin-left:8px;font-size:11px;color:var(--gold)">আপডেট করুন</a>
         </span>
@@ -124,9 +124,9 @@ const AdminDash = {
     const list = search ? ALL_PRODUCTS.filter(p=>p.name.toLowerCase().includes(search)) : ALL_PRODUCTS;
     if(!list.length){ tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;color:var(--ink-muted);padding:20px">কোনো প্রোডাক্ট নেই</td></tr>`; return; }
     tbody.innerHTML = list.map(p=>`<tr style="${p.stock===0?'opacity:.6':''}">
-      <td><input type="checkbox" class="prodCheck" value="${p.id}" ${this.selectedProducts.has(p.id)?'checked':''} onchange="AdminDash.toggleProductSelect('${p.id}',this.checked)" aria-label="${p.name} নির্বাচন"></td>
-      <td><div style="width:38px;height:38px;border-radius:8px;overflow:hidden;background:var(--elevated)"><img src="${p.imageUrl||p.img||''}" style="width:100%;height:100%;object-fit:cover" loading="lazy"></div></td>
-      <td><div style="font-size:12.5px;color:#fff;max-width:160px">${p.name}</div><div style="font-size:10.5px;color:var(--ink-muted)">${CATEGORIES.find(c=>c.id===p.category)?.label||''}</div></td>
+      <td><input type="checkbox" class="prodCheck" value="${p.id}" ${this.selectedProducts.has(p.id)?'checked':''} onchange="AdminDash.toggleProductSelect('${p.id}',this.checked)" aria-label="${esc(p.name)} নির্বাচন"></td>
+      <td><div style="width:38px;height:38px;border-radius:8px;overflow:hidden;background:var(--elevated)"><img src="${safeImgSrc(p.imageUrl||p.img)}" style="width:100%;height:100%;object-fit:cover" loading="lazy" decoding="async" width="38" height="38"></div></td>
+      <td><div style="font-size:12.5px;color:#fff;max-width:160px">${esc(p.name)}</div><div style="font-size:10.5px;color:var(--ink-muted)">${CATEGORIES.find(c=>c.id===p.category)?.label||''}</div></td>
       <td>${AREA_LABELS[p.zone]||'—'}</td>
       <td><div style="color:var(--gold);font-weight:600">${money(p.salePrice)}</div>${p.price>p.salePrice?`<div style="font-size:10px;color:var(--ink-dim);text-decoration:line-through">${money(p.price)}</div>`:''}</td>
       <td><input type="number" value="${p.stock}" min="0" onchange="AdminDash.quickStockUpdate('${p.id}',this.value)" style="width:60px;padding:4px 6px;border-radius:6px;background:var(--bg2);border:1px solid ${p.stock<=5?'rgba(239,68,68,.4)':'var(--line)'};color:${p.stock===0?'#f87171':p.stock<=5?'#fbbf24':'#fff'};font-size:12px;text-align:center"></td>
@@ -329,7 +329,7 @@ const AdminDash = {
       const sorted = Object.entries(productSales).sort((a,b)=>b[1]-a[1]).slice(0,5);
       tpEl.innerHTML = sorted.length ? sorted.map(([id,qty],i)=>{
         const p = ALL_PRODUCTS.find(x=>x.id===id);
-        return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)"><span style="width:20px;text-align:center;font-weight:700;color:var(--gold);font-size:13px">${i+1}</span><div style="width:32px;height:32px;border-radius:6px;overflow:hidden"><img src="${p?.imageUrl||p?.img||''}" style="width:100%;height:100%;object-fit:cover"></div><div style="flex:1;min-width:0"><div style="font-size:12.5px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p?.name||id}</div></div><span style="font-size:12px;color:var(--ink-muted)">${qty} বিক্রি</span></div>`;
+        return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)"><span style="width:20px;text-align:center;font-weight:700;color:var(--gold);font-size:13px">${i+1}</span><div style="width:32px;height:32px;border-radius:6px;overflow:hidden"><img src="${safeImgSrc(p?.imageUrl||p?.img)}" style="width:100%;height:100%;object-fit:cover" loading="lazy" decoding="async" width="32" height="32"></div><div style="flex:1;min-width:0"><div style="font-size:12.5px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p?.name)||id}</div></div><span style="font-size:12px;color:var(--ink-muted)">${qty} বিক্রি</span></div>`;
       }).join('') : '<p style="color:var(--ink-muted);font-size:13px">তথ্য নেই</p>';
     }
   },
@@ -358,7 +358,7 @@ const AdminDash = {
     if(!list.length){ tbody.innerHTML=`<tr><td colspan="7" style="text-align:center;color:var(--ink-muted);padding:20px">কোনো কাস্টমার নেই</td></tr>`; return; }
     tbody.innerHTML = list.map(c=>`<tr>
       <td>${c.name}</td>
-      <td>${c.phone}</td>
+      <td>${esc(c.phone)}</td>
       <td style="font-size:11.5px;cursor:pointer" onclick="this.textContent=this.textContent.includes('•')?'${c.nid}':maskNid('${c.nid}')" title="ক্লিক করে দেখুন/লুকান">${maskNid(c.nid)}</td>
       <td style="text-align:center">${c.orders.length}</td>
       <td style="color:var(--gold)">${money(c.total)}</td>
@@ -623,6 +623,74 @@ const AdminDash = {
     }catch(e){ toast('সমস্যা: '+e.message,'error'); }
   },
 
+  /* ⚠️ generateImageVariants() নতুন আপলোডের সময়ই শুধু কাজ করতো, আগে থেকে
+     থাকা প্রোডাক্টের ছবি কখনো ছোঁয়া হতো না। এই ফাংশন সব পুরনো প্রোডাক্ট
+     একে একে (rate-limit এড়াতে ছোট বিরতি দিয়ে) reprocess করে — একই ছোট
+     সাইজ + blur placeholder logic ব্যবহার করে, শুধু ইনপুট আসে existing
+     imageUrl থেকে fetch করে (নতুন ফাইল আপলোড ছাড়াই)। */
+  async reprocessAllProductImages(){
+    const btn = document.getElementById('reprocessImagesBtn');
+    const progressEl = document.getElementById('reprocessProgress');
+    if(!FB){ toast('সংযোগ সমস্যা','error'); return; }
+    if(!confirm('এতে কয়েক মিনিট সময় লাগতে পারে এবং প্রতিটা প্রোডাক্টের জন্য নতুন ছবি Storage-এ আপলোড হবে। এগোতে চাও?')) return;
+
+    btn.disabled = true; btn.textContent = 'শুরু হচ্ছে...';
+    progressEl.style.display = 'block';
+
+    try{
+      const snap = await FB.getDocs(FB.collection(FB.db, 'products'));
+      const targets = [];
+      snap.forEach(d => {
+        const data = d.data();
+        if(data.imageUrl && (!data.imageUrlSmall || !data.imageBlurDataUrl)) targets.push({ id: d.id, data });
+      });
+
+      if(targets.length === 0){
+        progressEl.textContent = '✓ সব প্রোডাক্টের ছবি ইতিমধ্যেই আপডেটেড আছে।';
+        btn.disabled = false; btn.textContent = 'সব পুরনো প্রোডাক্টের ছবি আপডেট করুন';
+        return;
+      }
+
+      let done = 0, failed = 0;
+      for(const t of targets){
+        progressEl.textContent = `প্রসেস হচ্ছে... (${done + failed + 1}/${targets.length}) — ${esc(t.data.name || t.id)}`;
+        try{
+          // CORS-নিরাপদভাবে ছবি fetch করে Blob বানানো (canvas taint সমস্যা এড়াতে <img> এর বদলে fetch ব্যবহার)
+          const resp = await fetch(t.data.imageUrl);
+          if(!resp.ok) throw new Error('ছবি fetch ব্যর্থ');
+          const originalBlob = await resp.blob();
+
+          const variants = await this.generateImageVariants(originalBlob);
+          const updates = {};
+          if(variants.smallBlob){
+            const ext1 = variants.smallBlob.type === 'image/avif' ? 'avif' : 'webp';
+            const smallRef = FB.storageRef(FB.storage, `products/${t.id}_${Date.now()}_small.${ext1}`);
+            await FB.uploadBytes(smallRef, variants.smallBlob);
+            updates.imageUrlSmall = await FB.getDownloadURL(smallRef);
+          }
+          if(variants.blurDataUrl) updates.imageBlurDataUrl = variants.blurDataUrl;
+
+          if(Object.keys(updates).length > 0){
+            await FB.updateDoc(FB.doc(FB.db, 'products', t.id), updates);
+          }
+          done++;
+        }catch(e){
+          devWarn('reprocess failed for', t.id, e.message);
+          failed++;
+        }
+        await new Promise(r => setTimeout(r, 400)); // Firebase-এ চাপ কমাতে ছোট বিরতি
+      }
+
+      progressEl.textContent = `✓ শেষ হয়েছে — ${done}টা সফল, ${failed}টা ব্যর্থ (মোট ${targets.length}টার মধ্যে)।`;
+      toast(`✓ ছবি reprocess সম্পন্ন — ${done}/${targets.length}`, 'success');
+    }catch(e){
+      progressEl.textContent = '⚠ ব্যর্থ: ' + e.message;
+      toast('⚠ সমস্যা হয়েছে: ' + e.message, 'error');
+    }finally{
+      btn.disabled = false; btn.textContent = 'সব পুরনো প্রোডাক্টের ছবি আপডেট করুন';
+    }
+  },
+
   generateSitemap(){
     const BASE = 'https://www.golapishop.online';
     const today = new Date().toISOString().split('T')[0];
@@ -675,7 +743,7 @@ const AdminDash = {
       const snap = await FB.getDocs(FB.query(FB.collection(FB.db,'sms_failures'), FB.orderBy('createdAt','desc'), FB.limit(20)));
       const list=[]; snap.forEach(d=>list.push(d.data()));
       if(!list.length){ el.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--ink-muted);padding:16px">কোনো ব্যর্থতা নেই ✓</td></tr>'; return; }
-      el.innerHTML = list.map(f=>`<tr><td>${f.phone}</td><td style="font-size:11px;max-width:200px;white-space:normal">${f.message}</td><td style="font-size:11px">${f.createdAt?.seconds?new Date(f.createdAt.seconds*1000).toLocaleString('bn-BD'):''}</td></tr>`).join('');
+      el.innerHTML = list.map(f=>`<tr><td>${esc(f.phone)}</td><td style="font-size:11px;max-width:200px;white-space:normal">${esc(f.message)}</td><td style="font-size:11px">${f.createdAt?.seconds?new Date(f.createdAt.seconds*1000).toLocaleString('bn-BD'):''}</td></tr>`).join('');
     }catch(e){ devWarn('sms failures load failed', e.message); }
   },
 
@@ -812,6 +880,46 @@ const ProductForm = {
     });
   },
 
+  /* ⚠️ আগে সব কাস্টমার সবসময় original-size ছবিই ডাউনলোড করতো, ছোট মোবাইল স্ক্রিনেও।
+     এখন main ছবি থেকেই canvas দিয়ে (কোনো বাইরের সার্ভিস ছাড়াই) দুটো অতিরিক্ত ভার্সন
+     বানানো হয়: (১) ছোট 400px সংস্করণ (srcset-এ ব্যবহারের জন্য), (২) একটা ২৪px
+     "blur placeholder" (base64 data URI, ছবি লোড হওয়ার আগে ঝাপসা প্রিভিউ দেখাতে,
+     স্লো নেটওয়ার্কে ফাঁকা বক্সের বদলে)। */
+  async generateImageVariants(mainBlob){
+    const img = new Image();
+    const url = URL.createObjectURL(mainBlob);
+    try{
+      await new Promise((resolve, reject)=>{ img.onload = resolve; img.onerror = reject; img.src = url; });
+
+      /* ⚠️ AVIF, WebP-এর চেয়েও ছোট ফাইল দেয় — যেসব ব্রাউজার/ডিভাইস থেকে এই
+         অ্যাডমিন প্যানেল ব্যবহার হচ্ছে সেখানে canvas AVIF এনকোডিং সাপোর্ট করলে
+         সেটাই ব্যবহার হবে। কিন্তু canvas.toBlob() না-সাপোর্টেড format-এর জন্য
+         চুপচাপ PNG ফেরত দেয় (স্পেসিফিকেশন অনুযায়ী) — তাই blob.type চেক করে
+         নিশ্চিত হওয়া হচ্ছে সত্যিই AVIF হয়েছে কিনা, নইলে WebP-তে ফিরে যাওয়া হয়। */
+      const makeVariant = (size, quality) => new Promise(resolve => {
+        const c = document.createElement('canvas');
+        c.width = size; c.height = size;
+        const ctx = c.getContext('2d');
+        ctx.drawImage(img, 0, 0, size, size);
+        c.toBlob(async avifBlob => {
+          if(avifBlob && avifBlob.type === 'image/avif'){ resolve(avifBlob); return; }
+          c.toBlob(webpBlob => resolve(webpBlob), 'image/webp', quality);
+        }, 'image/avif', quality);
+      });
+
+      const smallBlob = await makeVariant(400, 0.82);
+
+      const blurCanvas = document.createElement('canvas');
+      blurCanvas.width = 24; blurCanvas.height = 24;
+      blurCanvas.getContext('2d').drawImage(img, 0, 0, 24, 24);
+      const blurDataUrl = blurCanvas.toDataURL('image/jpeg', 0.5);
+
+      return { smallBlob, blurDataUrl };
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  },
+
   async onImageSelect(input){
     const file = input.files[0]; if(!file) return;
     const prev=document.getElementById('pfImgPreview');
@@ -943,16 +1051,30 @@ const ProductForm = {
     if(!FB){ msgEl.textContent='সংযোগ সমস্যা — Firebase কনফিগার নেই'; msgEl.className='form-msg err'; return; }
     const btn=document.getElementById('pfSubmitBtn'); const orig=btn.textContent; btn.textContent='সংরক্ষণ হচ্ছে...'; btn.disabled=true;
     try{
-      let imageUrl = null;
+      let imageUrl = null, imageUrlSmall = null, imageBlurDataUrl = null;
       const imgFile = document.getElementById('pfImgFile').files[0];
       if(imgFile){
         const uploadBlob = this.processedBlob || imgFile;
         const fileRef = FB.storageRef(FB.storage, `products/${Date.now()}_sealed.webp`);
         await FB.uploadBytes(fileRef, uploadBlob);
         imageUrl = await FB.getDownloadURL(fileRef);
+
+        // ছোট সংস্করণ + blur placeholder — ব্যর্থ হলেও মূল ছবি সেভ হওয়া আটকাবে না
+        try{
+          const variants = await this.generateImageVariants(uploadBlob);
+          if(variants.smallBlob){
+            const ext2 = variants.smallBlob.type === 'image/avif' ? 'avif' : 'webp';
+          const smallRef = FB.storageRef(FB.storage, `products/${Date.now()}_small.${ext2}`);
+            await FB.uploadBytes(smallRef, variants.smallBlob);
+            imageUrlSmall = await FB.getDownloadURL(smallRef);
+          }
+          imageBlurDataUrl = variants.blurDataUrl || null;
+        }catch(e){ devWarn('image variant generation failed', e.message); }
       }
       const base = {name,category,unit,price:price||salePrice,salePrice,stock,description,costPrice,extraCost,deliveryPercent,profitPercent,cod,isFlash,isFeatured,status:'active',updatedAt:FB.serverTimestamp()};
       if(imageUrl) base.imageUrl = imageUrl;
+      if(imageUrlSmall) base.imageUrlSmall = imageUrlSmall;
+      if(imageBlurDataUrl) base.imageBlurDataUrl = imageBlurDataUrl;
       if(this.mode==='add'){
         const groupId = selZones.length>1 ? `${Date.now()}` : null;
         for(const zone of selZones){
@@ -999,7 +1121,7 @@ const OrderDetail = {
     const items = order.items||[];
     itemsEl.innerHTML = items.map(item=>{
       const p = ALL_PRODUCTS.find(x=>x.id===item.productId);
-      return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line)"><div style="width:36px;height:36px;border-radius:7px;overflow:hidden;background:var(--elevated);flex-shrink:0"><img src="${p?.imageUrl||p?.img||''}" style="width:100%;height:100%;object-fit:cover"></div><div style="flex:1;min-width:0"><div style="font-size:12.5px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p?.name||item.productId}</div><div style="font-size:11px;color:var(--ink-muted)">${money(p?.salePrice||0)} × ${item.qty}</div></div><span style="color:var(--gold);font-weight:600;font-size:13px">${money((p?.salePrice||0)*item.qty)}</span></div>`;
+      return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line)"><div style="width:36px;height:36px;border-radius:7px;overflow:hidden;background:var(--elevated);flex-shrink:0"><img src="${safeImgSrc(p?.imageUrl||p?.img)}" style="width:100%;height:100%;object-fit:cover" loading="lazy" decoding="async" width="36" height="36"></div><div style="flex:1;min-width:0"><div style="font-size:12.5px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p?.name)||item.productId}</div><div style="font-size:11px;color:var(--ink-muted)">${money(p?.salePrice||0)} × ${item.qty}</div></div><span style="color:var(--gold);font-weight:600;font-size:13px">${money((p?.salePrice||0)*item.qty)}</span></div>`;
     }).join('') || '<p style="color:var(--ink-muted);font-size:13px">আইটেম তথ্য নেই</p>';
     const ship = order.shippingCost||0;
     const sub = Number(order?.total ?? order?.payableTotal ?? order?.subtotal ?? 0) - ship;
@@ -1044,7 +1166,7 @@ const OrderDetail = {
   print(){
     const o = this.current; if(!o) return;
     const w = window.open('', '_blank');
-    w.document.write(`<html><head><title>${o.orderNumber||o.id}</title><style>body{font-family:sans-serif;padding:30px;max-width:600px;margin:0 auto}h1{color:#C2185B}.row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee}table{width:100%;margin-top:14px}.tot{font-size:18px;font-weight:700;margin-top:14px}</style></head><body><h1>Golapi Shop Online</h1><p>অর্ডার: ${o.orderNumber||o.id}</p><p>তারিখ: ${o.createdAt?.seconds?new Date(o.createdAt.seconds*1000).toLocaleString('bn-BD'):'—'}</p><hr><h3>কাস্টমার</h3><p>${esc(o.customerName)}<br>${esc(o.customerPhone)}<br>${esc(o.village)}, ${esc(AREA_LABELS[o.branchZone])}<br>${esc(o.address)}</p><h3>আইটেম</h3><table><tr><th>পণ্য</th><th>মোট</th></tr>${(o.items||[]).map(it=>{const p=ALL_PRODUCTS.find(x=>x.id===it.productId);return `<tr><td>${p?.name||it.productId} × ${it.qty}</td><td>${money((p?.salePrice||0)*it.qty)}</td></tr>`}).join('')}</table><div class="tot"><div class="row"><span>মোট</span><span>${moneyNumber(o?.total ?? o?.payableTotal ?? o?.subtotal ?? 0)}</span></div></div><p style="margin-top:20px;font-size:12px;color:#888">Golapi Shop Online — নোয়াখালী</p></body></html>`);
+    w.document.write(`<html><head><title>${o.orderNumber||o.id}</title><style>body{font-family:sans-serif;padding:30px;max-width:600px;margin:0 auto}h1{color:#C2185B}.row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee}table{width:100%;margin-top:14px}.tot{font-size:18px;font-weight:700;margin-top:14px}</style></head><body><h1>Golapi Shop Online</h1><p>অর্ডার: ${o.orderNumber||o.id}</p><p>তারিখ: ${o.createdAt?.seconds?new Date(o.createdAt.seconds*1000).toLocaleString('bn-BD'):'—'}</p><hr><h3>কাস্টমার</h3><p>${esc(o.customerName)}<br>${esc(o.customerPhone)}<br>${esc(o.village)}, ${esc(AREA_LABELS[o.branchZone])}<br>${esc(o.address)}</p><h3>আইটেম</h3><table><tr><th>পণ্য</th><th>মোট</th></tr>${(o.items||[]).map(it=>{const p=ALL_PRODUCTS.find(x=>x.id===it.productId);return `<tr><td>${esc(p?.name||it.productId)} × ${it.qty}</td><td>${money((p?.salePrice||0)*it.qty)}</td></tr>`}).join('')}</table><div class="tot"><div class="row"><span>মোট</span><span>${moneyNumber(o?.total ?? o?.payableTotal ?? o?.subtotal ?? 0)}</span></div></div><p style="margin-top:20px;font-size:12px;color:#888">Golapi Shop Online — নোয়াখালী</p></body></html>`);
     w.document.close(); w.print();
   }
 };

@@ -16,6 +16,19 @@ function esc(str){
     .replace(/'/g, '&#39;');
 }
 
+/* URL → protocol allowlist + escape — কোনো প্রোডাক্ট/রিভিউ ছবির URL (Firestore
+   থেকে আসা, তাই "external data") সরাসরি src="${...}"-এ বসানোর আগে এটা ব্যবহার করা
+   উচিত। শুধু http(s)/relative path/data:image allow করে, javascript:/অন্য যেকোনো
+   protocol বাতিল করে দেয় (fallback ছবি দেখায়), আর quote-breakout আটকাতে esc() করে। */
+const GOLAPI_IMG_PLACEHOLDER = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400"><rect width="400" height="400" fill="%23FBF7F4"/><text x="200" y="210" font-size="28" text-anchor="middle" fill="%23C9BEB8">Golapi Shop</text></svg>');
+function safeImgSrc(url, fallback=GOLAPI_IMG_PLACEHOLDER){
+  if(!url) return fallback;
+  const trimmed = String(url).trim();
+  const allowedPattern = /^(https?:\/\/|\.?\/|data:image\/)/i;
+  if(!allowedPattern.test(trimmed)) return fallback;
+  return esc(trimmed);
+}
+
 function toast(msg,type='info'){
   const wrap = document.getElementById('toastWrap');
   if(!wrap) return;
@@ -181,14 +194,25 @@ document.addEventListener('load', function(e){
   }
 }, true);
 
-/* কিছু ইমেজ এই লিসেনার অ্যাটাচ হওয়ার আগেই cache থেকে সাথে সাথে লোড হয়ে যায়,
-   ফলে তাদের load ইভেন্ট মিস হয়ে যেতে পারে। সেফটির জন্য প্রতি ৪০০ms পর
-   .complete চেক করে বাকি থাকা ইমেজগুলোকেও visible করে দেওয়া হয়। */
-setInterval(function(){
-  document.querySelectorAll('img[loading="lazy"]:not(.loaded)').forEach(img=>{
-    if(img.complete && img.naturalWidth > 0) img.classList.add('loaded');
-  });
-}, 400);
+/* ⚠️ আগে setInterval দিয়ে প্রতি সেকেন্ডে পুরো DOM scan করা হতো (৩০ বার পর বন্ধ
+   হতো ঠিকই, কিন্তু তাও অকারণে polling ছিল)। এখন সম্পূর্ণ event-driven —
+   MutationObserver নতুন যোগ হওয়া <img loading="lazy"> ধরে ফেলে, আর প্রতিটার
+   জন্য সরাসরি load/error ইভেন্ট বা .complete চেক করা হয় — কোনো periodic
+   polling নেই, CPU/ব্যাটারি সম্পূর্ণ idle থাকে যতক্ষণ না নতুন ছবি আসে। */
+function markLazyImageLoaded(img){
+  if(img.complete && img.naturalWidth > 0){ img.classList.add('loaded'); return; }
+  img.addEventListener('load', () => img.classList.add('loaded'), { once: true });
+}
+document.querySelectorAll('img[loading="lazy"]:not(.loaded)').forEach(markLazyImageLoaded);
+new MutationObserver(mutations => {
+  for(const m of mutations){
+    m.addedNodes.forEach(node => {
+      if(node.nodeType !== 1) return;
+      if(node.tagName === 'IMG' && node.loading === 'lazy') markLazyImageLoaded(node);
+      else if(node.querySelectorAll) node.querySelectorAll('img[loading="lazy"]:not(.loaded)').forEach(markLazyImageLoaded);
+    });
+  }
+}).observe(document.body, { childList: true, subtree: true });
 /* ---------- Dark Mode Toggle (auto = system অনুযায়ী, ম্যানুয়াল হলে override) ---------- */
 const ThemeToggle = {
   KEY: 'golapi_theme', // মান: 'light' | 'dark' | 'auto' (ডিফল্ট auto)
@@ -217,6 +241,25 @@ const ThemeToggle = {
   }
 };
 ThemeToggle.init();
+
+/* ═══════════════════════════════════════════════════════════
+   Lazy JS Loader — admin/driver/zone-manager/payment/sms/memo/livemap
+   এই ৭টা ফাইল আগে প্রতিটা কাস্টমারের প্রথম লোডেই ডাউনলোড+parse হতো,
+   যদিও বেশিরভাগ ভিজিটর কখনো এগুলো ব্যবহারই করে না। এখন শুধু যখন সত্যিই
+   দরকার (নির্দিষ্ট পেজে গেলে) তখনই লোড হয়, একবার লোড হলে আর দ্বিতীয়বার না।
+   ═══════════════════════════════════════════════════════════ */
+window.__loadedScripts = {};
+window.loadScriptOnce = function(src){
+  if(window.__loadedScripts[src]) return window.__loadedScripts[src];
+  window.__loadedScripts[src] = new Promise((resolve, reject)=>{
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = resolve;
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+  return window.__loadedScripts[src];
+};
 
 /* ═══════════════════════════════════════════════════════════
    গ্লোবাল ইমেজ auto-retry — ধীর নেটওয়ার্কে (যেমন 2-3 KB/s) পেজ লোডের

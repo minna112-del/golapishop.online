@@ -72,8 +72,8 @@ const DriverManage = {
     const list = zoneFilter? this.drivers.filter(d=>d.branchZone===zoneFilter) : this.drivers;
     if(!list.length){ tbody.innerHTML=`<tr><td colspan="4" style="text-align:center;color:var(--ink-muted);padding:20px">এখনো কোনো ড্রাইভার নেই</td></tr>`; return; }
     tbody.innerHTML = list.map(d=> zoneFilter
-      ? `<tr><td>${d.name}</td><td>${d.phone}</td><td><span class="status-pill delivered">সক্রিয়</span></td></tr>`
-      : `<tr><td>${d.name}</td><td>${AREA_LABELS[d.branchZone]||'—'}</td><td>${d.phone}</td><td><span class="status-pill delivered">সক্রিয়</span></td></tr>`
+      ? `<tr><td>${esc(d.name)}</td><td>${esc(d.phone)}</td><td><span class="status-pill delivered">সক্রিয়</span></td></tr>`
+      : `<tr><td>${esc(d.name)}</td><td>${AREA_LABELS[d.branchZone]||'—'}</td><td>${esc(d.phone)}</td><td><span class="status-pill delivered">সক্রিয়</span></td></tr>`
     ).join('');
   },
   openAdd(presetZone=null){
@@ -171,7 +171,7 @@ const ReviewService = {
       const date = r.createdAt?.seconds ? new Date(r.createdAt.seconds*1000).toLocaleDateString('bn-BD') : '';
       return `<div style="padding:12px 0;border-bottom:1px solid var(--line)">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-          <strong style="font-size:13px;color:#fff">${r.userName||'গ্রাহক'} ${r.verified?'<span style="font-size:10.5px;color:#22c55e;font-weight:600;background:rgba(34,197,94,.1);padding:2px 7px;border-radius:8px;margin-left:6px">✓ যাচাইকৃত ক্রয়</span>':''}</strong>
+          <strong style="font-size:13px;color:#fff">${esc(r.userName)||'গ্রাহক'} ${r.verified?'<span style="font-size:10.5px;color:#22c55e;font-weight:600;background:rgba(34,197,94,.1);padding:2px 7px;border-radius:8px;margin-left:6px">✓ যাচাইকৃত ক্রয়</span>':''}</strong>
           <span style="color:var(--gold);font-size:13px">${stars}</span>
         </div>
         <p style="font-size:12.5px;color:var(--ink-soft);line-height:1.6">${r.text}</p>

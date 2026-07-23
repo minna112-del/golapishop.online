@@ -85,11 +85,11 @@ const AddressService = {
       <div class="card" style="padding:14px;margin-bottom:10px">
         <div style="display:flex;justify-content:space-between;align-items:start">
           <div style="flex:1">
-            <div style="font-weight:600;color:#fff;font-size:14px;margin-bottom:4px">📍 ${a.label}</div>
+            <div style="font-weight:600;color:#fff;font-size:14px;margin-bottom:4px">📍 ${esc(a.label)}</div>
             <div style="font-size:12.5px;color:var(--ink-muted);line-height:1.5">
-              ${a.village ? a.village + ', ' : ''}${a.union ? a.union + ', ' : ''}${a.upazila || ''}<br>
-              ${a.address}<br>
-              ${a.phone ? '📞 ' + a.phone : ''}
+              ${a.village ? esc(a.village) + ', ' : ''}${a.union ? esc(a.union) + ', ' : ''}${esc(a.upazila) || ''}<br>
+              ${esc(a.address)}<br>
+              ${a.phone ? '📞 ' + esc(a.phone) : ''}
             </div>
           </div>
           <button onclick="AddressService.deleteAddress('${a.id}')" style="background:none;border:none;color:#e91e63;font-size:18px;cursor:pointer;padding:4px">🗑️</button>
@@ -231,7 +231,7 @@ const OrderTracker = {
             <span style="font-size:24px">🛵</span>
             <div>
               <div style="font-size:12px;color:var(--ink-muted)">ডেলিভারি ড্রাইভার</div>
-              <div style="font-size:14px;color:#fff;font-weight:600">${order.driverName}</div>
+              <div style="font-size:14px;color:#fff;font-weight:600">${esc(order.driverName)}</div>
             </div>
           </div>
         </div>` : ''}

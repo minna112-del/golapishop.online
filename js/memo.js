@@ -2,6 +2,23 @@
 const BazarMemo = {
   typeLabels:{weekly:'সাপ্তাহিক মুদি বাজার',monthly:'মাসিক মুদি বাজার',wedding:'বিয়ের বাজার',ramadan:'রমজানের বাজার',qurbani:'কুরবানির বাজার',other:'অন্যান্য বাজার'},
 
+  // ⚠️ আগে পুরো অর্ডার-অবজেক্ট (নাম/ঠিকানা/নোট সহ) JSON.stringify করে সরাসরি
+  // onclick="..." HTML attribute-এ বসানো হতো — এটা fragile ও ঝুঁকিপূর্ণ প্যাটার্ন
+  // (attribute-escaping ও embedded-JS-parsing দুই স্তরেই ভুল হওয়ার সুযোগ ছিল)।
+  // এখন অর্ডার-অবজেক্ট এই registry-তে রেখে, শুধু ছোট্ট একটা ID দিয়ে reference
+  // করা হয় — কোনো ইউজার-ডেটা কখনো HTML attribute-এ বসেই না।
+  _registry:{},
+  register(order){
+    const key = order.id || order.orderNumber || String(Date.now());
+    this._registry[key] = order;
+    return key;
+  },
+  openById(key){
+    const order = this._registry[key];
+    if(!order){ toast('অর্ডার তথ্য পাওয়া যায়নি','error'); return; }
+    this.open(order);
+  },
+
   buildHTML(order){
     const items = (order.bazarList||'').split('\n').map(l=>l.trim()).filter(Boolean);
     const priced = order.bazarItems && order.bazarItems.length ? order.bazarItems : null;

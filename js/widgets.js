@@ -231,7 +231,7 @@ const Reviews = {
         const p = ALL_PRODUCTS.find(x=>x.id===r.productId);
         return `<div class="card-box" style="margin-bottom:10px">
           <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px">
-            <div><strong style="font-size:13px;color:#fff">${r.userName||'গ্রাহক'}</strong>${p?` <span style="font-size:11px;color:var(--ink-muted)">— ${p.name}</span>`:''}</div>
+            <div><strong style="font-size:13px;color:#fff">${esc(r.userName)||'গ্রাহক'}</strong>${p?` <span style="font-size:11px;color:var(--ink-muted)">— ${p.name}</span>`:''}</div>
             <span style="color:var(--gold);font-size:14px">${stars}</span>
           </div>
           <p style="font-size:13px;color:var(--ink-soft);line-height:1.6">${r.text}</p>

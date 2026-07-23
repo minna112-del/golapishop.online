@@ -6,29 +6,62 @@
     { url: 'pages/topbar.html',       slot: 'slot-topbar' },
     { url: 'pages/header.html',       slot: 'slot-header' },
     { url: 'pages/cart-drawer.html',  slot: 'slot-cart-drawer' },
-    { url: 'pages/footer.html',       slot: 'slot-footer' },
     { url: 'pages/mobnav.html',       slot: 'slot-mobnav' },
     { url: 'pages/chat-widget.html',  slot: 'slot-chat' },
-    { url: 'pages/modals.html',       slot: 'slot-modals' },
     { url: 'pages/toast.html',        slot: 'slot-toast' }
   ];
 
-  /* সব কাস্টমার প্রথম ভিজটেই এগুলো দেখতে পারে — সাথে সাথে লড হবে */
-  const pages = ['home','listing','product','checkout','myorders','wishlist','account','medical','custom-bazar','order-success','account-addresses','about-app','privacy-info','terms','contact'];
+  /* ⚠️ footer.html (~৩২KB) ও modals.html (~৩২KB) আগে blocking partials-এর
+     অংশ ছিল — home page দেখানোর আগেই এই ৬৪KB লোড+parse হতে হতো, যদিও এগুলো
+     নিচের দিকে/প্রয়োজন হলে দেখা যায়। এখন এগুলো pages-ready-এর পরে, নীরবে
+     ব্যাকগ্রাউন্ডে লোড হয় — first paint আটকায় না। */
+  const deferredPartials = [
+    { url: 'pages/footer.html', slot: 'slot-footer' },
+    { url: 'pages/modals.html', slot: 'slot-modals' }
+  ];
 
-  /* স্টাফ-অনলি পেজ — শুধু প্রয়োজন হলে (Router.go কল হলে) লোড হবে */
-  window.__lazyPages = ['admin-dash','driver','zone-manager'];
+  /* শুধু browsing-এর জন্য একদম প্রথমেই দরকার — বাকি সব পেজ এখন lazy */
+  const pages = ['home','listing','product'];
+
+  /* স্টাফ-অনলি + এখন থেকে বেশিরভাগ customer পেজও — শুধু প্রয়োজন হলে (Router.go কল হলে) লোড হবে */
+  window.__lazyPages = ['admin-dash','driver','zone-manager','checkout','myorders','wishlist','account','medical','custom-bazar','order-success','account-addresses','about-app','privacy-info','terms','contact'];
   window.__loadedLazyPages = {};
 
   let pending = partials.length + pages.length;
   const container = document.getElementById('pageContainer');
 
-  function done(){
-    pending--;
-    if(pending > 0) return;
+  let donePagesReadyFired = false;
+  const maxLoaderTimeout = setTimeout(function(){
+    if(donePagesReadyFired) return;
+    donePagesReadyFired = true;
     const loader = document.getElementById('pageLoader');
     if(loader) loader.style.display = 'none';
     document.dispatchEvent(new Event('pages-ready'));
+  }, 10000);
+
+  function done(){
+    pending--;
+    if(pending > 0) return;
+    clearTimeout(maxLoaderTimeout);
+    if(donePagesReadyFired) return;
+    donePagesReadyFired = true;
+    const loader = document.getElementById('pageLoader');
+    if(loader) loader.style.display = 'none';
+    document.dispatchEvent(new Event('pages-ready'));
+    // মূল পেজ দেখানোর পরে, নীরবে footer/modals লোড করা (blocking না, pending counter-এর সাথে জড়িত না)
+    deferredPartials.forEach(function(p){
+      const slot = document.getElementById(p.slot);
+      if(!slot) return;
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', p.url, true);
+    xhr.timeout = 15000;
+      xhr.onload = function(){
+        if(xhr.status === 200 && isSafeFragment(xhr.responseText)){
+          slot.innerHTML = xhr.responseText;
+        }
+      };
+      xhr.send();
+    });
   }
 
   function isSafeFragment(text){
@@ -38,6 +71,7 @@
   function fetchInto(url, targetEl){
     const xhr = new XMLHttpRequest();
     xhr.open('GET', url, true);
+    xhr.timeout = 15000;
     xhr.onload = function(){
       if(xhr.status === 200 && targetEl){
         if(isSafeFragment(xhr.responseText)){
@@ -49,6 +83,7 @@
       done();
     };
     xhr.onerror = function(){ done(); };
+    xhr.ontimeout = function(){ done(); };
     xhr.send();
   }
 
@@ -61,6 +96,7 @@
   pages.forEach(function(name){
     const xhr = new XMLHttpRequest();
     xhr.open('GET', 'pages/' + name + '.html', true);
+    xhr.timeout = 15000;
     xhr.onload = function(){
       if(xhr.status === 200 && container && isSafeFragment(xhr.responseText)){
         const wrapper = document.createElement('div');
@@ -72,6 +108,7 @@
       done();
     };
     xhr.onerror = function(){ done(); };
+    xhr.ontimeout = function(){ done(); };
     xhr.send();
   });
 
@@ -80,6 +117,7 @@
     if(window.__loadedLazyPages[name]){ callback(); return; }
     const xhr = new XMLHttpRequest();
     xhr.open('GET', 'pages/' + name + '.html', true);
+    xhr.timeout = 15000;
     xhr.onload = function(){
       if(xhr.status === 200 && container && isSafeFragment(xhr.responseText)){
         const wrapper = document.createElement('div');
@@ -92,6 +130,7 @@
       callback();
     };
     xhr.onerror = function(){ callback(); };
+    xhr.ontimeout = function(){ callback(); };
     xhr.send();
   };
 })();

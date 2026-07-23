@@ -26,7 +26,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 
   try{
     const app = initializeApp(firebaseConfig);
-    analyticsIsSupported().then(ok => { if (ok) getAnalytics(app); }).catch(()=>{});
+    setTimeout(() => { analyticsIsSupported().then(ok => { if (ok) getAnalytics(app); }).catch(()=>{}); }, 5000); // Analytics আর critical path-এ নেই — ৫সে পরে নীরবে চালু হয়
     const auth = getAuth(app);
     const db = getFirestore(app);
     const storage = getStorage(app);
@@ -50,10 +50,11 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
     try{
       const supported = await messagingIsSupported();
       if(!supported || !('Notification' in window)) return;
-      if(Notification.permission === 'default'){
-        const perm = await Notification.requestPermission();
-        if(perm !== 'granted') return;
-      }
+      // ⚠️ আগে login হলেই স্বয়ংক্রিয়ভাবে notification permission popup আসতো —
+      // অনেক mobile browser এটা block করে বা বিরক্তিকর মনে করে। এখন শুধু
+      // permission আগে থেকেই 'granted' থাকলে (আগে কখনো manually অনুমতি দেওয়া
+      // হয়েছিল) নীরবে token রেজিস্টার হয় — নতুন করে prompt কখনো auto-দেখানো হয় না,
+      // সেটা এখন শুধু "নোটিফিকেশন চালু করুন" বাটনে ট্যাপ করলেই হয় (NotifHelper)।
       if(Notification.permission !== 'granted') return;
       const messaging = getMessaging(app);
       const swReg = await navigator.serviceWorker.getRegistration('/');
@@ -69,22 +70,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
     if(user) registerPushToken(user.uid);
   });
   
-  // ===== DEBUG START (এখন console-এ না, সরাসরি স্ক্রিনে দেখাবে) =====
-window.addEventListener("firebase-ready", () => {
-
-  if (!window.__fb) {
-    return;
-  }
-
-  const FB = window.__fb;
-
-  FB.getDocs(FB.collection(FB.db, "products"))
-    .then((snap) => {
-    })
-    .catch((err) => {
-    });
-});
-// ===== DEBUG END =====
   }catch(initErr){
     console.error('Firebase initialization failed:', initErr);
   }

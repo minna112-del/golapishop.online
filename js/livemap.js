@@ -58,7 +58,7 @@ const LiveMap = {
 
     this.instances[orderId] = { map, marker, lastPos: {lat,lng} };
 
-    if(window.FB){
+    if(window.__fb){
       const unsub = FB.onSnapshot(FB.doc(FB.db,'orders',orderId), snap=>{
         if(!snap.exists()) return;
         const d = snap.data();

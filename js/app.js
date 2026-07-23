@@ -1,6 +1,23 @@
 let FB = null;
 let firebaseStarted = false;
 
+/* ⚠️ এতদিন যত রিট্রাই/fallback লজিক বানানো হয়েছে (onSnapshot timeout → getDocs,
+   getDocs ব্যর্থ হলে আবার চেষ্টা) — এগুলো সবই 'firebase-ready' ইভেন্ট ফায়ার হওয়ার
+   পরের ধাপ। কিন্তু যদি Firebase SDK নিজেই (gstatic.com থেকে import) কোনো কারণে
+   (নেটওয়ার্ক ব্লক, খুবই ধীর গতি, CDN সমস্যা) কখনো লোড না হয়, 'firebase-ready'
+   কখনো fire-ই হয় না — আর নিচের কোনো retry logic-ই কখনো চালু হওয়ার সুযোগ পায় না,
+   ব্যবহারকারী স্থায়ীভাবে skeleton দেখতে থাকে কোনো ব্যাখ্যা বা উপায় ছাড়াই।
+   এই watchdog সেই সবচেয়ে-প্রথম ধাপটাই পাহারা দেয়। */
+setTimeout(() => {
+  if (!window.__fb && !firebaseStarted) {
+    const grid = document.querySelector('#flashRow, #bestRow, #newGrid');
+    const msg = document.createElement('div');
+    msg.style.cssText = 'position:fixed;bottom:90px;left:16px;right:16px;background:#DC2626;color:#fff;padding:14px 16px;border-radius:12px;font-size:13px;z-index:9998;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.3)';
+    msg.innerHTML = '⚠ সংযোগ স্থাপন করতে সমস্যা হচ্ছে।<br><button style="margin-top:8px;background:#fff;color:#DC2626;border:none;padding:8px 20px;border-radius:8px;font-weight:600" onclick="window.location.reload()">পুনরায় লোড করুন</button>';
+    document.body.appendChild(msg);
+  }
+}, 15000);
+
 function startFirebaseFeatures() {
   if (firebaseStarted || !window.__fb) return;
 
@@ -34,10 +51,6 @@ window.addEventListener(
 /*
  * Firebase module আগে ready হয়ে গেলে সরাসরি শুরু করবে।
  */
-if (window.__fb) {
-  startFirebaseFeatures();
-}
-
 if (window.__fb) {
   startFirebaseFeatures();
 }
@@ -112,8 +125,13 @@ function initApp(){
           updateViaCache: 'none'
         });
 
-        // প্রতিবার page load-এ Service Worker-এর নতুন version পরীক্ষা করুন।
-        await registration.update();
+        // ⚠️ আগে প্রতিটা page load-এই registration.update() চলতো (বারবার
+        // network request)। এখন সেশনে একবারই যথেষ্ট — sessionStorage দিয়ে
+        // ট্র্যাক করা হয়, ট্যাব বন্ধ করে আবার খুললে (নতুন সেশন) আবার চেক হবে।
+        if (!sessionStorage.getItem('golapi_sw_update_checked')) {
+          sessionStorage.setItem('golapi_sw_update_checked', '1');
+          await registration.update();
+        }
 
         // নতুন worker control নিলে একবার reload করে latest files দেখান।
         navigator.serviceWorker.addEventListener('controllerchange', () => {

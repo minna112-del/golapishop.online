@@ -413,6 +413,20 @@ const Router = {
   },
 
   async go(page, params = {}, opts = {}) {
+    /* ⚠️ admin/driver/zone-manager/payment/sms/memo/livemap আগে সবার জন্যই
+       প্রথম লোডে ডাউনলোড হতো। এখন শুধু সংশ্লিষ্ট পেজে গেলেই লোড হয়। */
+    const scriptMap = {
+      'admin-dash': ['./js/admin.js'],
+      'driver': ['./js/driver.js', './js/livemap.js'],
+      'zone-manager': ['./js/zone-manager.js'],
+      'checkout': ['./js/checkout.js', './js/payment.js', './js/sms.js'],
+      'custom-bazar': ['./js/custom-bazar.js', './js/memo.js'],
+      'myorders': ['./js/memo.js', './js/livemap.js']
+    };
+    if(scriptMap[page]){
+      await Promise.all(scriptMap[page].map(src => window.loadScriptOnce(src).catch(()=>{})));
+    }
+
     if (
       page === 'admin-dash' &&
       !OwnerAuth.isUnlocked()

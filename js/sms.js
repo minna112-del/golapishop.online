@@ -62,7 +62,7 @@ const SMSGateway = {
 
   /* ── Firestore-এ SMS লগ রাখা (সফল/ব্যর্থ দুটোই) ── */
   async _log(phone, msg, gateway, result, attempt){
-    if(!window.FB) return;
+    if(!window.__fb) return;
     try{
       await FB.addDoc(FB.collection(FB.db,'sms_logs'), {
         phone, message: msg.slice(0,300), gateway, success: !!result.ok,
@@ -104,7 +104,7 @@ const SMSGateway = {
 
   /* ── ৩ বার চেষ্টার পরেও ব্যর্থ হলে admin-এর জন্য visible failure log ── */
   async _logPermanentFailure(phone, msg){
-    if(!window.FB) return;
+    if(!window.__fb) return;
     try{
       await FB.addDoc(FB.collection(FB.db,'sms_failures'), {
         phone, message: msg.slice(0,300), createdAt: FB.serverTimestamp(), resolved:false
