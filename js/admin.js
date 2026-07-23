@@ -62,7 +62,7 @@ const AdminDash = {
     if(alertEl) alertEl.style.display='block';
     if(listEl) listEl.innerHTML = low.map(p=>`
       <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(251,191,36,.1);font-size:12.5px">
-        <span style="color:#fff">${esc(p.name)}</span>
+        <span style="color:var(--ink)">${esc(p.name)}</span>
         <span style="${p.stock===0?'color:#f87171':'color:#fbbf24'};font-weight:600">${p.stock===0?'স্টক আউট':p.stock+' টি বাকি'}
           <a href="#" onclick="event.preventDefault();ProductForm.openEdit('${p.id}')" style="margin-left:8px;font-size:11px;color:var(--gold)">আপডেট করুন</a>
         </span>
@@ -109,7 +109,7 @@ const AdminDash = {
         <td style="color:var(--gold)">${money(this.orderTotal(o))}</td>
         <td><span class="status-pill ${s.cls}">${s.label}</span></td>
         <td><a href="#" onclick="event.preventDefault();AdminDash.openOrderDetail('${o.id}')" style="color:var(--gold);font-size:11px;display:block;margin-bottom:4px">বিস্তারিত</a>
-          <select onchange="AdminDash.quickStatus('${o.id}',this.value)" style="padding:3px 6px;border-radius:6px;background:var(--bg2);border:1px solid var(--line);color:#fff;font-size:11px">
+          <select onchange="AdminDash.quickStatus('${o.id}',this.value)" style="padding:3px 6px;border-radius:6px;background:var(--bg2);border:1px solid var(--line);color:var(--ink);font-size:11px">
             ${Object.entries(ORDER_STATUS).map(([k,v])=>`<option value="${k}" ${o.status===k?'selected':''}>${v.label}</option>`).join('')}
           </select>
         </td>
@@ -126,7 +126,7 @@ const AdminDash = {
     tbody.innerHTML = list.map(p=>`<tr style="${p.stock===0?'opacity:.6':''}">
       <td><input type="checkbox" class="prodCheck" value="${p.id}" ${this.selectedProducts.has(p.id)?'checked':''} onchange="AdminDash.toggleProductSelect('${p.id}',this.checked)" aria-label="${esc(p.name)} নির্বাচন"></td>
       <td><div style="width:38px;height:38px;border-radius:8px;overflow:hidden;background:var(--elevated)"><img src="${safeImgSrc(p.imageUrl||p.img)}" style="width:100%;height:100%;object-fit:cover" loading="lazy" decoding="async" width="38" height="38"></div></td>
-      <td><div style="font-size:12.5px;color:#fff;max-width:160px">${esc(p.name)}</div><div style="font-size:10.5px;color:var(--ink-muted)">${CATEGORIES.find(c=>c.id===p.category)?.label||''}</div></td>
+      <td><div style="font-size:12.5px;color:var(--ink);max-width:160px">${esc(p.name)}</div><div style="font-size:10.5px;color:var(--ink-muted)">${CATEGORIES.find(c=>c.id===p.category)?.label||''}</div></td>
       <td>${AREA_LABELS[p.zone]||'—'}</td>
       <td><div style="color:var(--gold);font-weight:600">${money(p.salePrice)}</div>${p.price>p.salePrice?`<div style="font-size:10px;color:var(--ink-dim);text-decoration:line-through">${money(p.price)}</div>`:''}</td>
       <td><input type="number" value="${p.stock}" min="0" onchange="AdminDash.quickStockUpdate('${p.id}',this.value)" style="width:60px;padding:4px 6px;border-radius:6px;background:var(--bg2);border:1px solid ${p.stock<=5?'rgba(239,68,68,.4)':'var(--line)'};color:${p.stock===0?'#f87171':p.stock<=5?'#fbbf24':'#fff'};font-size:12px;text-align:center"></td>
@@ -201,10 +201,10 @@ const AdminDash = {
         <td>${esc(o.customerName)||'—'}</td>
         <td>${esc(o.customerPhone)||'—'}</td>
         <td style="color:var(--gold)">${money(this.orderTotal(o))}</td>
-        <td><select onchange="AdminDash.assignDriver('${o.id}',this.value)" style="padding:3px 6px;border-radius:6px;background:var(--bg2);border:1px solid var(--line);color:#fff;font-size:11px;max-width:120px"><option value="">বেছে নিন</option>${opts}</select></td>
+        <td><select onchange="AdminDash.assignDriver('${o.id}',this.value)" style="padding:3px 6px;border-radius:6px;background:var(--bg2);border:1px solid var(--line);color:var(--ink);font-size:11px;max-width:120px"><option value="">বেছে নিন</option>${opts}</select></td>
         <td><span class="status-pill ${s.cls}">${s.label}</span></td>
         <td><a href="#" onclick="event.preventDefault();AdminDash.openOrderDetail('${o.id}')" style="color:var(--gold);font-size:11px;display:block;margin-bottom:4px">বিস্তারিত</a>
-          <select onchange="AdminDash.quickStatus('${o.id}',this.value)" style="padding:3px 6px;border-radius:6px;background:var(--bg2);border:1px solid var(--line);color:#fff;font-size:11px">
+          <select onchange="AdminDash.quickStatus('${o.id}',this.value)" style="padding:3px 6px;border-radius:6px;background:var(--bg2);border:1px solid var(--line);color:var(--ink);font-size:11px">
             ${Object.entries(ORDER_STATUS).map(([k,v])=>`<option value="${k}" ${o.status===k?'selected':''}>${v.label}</option>`).join('')}
           </select>
         </td>
@@ -329,7 +329,7 @@ const AdminDash = {
       const sorted = Object.entries(productSales).sort((a,b)=>b[1]-a[1]).slice(0,5);
       tpEl.innerHTML = sorted.length ? sorted.map(([id,qty],i)=>{
         const p = ALL_PRODUCTS.find(x=>x.id===id);
-        return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)"><span style="width:20px;text-align:center;font-weight:700;color:var(--gold);font-size:13px">${i+1}</span><div style="width:32px;height:32px;border-radius:6px;overflow:hidden"><img src="${safeImgSrc(p?.imageUrl||p?.img)}" style="width:100%;height:100%;object-fit:cover" loading="lazy" decoding="async" width="32" height="32"></div><div style="flex:1;min-width:0"><div style="font-size:12.5px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p?.name)||id}</div></div><span style="font-size:12px;color:var(--ink-muted)">${qty} বিক্রি</span></div>`;
+        return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)"><span style="width:20px;text-align:center;font-weight:700;color:var(--gold);font-size:13px">${i+1}</span><div style="width:32px;height:32px;border-radius:6px;overflow:hidden"><img src="${safeImgSrc(p?.imageUrl||p?.img)}" style="width:100%;height:100%;object-fit:cover" loading="lazy" decoding="async" width="32" height="32"></div><div style="flex:1;min-width:0"><div style="font-size:12.5px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p?.name)||id}</div></div><span style="font-size:12px;color:var(--ink-muted)">${qty} বিক্রি</span></div>`;
       }).join('') : '<p style="color:var(--ink-muted);font-size:13px">তথ্য নেই</p>';
     }
   },
@@ -445,7 +445,7 @@ const AdminDash = {
     if(!list.length){ el.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--ink-muted);padding:16px">তথ্য নেই</td></tr>'; return; }
     el.innerHTML = list.map(d=>{
       const rate = d.total>0?Math.round(d.delivered/d.total*100):0;
-      return `<tr><td style="color:#fff;font-weight:600">${d.name}</td><td style="text-align:center">${d.total}</td><td style="text-align:center;color:#22c55e">${d.delivered}</td><td style="text-align:center"><div style="display:flex;align-items:center;gap:6px"><div style="flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,.06)"><div style="height:100%;width:${rate}%;border-radius:3px;background:${rate>=80?'#22c55e':rate>=50?'#fbbf24':'#f87171'}"></div></div><span style="font-size:11px;color:var(--ink-muted)">${rate}%</span></div></td><td style="color:var(--gold)">${money(d.revenue)}</td></tr>`;
+      return `<tr><td style="color:var(--ink);font-weight:600">${d.name}</td><td style="text-align:center">${d.total}</td><td style="text-align:center;color:#22c55e">${d.delivered}</td><td style="text-align:center"><div style="display:flex;align-items:center;gap:6px"><div style="flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,.06)"><div style="height:100%;width:${rate}%;border-radius:3px;background:${rate>=80?'#22c55e':rate>=50?'#fbbf24':'#f87171'}"></div></div><span style="font-size:11px;color:var(--ink-muted)">${rate}%</span></div></td><td style="color:var(--gold)">${money(d.revenue)}</td></tr>`;
     }).join('');
   },
 
@@ -599,8 +599,8 @@ const AdminDash = {
         ${zones.map(z=>`
           <div style="display:grid;grid-template-columns:1.4fr .8fr .8fr;gap:8px;align-items:center;margin-bottom:6px">
             <span style="font-size:12px;color:var(--ink-soft)">${z.label}</span>
-            <input type="number" id="zn_${z.id}_radius" value="${z.radiusKm}" min="0" step="0.5" placeholder="কিমি" style="padding:7px 9px;border-radius:8px;background:var(--bg2);border:1px solid var(--line);color:#fff;font-size:12px">
-            <input type="number" id="zn_${z.id}_fee" value="${z.fee}" min="0" placeholder="৳ চার্জ" style="padding:7px 9px;border-radius:8px;background:var(--bg2);border:1px solid var(--line);color:#fff;font-size:12px">
+            <input type="number" id="zn_${z.id}_radius" value="${z.radiusKm}" min="0" step="0.5" placeholder="কিমি" style="padding:7px 9px;border-radius:8px;background:var(--bg2);border:1px solid var(--line);color:var(--ink);font-size:12px">
+            <input type="number" id="zn_${z.id}_fee" value="${z.fee}" min="0" placeholder="৳ চার্জ" style="padding:7px 9px;border-radius:8px;background:var(--bg2);border:1px solid var(--line);color:var(--ink);font-size:12px">
           </div>`).join('')}
       </div>`;
     }).join('') + `<div style="font-size:10.5px;color:var(--ink-dim);display:grid;grid-template-columns:1.4fr .8fr .8fr;gap:8px;margin-top:-4px"><span></span><span>radius (কিমি)</span><span>চার্জ (৳)</span></div>`;
@@ -788,7 +788,7 @@ const ProductForm = {
     mobile: ['মোবাইল চার্জার','ইয়ারফোন','হেডফোন','পাওয়ার ব্যাংক','স্ক্রিন প্রটেক্টর','মোবাইল কভার','সিম','মেমোরি কার্ড'],
     electronics: ['ইলেকট্রনিক্স','ফ্যান','লাইট','বাল্ব','মাল্টিপ্লাগ','এক্সটেনশন','চার্জার লাইট','আয়রন'],
     watch: ['ঘড়ি','সেল ব্যাটারি','wristwatch'],
-    personal_care: ['শ্যাম্পু','সাবান','পারফিউম','বডি স্প্রে','টুথপেস্ট','টুথব্রাশ','ক্রিম','লোশন','শেভিং'],
+    personal_care: ['শ্যাম্পু','সাবান','পারফিউম','বডি স্প্রে','টুথপেস্ট','টুথব্রাশ','ক্রিম','লোশন','শেভিং','স্যানিটারি ন্যাপকিন','স্যানিটারি প্যাড','ন্যাপকিন','সেনোরা','হুইস্পার','ফ্রেশ ন্যাপকিন','চুলের তেল','হেয়ার অয়েল'],
     cosmetics: ['লিপস্টিক','ফাউন্ডেশন','মেকআপ','কাজল','কসমেটিক্স','নেইল পলিশ'],
     clothing: ['শাড়ি','পাঞ্জাবি','শার্ট','প্যান্ট','থ্রি পিস','জামা','লুঙ্গি','গেঞ্জি'],
     footwear: ['জুতা','স্যান্ডেল','স্লিপার','সু'],
@@ -810,12 +810,22 @@ const ProductForm = {
   guessCategory(name){
     if(!name || !name.trim()) return null;
     const n = name.trim().toLowerCase();
+    // ⚠️ আগে যে category dictionary-তে আগে ছিল (object-এর insertion order) সেটার
+    // যেকোনো keyword match পেলেই সাথে সাথে সেটাই রিটার্ন হতো — ফলে একটা ছোট/সাধারণ
+    // keyword অন্য কোনো কম-প্রাসঙ্গিক category-তে আগে থেকে থাকলে ভুল category
+    // বেছে নিতো। এখন সব category/keyword-এর মধ্যে থেকে সবচেয়ে লম্বা (সবচেয়ে
+    // নির্দিষ্ট/specific) matching keyword-টাই জেতে, কোন category আগে declare
+    // হয়েছে সেটা আর গুরুত্বপূর্ণ না।
+    let best = null, bestLen = 0;
     for(const [catId, keywords] of Object.entries(this.CATEGORY_KEYWORDS)){
       for(const kw of keywords){
-        if(n.includes(kw.toLowerCase())) return catId;
+        const kwLower = kw.toLowerCase();
+        if(n.includes(kwLower) && kwLower.length > bestLen){
+          best = catId; bestLen = kwLower.length;
+        }
       }
     }
-    return null;
+    return best;
   },
 
   autoDetectCategory(name){
@@ -950,13 +960,18 @@ const ProductForm = {
   },
   async generateDesc(){
     const name = document.getElementById('pfName').value.trim();
-    const cat = document.getElementById('pfCategory').value;
+    const catId = document.getElementById('pfCategory').value;
+    // ⚠️ আগে raw category ID (যেমন 'rice_pulses', 'gas', 'watch') সরাসরি AI
+    // prompt-এ পাঠানো হতো — এটা মানুষের ভাষায় না হওয়ায় AI মাঝেমধ্যে ভুল/অপ্রাসঙ্গিক
+    // প্রসঙ্গ ধরে নিতো। এখন CATEGORIES তালিকা থেকে আসল বাংলা label বের করে পাঠানো হয়।
+    const catObj = (typeof CATEGORIES !== 'undefined') ? CATEGORIES.find(c=>c.id===catId) : null;
+    const cat = catObj ? catObj.label : catId;
     const loadEl = document.getElementById('pfDescLoading');
     const descEl = document.getElementById('pfDescription');
     if(loadEl) loadEl.style.display = 'block';
     const aiBtn=document.getElementById('pfDescAiBtn'); if(aiBtn) aiBtn.style.display = 'none';
     try{
-      const userMsg = `তুমি একটি বাংলাদেশি ই-কমার্স দোকানের জন্য পণ্যের বিবরণ লিখবে। পণ্যের নাম: "${name || 'পণ্য'}", ক্যাটাগরি: "${cat}". সংক্ষিপ্ত, আকর্ষণীয় বাংলা বিবরণ লিখো (৩-৫ লাইন)।`;
+      const userMsg = `তুমি একটি বাংলাদেশি ই-কমার্স দোকানের জন্য পণ্যের বিবরণ লিখবে। পণ্যের নাম: "${name || 'পণ্য'}", ক্যাটাগরি: "${cat}". সংক্ষিপ্ত, আকর্ষণীয় বাংলা বিবরণ লিখো (৩-৫ লাইন)। শুধু বিবরণের টেক্সট-টুকুই ফেরত দাও — কোনো ভূমিকা, ব্যাখ্যা, quotation mark, বা markdown formatting (** বা #) ছাড়া।`;
       /* ⚠️ Anthropic API browser থেকে সরাসরি কল করা যায় না (CORS + API key ব্রাউজারে expose হয়ে যায়) —
          তাই ChatWidget-এর মতোই একই Cloudflare Worker proxy ব্যবহার করা হচ্ছে, যেটা ইতিমধ্যে কাজ করছে */
       const res = await fetch(ChatWidget.workerUrl,{
@@ -964,7 +979,15 @@ const ProductForm = {
         body:JSON.stringify({model:'claude-sonnet-4-6', max_tokens:300, messages:[{role:'user', content:userMsg}]})
       });
       const data = await res.json();
-      const text = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+      let text = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+      // ⚠️ আগে AI-এর raw output হুবহু বসিয়ে দেওয়া হতো — কখনো কখনো তার শুরুতে
+      // "এখানে বিবরণ:" জাতীয় ভূমিকা, বা **markdown** bold, বা চারপাশে quotation
+      // mark থেকে যেতো। এখন সেগুলো ছেঁটে ফেলা হয়, শুধু আসল বিবরণটুকু সেভ হয়।
+      text = text
+        .replace(/^\s*(এখানে|নিশ্চয়ই|অবশ্যই)[^:।\n]{0,40}[:।]\s*/i, '')
+        .replace(/\*\*/g, '')
+        .replace(/^["'"]+|["'"]+$/g, '')
+        .trim();
       if(text && descEl) descEl.value = text;
       else toast('বিবরণ তৈরি হয়নি','error');
     }catch(e){ toast('AI সংযোগ সমস্যা','error'); devWarn('generateDesc failed', e.message); }
@@ -982,7 +1005,7 @@ const ProductForm = {
     const ai=document.getElementById('pfDescAiBtn'); if(ai) ai.style.display='none';
     const ec=document.getElementById('pfExtraCost'); if(ec) ec.value='0';
     const dp=document.getElementById('pfDeliveryPercent'); if(dp) dp.value='0';
-    const pp=document.getElementById('pfProfitPercent'); if(pp) pp.value='20';
+    const pp=document.getElementById('pfProfitPercent'); if(pp) pp.value='5';
     const bd=document.getElementById('pfBreakdown'); if(bd) bd.textContent='৳0';
     const zs=document.getElementById('pfZoneSadar'); if(zs){ zs.disabled=false; zs.checked=true; }
     const zb=document.getElementById('pfZoneBegumganj'); if(zb){ zb.disabled=false; zb.checked=false; }
@@ -997,12 +1020,14 @@ const ProductForm = {
   recalc(){
     const cost=Number(document.getElementById('pfCostPrice')?.value)||0;
     const extra=Number(document.getElementById('pfExtraCost')?.value)||0;
-    const delp=Number(document.getElementById('pfDeliveryPercent')?.value)||0;
     const profp=Number(document.getElementById('pfProfitPercent')?.value)||0;
     const base=cost+extra;
-    const afterDel = base + base*delp/100;
-    const final = Math.round(afterDel + afterDel*profp/100);
-    const bd=document.getElementById('pfBreakdown'); if(bd) bd.textContent = `৳${cost}+৳${extra} → +${delp}% → +${profp}% = ৳${final}`;
+    // ⚠️ আগে এখানে deliveryPercent-ও যোগ হতো, ফলে প্রোডাক্টের দামের ভেতরেই
+    // ডেলিভারি খরচ ঢুকে যেতো — অথচ checkout-এ ডেলিভারি চার্জ আলাদাভাবে নেওয়া
+    // হয়, তাই কাস্টমার কার্যত দুইবার ডেলিভারি চার্জ দিতো। এখন শুধু cost+extra
+    // -এর উপর profit % যোগ হয়ে দাম হিসাব হয়।
+    const final = Math.round(base + base*profp/100);
+    const bd=document.getElementById('pfBreakdown'); if(bd) bd.textContent = `৳${cost}+৳${extra} → +${profp}% লাভ = ৳${final}`;
     if(cost>0){
       const sp=document.getElementById('pfSalePrice'); if(sp) sp.value = final;
       const pf=document.getElementById('pfPrice'); if(pf && !pf.value) pf.value = Math.round(final*1.1);
@@ -1024,10 +1049,10 @@ const ProductForm = {
     const s=document.getElementById('pfStock'); if(s) s.value=p.stock;
     const cp=document.getElementById('pfCostPrice'); if(cp) cp.value=p.costPrice||'';
     const ec=document.getElementById('pfExtraCost'); if(ec) ec.value=p.extraCost||0;
-    const dp=document.getElementById('pfDeliveryPercent'); if(dp) dp.value=p.deliveryPercent||0;
-    const pp=document.getElementById('pfProfitPercent'); if(pp) pp.value=p.profitPercent||20;
+    const dp=document.getElementById('pfDeliveryPercent'); if(dp) dp.value=p.deliveryPercent||0; // hidden legacy field, no longer editable/shown
+    const pp=document.getElementById('pfProfitPercent'); if(pp) pp.value=p.profitPercent||5;
     const bd=document.getElementById('pfBreakdown');
-    if(bd) bd.textContent = p.costPrice ? `৳${p.costPrice}+৳${p.extraCost||0} → +${p.deliveryPercent||0}% → +${p.profitPercent||20}% = ৳${p.salePrice}` : '৳0';
+    if(bd) bd.textContent = p.costPrice ? `৳${p.costPrice}+৳${p.extraCost||0} → +${p.profitPercent||5}% লাভ = ৳${p.salePrice}` : '৳0';
     const d=document.getElementById('pfDescription'); if(d) d.value=p.description||'';
     const cd=document.getElementById('pfCod'); if(cd) cd.checked=!!p.cod;
     const fl=document.getElementById('pfFlash'); if(fl) fl.checked=!!p.isFlash;
@@ -1115,13 +1140,13 @@ const OrderDetail = {
       odNidEl.onclick = order.customerNid ? function(){ this.textContent = this.textContent.includes('•') ? order.customerNid : maskNid(order.customerNid); } : null;
     }
     document.getElementById('odPayment').textContent = {cod:'💰 COD',bkash:'📱 bKash',nagad:'📱 Nagad'}[order.paymentMethod]||order.paymentMethod||'COD';
-    document.getElementById('odAddress').innerHTML = `<strong style="color:#fff">${esc(order.village)||''}</strong>${order.village?', ':''}<br>${esc(AREA_LABELS[order.branchZone])||''} — ${esc(order.address)||''}`;
+    document.getElementById('odAddress').innerHTML = `<strong style="color:var(--ink)">${esc(order.village)||''}</strong>${order.village?', ':''}<br>${esc(AREA_LABELS[order.branchZone])||''} — ${esc(order.address)||''}`;
     document.getElementById('odInstructions').textContent = '💬 ' + (order.instructions||'কোনো বিশেষ নির্দেশনা নেই');
     const itemsEl = document.getElementById('odItems');
     const items = order.items||[];
     itemsEl.innerHTML = items.map(item=>{
       const p = ALL_PRODUCTS.find(x=>x.id===item.productId);
-      return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line)"><div style="width:36px;height:36px;border-radius:7px;overflow:hidden;background:var(--elevated);flex-shrink:0"><img src="${safeImgSrc(p?.imageUrl||p?.img)}" style="width:100%;height:100%;object-fit:cover" loading="lazy" decoding="async" width="36" height="36"></div><div style="flex:1;min-width:0"><div style="font-size:12.5px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p?.name)||item.productId}</div><div style="font-size:11px;color:var(--ink-muted)">${money(p?.salePrice||0)} × ${item.qty}</div></div><span style="color:var(--gold);font-weight:600;font-size:13px">${money((p?.salePrice||0)*item.qty)}</span></div>`;
+      return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line)"><div style="width:36px;height:36px;border-radius:7px;overflow:hidden;background:var(--elevated);flex-shrink:0"><img src="${safeImgSrc(p?.imageUrl||p?.img)}" style="width:100%;height:100%;object-fit:cover" loading="lazy" decoding="async" width="36" height="36"></div><div style="flex:1;min-width:0"><div style="font-size:12.5px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p?.name)||item.productId}</div><div style="font-size:11px;color:var(--ink-muted)">${money(p?.salePrice||0)} × ${item.qty}</div></div><span style="color:var(--gold);font-weight:600;font-size:13px">${money((p?.salePrice||0)*item.qty)}</span></div>`;
     }).join('') || '<p style="color:var(--ink-muted);font-size:13px">আইটেম তথ্য নেই</p>';
     const ship = order.shippingCost||0;
     const sub = Number(order?.total ?? order?.payableTotal ?? order?.subtotal ?? 0) - ship;
