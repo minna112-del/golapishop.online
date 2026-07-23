@@ -936,16 +936,19 @@ const ProductForm = {
     const thumb=document.getElementById('pfImgThumb');
     if(thumb) thumb.style.opacity='.4';
     try{
-      const blob = await this.compositeSeal(file);
-      this.processedBlob = blob;
-      const previewUrl = URL.createObjectURL(blob);
+      // ⚠️ আগে এখানে this.compositeSeal(file) দিয়ে ছবির ভেতরেই স্থায়ীভাবে
+      // Golapi Shop-এর গোল লোগো/সিল বসিয়ে দেওয়া হতো (canvas দিয়ে pixel-এ বার্ন করা,
+      // পরে আর সরানো যেতো না)। এখন request অনুযায়ী সেটা বাদ দেওয়া হলো — মূল ছবিই
+      // (কোনো ওয়াটারমার্ক ছাড়া) আপলোড হবে।
+      this.processedBlob = file;
+      const previewUrl = URL.createObjectURL(file);
       if(thumb){ thumb.src = previewUrl; thumb.style.opacity='1'; }
       if(prev) prev.style.display = 'block';
       const ai=document.getElementById('pfDescAiBtn'); if(ai) ai.style.display = 'inline-block';
       const name = document.getElementById('pfName')?.value.trim();
       if(name) this.generateDesc();
     }catch(e){
-      devWarn('image seal composite failed', e.message);
+      devWarn('image select failed', e.message);
       this.processedBlob = file;
       const reader = new FileReader();
       reader.onload = ev => { if(thumb){ thumb.src = ev.target.result; thumb.style.opacity='1'; } if(prev) prev.style.display='block'; };
@@ -1008,19 +1011,19 @@ const ProductForm = {
     const pp=document.getElementById('pfProfitPercent'); if(pp) pp.value='5';
     const bd=document.getElementById('pfBreakdown'); if(bd) bd.textContent='৳0';
     const zs=document.getElementById('pfZoneSadar'); if(zs){ zs.disabled=false; zs.checked=true; }
-    const zb=document.getElementById('pfZoneBegumganj'); if(zb){ zb.disabled=false; zb.checked=false; }
+    const zb=document.getElementById('pfZoneBegumganj'); if(zb){ zb.disabled=false; zb.checked=true; }
     const c=document.getElementById('pfCategory'); if(c) c.value='grocery';
     const u=document.getElementById('pfUnit'); if(u) u.value='পিস';
-    const cd=document.getElementById('pfCod'); if(cd) cd.checked=true;
+    const cd=document.getElementById('pfCod'); if(cd) cd.checked=false;
     const fl=document.getElementById('pfFlash'); if(fl) fl.checked=false;
     const ft=document.getElementById('pfFeatured'); if(ft) ft.checked=false;
     const m=document.getElementById('pfMsg'); if(m) m.className='form-msg';
     document.getElementById('productModal').classList.add('show');
   },
   recalc(){
-    const cost=Number(document.getElementById('pfCostPrice')?.value)||0;
-    const extra=Number(document.getElementById('pfExtraCost')?.value)||0;
-    const profp=Number(document.getElementById('pfProfitPercent')?.value)||0;
+    const cost=Number(bnDigitsToEn(document.getElementById('pfCostPrice')?.value))||0;
+    const extra=Number(bnDigitsToEn(document.getElementById('pfExtraCost')?.value))||0;
+    const profp=Number(bnDigitsToEn(document.getElementById('pfProfitPercent')?.value))||0;
     const base=cost+extra;
     // ⚠️ আগে এখানে deliveryPercent-ও যোগ হতো, ফলে প্রোডাক্টের দামের ভেতরেই
     // ডেলিভারি খরচ ঢুকে যেতো — অথচ checkout-এ ডেলিভারি চার্জ আলাদাভাবে নেওয়া
@@ -1066,11 +1069,11 @@ const ProductForm = {
     const name=document.getElementById('pfName').value.trim();
     const selZones=[]; if(document.getElementById('pfZoneSadar')?.checked) selZones.push('noakhali_sadar'); if(document.getElementById('pfZoneBegumganj')?.checked) selZones.push('begumganj');
     const category=document.getElementById('pfCategory').value, unit=document.getElementById('pfUnit').value;
-    const price=Number(document.getElementById('pfPrice').value), salePrice=Number(document.getElementById('pfSalePrice').value), stock=Number(document.getElementById('pfStock').value);
+    const price=Number(bnDigitsToEn(document.getElementById('pfPrice').value)), salePrice=Number(bnDigitsToEn(document.getElementById('pfSalePrice').value)), stock=Number(bnDigitsToEn(document.getElementById('pfStock').value));
     const description=document.getElementById('pfDescription').value.trim();
     const cod=document.getElementById('pfCod').checked, isFlash=document.getElementById('pfFlash').checked, isFeatured=document.getElementById('pfFeatured').checked;
-    const costPrice=Number(document.getElementById('pfCostPrice').value)||0, extraCost=Number(document.getElementById('pfExtraCost').value)||0;
-    const deliveryPercent=Number(document.getElementById('pfDeliveryPercent').value)||0, profitPercent=Number(document.getElementById('pfProfitPercent').value)||0;
+    const costPrice=Number(bnDigitsToEn(document.getElementById('pfCostPrice').value))||0, extraCost=Number(bnDigitsToEn(document.getElementById('pfExtraCost').value))||0;
+    const deliveryPercent=Number(bnDigitsToEn(document.getElementById('pfDeliveryPercent').value))||0, profitPercent=Number(bnDigitsToEn(document.getElementById('pfProfitPercent').value))||0;
     if(!name||!salePrice||stock===''){ msgEl.textContent='সব প্রয়োজনীয় তথ্য পূরণ করুন'; msgEl.className='form-msg err'; return; }
     if(!selZones.length){ msgEl.textContent='অন্তত একটা শাখা বেছে নিন'; msgEl.className='form-msg err'; return; }
     if(!FB){ msgEl.textContent='সংযোগ সমস্যা — Firebase কনফিগার নেই'; msgEl.className='form-msg err'; return; }
