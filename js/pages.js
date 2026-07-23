@@ -11,11 +11,21 @@ const Home = {
       </button>`).join('');
     const zp = zoneProducts();
     const loading = !ProductStore.loaded;
+    // ⚠️ আগে শুধু loaded (boolean) চেক হতো, তাই সব retry ব্যর্থ হওয়ার পরও UI
+    // "loading" আর "কোনো পণ্য নেই" — এই দুই ভুল অবস্থার মধ্যে আটকে থাকতো,
+    // কখনো real error দেখাতো না। এখন status==='error' + খালি ALL_PRODUCTS
+    // হলে স্পষ্ট retry বাটনসহ error UI দেখানো হয়।
+    const isErrorState = ProductStore.status === 'error' && ALL_PRODUCTS.length === 0;
     const specialSection = document.getElementById('homeSpecialProducts');
     const popularSection = document.getElementById('homePopularProducts');
     const empty = message => `<div class="home-products-empty" role="status"><span class="ic ic-cart" aria-hidden="true"></span><p>${message}</p><button type="button" onclick="Router.go('listing',{cat:'all'})">সব পণ্য দেখুন</button></div>`;
+    const errorRetry = `<div class="home-products-empty" role="alert"><span class="ic ic-warning" aria-hidden="true">⚠</span><p>পণ্য লোড করা যায়নি — ইন্টারনেট সংযোগ চেক করে আবার চেষ্টা করুন।</p><button type="button" onclick="ProductStore.retryLoad()">আবার চেষ্টা করুন</button></div>`;
 
-    if(loading){
+    if(isErrorState){
+      if(specialSection) specialSection.hidden = true;
+      if(popularSection) popularSection.hidden = true;
+      const ng=document.getElementById('newGrid'); if(ng) ng.innerHTML = errorRetry;
+    }else if(loading){
       if(specialSection) specialSection.hidden = false;
       if(popularSection) popularSection.hidden = false;
       const fr=document.getElementById('flashRow'); if(fr) fr.innerHTML = skeletonCards(4);
