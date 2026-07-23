@@ -416,16 +416,6 @@ function pcardHTML(p, idx) {
 
         <div class="product-badges">
           ${
-            discount
-              ? `
-                <span class="pbadge">
-                  ${bn(discount)}% ছাড়
-                </span>
-              `
-              : ''
-          }
-
-          ${
             p.isFeatured
               ? `
                 <span class="pbadge gold">
