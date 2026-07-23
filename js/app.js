@@ -20,6 +20,44 @@ setTimeout(() => {
   }
 }, 15000);
 
+/* ⚠️ bug fix (orphan pending order): payment.js শুধু checkout পেজে lazy-load
+   হয়, তাই এই check-টা এখানে self-contained রাখা হলো যাতে অ্যাপ যেকোনো পেজ
+   দিয়ে শুরু হলেও কাজ করে। localStorage-এ আগের সেশনের অসম্পূর্ণ online payment
+   পাওয়া গেলে একটা মনে করিয়ে দেওয়ার ব্যানার দেখায়; ট্যাপ করলেই payment.js
+   lazy-load করে modal আবার খোলে। */
+async function checkPendingPaymentBanner() {
+  let pending;
+  try { pending = JSON.parse(localStorage.getItem('golapi_pending_payment') || 'null'); } catch (e) { return; }
+  if (!pending || !pending.orderId) return;
+  if (Date.now() - (pending.at || 0) > 48 * 60 * 60 * 1000) {
+    try { localStorage.removeItem('golapi_pending_payment'); } catch (e) {}
+    return;
+  }
+  if (!FB) return;
+  try {
+    const snap = await FB.getDoc(FB.doc(FB.db, 'orders', pending.orderId));
+    if (!snap.exists() || snap.data().paymentStatus !== 'pending_submission') {
+      try { localStorage.removeItem('golapi_pending_payment'); } catch (e) {}
+      return;
+    }
+    const banner = document.createElement('div');
+    banner.id = 'pendingPaymentBanner';
+    banner.style.cssText = 'position:fixed;bottom:90px;left:16px;right:16px;background:#F0B429;color:#1a1200;padding:12px 14px;border-radius:12px;font-size:13px;z-index:9997;box-shadow:0 8px 24px rgba(0,0,0,.25);display:flex;align-items:center;gap:10px';
+    banner.innerHTML = `<span style="flex:1">⏳ অর্ডার #${(pending.orderNo || '').replace(/</g,'')}-এর পেমেন্ট এখনো বাকি আছে</span>
+      <button id="pendingPaymentResumeBtn" style="background:#1a1200;color:#fff;border:none;padding:7px 12px;border-radius:8px;font-weight:600;font-size:12px;white-space:nowrap">পেমেন্ট করুন</button>
+      <button id="pendingPaymentDismissBtn" style="background:transparent;color:#1a1200;border:none;font-size:16px;padding:0 4px" aria-label="বন্ধ করুন">✕</button>`;
+    document.body.appendChild(banner);
+    document.getElementById('pendingPaymentDismissBtn').onclick = () => banner.remove();
+    document.getElementById('pendingPaymentResumeBtn').onclick = async () => {
+      banner.remove();
+      await window.loadScriptOnce('./js/payment.js').catch(() => {});
+      if (typeof PaymentGateway !== 'undefined') {
+        PaymentGateway.reopenModal(pending.method, pending.amount, pending.orderId, pending.zone);
+      }
+    };
+  } catch (e) { console.error('Pending payment check failed:', e.message); }
+}
+
 function startFirebaseFeatures() {
   if (firebaseStarted || !window.__fb) return;
 
@@ -43,6 +81,13 @@ function startFirebaseFeatures() {
   } catch (error) {
     console.error('Product sync initialization failed:', error);
   }
+
+  /* আগের সেশনে payment modal বাতিল/ব্রাউজার বন্ধ হওয়ার কারণে অসম্পূর্ণ থেকে
+     যাওয়া online payment থাকলে মনে করিয়ে দেয় (bug fix: orphan pending order)।
+     ⚠️ payment.js শুধু checkout পেজেই লোড হয় (lazy), তাই এখানে সরাসরি
+     PaymentGateway ব্যবহার না করে শুধু check + banner এখানেই self-contained
+     রাখা হলো — customer ব্যানারে ট্যাপ করলে তখনই payment.js lazy-load হবে। */
+  try { checkPendingPaymentBanner(); } catch (error) { console.error('Pending payment check failed:', error); }
 }
 
 window.addEventListener(
