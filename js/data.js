@@ -26,6 +26,12 @@ function zoneProducts() {
 const ProductStore = {
   loaded: false,
   unsubscribe: null,
+  /* status: 'idle' | 'loading' | 'loaded' | 'error'
+     — এতদিন শুধু `loaded` (boolean) দিয়ে state ট্র্যাক হতো, তাই "এখনো লোড হচ্ছে"
+     আর "সব চেষ্টা ব্যর্থ হয়ে গেছে" — দুটোই UI-তে একই (skeleton) দেখাতো, কোনো
+     final error state ছিল না। এখন `status==='error'` হলে Home.render()
+     skeleton-এর বদলে retry বাটনসহ error UI দেখাবে। */
+  status: 'idle',
 
   mapDoc(id, d) {
     return {
@@ -83,14 +89,54 @@ const ProductStore = {
       if(!Array.isArray(cached) || cached.length === 0) return false;
       ALL_PRODUCTS = cached;
       this.loaded = true;
+      this.status = 'loaded';
       if (Router.current === 'home') Home.render();
       if (Router.current === 'listing') Listing.render();
       return true;
     }catch(e){ return false; }
   },
 
+  /* সব retry শেষে ব্যর্থ হলে, বা permission-denied/unauthenticated-এর মতো
+     স্থায়ী error হলে — skeleton আটকে না রেখে grid-এর ভেতরেই retry বাটনসহ
+     error state দেখানো হয়। কোনো cache না থাকলে ALL_PRODUCTS খালিই থাকে,
+     কিন্তু status='error' হওয়ায় Home.render() আর অনন্তকাল skeleton দেখাবে না। */
+  markError() {
+    this.status = 'error';
+    if (!this.loaded) {
+      // cache/live data কিছুই নেই — Home.render()-কে "loading" ভাবার বদলে
+      // "error" ভাবতে হবে, তাই loaded-কেও true করে দিচ্ছি (ALL_PRODUCTS খালি
+      // থাকবে, কিন্তু render() আর skeleton দেখাবে না — status চেক করে error UI দেখাবে)।
+      this.loaded = true;
+    }
+    if (Router.current === 'home' && typeof Home !== 'undefined') Home.render();
+    if (Router.current === 'listing' && typeof Listing !== 'undefined') Listing.render();
+  },
+
+  /* Firebase module/SDK নিজেই লোড না হলে (app.js watchdog থেকে ডাকা হয়) —
+     cache থাকলে অন্তত সেটা দেখানো হয়, না থাকলে সরাসরি error state। */
+  handleFirebaseUnavailable() {
+    if (this.loaded) return; // ইতিমধ্যে cache/live data থেকে কিছু দেখানো হয়ে গেছে
+    const hadCache = this.loadFromCache();
+    if (!hadCache) this.markError();
+  },
+
+  /* Error UI-এর "আবার চেষ্টা করুন" বাটন থেকে ডাকা হয় — পুরো পেজ reload না করেই
+     আবার sync শুরু করার চেষ্টা করে। */
+  retryLoad() {
+    this.status = 'loading';
+    if (ALL_PRODUCTS.length === 0) this.loaded = false; // cache/data কিছু না থাকলে আবার skeleton দেখাবে
+    if (Router.current === 'home') Home.render();
+    if (FB) {
+      this.startLiveSync();
+    } else {
+      window.location.reload();
+    }
+  },
+
   startLiveSync() {
     if (!FB || this.unsubscribe) { return; }
+
+    this.status = 'loading';
 
     // ক্যাশ থেকে সাথে সাথে দেখানো (থাকলে) — নেটওয়ার্কের অপেক্ষা নেই
     const hadCache = this.loadFromCache();
@@ -99,15 +145,14 @@ const ProductStore = {
 
     // ⚠️ বাংলাদেশে অনেক কাস্টমারের নেটওয়ার্ক স্পিড খুবই কম (যেমন 2-3 KB/s,
     // যদিও 4G দেখায়) — এমন নেটওয়ার্কে Firestore সংযোগ স্থাপন করতেই ৫-১০ সেকেন্ড
-    // লেগে যেতে পারে, যেটা কোনো bug না, স্বাভাবিক ধীরগতি। তাই প্রথমে দীর্ঘ সময়
-    // (১২ সেকেন্ড) অপেক্ষা করা হয়, আর fallback ব্যর্থ হলেও ৩ বার পর্যন্ত আবার
-    // চেষ্টা করা হয় (প্রতিবার একটু বেশি সময় দিয়ে) — একবার ব্যর্থ হলেই "সমস্যা
-    // হচ্ছে" বলে থেমে যাওয়া হয় না।
+    // লেগে যেতে পারে, যেটা কোনো bug না, স্বাভাবিক ধীরগতি। তাই ক্যাশ থাকলে বেশি
+    // সময় দেওয়া হয়, না থাকলে দ্রুত fallback শুরু হয় — একবার ব্যর্থ হলেই "সমস্যা
+    // হচ্ছে" বলে থেমে যাওয়া হয় না, কিন্তু সব চেষ্টা শেষে অবশ্যই একটা final state আসে।
     const fallbackTimer = setTimeout(async () => {
       if (delivered) return;
       devWarn('onSnapshot timeout — falling back to getDocs() with retry');
       await this.refreshWithRetry();
-    }, hadCache ? 15000 : 6000); // ক্যাশ দেখানো থাকলে তাড়া নেই; না থাকলে দ্রুত fallback
+    }, hadCache ? 15000 : 6000);
 
     try {
       this.unsubscribe = FB.onSnapshot(
@@ -133,6 +178,7 @@ const ProductStore = {
           );
 
           this.loaded = true;
+          this.status = 'loaded';
           this.saveCache();
 
           if (Router.current === 'home') {
@@ -153,6 +199,7 @@ const ProductStore = {
 
         error => {
           clearTimeout(fallbackTimer);
+          this.unsubscribe = null; // পরবর্তী retryLoad()-কে নতুন করে subscribe করার সুযোগ দিতে
 
           devWarn(
             'live sync error',
@@ -168,6 +215,14 @@ const ProductStore = {
               ),
             'error'
           );
+
+          // permission-denied/unauthenticated হলো configuration error —
+          // network retry দিয়ে ঠিক হবে না, তাই বারবার একই ব্যর্থ query না
+          // চালিয়ে সরাসরি error state দেখানো হয়।
+          if (error.code === 'permission-denied' || error.code === 'unauthenticated') {
+            this.markError();
+            return;
+          }
 
           this.refreshWithRetry();
         }
@@ -185,6 +240,11 @@ const ProductStore = {
           error.message,
         'error'
       );
+
+      // ⚠️ আগে এখানে fallback কল করা হতো না — onSnapshot চালু হতেই ব্যর্থ হলে
+      // (যেমন FB.query/FB.collection অনুপলব্ধ) কোনো retry হতোই না, ProductStore.loaded
+      // চিরকাল false থেকে যেত। এখন getDocs()-ভিত্তিক fallback এখানেও চেষ্টা করা হয়।
+      this.refreshWithRetry();
     }
   },
 
@@ -197,23 +257,32 @@ const ProductStore = {
         toast(`⏳ ইন্টারনেট সংযোগ ধীর মনে হচ্ছে, আবার চেষ্টা করা হচ্ছে (${attempt}/${delays.length - 1})...`, 'info');
         await new Promise(r => setTimeout(r, delays[attempt]));
       }
-      const ok = await this.refreshAndRerender();
-      if (ok && this.loaded && ALL_PRODUCTS.length > 0) {
+      const result = await this.refreshAndRerender();
+      if (result === 'fatal') break; // permission-denied ইত্যাদি — আর retry করে লাভ নেই
+      if (result && this.loaded && ALL_PRODUCTS.length > 0) {
         if (attempt > 0) toast('✓ পণ্য লোড হয়েছে', 'success');
         return;
       }
     }
-    // সব চেষ্টার পরও ব্যর্থ হলে — স্পষ্টভাবে জানানো, কিন্তু আশ্বস্ত করে
+    // ⚠️ আগে সব retry ব্যর্থ হলে শুধু toast দেখানো হতো, ProductStore.loaded/status
+    // কখনো বদলাতো না — ফলে UI চিরকাল "loading" ভেবে skeleton দেখাতেই থাকতো।
+    // এখন explicit error state সেট হয়, যাতে grid-এ retry বাটনসহ error UI আসে।
     toast('⚠ ইন্টারনেট সংযোগ খুবই ধীর — একটু পর আবার পেজ খুলুন, অথবা ওয়াইফাই/ভালো নেটওয়ার্কে চেষ্টা করুন', 'error');
+    this.markError();
   },
 
   async refreshAndRerender() {
     if (!FB) return false;
 
     try {
-      const snap = await FB.getDocs(
-        FB.query(FB.collection(FB.db, 'products'), FB.limit(300))
-      );
+      // ⚠️ আগে getDocs()-এর নিজস্ব কোনো timeout ছিল না — Firestore SDK-এর
+      // অভ্যন্তরীণ connection hang করলে এই Promise অনির্দিষ্টকাল pending থেকে
+      // যেতে পারতো, আর retry loop কখনো পরের ধাপে যেতে পারতো না। এখন ৯ সেকেন্ড
+      // পরে স্পষ্টভাবে timeout করে দেওয়া হয়, retry loop চালিয়ে যাওয়ার জন্য।
+      const snap = await Promise.race([
+        FB.getDocs(FB.query(FB.collection(FB.db, 'products'), FB.limit(300))),
+        new Promise((_, reject) => setTimeout(() => reject(Object.assign(new Error('getDocs timeout'), { code: 'app-timeout' })), 9000))
+      ]);
 
       const real = [];
 
@@ -231,7 +300,8 @@ const ProductStore = {
       );
 
       this.loaded = true;
-          this.saveCache();
+      this.status = 'loaded';
+      this.saveCache();
 
       Home.render();
 
@@ -245,6 +315,12 @@ const ProductStore = {
         'refresh failed',
         error.message
       );
+
+      // permission-denied/unauthenticated = configuration error, retry loop
+      // চালিয়ে লাভ নেই, caller-কে জানিয়ে দেওয়া হচ্ছে থেমে যেতে।
+      if (error.code === 'permission-denied' || error.code === 'unauthenticated') {
+        return 'fatal';
+      }
 
       return false;
     }
