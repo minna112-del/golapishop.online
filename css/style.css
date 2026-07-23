@@ -549,18 +549,27 @@ body {
 .live-map-badge .dot{width:6px;height:6px;background:var(--emerald);border-radius:50%;animation:pulseRing 2s infinite}
 .leaflet-container{background:var(--bg2)!important;font-family:'Hind Siliguri',sans-serif!important}
 
-/* ---------- Brand Seal (প্রোডাক্ট ছবির কোণায় লোগো) ---------- */
-/* ⚠️ আগে প্রতিটা প্রোডাক্ট কার্ডে একটা আলাদা <img> ট্যাগ ছিল এই সিলের জন্য —
-   browser একবার ফাইল ডাউনলোড করলেও প্রতিটা element-এর জন্য আলাদা decode/layout
-   cost হতো। এখন CSS background-image — একটাই raster, কোনো element/decode cost নেই। */
-.brand-seal{
-  position:absolute; bottom:8px; right:8px; width:30px; height:30px;
-  border-radius:50%; overflow:hidden; z-index:5;
-  border:1.5px solid #fff;
-  box-shadow:0 2px 8px rgba(0,0,0,.15);
-  background:#fff url('../icons/head_logo.webp') center/cover;
+/* ---------- Savings Ribbon (আগে এখানে brand-seal লোগো ছিল, request অনুযায়ী সরিয়ে
+   "বাঁচলো ৳X" ribbon বসানো হলো — উপরে-ডানে, ফোল্ড-কর্নার স্টাইলে) ---------- */
+.savings-ribbon{
+  position:absolute; top:10px; right:-6px; z-index:6;
+  display:flex; flex-direction:column; align-items:center; line-height:1.15;
+  background:linear-gradient(135deg,#ef4444,#b91c1c);
+  color:#fff; font-weight:800; font-size:10.5px;
+  padding:6px 9px 7px 13px;
+  border-radius:9px 3px 3px 9px;
+  box-shadow:0 4px 12px rgba(185,28,28,.38);
+  white-space:nowrap;
 }
-.pdp-seal{width:42px;height:42px;bottom:12px;right:12px}
+.savings-ribbon::after{
+  content:'';
+  position:absolute; right:0; bottom:-6px;
+  border-style:solid; border-width:0 0 0 6px;
+  border-color:transparent transparent transparent #7f1d1d;
+}
+.savings-ribbon .amt{font-size:13px;font-weight:900;letter-spacing:.01em}
+.pdp-savings-ribbon{top:14px;right:-7px;font-size:12px;padding:8px 11px 9px 16px;border-radius:11px 4px 4px 11px}
+.pdp-savings-ribbon .amt{font-size:16px}
 
 /* ============================================================
    DARK MODE — html[data-theme="dark"] অ্যাট্রিবিউট দিয়ে চালু হয়
@@ -614,7 +623,6 @@ html[data-theme="dark"] .wish{background:rgba(30,27,32,.85)}
 html[data-theme="dark"] .add-btn{background:var(--elevated)}
 html[data-theme="dark"] .qty-ctrl{border-color:var(--line-l)}
 html[data-theme="dark"] .qty-ctrl button:hover{background:var(--elevated)}
-html[data-theme="dark"] .brand-seal{background:var(--card);border-color:var(--card)}
 html[data-theme="dark"] .live-map-box,
 html[data-theme="dark"] .live-map-badge{background:var(--card);border-color:var(--line)}
 html[data-theme="dark"] ::-webkit-scrollbar-thumb{background:rgba(255,92,135,.3)}
