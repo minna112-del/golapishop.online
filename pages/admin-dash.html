@@ -192,6 +192,12 @@
         </div>
         <div id="adminSettingsPane" style="display:none">
           <div class="card-box" style="margin-bottom:16px">
+            <h3 style="font-size:14px;margin-bottom:4px;color:#fff">🖼️ পুরনো প্রোডাক্ট ছবি আপডেট</h3>
+            <p style="font-size:11.5px;color:var(--ink-muted);margin-bottom:12px">নতুন প্রোডাক্টে ছবির ছোট সংস্করণ ও blur placeholder এখন স্বয়ংক্রিয়ভাবে তৈরি হয়। এই বাটনে চাপলে <b>আগে থেকে থাকা সব প্রোডাক্টের</b> ছবিও একই সুবিধা পাবে (ধীর নেটওয়ার্কে দ্রুত লোড হবে)। এতে কয়েক মিনিট লাগতে পারে প্রোডাক্ট সংখ্যা অনুযায়ী — পেজ বন্ধ করো না।</p>
+            <button class="btn btn-outline btn-block" id="reprocessImagesBtn" onclick="AdminDash.reprocessAllProductImages()">সব পুরনো প্রোডাক্টের ছবি আপডেট করুন</button>
+            <div id="reprocessProgress" style="margin-top:10px;font-size:12px;color:var(--ink-muted);display:none"></div>
+          </div>
+          <div class="card-box" style="margin-bottom:16px">
             <h3 style="font-size:14px;margin-bottom:4px;color:#fff">🔎 SEO Sitemap</h3>
             <p style="font-size:11.5px;color:var(--ink-muted);margin-bottom:12px">সব পাবলিক পেজ ও লাইভ প্রোডাক্টের URL সহ একটা sitemap.xml তৈরি করে দেবে। নিচে দেখানো টেক্সট পুরোটা কপি করে GitHub-এ <code>sitemap.xml</code> ফাইলে (রুট ফোল্ডারে) পেস্ট করে দাও — প্রতি সপ্তাহে বা নতুন অনেক প্রোডাক্ট যোগ করলে আবার জেনারেট করে আপডেট করে দিও।</p>
             <button class="btn btn-outline btn-block" style="margin-bottom:10px" onclick="AdminDash.generateSitemap()">Sitemap.xml তৈরি করুন</button>
