@@ -684,16 +684,25 @@ const OrderSuccess = {
     set('successOrderTotal', Number.isFinite(Number(data.total)) ? money(Number(data.total)) : '—');
     set('successItemCount', data.itemCount ? `${data.itemCount}টি` : '—');
     set('successDeliveryArea', data.deliveryArea);
-    const methodLabel={cod:'ক্যাশ অন ডেলিভারি',bkash:'বিকাশ',nagad:'নগদ'}[data.paymentMethod]||'—';
+    const methodLabel={cod:'ক্যাশ অন ডেলিভারি',bkash:'বিকাশ',nagad:'নগদ','bkash+cod':'অগ্রিম বিকাশ + বাকি COD'}[data.paymentMethod]||'—';
     set('successPaymentMethod', methodLabel);
     const lead=document.getElementById('orderSuccessLead');
     const note=document.getElementById('successPaymentNote');
     if(data.paymentMethod==='bkash' || data.paymentMethod==='nagad'){
-      if(lead) lead.textContent='পেমেন্ট তথ্য জমা হয়েছে। যাচাই সম্পন্ন হলে অর্ডারের স্ট্যাটাস আপডেট হবে।';
-      if(note) note.querySelector('p').textContent='ট্রানজেকশন তথ্য যাচাই না হওয়া পর্যন্ত পেমেন্ট স্ট্যাটাস অপেক্ষমাণ থাকবে।';
+      if(lead) lead.textContent='পেমেন্ট তথ্য জমা হয়েছে। যাচাই সম্পন্ন হলে অর্ডারের স্ট্যাটাস আপডেট হবে।';
+      if(note) note.querySelector('p').textContent='ট্রানজেকশন তথ্য যাচাই না হওয়া পর্যন্ত পেমেন্ট স্ট্যাটাস অপেক্ষমাণ থাকবে।';
+    }else if(data.paymentMethod==='bkash+cod'){
+      if(lead) lead.textContent='আপনার Custom Bazar অর্ডার জমা হয়েছে। ড্রাইভার বাজার করার পর বিলের ছবি এখানেই দেখতে পাবেন।';
+      if(note) note.querySelector('p').textContent='অগ্রিম ৳১০০ বাদে বাকি বিল ডেলিভারির সময় নগদ পরিশোধ করুন।';
     }else{
       if(lead) lead.textContent='অর্ডারের পরবর্তী আপডেট “আমার অর্ডার” পেজে দেখতে পারবেন।';
-      if(note) note.querySelector('p').textContent='ডেলিভারির সময় নির্ধারিত পরিমাণ নগদ পরিশোধ করুন। প্রয়োজন হলে আমাদের টিম ফোনে যোগাযোগ করবে।';
+      if(note) note.querySelector('p').textContent='ডেলিভারির সময় নির্ধারিত পরিমাণ নগদ পরিশোধ করুন। প্রয়োজন হলে আমাদের টিম ফোনে যোগাযোগ করবে।';
+    }
+    const memoBtnWrap=document.getElementById('successMemoBtnWrap');
+    if(memoBtnWrap){
+      memoBtnWrap.innerHTML = data.customBazarMemoKey
+        ? `<button class="btn btn-outline btn-block" onclick="BazarMemo.openById('${esc(data.customBazarMemoKey)}')">🧾 মেমো দেখুন / প্রিন্ট করুন</button>`
+        : '';
     }
     const copy=document.getElementById('successCopyBtn');
     if(copy) copy.disabled=!data.orderNumber;
