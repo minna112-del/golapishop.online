@@ -1,5 +1,5 @@
 /* sw.js — Golapi Shop Offline Service Worker (network-first) */
-const CACHE = 'golapi-v29';
+const CACHE = 'golapi-v30';
 const OFFLINE_URL = '/offline.html';
 /* ⚠️ আগে এখানে admin/driver/zone-manager/checkout/account ইত্যাদি সব পেজ+JS
    pre-cache হতো — যদিও page-loader.js/router.js এগুলো lazy করে দিয়েছে, Service
@@ -47,8 +47,8 @@ self.addEventListener('install', event => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE).then(async cache => {
-      // ⚠️ আগে সব asset একসঙ্গে parallel request হতো — slow নেটওয়ার্কে bandwidth-এ চাপ পড়তো।
-      // এখন ৪টা করে ব্যাচে, ধারাবাহিকভাবে লোড হয়।
+      // ⚠️ আগে সব asset একসঙ্গে parallel request হতো — slow নেটওয়ার্কে bandwidth-এ চাপ পড়তো।
+      // এখন ৪টা করে ব্যাচে, ধারাবাহিকভাবে লোড হয়।
       const BATCH_SIZE = 4;
       const results = [];
       for (let i = 0; i < ASSETS.length; i += BATCH_SIZE) {
@@ -63,7 +63,7 @@ self.addEventListener('install', event => {
 
       if (failed.length) {
         console.warn(
-          '[service-worker] কিছু asset pre-cache করা যায়নি:',
+          '[service-worker] কিছু asset pre-cache করা যায়নি:',
           failed.map(entry => entry.asset)
         );
       }
