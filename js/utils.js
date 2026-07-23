@@ -2,6 +2,28 @@
 const isDev = location.hostname==='localhost' || location.hostname==='127.0.0.1';
 function devWarn(...a){ if(isDev) console.warn(...a); }
 
+/* বাংলা কিবোর্ড থেকে টাইপ করা বাংলা সংখ্যা (০-৯) ইংরেজি সংখ্যায় (0-9) রূপান্তর করে।
+   ⚠️ HTML-এর <input type="number"> শুধু ASCII 0-9 গ্রহণ করে — বাংলা সংখ্যা টাইপ করলে
+   ব্রাউজার সেটা invalid ধরে বাদ দিয়ে দেয়, ফলে অ্যাডমিনকে বাধ্য হয়ে কিবোর্ড ইংরেজি
+   মোডে বদলাতে হতো শুধু দাম/স্টক লেখার জন্য। এই ফাংশন input থেকে টাইপ করা মাত্রই
+   বাংলা সংখ্যাকে ইংরেজিতে বদলে দেয়, যাতে বাংলা কিবোর্ড থেকেও সরাসরি লেখা যায়। */
+function bnDigitsToEn(str){
+  if(str == null) return str;
+  const map = {'০':'0','১':'1','২':'2','৩':'3','৪':'4','৫':'5','৬':'6','৭':'7','৮':'8','৯':'9','．':'.','،':','};
+  return String(str).replace(/[০-৯．،]/g, ch => map[ch] || ch);
+}
+/* একটা numeric input-এ লাইভ বাংলা→ইংরেজি সংখ্যা রূপান্তর বসিয়ে দেয়, cursor position ঠিক রেখে। */
+function normalizeDigitInput(el){
+  if(!el) return;
+  const before = el.value;
+  const converted = bnDigitsToEn(before);
+  if(converted !== before){
+    const pos = el.selectionStart;
+    el.value = converted;
+    try{ el.setSelectionRange(pos, pos); }catch(e){}
+  }
+}
+
 /* ⚠️ Security audit finding: customer-controllable ডেটা (নাম, ঠিকানা, ফোন, মেসেজ ইত্যাদি)
    admin.js-এর অনেক জায়গায় innerHTML দিয়ে সরাসরি বসানো হতো, escape ছাড়াই — কেউ যদি
    checkout ফর্মে নামের জায়গায় HTML/script ঢুকিয়ে দেয়, admin panel-এ সেটা execute হয়ে
