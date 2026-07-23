@@ -31,7 +31,7 @@ const CustomBazar = {
             const preview = (o.bazarList||'').split('\n').filter(Boolean).slice(0,2).join(', ');
             return `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px;background:rgba(255,255,255,.02);border-radius:8px">
               <div style="flex:1;min-width:0">
-                <div style="font-size:12px;color:#fff">${o.bazarTypeLabel||'বাজার'} — ${date}</div>
+                <div style="font-size:12px;color:var(--ink)">${o.bazarTypeLabel||'বাজার'} — ${date}</div>
                 <div style="font-size:11px;color:var(--ink-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${preview}...</div>
               </div>
               <button class="btn btn-outline" style="font-size:11.5px;padding:6px 10px;white-space:nowrap" onclick='CustomBazar.reuseOrder(${JSON.stringify(o).replace(/'/g,"&#39;")})'>এই লিস্ট ব্যবহার করুন</button>
@@ -74,6 +74,17 @@ const CustomBazar = {
     if(!name||!phone||!address||!district||!zone||!village||!instructions||!list||!trxId){ msgEl.textContent='সব প্রয়োজনীয় তথ্য পূরণ করুন (ডেলিভারি ইনস্ট্রাকশন সহ)'; msgEl.className='form-msg err'; return; }
     const phoneRe=/^(?:\+880|880|0)1[3-9]\d{8}$/;
     if(!phoneRe.test(phone.replace(/[\s-]/g,''))){ msgEl.textContent='সঠিক মোবাইল নম্বর দিন'; msgEl.className='form-msg err'; return; }
+    // ⚠️ duplicate submission guard: form reset না হওয়ায় ও বাটন সাথে সাথে আবার
+    // enable হয়ে যাওয়ায় customer একই ট্রানজেকশন ID দিয়ে দ্বিতীয়বার submit
+    // করে ফেলতে পারতো — একটা bKash পেমেন্ট দিয়ে দুইটা অর্ডার তৈরি হয়ে যেতো।
+    // এখন এই সেশনে ইতিমধ্যে সাবমিট হওয়া trxId আবার দিলে আটকে দেওয়া হয়।
+    let recentTrxIds = [];
+    try{ recentTrxIds = JSON.parse(sessionStorage.getItem('golapi_cb_submitted_trx')||'[]'); }catch(e){}
+    if(recentTrxIds.includes(trxId.toUpperCase())){
+      msgEl.textContent = 'এই ট্রানজেকশন ID দিয়ে ইতিমধ্যে একটি অর্ডার জমা হয়েছে — নতুন লিস্টের জন্য নতুন পেমেন্ট করুন।';
+      msgEl.className='form-msg err';
+      return;
+    }
     if(!FB){ msgEl.textContent='সংযোগ সমস্যা'; msgEl.className='form-msg err'; return; }
     const btn=document.getElementById('cbSubmitBtn'); const orig=btn.textContent; btn.textContent='জমা হচ্ছে...'; btn.disabled=true;
     const typeLabels={weekly:'সাপ্তাহিক',monthly:'মাসিক',wedding:'বিয়ের',ramadan:'রমজানের',qurbani:'কুরবানির',other:'অন্যান্য'};
@@ -88,9 +99,38 @@ const CustomBazar = {
       });
       const submittedOrder = {orderNumber:orderNo, orderType:'custom-bazar', bazarType:type, bazarTypeLabel:typeLabels[type]||type, customerName:name, customerPhone:phone, address, village, instructions, notes, bazarList:list, advanceAmount:100};
       const memoKey = BazarMemo.register(submittedOrder);
-      msgEl.innerHTML = `✅ আপনার বাজার অর্ডার (${esc(orderNo)}) সফলভাবে জমা হয়েছে! ড্রাইভার বাজার করার পর বিলের ছবি এখানেই দেখতে পাবেন।<br><button class="btn btn-outline" style="margin-top:10px;font-size:12.5px;padding:8px 16px" onclick="BazarMemo.openById('${esc(memoKey)}')">🧾 মেমো দেখুন / প্রিন্ট করুন</button>`;
+
+      // duplicate-guard-এর জন্য এই trxId মনে রাখা হলো
+      try{
+        recentTrxIds.push(trxId.toUpperCase());
+        sessionStorage.setItem('golapi_cb_submitted_trx', JSON.stringify(recentTrxIds.slice(-20)));
+      }catch(e){}
+
+      // ⚠️ আগে ফর্মের ভ্যালু (নাম, ঠিকানা, trxId ইত্যাদি) সাবমিটের পরও ফর্মে থেকে
+      // যেতো, আর বাটন সাথে সাথেই আবার enable হয়ে যেতো — customer ভুলবশত আবার
+      // চাপলে হুবহু একই তথ্য দিয়ে duplicate অর্ডার তৈরি হয়ে যেতো। এখন সফল হলে
+      // পুরো ফর্ম খালি করে দেওয়া হয়।
+      ['cbName','cbPhone','cbAddress','cbList','cbNotes','cbTrxId','cbVillage','cbInstructions'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+      const dEl=document.getElementById('cbDistrict'); if(dEl) dEl.value='';
+      const zEl=document.getElementById('cbZone'); if(zEl) zEl.innerHTML='<option value="">প্রথমে উপজেলা বেছে নিন</option>';
+
+      // ⚠️ আগে শুধু এই একই পেজে ইনলাইন success message দেখানো হতো, কোনো
+      // প্রকৃত "order success" পেজে navigation ছিল না। এখন OrderSuccess-এর
+      // মাধ্যমে অর্ডার নম্বর সংরক্ষণ করে সফলতার পেজে নিয়ে যাওয়া হয় (memo
+      // দেখার বাটনও সেখানে দেওয়া থাকে)।
+      OrderSuccess.save({
+        orderNumber:orderNo,
+        total:100,
+        itemCount: list.split('\n').filter(Boolean).length,
+        paymentMethod:'bkash+cod',
+        deliveryArea: AREA_LABELS[district] || district,
+        customBazarMemoKey: memoKey
+      });
+
+      msgEl.innerHTML = `✅ আপনার বাজার অর্ডার (${esc(orderNo)}) সফলভাবে জমা হয়েছে!`;
       msgEl.className='form-msg ok';
       btn.textContent=orig; btn.disabled=false;
+      setTimeout(()=>Router.go('order-success'), 900);
     }catch(e){ msgEl.textContent='সমস্যা হয়েছে: '+e.message; msgEl.className='form-msg err'; btn.textContent=orig; btn.disabled=false; }
   }
 };
