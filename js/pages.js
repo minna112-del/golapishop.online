@@ -52,8 +52,14 @@ const Home = {
       if(popularSection) popularSection.hidden = popular.length===0;
 
       const fr=document.getElementById('flashRow'); if(fr) fr.innerHTML = special.map(pcardHTML).join('');
-      const br=document.getElementById('bestRow'); if(br) br.innerHTML = popular.map(pcardHTML).join('');
-      const ng=document.getElementById('newGrid'); if(ng) ng.innerHTML = more.map(pcardHTML).join('') || empty('এই মুহূর্তে স্টকে কোনো পণ্য নেই।');
+      // ⚠️ আগে বাকি দুই section-ও আলাদাভাবে idx 0 থেকে গোনা শুরু করতো, তাই
+      // "প্রথম ৪টা" প্রায়োরিটি আসলে পুরো পেজে ১২টা (বা তার বেশি) card-এ প্রযোজ্য
+      // হয়ে যেতো — ব্রাউজারের কাছে "high priority"-এর অর্থ নষ্ট হয়ে যেতো এবং
+      // দুর্বল নেটওয়ার্কে একসাথে অনেক eager image request গিয়ে বাকি সবকিছু
+      // (ছবিসহ) ধীর করে দিতো। এখন শুধু পেজের একদম উপরের section (flashRow)
+      // eager/high-priority পায়; বাকি দুটোতে idx offset দিয়ে lazy রাখা হয়েছে।
+      const br=document.getElementById('bestRow'); if(br) br.innerHTML = popular.map((p,i)=>pcardHTML(p,i+100)).join('');
+      const ng=document.getElementById('newGrid'); if(ng) ng.innerHTML = more.map((p,i)=>pcardHTML(p,i+100)).join('') || empty('এই মুহূর্তে স্টকে কোনো পণ্য নেই।');
     }
   }
 };
