@@ -191,7 +191,7 @@ const DriverPortal = {
     if(!FB) return;
     try{
       await FB.updateDoc(FB.doc(FB.db,'orders',orderId),{driverAccepted:true, acceptedAt:FB.serverTimestamp()});
-      toast('✓ অর্ডার Accept করা হয়েছে','success');
+      toast('✓ অর্ডার গ্রহণ করা হয়েছে','success');
       this.render();
     }catch(e){ toast('সমস্যা: '+e.message,'error'); }
   },
@@ -200,7 +200,7 @@ const DriverPortal = {
     if(!confirm('এই অর্ডারটা Reject করলে এটা আবার admin-এর কাছে ফিরে যাবে। নিশ্চিত?')) return;
     try{
       await FB.updateDoc(FB.doc(FB.db,'orders',orderId),{status:'confirmed', driverId:null, driverName:null, driverAccepted:false, rejectedAt:FB.serverTimestamp()});
-      toast('অর্ডার Reject করা হয়েছে, admin-কে জানানো হয়েছে','success');
+      toast('অর্ডার প্রত্যাখ্যান করা হয়েছে, অ্যাডমিনকে জানানো হয়েছে','success');
       this.render();
     }catch(e){ toast('সমস্যা: '+e.message,'error'); }
   },

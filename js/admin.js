@@ -715,6 +715,69 @@ const AdminDash = {
     }
   },
 
+  async fillMissingDescriptions(){
+    const btn = document.getElementById('fillDescBtn');
+    const progressEl = document.getElementById('fillDescProgress');
+    if(!FB){ toast('সংযোগ সমস্যা','error'); return; }
+
+    btn.disabled = true; btn.textContent = 'শুরু হচ্ছে...';
+    progressEl.style.display = 'block';
+
+    try{
+      const snap = await FB.getDocs(FB.collection(FB.db, 'products'));
+      const targets = [];
+      snap.forEach(d => {
+        const data = d.data();
+        if(!data.description || !data.description.trim()) targets.push({ id: d.id, data });
+      });
+
+      if(targets.length === 0){
+        progressEl.textContent = '✓ সব প্রোডাক্টেই ইতিমধ্যে বিবরণ আছে।';
+        btn.disabled = false; btn.textContent = 'খালি বিবরণগুলো পূরণ করুন';
+        return;
+      }
+
+      let done = 0, failed = 0;
+      for(const t of targets){
+        progressEl.textContent = `প্রসেস হচ্ছে... (${done + failed + 1}/${targets.length}) — ${esc(t.data.name || t.id)}`;
+        try{
+          const catObj = (typeof CATEGORIES !== 'undefined') ? CATEGORIES.find(c=>c.id===t.data.category) : null;
+          const catLabel = catObj ? catObj.label : (t.data.category || '');
+          const userMsg = `তুমি একটি বাংলাদেশি ই-কমার্স দোকানের জন্য পণ্যের বিবরণ লিখবে। পণ্যের নাম: "${t.data.name || 'পণ্য'}", ক্যাটাগরি: "${catLabel}". সংক্ষিপ্ত, আকর্ষণীয় বাংলা বিবরণ লিখো (৩-৫ লাইন)। শুধু বিবরণের টেক্সট-টুকুই ফেরত দাও — কোনো ভূমিকা, ব্যাখ্যা, quotation mark, বা markdown formatting (** বা #) ছাড়া।`;
+          const res = await fetch(ChatWidget.workerUrl,{
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({model:'claude-sonnet-4-6', max_tokens:300, messages:[{role:'user', content:userMsg}]})
+          });
+          const data = await res.json();
+          let text = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+          text = text
+            .replace(/^\s*(এখানে|নিশ্চয়ই|অবশ্যই)[^:।\n]{0,40}[:।]\s*/i, '')
+            .replace(/\*\*/g, '')
+            .replace(/^["'"]+|["'"]+$/g, '')
+            .trim();
+          if(text){
+            await FB.updateDoc(FB.doc(FB.db, 'products', t.id), { description: text });
+            done++;
+          } else {
+            failed++;
+          }
+        }catch(e){
+          devWarn('description fill failed for', t.id, e.message);
+          failed++;
+        }
+        await new Promise(r => setTimeout(r, 600)); // AI/Firebase-এ চাপ কমাতে ছোট বিরতি
+      }
+
+      progressEl.textContent = `✓ শেষ হয়েছে — ${done}টা সফল, ${failed}টা ব্যর্থ (মোট ${targets.length}টার মধ্যে)।`;
+      toast(`✓ বিবরণ পূরণ সম্পন্ন — ${done}/${targets.length}`, 'success');
+    }catch(e){
+      progressEl.textContent = '⚠ ব্যর্থ: ' + e.message;
+      toast('⚠ সমস্যা হয়েছে: ' + e.message, 'error');
+    }finally{
+      btn.disabled = false; btn.textContent = 'খালি বিবরণগুলো পূরণ করুন';
+    }
+  },
+
   generateSitemap(){
     const BASE = 'https://www.golapishop.online';
     const today = new Date().toISOString().split('T')[0];

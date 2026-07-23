@@ -180,13 +180,16 @@ const PDP = {
     const name=document.getElementById('pdpName'); if(name) name.textContent = p.name;
     const meta=document.getElementById('pdpMeta');
     if(meta) meta.innerHTML = p.reviews>0
-      ? `<span aria-label="রেটিং">★ ${p.rating}</span> <span>(${bn(p.reviews)} রিভিউ)</span>${Number(p.sold)>0?` <span>· ${bn(p.sold)} বিক্রি</span>`:''}`
+      ? `<span aria-label="রেটিং">★ ${p.rating}</span> <span>(${bn(p.reviews)} রিভিউ)</span>`
       : `<span>এই পণ্যে এখনো কোনো প্রকাশিত রিভিউ নেই</span>`;
     const price=document.getElementById('pdpPrice'); if(price) price.textContent = money(p.salePrice);
     const disc = p.price>p.salePrice ? Math.round((1-p.salePrice/p.price)*100) : 0;
     const old=document.getElementById('pdpOld'); if(old) old.textContent = disc? money(p.price):'';
+    // ⚠️ আগে এখানে "X% ছাড়" পিল দেখানো হতো — কখনো অনুরোধ করা হয়নি, আর ribbon-এই
+    // একই তথ্য (টাকায়) থাকায় এটা অপ্রয়োজনীয় ডুপ্লিকেট ছিল। এখন এই একই জায়গায়
+    // "কত পিছ বিক্রি হয়েছে" — সবসময় দেখানো হয় (শূন্য হলেও), রেফারেন্স ছবির স্টাইলে।
     const discEl=document.getElementById('pdpDisc');
-    if(discEl){ discEl.style.display = disc?'inline-block':'none'; discEl.textContent = disc?`${bn(disc)}% ছাড়`:''; }
+    if(discEl){ discEl.style.display='inline-block'; discEl.textContent = `${bn(p.sold||0)} বিক্রি হয়েছে`; }
     const ribbon=document.getElementById('pdpSavingsRibbon');
     if(ribbon){
       if(disc){ ribbon.style.display='flex'; ribbon.innerHTML = `বাঁচলো<span class="amt">৳${bn(p.price - p.salePrice)}</span>`; }
@@ -217,7 +220,12 @@ const PDP = {
     ReviewService.renderReviews(p.id, 'pdpReviews');
     const reviewForm=document.getElementById('pdpReviewForm');
     if(reviewForm){
-      reviewForm.innerHTML = `
+      // ⚠️ আগে এই ফর্ম সবসময় দেখানো হতো, এমনকি লগইন ছাড়াই (guest) রিভিউ সাবমিট
+      // করা যেতো — কোনো account থাকার শর্তই ছিল না। কেনাকাটা করতে হবে এমন শর্তও
+      // কখনো ছিল না (সেটা ঠিকই ছিল, বহাল রাখা হলো) — শুধু এখন account/লগইন
+      // বাধ্যতামূলক করা হলো, purchase-এর কোনো শর্ত নেই।
+      if(Auth.currentUser){
+        reviewForm.innerHTML = `
         <h3 class="tiro" style="font-size:16px;margin-bottom:10px">আপনার রিভিউ দিন</h3>
         <div style="display:flex;gap:4px;margin-bottom:10px;font-size:24px;cursor:pointer" id="starInput">
           <span onclick="PDP.setRating(1)" data-star="1">☆</span>
@@ -229,6 +237,12 @@ const PDP = {
         <div class="field"><textarea id="reviewText" rows="2" placeholder="আপনার অভিজ্ঞতা লিখুন..."></textarea></div>
         <div class="field"><label style="font-size:11.5px">ছবি যোগ করুন (ঐচ্ছিক)</label><input type="file" id="reviewPhoto" accept="image/*"></div>
         <button class="btn btn-gold" style="font-size:13px" onclick="PDP.submitReview()">রিভিউ সাবমিট করুন</button>`;
+      }else{
+        reviewForm.innerHTML = `
+        <h3 class="tiro" style="font-size:16px;margin-bottom:8px">রিভিউ দিতে চান?</h3>
+        <p style="font-size:13px;color:var(--ink-muted);margin-bottom:12px">পণ্য কিনুন বা না কিনুন, শুধু অ্যাকাউন্ট থাকলেই আপনি রিভিউ দিতে পারবেন।</p>
+        <button class="btn btn-gold" style="font-size:13px" onclick="AuthUI.open()">লগইন / অ্যাকাউন্ট তৈরি করুন</button>`;
+      }
     }
     this.injectProductSchema(p, disc);
   },
@@ -289,7 +303,17 @@ const PDP = {
   openFullImg(){
     const overlay=document.getElementById('pdpImgOverlay');
     const fullImg=document.getElementById('pdpImgFull');
-    if(overlay && fullImg){ fullImg.src=this.product?.img||''; overlay.classList.add('is-open'); document.body.style.overflow='hidden'; }
+    if(overlay && fullImg){
+      // ⚠️ আগে সরাসরি this.product?.img||'' বসানো হতো, কোনো fallback/error-handling
+      // ছাড়া। ছবির URL কোনো কারণে লোড ব্যর্থ হলে (broken link, ধীর নেটওয়ার্ক,
+      // CORS ইত্যাদি) শুধু গাঢ় কালো overlay-টাই দেখা যেত, ভেতরে কিছুই না —
+      // ঠিক যে সমস্যাটা রিপোর্ট হয়েছে। এখন safeImgSrc() fallback ব্যবহার করা
+      // হচ্ছে (অন্য জায়গায় যেমন ব্যবহার হয়), আর onerror হলেও placeholder দেখাবে।
+      fullImg.onerror = () => { fullImg.src = GOLAPI_IMG_PLACEHOLDER; };
+      fullImg.src = safeImgSrc(this.product?.img);
+      overlay.classList.add('is-open');
+      document.body.style.overflow='hidden';
+    }
   },
   closeFullImg(){
     const overlay=document.getElementById('pdpImgOverlay');
