@@ -464,7 +464,13 @@ function pcardHTML(p, idx) {
             : ''
         }
 
-        <span class="brand-seal" aria-hidden="true"></span>
+        ${
+          discount
+            ? `
+              <span class="savings-ribbon" aria-hidden="true">বাঁচলো<span class="amt">৳${bn(p.price - p.salePrice)}</span></span>
+            `
+            : ''
+        }
       </div>
 
       <div class="pbody">
