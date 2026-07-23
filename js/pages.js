@@ -187,6 +187,11 @@ const PDP = {
     const old=document.getElementById('pdpOld'); if(old) old.textContent = disc? money(p.price):'';
     const discEl=document.getElementById('pdpDisc');
     if(discEl){ discEl.style.display = disc?'inline-block':'none'; discEl.textContent = disc?`${bn(disc)}% ছাড়`:''; }
+    const ribbon=document.getElementById('pdpSavingsRibbon');
+    if(ribbon){
+      if(disc){ ribbon.style.display='flex'; ribbon.innerHTML = `বাঁচলো<span class="amt">৳${bn(p.price - p.salePrice)}</span>`; }
+      else { ribbon.style.display='none'; }
+    }
     const unit=document.getElementById('pdpUnit'); if(unit) unit.textContent = '/ '+p.unit;
     const tags=document.getElementById('pdpTags');
     if(tags) tags.innerHTML = `${p.cod?'<span class="cod-tag">ক্যাশ অন ডেলিভারি</span>':''}${p.fastDelivery?'<span class="fast-tag">লোকাল ডেলিভারি</span>':''}`;
