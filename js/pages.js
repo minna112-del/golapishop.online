@@ -162,6 +162,55 @@ const Listing = {
 };
 
 /* ---------- PDP ---------- */
+/* সাইট-লেভেল রিভিউ (নির্দিষ্ট প্রোডাক্ট না, পুরো Golapi Shop Online নিয়ে অভিজ্ঞতা) —
+   প্রোডাক্ট রিভিউ-এর একই ReviewService/Firestore 'reviews' collection পুনরায়
+   ব্যবহার করা হচ্ছে, শুধু productId হিসেবে একটা reserved sentinel মান
+   ('SITE_REVIEW') ব্যবহার করা হয়েছে — তাই আলাদা কোনো নতুন Firestore rules লাগছে না। */
+const SITE_REVIEW_ID = 'SITE_REVIEW';
+const SiteReview = {
+  currentRating: 0,
+  async render(){
+    const formEl = document.getElementById('siteReviewForm');
+    if(formEl){
+      if(Auth.currentUser){
+        formEl.innerHTML = `
+        <div style="display:flex;gap:4px;margin-bottom:10px;font-size:24px;cursor:pointer" id="siteStarInput">
+          <span onclick="SiteReview.setRating(1)" data-star="1">☆</span>
+          <span onclick="SiteReview.setRating(2)" data-star="2">☆</span>
+          <span onclick="SiteReview.setRating(3)" data-star="3">☆</span>
+          <span onclick="SiteReview.setRating(4)" data-star="4">☆</span>
+          <span onclick="SiteReview.setRating(5)" data-star="5">☆</span>
+        </div>
+        <div class="field"><textarea id="siteReviewText" rows="3" placeholder="অর্ডার, ডেলিভারি বা সাইট ব্যবহারের অভিজ্ঞতা লিখুন..."></textarea></div>
+        <button class="btn btn-gold" style="font-size:13px" onclick="SiteReview.submit()">রিভিউ সাবমিট করুন</button>`;
+      }else{
+        formEl.innerHTML = `
+        <p style="font-size:13px;color:var(--ink-muted);margin-bottom:12px">রিভিউ দিতে অ্যাকাউন্ট প্রয়োজন — লগইন করা থাকলেই দেওয়া যায়।</p>
+        <button class="btn btn-gold" style="font-size:13px" onclick="AuthUI.open()">লগইন / অ্যাকাউন্ট তৈরি করুন</button>`;
+      }
+    }
+    await ReviewService.renderReviews(SITE_REVIEW_ID, 'siteReviewList');
+  },
+  setRating(n){
+    this.currentRating=n;
+    document.querySelectorAll('#siteStarInput span').forEach(s=>{
+      const star=parseInt(s.dataset.star);
+      s.textContent = star<=n?'★':'☆';
+      s.style.color = star<=n?'var(--gold)':'var(--ink-muted)';
+    });
+  },
+  async submit(){
+    const text=document.getElementById('siteReviewText')?.value.trim()||'';
+    const userName = Auth.currentUser?.displayName || 'গ্রাহক';
+    const ok = await ReviewService.submitReview(SITE_REVIEW_ID, this.currentRating, text, userName, null);
+    if(ok){
+      this.currentRating=0;
+      const rt=document.getElementById('siteReviewText'); if(rt) rt.value='';
+      this.render();
+    }
+  }
+};
+
 const PDP = {
   product:null, qty:1,
   load(id){
@@ -239,8 +288,8 @@ const PDP = {
         <button class="btn btn-gold" style="font-size:13px" onclick="PDP.submitReview()">রিভিউ সাবমিট করুন</button>`;
       }else{
         reviewForm.innerHTML = `
-        <h3 class="tiro" style="font-size:16px;margin-bottom:8px">রিভিউ দিতে চান?</h3>
-        <p style="font-size:13px;color:var(--ink-muted);margin-bottom:12px">পণ্য কিনুন বা না কিনুন, শুধু অ্যাকাউন্ট থাকলেই আপনি রিভিউ দিতে পারবেন।</p>
+        <h3 class="tiro" style="font-size:16px;margin-bottom:8px">রিভিউ দিতে অ্যাকাউন্ট প্রয়োজন</h3>
+        <p style="font-size:13px;color:var(--ink-muted);margin-bottom:12px">পণ্য কেনা বাধ্যতামূলক নয় — লগইন করা থাকলেই রিভিউ দেওয়া যায়।</p>
         <button class="btn btn-gold" style="font-size:13px" onclick="AuthUI.open()">লগইন / অ্যাকাউন্ট তৈরি করুন</button>`;
       }
     }
@@ -502,7 +551,7 @@ function doSearch(v){
   if(!matches.length){ box.innerHTML = `<div style="padding:14px;font-size:13px;color:var(--ink-muted);text-align:center">কোনো মিল পাওয়া যায়নি</div>`; box.style.display='block'; return; }
   box.innerHTML = matches.map(p=>`<div onclick="Router.go('product',{id:'${p.id}'});document.getElementById('searchSuggestBox').style.display='none'" style="display:flex;align-items:center;gap:10px;padding:9px 14px;cursor:pointer;border-bottom:1px solid var(--line)">
     <img src="${safeImgSrc(p.img)}" style="width:32px;height:32px;border-radius:6px;object-fit:cover">
-    <div style="flex:1;min-width:0"><div style="font-size:12.5px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.name)}</div><div style="font-size:11px;color:var(--gold)">${money(p.salePrice)}</div></div>
+    <div style="flex:1;min-width:0"><div style="font-size:12.5px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.name)}</div><div style="font-size:11px;color:var(--gold)">${money(p.salePrice)}</div></div>
   </div>`).join('');
   box.style.display='block';
 }
@@ -712,7 +761,7 @@ function orderTrackHTML(o){
     ? `<div style="margin-top:10px">
         ${o.bazarItems?.length ? `<div style="background:rgba(255,255,255,.02);border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px">
           ${o.bazarItems.map(it=>`<div class="row-between" style="font-size:12px"><span>${it.text}</span><span>${money(it.price)}</span></div>`).join('')}
-          <div class="row-between" style="font-weight:700;color:#fff;border-top:1px solid var(--line);margin-top:6px;padding-top:6px"><span>মোট বিল</span><span style="color:var(--gold)">${money(o.billAmount||0)}</span></div>
+          <div class="row-between" style="font-weight:700;color:var(--ink);border-top:1px solid var(--line);margin-top:6px;padding-top:6px"><span>মোট বিল</span><span style="color:var(--gold)">${money(o.billAmount||0)}</span></div>
         </div>` : ''}
         ${(o.billPhotos||[]).map(url=>`<img src="${url}" style="width:100%;border-radius:10px;border:1px solid var(--line);margin-bottom:6px">`).join('')}
         <div style="font-size:11.5px;color:var(--ink-muted)">ড্রাইভার ডেলিভারির সময় আসল দোকানের মেমো/রশিদও সাথে নিয়ে আসবে — টাকা রেডি রাখুন।</div>
@@ -778,7 +827,7 @@ const SavedLists = {
         const availableCount = l.items.filter(it=>{ const p=ALL_PRODUCTS.find(x=>x.id===it.productId); return p && p.stock>0; }).length;
         return `<div class="card-box">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-            <strong style="color:#fff">${l.name}</strong>
+            <strong style="color:var(--ink)">${l.name}</strong>
             <a href="#" onclick="event.preventDefault();SavedLists.deleteList('${l.id}')" style="color:#f87171;font-size:11.5px">মুছুন</a>
           </div>
           <div style="font-size:12px;color:var(--ink-muted);margin-bottom:10px">${l.items.length}টি প্রোডাক্ট — ${availableCount}টি এখন পাওয়া যাচ্ছে</div>

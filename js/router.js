@@ -558,6 +558,10 @@ const Router = {
       CustomBazar.init();
     }
 
+    if (page === 'about-app') {
+      SiteReview.render();
+    }
+
     if (page === 'account') {
       AccountPage.render();
     }

@@ -231,13 +231,13 @@ function bazarShopHTML(o){
   const lines = (o.bazarList||'').split('\n').map(l=>l.trim()).filter(Boolean);
   const rows = lines.map((line,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)">
     <span class="bazar-line-text" style="font-size:12px;color:var(--ink-soft);flex:1">${driverEscape(line)}</span>
-    <input type="number" placeholder="৳" data-bazar-line="${o.id}:${i}" oninput="BazarShop.recalc('${o.id}', ${lines.length})" style="width:70px;padding:6px;border-radius:6px;background:rgba(255,255,255,.04);border:1px solid var(--line-l);color:#fff;font-size:12px;text-align:right">
+    <input type="number" placeholder="৳" data-bazar-line="${o.id}:${i}" oninput="BazarShop.recalc('${o.id}', ${lines.length})" style="width:70px;padding:6px;border-radius:6px;background:rgba(255,255,255,.04);border:1px solid var(--line-l);color:var(--ink);font-size:12px;text-align:right">
   </div>`).join('');
   return `<div style="margin:8px 0;padding:10px;background:rgba(212,175,55,.05);border:1px solid var(--gold-line);border-radius:10px">
     <div style="font-size:11.5px;color:var(--gold);font-weight:600;margin-bottom:8px">🛒 আইটেম অনুযায়ী দাম লিখুন (Shop & Deliver)</div>
     <button class="btn btn-outline btn-block" style="margin-bottom:8px;font-size:11.5px" onclick="BazarMemo.openById('${esc(BazarMemo.register(o))}')">🧾 লিস্ট প্রিন্ট করুন (দোকানে নিয়ে যাওয়ার জন্য)</button>
     ${rows}
-    <div style="display:flex;justify-content:space-between;margin-top:8px;font-weight:700;color:#fff;font-size:13px">মোট বিল <span id="bazarTotal-${o.id}">৳0</span></div>
+    <div style="display:flex;justify-content:space-between;margin-top:8px;font-weight:700;color:var(--ink);font-size:13px">মোট বিল <span id="bazarTotal-${o.id}">৳0</span></div>
     <div style="font-size:11px;color:var(--ink-muted);margin:8px 0 4px">দোকানের মেমো/রশিদের ছবি *</div>
     <input type="file" accept="image/*" multiple id="bazarPhotos-${o.id}" style="width:100%;font-size:11.5px;color:var(--ink-muted)">
     <button class="btn btn-gold btn-block" style="margin-top:8px;font-size:12.5px" onclick="BazarShop.submit('${o.id}', ${lines.length})">✅ বাজার সম্পন্ন, বিল আপলোড করুন</button>
