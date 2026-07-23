@@ -1,53 +1,67 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getAnalytics, isSupported as analyticsIsSupported } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
-  import {
-    getAuth, onAuthStateChanged, createUserWithEmailAndPassword,
-    signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, updateProfile,
-    signInWithPhoneNumber, RecaptchaVerifier
-  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-  import {
-    getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc,
-    updateDoc, deleteDoc, query, where, orderBy, limit, onSnapshot,
-    serverTimestamp, increment, runTransaction
-  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-  import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
-  import { getMessaging, getToken, isSupported as messagingIsSupported } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js";
+import {
+  getAuth, onAuthStateChanged, createUserWithEmailAndPassword,
+  signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, updateProfile,
+  signInWithPhoneNumber, RecaptchaVerifier
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc,
+  updateDoc, deleteDoc, query, where, orderBy, limit, onSnapshot,
+  serverTimestamp, increment, runTransaction
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
+/* ⚠️ আগে analytics ও messaging module উপরে static import করা হতো (app/auth/firestore/
+   storage-এর সাথে একই import গ্রুপে)। ES module-এর নিয়ম অনুযায়ী একটা <script type="module">-এর
+   ভেতরের সব static import সম্পূর্ণ ডাউনলোড/parse না হওয়া পর্যন্ত নিচের একটা লাইনও রান হয় না।
+   ফলে analytics/messaging ফাইল দুটো (যেগুলো non-critical — না থাকলেও সাইট চলে) কোনো কারণে
+   স্লো/ব্যর্থ হলে — auth, db, storage সহ পুরো Firebase-ই কখনো চালু হতো না, আর ব্যবহারকারী
+   স্থায়ীভাবে "সংযোগ স্থাপন করতে সমস্যা হচ্ছে" স্ক্রিনে আটকে থাকতো, যদিও মূল সংযোগে কোনো
+   সমস্যা ছিল না। এখন এই দুটো module dynamic import() দিয়ে আলাদা করা হলো — এগুলো ব্যর্থ হলেও
+   core Firebase (auth/db/storage) সাথে সাথে চালু হয়ে যাবে। */
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyBdtIlcoPFFqzkI6X9KOIH-f4QAyEfH4o8",
-    authDomain: "golapishoponline.firebaseapp.com",
-    projectId: "golapishoponline",
-    storageBucket: "golapishoponline.firebasestorage.app",
-    messagingSenderId: "871653454194",
-    appId: "1:871653454194:web:67e207a7df46503169edeb",
-    measurementId: "G-EZX9JH30DB"
+const firebaseConfig = {
+  apiKey: "AIzaSyBdtIlcoPFFqzkI6X9KOIH-f4QAyEfH4o8",
+  authDomain: "golapishoponline.firebaseapp.com",
+  projectId: "golapishoponline",
+  storageBucket: "golapishoponline.firebasestorage.app",
+  messagingSenderId: "871653454194",
+  appId: "1:871653454194:web:67e207a7df46503169edeb",
+  measurementId: "G-EZX9JH30DB"
+};
+
+try{
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const storage = getStorage(app);
+
+  window.__fb = {
+    auth, db, storage, GoogleAuthProvider,
+    onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword,
+    signOut, signInWithPopup, updateProfile,
+    signInWithPhoneNumber, RecaptchaVerifier,
+    collection, doc, setDoc, getDoc, getDocs, addDoc, updateDoc, deleteDoc,
+    query, where, orderBy, limit, onSnapshot, serverTimestamp, increment, runTransaction,
+    storageRef, uploadBytes, getDownloadURL
   };
+  window.dispatchEvent(new Event('firebase-ready'));
 
-  try{
-    const app = initializeApp(firebaseConfig);
-    setTimeout(() => { analyticsIsSupported().then(ok => { if (ok) getAnalytics(app); }).catch(()=>{}); }, 5000); // Analytics আর critical path-এ নেই — ৫সে পরে নীরবে চালু হয়
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const storage = getStorage(app);
+  /* ---------- Analytics: lazy-loaded, ৫সে পরে, ব্যর্থ হলেও কোনো প্রভাব নেই ---------- */
+  setTimeout(() => {
+    import("https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js")
+      .then(({ getAnalytics, isSupported }) => isSupported().then(ok => { if (ok) getAnalytics(app); }))
+      .catch(()=>{});
+  }, 5000);
 
-    window.__fb = {
-      auth, db, storage, GoogleAuthProvider,
-      onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword,
-      signOut, signInWithPopup, updateProfile,
-      signInWithPhoneNumber, RecaptchaVerifier,
-      collection, doc, setDoc, getDoc, getDocs, addDoc, updateDoc, deleteDoc,
-      query, where, orderBy, limit, onSnapshot, serverTimestamp, increment, runTransaction,
-      storageRef, uploadBytes, getDownloadURL
-    };
-    window.dispatchEvent(new Event('firebase-ready'));
-
-  /* ---------- FCM: customer push token capture ---------- */
+  /* ---------- FCM: customer push token capture (lazy-loaded messaging module) ---------- */
   /* VAPID key — Firebase Console > Project Settings > Cloud Messaging > Web Push certificates */
   const VAPID_KEY = 'BPRxIznMoYaznW3dnf-OcB-MSplrzV6xA2bWWbPENH37-iAelbKjcwO50XbGMirLpNu6w4XZBr7kwZLPepf9KRQ';
 
   async function registerPushToken(userId){
     try{
+      const { getMessaging, getToken, isSupported: messagingIsSupported } =
+        await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js");
       const supported = await messagingIsSupported();
       if(!supported || !('Notification' in window)) return;
       // ⚠️ আগে login হলেই স্বয়ংক্রিয়ভাবে notification permission popup আসতো —
@@ -69,7 +83,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
   onAuthStateChanged(auth, user=>{
     if(user) registerPushToken(user.uid);
   });
-  
-  }catch(initErr){
-    console.error('Firebase initialization failed:', initErr);
-  }
+
+}catch(initErr){
+  console.error('Firebase initialization failed:', initErr);
+}
