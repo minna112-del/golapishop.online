@@ -121,21 +121,45 @@ const AdminDash = {
     const tbody = document.getElementById('aProductsTable');
     if(!tbody) return;
     const search = document.getElementById('productSearch')?.value.toLowerCase()||'';
-    const list = search ? ALL_PRODUCTS.filter(p=>p.name.toLowerCase().includes(search)) : ALL_PRODUCTS;
+    const zoneFilter = document.getElementById('productZoneFilter')?.value||'';
+    let list = search ? ALL_PRODUCTS.filter(p=>p.name.toLowerCase().includes(search)) : ALL_PRODUCTS.slice();
+    if(zoneFilter) list = list.filter(p=>p.zone===zoneFilter);
     if(!list.length){ tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;color:var(--ink-muted);padding:20px">কোনো প্রোডাক্ট নেই</td></tr>`; return; }
-    tbody.innerHTML = list.map(p=>`<tr style="${p.stock===0?'opacity:.6':''}">
+
+    // ⚠️ আগে ALL_PRODUCTS যে ক্রমে Firestore থেকে আসতো (মূলত এলোমেলো/insertion
+    // order-এ) ঠিক সেভাবেই টেবিলে দেখানো হতো — একই ক্যাটাগরির পণ্য ছড়িয়ে-ছিটিয়ে
+    // থাকতো। এখন প্রথমে ক্যাটাগরির বাংলা label অনুযায়ী, তারপর নাম অনুযায়ী sort করা
+    // হচ্ছে — একই ক্যাটাগরির পণ্য সবসময় একসাথে গ্রুপ হয়ে দেখাবে।
+    const catLabel = id => CATEGORIES.find(c=>c.id===id)?.label || id || '';
+    list.sort((a,b)=>{
+      const ca = catLabel(a.category), cb = catLabel(b.category);
+      if(ca !== cb) return ca.localeCompare(cb, 'bn');
+      return (a.name||'').localeCompare(b.name||'', 'bn');
+    });
+
+    let rows = '';
+    let lastCat = null;
+    for(const p of list){
+      const cat = catLabel(p.category);
+      if(cat !== lastCat){
+        rows += `<tr class="admin-table-group-row"><td colspan="8" style="padding:10px 12px;font-weight:700;font-size:12px;color:var(--brand-700,var(--gold));background:var(--brand-50,rgba(179,25,91,.05))">${esc(cat)} <span style="font-weight:500;color:var(--ink-muted);font-size:11px">— ${bn(list.filter(x=>catLabel(x.category)===cat).length)}টি পণ্য</span></td></tr>`;
+        lastCat = cat;
+      }
+      rows += `<tr style="${p.stock===0?'opacity:.6':''}">
       <td><input type="checkbox" class="prodCheck" value="${p.id}" ${this.selectedProducts.has(p.id)?'checked':''} onchange="AdminDash.toggleProductSelect('${p.id}',this.checked)" aria-label="${esc(p.name)} নির্বাচন"></td>
       <td><div style="width:38px;height:38px;border-radius:8px;overflow:hidden;background:var(--elevated)"><img src="${safeImgSrc(p.imageUrl||p.img)}" style="width:100%;height:100%;object-fit:cover" loading="lazy" decoding="async" width="38" height="38"></div></td>
-      <td><div style="font-size:12.5px;color:var(--ink);max-width:160px">${esc(p.name)}</div><div style="font-size:10.5px;color:var(--ink-muted)">${CATEGORIES.find(c=>c.id===p.category)?.label||''}</div></td>
+      <td><div style="font-size:12.5px;color:var(--ink);max-width:160px">${esc(p.name)}</div></td>
       <td>${AREA_LABELS[p.zone]||'—'}</td>
       <td><div style="color:var(--gold);font-weight:600">${money(p.salePrice)}</div>${p.price>p.salePrice?`<div style="font-size:10px;color:var(--ink-dim);text-decoration:line-through">${money(p.price)}</div>`:''}</td>
-      <td><input type="number" value="${p.stock}" min="0" onchange="AdminDash.quickStockUpdate('${p.id}',this.value)" style="width:60px;padding:4px 6px;border-radius:6px;background:var(--bg2);border:1px solid ${p.stock<=5?'rgba(239,68,68,.4)':'var(--line)'};color:${p.stock===0?'#f87171':p.stock<=5?'#fbbf24':'#fff'};font-size:12px;text-align:center"></td>
+      <td><input type="number" value="${p.stock}" min="0" onchange="AdminDash.quickStockUpdate('${p.id}',this.value)" style="width:60px;padding:4px 6px;border-radius:6px;background:var(--bg2);border:1px solid ${p.stock<=5?'rgba(239,68,68,.4)':'var(--line)'};color:${p.stock===0?'#f87171':p.stock<=5?'#fbbf24':'var(--ink)'};font-size:12px;text-align:center"></td>
       <td><span class="status-pill ${p.stock>0?'delivered':'cancelled'}">${p.stock>0?'লাইভ':'স্টক আউট'}</span></td>
       <td style="display:flex;gap:6px">
         <a href="#" onclick="event.preventDefault();ProductForm.openEdit('${p.id}')" style="color:var(--gold);font-size:12px">এডিট</a>
         <a href="#" onclick="event.preventDefault();AdminDash.toggleProductStatus('${p.id}')" style="color:${p.status==='inactive'?'#22c55e':'#f87171'};font-size:12px">${p.status==='inactive'?'চালু':'বন্ধ'}</a>
       </td>
-    </tr>`).join('');
+    </tr>`;
+    }
+    tbody.innerHTML = rows;
   },
 
   filterProducts(){ this.renderProducts(); },
