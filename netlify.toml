@@ -87,23 +87,31 @@
   [headers.values]
     Cache-Control = "no-cache, no-store, must-revalidate"
 
+# ⚠️ আগে এখানে "no-cache" ছিল — মানে প্রতিবার browser server-এর সাথে
+# revalidate করতো (round-trip লাগতো, যদিও content না বদলালে সম্পূর্ণ ফাইল
+# আবার ডাউনলোড হতো না)। এখন ৬০ সেকেন্ডের একটা ছোট max-age যোগ করা হলো —
+# এই সময়ের মধ্যে বারবার navigation/reload হলে কোনো network round-trip
+# ছাড়াই সরাসরি browser cache থেকে ব্যবহার হবে (আসল speed boost), কিন্তু
+# ৬০ সেকেন্ড পার হলেই নতুন deploy থাকলে সাথে সাথে ধরা পড়বে — বেশিদিন stale
+# থাকার ঝুঁকি নেই। Service Worker-এর network-first strategy-র সাথেও এখন
+# আর সাংঘর্ষিক না, বরং একে অপরের পরিপূরক।
 [[headers]]
   for = "/js/*"
   [headers.values]
-    Cache-Control = "no-cache, must-revalidate"
+    Cache-Control = "public, max-age=60, must-revalidate"
 
 [[headers]]
   for = "/css/*"
   [headers.values]
-    Cache-Control = "no-cache, must-revalidate"
-
-[[headers]]
-  for = "/firebase-messaging-sw.js"
-  [headers.values]
-    Cache-Control = "no-cache, no-store, must-revalidate"
-    Service-Worker-Allowed = "/"
+    Cache-Control = "public, max-age=60, must-revalidate"
 
 [[headers]]
   for = "/sw.js"
   [headers.values]
     Cache-Control = "no-cache, no-store, must-revalidate"
+# ─── Static images/icons — এগুলো কার্যত অপরিবর্তনীয়, তাই দীর্ঘমেয়াদি cache ───
+# (নতুন ছবি সবসময় নতুন filename-এ যোগ হয়, তাই stale হওয়ার ঝুঁকি নেই)
+[[headers]]
+  for = "/icons/*"
+  [headers.values]
+    Cache-Control = "public, max-age=2592000"

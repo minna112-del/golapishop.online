@@ -1,13 +1,19 @@
 /* sw.js — Golapi Shop Offline Service Worker (network-first) */
-const CACHE = 'golapi-v16';
+const CACHE = 'golapi-v29';
 const OFFLINE_URL = '/offline.html';
+/* ⚠️ আগে এখানে admin/driver/zone-manager/checkout/account ইত্যাদি সব পেজ+JS
+   pre-cache হতো — যদিও page-loader.js/router.js এগুলো lazy করে দিয়েছে, Service
+   Worker নিজে থেকেই আবার সব ডাউনলোড করে ফেলতো ব্যাকগ্রাউন্ডে, lazy-loading-এর
+   পুরো সুবিধা নষ্ট করে দিয়ে। এখন শুধু সাধারণ browsing-এর জন্য একদম-প্রথমেই-দরকার
+   এমন ফাইলগুলোই pre-cache হয়। বাকি সব (admin/driver/checkout/myorders ইত্যাদি)
+   Router.go()-এর সময় স্বাভাবিক network-first fetch দিয়েই লোড হয় (এখনো cache
+   হয়, শুধু install-এর সময় জোর করে আগে থেকে না)। */
 const ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
   OFFLINE_URL,
   '/css/style.css',
-  '/css/components.css',
   '/js/utils.js',
   '/js/data.js',
   '/js/store.js',
@@ -16,12 +22,7 @@ const ASSETS = [
   '/js/auth.js',
   '/js/widgets.js',
   '/js/pages.js',
-  '/js/driver.js',
-  '/js/zone-manager.js',
-  '/js/admin.js',
   '/js/features.js',
-  '/js/payment.js',
-  '/js/sms.js',
   '/js/page-loader.js',
   '/js/app.js',
   '/js/update-check.js',
@@ -30,28 +31,9 @@ const ASSETS = [
   '/pages/home.html',
   '/pages/listing.html',
   '/pages/product.html',
-  '/pages/checkout.html',
-  '/pages/order-success.html',
-  '/pages/myorders.html',
-  '/pages/account.html',
-  '/pages/account-addresses.html',
-  '/pages/wishlist.html',
-  '/pages/about-app.html',
-  '/pages/privacy-info.html',
-  '/pages/terms.html',
-  '/pages/contact.html',
-  '/pages/custom-bazar.html',
-  '/pages/medical.html',
-  '/pages/admin-dash.html',
-  '/pages/zone-manager.html',
-  '/pages/driver.html',
   '/pages/topbar.html',
   '/pages/header.html',
-  '/pages/cart-drawer.html',
-  '/pages/footer.html',
   '/pages/mobnav.html',
-  '/pages/chat-widget.html',
-  '/pages/modals.html',
   '/pages/toast.html',
   '/icons/head_logo.webp',
   '/icons/head_logo-192.webp',
@@ -65,9 +47,15 @@ self.addEventListener('install', event => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE).then(async cache => {
-      const results = await Promise.allSettled(
-        ASSETS.map(asset => cache.add(asset))
-      );
+      // ⚠️ আগে সব asset একসঙ্গে parallel request হতো — slow নেটওয়ার্কে bandwidth-এ চাপ পড়তো।
+      // এখন ৪টা করে ব্যাচে, ধারাবাহিকভাবে লোড হয়।
+      const BATCH_SIZE = 4;
+      const results = [];
+      for (let i = 0; i < ASSETS.length; i += BATCH_SIZE) {
+        const batch = ASSETS.slice(i, i + BATCH_SIZE);
+        const batchResults = await Promise.allSettled(batch.map(asset => cache.add(asset)));
+        results.push(...batchResults);
+      }
 
       const failed = results
         .map((result, index) => ({ result, asset: ASSETS[index] }))
@@ -93,16 +81,46 @@ self.addEventListener('activate', event => {
   );
 });
 
+const MAX_CACHE_ENTRIES = 120; // ⚠️ আগে কোনো সীমা ছিল না — মোবাইল ব্রাউজার storage সময়ের সাথে ফুলে যেতে পারতো
+
+async function trimCache(cacheName, maxEntries){
+  const cache = await caches.open(cacheName);
+  const keys = await cache.keys();
+  if(keys.length <= maxEntries) return;
+  // সবচেয়ে পুরনো entry-গুলো (তালিকার শুরুর দিকে) মুছে ফেলা
+  const toDelete = keys.length - maxEntries;
+  for(let i = 0; i < toDelete; i++){ await cache.delete(keys[i]); }
+}
+
 self.addEventListener('fetch', event => {
   const { request } = event;
   if (request.method !== 'GET') return;
 
+  // ⚠️ আগে img retry-এর সময় যোগ করা "?retry=timestamp" প্যারামিটার সহ প্রতিটা
+  // চেষ্টা আলাদা cache entry হিসেবে জমা হতো (কখনো মুছতো না)। এখন এই ধরনের
+  // one-off cache-busting URL কখনোই cache-এ সেভ করা হয় না।
+  const isRetryBust = /[?&]retry=\d+/.test(request.url);
+  // ⚠️ আগে same-origin-এর যেকোনো সফল GET response cache হতো (query-string URL,
+  // dynamic response সহ)। এখন শুধু নির্দিষ্ট static file extension/path allowlist
+  // অনুযায়ী cache হয় — cache-এ অপ্রয়োজনীয় entry জমা হওয়া বন্ধ।
+  const cacheableAllowlist = /\.(html|js|css|webp|png|jpg|jpeg|svg|json|woff2?)$/i;
+  const isCacheableStatic = cacheableAllowlist.test(new URL(request.url).pathname) || request.mode === 'navigate';
+
   event.respondWith(
-    fetch(request)
+    // ⚠️ আগে বিশুদ্ধ network-first ছিল — নেটওয়ার্ক খুব ধীর (কিন্তু offline না) হলে
+    // cache-এ কপি থাকা সত্ত্বেও অনন্ত অপেক্ষা হতো। এখন ৪ সেকেন্ডে নেটওয়ার্ক সাড়া
+    // না দিলে সাথে সাথে cache থেকে দেখানো হয় — সাইট আর "আটকে" থাকে না।
+    Promise.race([
+      fetch(request),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('sw-timeout')), 4000))
+    ])
       .then(response => {
-        if (response && response.ok && request.url.startsWith(self.location.origin)) {
+        if (response && response.ok && !isRetryBust && isCacheableStatic && request.url.startsWith(self.location.origin)) {
           const copy = response.clone();
-          caches.open(CACHE).then(cache => cache.put(request, copy)).catch(() => {});
+          caches.open(CACHE).then(cache => {
+            cache.put(request, copy);
+            trimCache(CACHE, MAX_CACHE_ENTRIES);
+          }).catch(() => {});
         }
         return response;
       })
