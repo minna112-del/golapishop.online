@@ -1,19 +1,24 @@
-/* sms.js — Green Web + SSL Wireless Dual Gateway, with retry queue + Firestore logging */
+/* sms.js — Green Web + SSL Wireless Dual Gateway, with retry queue + Firestore logging
+   ⚠️⚠️ CRITICAL SECURITY FIX: আগে এখানে GREENWEB.token ও SSL.api_token সরাসরি এই
+   client-side ফাইলে বসানোর কথা ছিল ("এখানে তোমার আসল credentials বসাও")। কিন্তু
+   এই ফাইলটা সরাসরি ব্রাউজারে ডাউনলোড হয় — যে কেউ DevTools → Sources খুলে বা
+   ওয়েবসাইটের সোর্স ডাউনলোড করে এই token হুবহু দেখে নিতে পারতো। সেই token দিয়ে
+   তখন যে কেউ (আমাদের ওয়েবসাইট ছাড়াই, সরাসরি curl/Postman দিয়ে) আমাদের
+   balance থেকে ইচ্ছামতো SMS পাঠাতে পারতো — spam, balance শেষ, account
+   suspension, বিল বৃদ্ধি, সবই সম্ভব ছিল।
+
+   এখন AI চ্যাট ফিচারে যেভাবে করা হয়েছে (js/widgets.js-এর ChatWidget.workerUrl —
+   Anthropic API key client-এ কখনো পাঠানো হয় না, একটা Cloudflare Worker proxy
+   ব্যবহার হয়) — ঠিক সেই একই প্যাটার্নে SMS পাঠানো হচ্ছে। আসল GreenWeb/SSL
+   token এখন শুধু Cloudflare Worker-এর ভেতরে (server-side secret হিসেবে)
+   থাকে, ব্রাউজারে কখনোই আসে না। এই ফাইলের নিচে workerUrl সেট করার নির্দেশনা
+   দেওয়া আছে, আর Worker-এর সম্পূর্ণ কোড আলাদাভাবে দেওয়া হয়েছে (cloudflare-sms-worker.js)। */
 const SMSGateway = {
 
-  /* =============================================
-     🔴 এখানে তোমার আসল credentials বসাও
-     ============================================= */
-  GREENWEB: {
-    token: 'YOUR_GREENWEB_TOKEN',
-    url: 'https://api.bdbulksms.net/api.php'
-  },
-
-  SSL: {
-    api_token: 'YOUR_SSL_API_TOKEN',
-    sid: 'GOLAPI',
-    url: 'https://api.sslwireless.com/sms/v3/api-sms.php'
-  },
+  /* 🔴 এখানে তোমার deploy করা Cloudflare Worker-এর URL বসাও (নিচের
+     cloudflare-sms-worker.js ফাইলটা Cloudflare Dashboard-এ deploy করার পর
+     যে subdomain পাবে, সেটা এখানে বসাও)। কোনো token/secret এখানে বসাতে হবে না। */
+  workerUrl: 'https://golapi-sms-proxy.studiomt46.workers.dev',
 
   /* Admin alert number */
   ADMIN_PHONE: '01612057371',
@@ -27,36 +32,21 @@ const SMSGateway = {
     return '88' + (p.startsWith('0') ? p : '0' + p);
   },
 
-  /* ── Green Web send ── */
-  async _gw(phone, msg) {
-    if (!this.GREENWEB.token || this.GREENWEB.token.includes('YOUR')) return { ok: false, reason:'not_configured' };
+  /* ⚠️ আগে এখানে _gw() ও _ssl() নামে দুইটা আলাদা ফাংশন ছিল, প্রতিটাতে সরাসরি
+     GreenWeb/SSL Wireless-এর URL + token বসানো থাকতো। এখন এই দুটোই সরিয়ে
+     একটাই ফাংশন — যেটা শুধু আমাদের নিজের Worker proxy-কে কল করে। Worker নিজেই
+     ভেতরে GreenWeb আগে চেষ্টা করে, ব্যর্থ হলে SSL Wireless-এ fallback করে —
+     ঠিক আগের মতোই dual-gateway লজিক, শুধু server-side-এ সরানো হয়েছে। */
+  async _sendViaProxy(phone, msg) {
+    if (this.workerUrl.includes('YOUR-SUBDOMAIN')) return { ok: false, reason: 'not_configured' };
     try {
-      const r = await fetch(
-        `${this.GREENWEB.url}?json&token=${this.GREENWEB.token}&to=${phone}&message=${encodeURIComponent(msg)}`
-      );
-      const d = await r.json().catch(() => ({}));
-      const ok = d.error === '0' || d.error === 0 || (typeof d.msg === 'string' && d.msg.toLowerCase().includes('success'));
-      return { ok, raw: d };
-    } catch (e) { return { ok: false, err: e.message }; }
-  },
-
-  /* ── SSL Wireless send ── */
-  async _ssl(phone, msg) {
-    if (!this.SSL.api_token || this.SSL.api_token.includes('YOUR')) return { ok: false, reason:'not_configured' };
-    try {
-      const r = await fetch(this.SSL.url, {
+      const r = await fetch(this.workerUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          api_token: this.SSL.api_token,
-          sid: this.SSL.sid,
-          msisdn: phone,
-          sms: msg,
-          csms_id: 'gs_' + Date.now()
-        })
+        body: JSON.stringify({ phone, message: msg })
       });
       const d = await r.json().catch(() => ({}));
-      return { ok: d.status === 'SUCCESS' || d.statusCode === 200, raw: d };
+      return { ok: !!d.ok, gateway: d.gateway || 'unknown', raw: d };
     } catch (e) { return { ok: false, err: e.message }; }
   },
 
@@ -72,23 +62,17 @@ const SMSGateway = {
     }catch(e){ devWarn('sms log write failed', e.message); }
   },
 
-  /* ── Master send: GW first → SSL fallback → ব্যর্থ হলে retry queue-তে যোগ ── */
+  /* ── Master send: Worker proxy (dual-gateway ভেতরে) → ব্যর্থ হলে retry queue-তে যোগ ── */
   async send(toRaw, msg, _attempt=1) {
     const phone = this.normalizePhone(toRaw);
     if (!phone) { devWarn('SMS: invalid phone', toRaw); return false; }
 
-    let res = await this._gw(phone, msg);
-    let gatewayUsed = 'greenweb';
-    if (!res.ok) {
-      devLog('GW failed → SSL fallback');
-      res = await this._ssl(phone, msg);
-      gatewayUsed = 'ssl';
-    }
-    await this._log(phone, msg, gatewayUsed, res, _attempt);
+    const res = await this._sendViaProxy(phone, msg);
+    await this._log(phone, msg, res.gateway || 'proxy', res, _attempt);
 
     if (res.ok) { devLog('SMS sent ✓', phone); return true; }
 
-    devWarn('SMS failed both gateways', phone, `attempt ${_attempt}`);
+    devWarn('SMS failed', phone, `attempt ${_attempt}`);
     if(_attempt < 3){
       await this._queueRetry(toRaw, msg, _attempt);
     } else {
