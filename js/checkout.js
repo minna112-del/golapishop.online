@@ -99,7 +99,14 @@ const Checkout = {
   getWalletUsed(sub, ship){
     const useWallet = document.getElementById('ckUseWallet')?.checked;
     if(!useWallet || this.walletAvailable<=0) return 0;
-    return Math.min(this.walletAvailable, sub+ship);
+    // ⚠️ আগে এখানে কুপন ছাড় বাদ দেওয়ার আগেই (sub+ship) থেকে wallet কেটে নেওয়া
+    // হিসাব হতো — ফলে coupon+wallet একসাথে ব্যবহার করলে wallet থেকে কুপনের
+    // ছাড়ের সমান অতিরিক্ত টাকা কেটে যেতো (customer-এর real financial loss)।
+    // এখন আগে কুপন ছাড় বাদ দিয়ে, তারপর যেটুকু আসলে payable সেটুকুর জন্যই
+    // wallet ব্যবহার হয়।
+    const couponDiscount = this.getCouponDiscount(sub);
+    const payable = Math.max(0, sub + ship - couponDiscount);
+    return Math.min(this.walletAvailable, payable);
   },
   async applyCoupon(){
     const codeEl = document.getElementById('ckCouponCode');
@@ -212,20 +219,62 @@ const Checkout = {
         prescriptionUrl = await FB.getDownloadURL(fileRef);
       }catch(e){ devWarn('prescription upload failed', e.message); }
     }
+    const cartEntries = Object.entries(Cart.items);
+    let orderId;
     try{
-      const orderRef = await FB.addDoc(FB.collection(FB.db,'orders'),{
-        orderNumber:orderNo, customerName:name, customerPhone:phone, customerNid:nid, address:addr, village,
-        branchZone:upazila, district:AREA_LABELS[upazila]||'', zone,
-        customerLat: this.locationData?.lat ?? null, customerLng: this.locationData?.lng ?? null,
-        deliveryZoneId: this.locationData?.zone?.id ?? null, deliveryZoneLabel: this.locationData?.zone?.label ?? null,
-        distanceKm: this.locationData?.distanceKm ?? null, etaMinutes: this.locationData?.etaMin ?? null,
-        prescriptionUrl,
-        instructions, paymentMethod:this.pay, paymentStatus:this.pay==='cod'?'cod':'pending_submission', deliverySlot:'express',
-        items:Object.entries(Cart.items).map(([id,qty])=>{ const p=ALL_PRODUCTS.find(x=>x.id===id); return {productId:id, name:p?.name||'', qty:Number(qty), unitPrice:Number(p?.salePrice||0)}; }),
-        subtotal:sub, shippingCost:ship, walletUsed, couponCode:this.couponCode||null, couponDiscount, total:Math.max(0, sub+ship-walletUsed-couponDiscount),
-        status:'pending', driverId:null, driverName:null,
-        userId:Auth.currentUser?.uid||null, createdAt:FB.serverTimestamp()
+      // ⚠️ আগে এখানে সরাসরি FB.addDoc() দিয়ে order তৈরি হতো, স্টক শুধু ব্রাউজারে
+      // cache করা (সম্ভবত পুরনো) ডেটা দেখে চেক হতো — কখনো Firestore-এর latest
+      // stock আবার read করে দেখা হতো না, আর order তৈরির সাথে stock কমানোও হতো
+      // না। ফলে শেষ ১টা পণ্য থাকা অবস্থায় দুইজন কাস্টমার প্রায় একসাথে অর্ডার
+      // করলে দুজনেরই order সফল হয়ে যেতো, যদিও বাস্তবে পণ্য ছিল ১টা।
+      // এখন পুরো (stock verify + stock decrement + order তৈরি) একটা Firestore
+      // transaction-এর ভেতরে atomic ভাবে হচ্ছে — transaction নিজেই latest
+      // stock আবার পড়ে, তাই দুইজন একসাথে চেষ্টা করলে Firestore নিজে থেকেই
+      // একজনকে retry/fail করাবে, দুজনকেই সফল হতে দেবে না।
+      orderId = await FB.runTransaction(FB.db, async (transaction) => {
+        const productRefs = cartEntries.map(([id]) => FB.doc(FB.db,'products',id));
+        const productSnaps = await Promise.all(productRefs.map(ref => transaction.get(ref)));
+
+        const itemsForOrder = [];
+        for(let i=0; i<cartEntries.length; i++){
+          const [id, qty] = cartEntries[i];
+          const snap = productSnaps[i];
+          if(!snap.exists()) throw new Error('একটি পণ্য আর পাওয়া যাচ্ছে না, কার্ট আপডেট করুন।');
+          const data = snap.data();
+          const latestStock = Number(data.stock||0);
+          if(latestStock < Number(qty)){
+            throw new Error(`${data.name||'পণ্য'}-এর পর্যাপ্ত স্টক নেই (এই মুহূর্তে মাত্র ${latestStock}টি আছে)। কার্ট আপডেট করুন।`);
+          }
+          itemsForOrder.push({productId:id, name:data.name||'', qty:Number(qty), unitPrice:Number(data.salePrice||0)});
+        }
+
+        productRefs.forEach((ref, i) => {
+          transaction.update(ref, { stock: FB.increment(-Number(cartEntries[i][1])), sold: FB.increment(Number(cartEntries[i][1])) });
+        });
+
+        const newOrderRef = FB.doc(FB.collection(FB.db,'orders'));
+        transaction.set(newOrderRef, {
+          orderNumber:orderNo, customerName:name, customerPhone:phone, customerNid:nid, address:addr, village,
+          branchZone:upazila, district:AREA_LABELS[upazila]||'', zone,
+          customerLat: this.locationData?.lat ?? null, customerLng: this.locationData?.lng ?? null,
+          deliveryZoneId: this.locationData?.zone?.id ?? null, deliveryZoneLabel: this.locationData?.zone?.label ?? null,
+          distanceKm: this.locationData?.distanceKm ?? null, etaMinutes: this.locationData?.etaMin ?? null,
+          prescriptionUrl,
+          instructions, paymentMethod:this.pay, paymentStatus:this.pay==='cod'?'cod':'pending_submission', deliverySlot:'express',
+          items: itemsForOrder,
+          subtotal:sub, shippingCost:ship, walletUsed, couponCode:this.couponCode||null, couponDiscount, total:Math.max(0, sub+ship-walletUsed-couponDiscount),
+          status:'pending', driverId:null, driverName:null,
+          userId:Auth.currentUser?.uid||null, createdAt:FB.serverTimestamp()
+        });
+        return newOrderRef.id;
       });
+    }catch(e){
+      devWarn('order transaction failed', e.message);
+      this.setPlaceOrderLoading(false);
+      toast('❌ ' + (e.message || 'অর্ডার সম্পন্ন হয়নি, আবার চেষ্টা করুন'), 'error');
+      return;
+    }
+    try{
       if(walletUsed>0 && Auth.currentUser){
         await FB.updateDoc(FB.doc(FB.db,'users',Auth.currentUser.uid), { walletBalance: FB.increment(-walletUsed) }).catch(e=>devWarn('wallet deduct failed', e.message));
       }
@@ -251,7 +300,17 @@ const Checkout = {
       });
       Cart.items={}; Cart.save();
       if(this.pay==='bkash' || this.pay==='nagad'){
-        PaymentGateway.showPaymentModal(this.pay, sub+ship-walletUsed-couponDiscount, orderRef.id, upazila);
+        // ⚠️ bug #1 fix: online payment modal-এর ঠিক আগে order-টা localStorage-এ
+        // "pending payment" হিসেবে রেকর্ড করা হচ্ছে। কাস্টমার মাঝপথে ব্রাউজার
+        // বন্ধ করে দিলে বা modal বাতিল করে অন্য পেজে চলে গেলেও, পরের বার সাইটে
+        // ফিরলে PaymentGateway.checkPendingPayment() এই তথ্য দেখে recovery
+        // banner দেখাবে — order হারিয়ে গেছে ভাবার সুযোগ থাকবে না।
+        try{
+          localStorage.setItem('golapi_pending_payment', JSON.stringify({
+            orderId, method:this.pay, amount: sub+ship-walletUsed-couponDiscount, zone, orderNo, at: Date.now()
+          }));
+        }catch(e){}
+        PaymentGateway.showPaymentModal(this.pay, sub+ship-walletUsed-couponDiscount, orderId, upazila);
       } else {
         Router.go('order-success');
       }
