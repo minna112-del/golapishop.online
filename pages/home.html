@@ -25,9 +25,8 @@
           আপনার লিস্ট,<br>
           <span>আমাদের বাজার ও ডেলিভারি</span>
         </h1>
-
         <p class="home-hero-copy">
-          মুদি বাজার, প্রয়োজনীয় ঔষধ ও গ্যাস সিলিন্ডার—ওয়েবসাইটে অর্ডার করুন অথবা নিজের বাজারের লিস্ট পাঠান। স্থানীয় টিম অর্ডার নিশ্চিত করে আপনার ঠিকানায় পৌঁছে দেবে।
+          মুদি বাজার, প্রয়োজনীয় ঔষধ ও গ্যাস সিলিন্ডার অর্ডার করুন। নোয়াখালী সদর ও বেগমগঞ্জে আমাদের স্থানীয় টিম অর্ডার নিশ্চিত করে আপনার ঠিকানায় পৌঁছে দেবে। সাধারণ অর্ডারে পণ্য হাতে পেয়ে মূল্য পরিশোধ করুন।
         </p>
 
         <div class="home-hero-actions" aria-label="অর্ডারের প্রধান অপশন">
@@ -37,7 +36,7 @@
             onclick="Router.go('listing',{cat:'all'})"
           >
             <span class="ic ic-cart" aria-hidden="true"></span>
-            আমাদের পণ্যগুলো দেখতে চাইলে এখানে ক্লিক করুন
+            পণ্য দেখে অর্ডার করুন
           </button>
 
           <button
@@ -46,8 +45,18 @@
             onclick="Router.go('custom-bazar')"
           >
             <span class="ic ic-pencil" aria-hidden="true"></span>
-            আপনার বাজারের লিস্ট লিখে দিন
+            তালিকা লিখে বাজার করান
           </button>
+        </div>
+
+        <p style="font-size:12px;color:var(--ink-muted);margin-top:8px">ক্যাটালগে পণ্য না পেলে নিজের তালিকা পাঠান।</p>
+
+        <div class="home-quick-zone" role="group" aria-label="আপনার উপজেলা নির্বাচন করুন">
+          <span class="home-quick-zone-label">আপনার উপজেলা নির্বাচন করুন:</span>
+          <div class="home-quick-zone-btns">
+            <button type="button" class="home-quick-zone-btn" onclick="toast('✓ নোয়াখালী সদরে আমরা ডেলিভারি দিই — পণ্য দেখে অর্ডার করুন','success')">নোয়াখালী সদর</button>
+            <button type="button" class="home-quick-zone-btn" onclick="toast('✓ বেগমগঞ্জে আমরা ডেলিভারি দিই — পণ্য দেখে অর্ডার করুন','success')">বেগমগঞ্জ</button>
+          </div>
         </div>
 
         <button
@@ -56,7 +65,7 @@
           onclick="LocationPicker.open(d=>{ toast(d.zone ? '✓ আপনার এলাকা কভার করি — '+d.zone.label : '⚠ দুঃখিত, এই এলাকায় এখনো ডেলিভারি নেই', d.zone?'success':'error') })"
         >
           <span class="ic ic-pin" aria-hidden="true"></span>
-          <span>আপনার এলাকায় ডেলিভারি আছে কি না যাচাই করুন</span>
+          <span>সঠিক ঠিকানা দিয়ে ডেলিভারি চার্জসহ যাচাই করুন</span>
           <span class="ic ic-arrow-r" aria-hidden="true"></span>
         </button>
       </div>
@@ -226,7 +235,7 @@
 
       <p>
         <strong>কাস্টম বাজার সম্পর্কে পরিষ্কার তথ্য:</strong>
-        ভুয়া অর্ডার প্রতিরোধে কাস্টম বাজারের ক্ষেত্রে ৳১০০ অগ্রিম verification fee প্রযোজ্য। এই টাকা অর্ডারের মোট হিসাবের সঙ্গে সমন্বয় করা হয়। সাধারণ product order-এর payment নিয়ম checkout-এ দেখানো হবে।
+        ভুয়া অর্ডার প্রতিরোধে কাস্টম বাজারের ক্ষেত্রে ৳১০০ অর্ডার যাচাইয়ের অগ্রিম প্রযোজ্য। এই টাকা অর্ডারের মোট হিসাবের সঙ্গে সমন্বয় করা হয়। সাধারণ পণ্যের অর্ডারের পরিশোধের নিয়ম অর্ডার নিশ্চিত করার ধাপে দেখানো হবে।
       </p>
     </div>
   </section>
@@ -237,14 +246,14 @@
   >
     <div class="home-about-card">
       <div class="home-about-content">
-        <span class="home-section-kicker">নতুন, তবে দায়বদ্ধ</span>
+        <span class="home-section-kicker">স্থানীয়ভাবে পরিচালিত</span>
 
         <h2 id="aboutGolapiTitle" class="tiro">
-          বড় দাবি নয়—প্রতিটি অর্ডার যত্ন নিয়ে সামলানোই আমাদের শুরু
+          প্রতিটি ধাপে স্পষ্ট যোগাযোগ ও নিশ্চয়তা
         </h2>
 
         <p>
-          Golapi Shop Online নোয়াখালী সদর ও বেগমগঞ্জের মানুষের দৈনন্দিন কেনাকাটা সহজ করার লক্ষ্য নিয়ে তৈরি একটি নতুন স্থানীয় উদ্যোগ। আমরা এখনো বড় কোনো সংখ্যা দেখানোর পর্যায়ে নেই। তাই আমাদের পরিচয় হবে পরিষ্কার যোগাযোগ, বাস্তব স্থানীয় টিম এবং প্রতিটি অর্ডারের প্রতি দায়িত্বশীলতা।
+          Golapi Shop Online নোয়াখালী সদর ও বেগমগঞ্জে আমাদের নিজস্ব স্থানীয় টিম পরিচালনা করে। অর্ডারের আগেই সম্পূর্ণ মূল্য দেখা যায়, নিশ্চিতকরণ হয় সরাসরি ফোনে, আর সাধারণ অর্ডারে পণ্য হাতে পাওয়ার পরই মূল্য পরিশোধ করবেন — Custom Bazar অর্ডারে চূড়ান্ত রসিদের ছবিও দেখতে পাবেন।
         </p>
 
         <button
@@ -361,13 +370,35 @@
         <div class="home-trust-card-icon">
           <span class="ic ic-shield" aria-hidden="true"></span>
         </div>
-        <h3>কৃত্রিম সামাজিক প্রমাণ নয়</h3>
-        <p>ভুয়া রিভিউ, অবাস্তব সংখ্যা বা অযাচাইকৃত “সেরা” দাবি দেখানো হয় না। আমাদের টিম, সেবা এলাকা ও নিয়মগুলো খোলাখুলি দেখা যাবে।</p>
+        <h3>খোলামেলা ও যাচাইযোগ্য তথ্য</h3>
+        <p>আমাদের স্থানীয় টিম, সেবা এলাকা, অর্ডারের নিয়ম ও চার্জ — সবকিছু অর্ডারের আগেই স্পষ্টভাবে জানানো হয়।</p>
         <button type="button" class="home-trust-link" onclick="Router.go('about-app')">
           টিম পরিচিতি দেখুন
           <span class="ic ic-arrow-r" aria-hidden="true"></span>
         </button>
       </article>
+    </div>
+
+    <div class="card-box" style="margin-top:18px;display:grid;gap:12px">
+      <div style="font-size:12.5px;font-weight:700;color:var(--gold)">আমাদের স্থানীয় টিম</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <img src="icons/team-rimon.webp" alt="রিমন" style="width:42px;height:42px;border-radius:50%;object-fit:cover;flex-shrink:0" loading="lazy">
+          <div style="min-width:0"><strong style="display:block;font-size:13px;color:var(--ink)">রিমন</strong><small style="color:var(--ink-muted);font-size:11px">নোয়াখালী সদর</small></div>
+          <a href="tel:+8801627010060" aria-label="রিমনকে কল করুন" style="margin-left:auto;flex-shrink:0"><span class="ic ic-phone" style="color:var(--gold)"></span></a>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <img src="icons/team-srijon.webp" alt="সৃজন" style="width:42px;height:42px;border-radius:50%;object-fit:cover;flex-shrink:0" loading="lazy">
+          <div style="min-width:0"><strong style="display:block;font-size:13px;color:var(--ink)">সৃজন</strong><small style="color:var(--ink-muted);font-size:11px">বেগমগঞ্জ</small></div>
+          <a href="tel:+8801310006959" aria-label="সৃজনকে কল করুন" style="margin-left:auto;flex-shrink:0"><span class="ic ic-phone" style="color:var(--gold)"></span></a>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <img src="icons/team-hridoy.webp" alt="হৃদয়" style="width:42px;height:42px;border-radius:50%;object-fit:cover;flex-shrink:0" loading="lazy">
+          <div style="min-width:0"><strong style="display:block;font-size:13px;color:var(--ink)">হৃদয়</strong><small style="color:var(--ink-muted);font-size:11px">কেন্দ্রীয় হটলাইন</small></div>
+          <a href="tel:+8801612057371" aria-label="হটলাইনে কল করুন" style="margin-left:auto;flex-shrink:0"><span class="ic ic-phone" style="color:var(--gold)"></span></a>
+        </div>
+      </div>
+      <p style="font-size:11.5px;color:var(--ink-muted);margin:0">অর্ডারের আগে বা পরে সরাসরি কল করুন — কেউ ধরতে না পারলে হটলাইনে চেষ্টা করুন।</p>
     </div>
 
     <div class="home-trust-note" role="note">
@@ -434,12 +465,12 @@
   >
     <div class="home-product-heading">
       <div>
-        <span class="home-section-kicker">গ্রাহকের পছন্দ</span>
+        <span class="home-section-kicker" id="popularProductsKicker">গ্রাহকের পছন্দ</span>
         <h2 id="popularProductsTitle" class="tiro">
           <span class="ic ic-star" aria-hidden="true"></span>
           জনপ্রিয় পণ্য
         </h2>
-        <p>বাস্তব বিক্রির তথ্য অনুযায়ী বেশি অর্ডার হওয়া পণ্য।</p>
+        <p id="popularProductsDesc">বাস্তব বিক্রির তথ্য অনুযায়ী বেশি অর্ডার হওয়া পণ্য।</p>
       </div>
 
       <button
@@ -618,7 +649,7 @@
         <summary>কাস্টম বাজারে ৳১০০ কেন দিতে হয়?</summary>
 
         <p>
-          ড্রাইভারকে সরাসরি বাজারে পাঠানোর আগে ভুয়া অর্ডার প্রতিরোধে ৳১০০ verification fee নেওয়া হয়। এই টাকা অর্ডারের মোট হিসাবের সঙ্গে সমন্বয় করা হয়; এটি অতিরিক্ত গোপন charge নয়।
+          ড্রাইভারকে সরাসরি বাজারে পাঠানোর আগে ভুয়া অর্ডার প্রতিরোধে ৳১০০ অর্ডার যাচাইয়ের অগ্রিম নেওয়া হয়। এই টাকা অর্ডারের মোট হিসাবের সঙ্গে সমন্বয় করা হয়; এটি অতিরিক্ত গোপন চার্জ নয়।
         </p>
       </details>
 
@@ -626,7 +657,7 @@
         <summary>ডেলিভারি চার্জ কত?</summary>
 
         <p>
-          দূরত্ব, delivery zone, order size ও চলমান নিয়মের ভিত্তিতে charge নির্ধারিত হতে পারে। অর্ডার নিশ্চিত করার আগে প্রযোজ্য charge দেখানো বা জানানো হবে।
+          ডেলিভারি চার্জ সাধারণত ৳৩০ থেকে শুরু হয়, দূরত্ব ও পণ্যের পরিমাণ অনুযায়ী বাড়তে পারে। ৳১,০০০ বা তার বেশি অর্ডারে ডেলিভারি ফ্রি। আপনার লোকেশন নির্বাচন করলেই সম্ভাব্য চার্জ সাথে সাথে দেখানো হয়, আর অর্ডার নিশ্চিত করার আগে চূড়ান্ত চার্জ দেখতে পাবেন।
         </p>
       </details>
 
@@ -642,14 +673,14 @@
 
   <section class="sec home-final-cta" aria-label="কেনাকাটা শুরু করুন">
     <div>
-      <span class="home-section-kicker">প্রস্তুত?</span>
+      <span class="home-section-kicker">আজই শুরু করুন</span>
 
       <h2 class="tiro">
-        আজকের প্রয়োজনীয় পণ্য খুঁজে নিন
+        আজকের প্রয়োজনীয় বাজার এখনই শুরু করুন
       </h2>
 
       <p>
-        পণ্য বেছে অর্ডার করুন, অথবা আপনার সম্পূর্ণ বাজারের লিস্ট আমাদের পাঠান।
+        পণ্য বেছে অর্ডার করুন অথবা পুরো তালিকা পাঠিয়ে দিন—আমাদের স্থানীয় টিম ফোনে নিশ্চিত করবে।
       </p>
     </div>
 
@@ -659,7 +690,7 @@
         class="btn btn-gold"
         onclick="Router.go('listing',{cat:'all'})"
       >
-        কেনাকাটা শুরু করুন
+        পণ্য দেখুন
       </button>
 
       <button
@@ -667,8 +698,15 @@
         class="btn btn-outline"
         onclick="Router.go('custom-bazar')"
       >
-        লিস্ট পাঠান
+        বাজারের তালিকা পাঠান
       </button>
+
+      <a
+        href="tel:+8801612057371"
+        class="btn btn-outline"
+      >
+        সহায়তায় কল করুন
+      </a>
     </div>
   </section>
 </div>
