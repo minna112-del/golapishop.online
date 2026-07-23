@@ -890,6 +890,12 @@ section.sec {
 .home-hero-copy{max-width:680px;font-size:clamp(14px,1.5vw,17px);line-height:1.82}
 .home-hero-actions{gap:12px;margin-top:26px}
 .home-primary-cta,.home-secondary-cta{min-height:50px;border-radius:14px}
+.home-quick-zone{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:14px 0 10px}
+.home-quick-zone-label{font-size:12.5px;color:var(--ink-muted);font-weight:600}
+.home-quick-zone-btns{display:flex;flex-wrap:wrap;gap:8px}
+.home-quick-zone-btn{padding:8px 16px;border-radius:999px;border:1px solid var(--gold-line);background:color-mix(in srgb,var(--gold) 8%,transparent);color:var(--gold-dark);font-size:12.5px;font-weight:700;transition:background .15s ease,transform .12s ease}
+.home-quick-zone-btn:hover{background:color-mix(in srgb,var(--gold) 16%,transparent)}
+.home-quick-zone-btn:active{transform:scale(.96)}
 .home-location-check{min-height:44px;border-radius:12px;transition:background-color var(--duration-fast) var(--ease),color var(--duration-fast) var(--ease)}
 .home-location-check:hover{background:rgba(233,54,104,.055);color:var(--rose)}
 
