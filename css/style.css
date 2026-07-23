@@ -549,14 +549,16 @@ body {
 .leaflet-container{background:var(--bg2)!important;font-family:'Hind Siliguri',sans-serif!important}
 
 /* ---------- Brand Seal (প্রোডাক্ট ছবির কোণায় লোগো) ---------- */
+/* ⚠️ আগে প্রতিটা প্রোডাক্ট কার্ডে একটা আলাদা <img> ট্যাগ ছিল এই সিলের জন্য —
+   browser একবার ফাইল ডাউনলোড করলেও প্রতিটা element-এর জন্য আলাদা decode/layout
+   cost হতো। এখন CSS background-image — একটাই raster, কোনো element/decode cost নেই। */
 .brand-seal{
   position:absolute; bottom:8px; right:8px; width:30px; height:30px;
   border-radius:50%; overflow:hidden; z-index:5;
   border:1.5px solid #fff;
   box-shadow:0 2px 8px rgba(0,0,0,.15);
-  background:#fff;
+  background:#fff url('../icons/head_logo.webp') center/cover;
 }
-.brand-seal img{width:100%;height:100%;object-fit:cover;opacity:.95}
 .pdp-seal{width:42px;height:42px;bottom:12px;right:12px}
 
 /* ============================================================
