@@ -10,13 +10,29 @@ let firebaseStarted = false;
    এই watchdog সেই সবচেয়ে-প্রথম ধাপটাই পাহারা দেয়। */
 setTimeout(() => {
   if (!window.__fb && !firebaseStarted) {
-    const grid = document.querySelector('#flashRow, #bestRow, #newGrid');
+    // ⚠️ আগে এখানে শুধু একটা floating banner দেখানো হতো — ProductStore.loaded
+    // কখনো বদলাতো না, ফলে product grid অনির্দিষ্টকাল skeleton-এই থেকে যেতো,
+    // যদিও banner-এ "সমস্যা হচ্ছে" লেখা ছিল। এখন ProductStore-কে সরাসরি জানানো
+    // হচ্ছে, যাতে (cache থাকলে) cached data দেখায়, নাহলে grid-এর ভেতরেই
+    // retry বাটনসহ error state দেখায় — endless skeleton না রেখে।
+    if (typeof ProductStore !== 'undefined') {
+      try { ProductStore.handleFirebaseUnavailable(); } catch (e) { console.error(e); }
+    }
+
     const msg = document.createElement('div');
+    msg.id = 'golapiConnErrBanner';
     msg.style.cssText = 'position:fixed;bottom:90px;left:16px;right:16px;background:#DC2626;color:#fff;padding:14px 16px;border-radius:12px;font-size:13px;z-index:9998;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.3)';
     msg.innerHTML = '⚠ সংযোগ স্থাপন করতে সমস্যা হচ্ছে।<br><button style="margin-top:8px;background:#fff;color:#DC2626;border:none;padding:8px 20px;border-radius:8px;font-weight:600" onclick="window.location.reload()">পুনরায় লোড করুন</button>';
     document.body.appendChild(msg);
   }
 }, 15000);
+
+// Firebase দেরিতে হলেও শেষ পর্যন্ত সফল হলে (retry script কাজ করেছে) — ততক্ষণে
+// দেখানো error banner-টা আর প্রাসঙ্গিক না, স্বয়ংক্রিয়ভাবে সরিয়ে দেওয়া হয়।
+window.addEventListener('firebase-ready', () => {
+  const oldBanner = document.getElementById('golapiConnErrBanner');
+  if (oldBanner) oldBanner.remove();
+});
 
 function startFirebaseFeatures() {
   if (firebaseStarted || !window.__fb) return;
@@ -81,6 +97,15 @@ function checkCartAbandonment(){
 }
 
 function initApp(){
+  // ⚠️ আগে ProductStore.loadFromCache() শুধু startLiveSync()-এর ভেতরে চলতো, যেটা
+  // Firebase ready হওয়ার আগে কখনো ডাকা হতো না। ফলে ব্রাউজারে valid cache থাকা
+  // সত্ত্বেও Firebase load দেরি/ব্যর্থ হলে সেই cache দেখানো হতো না। এখন Firebase-এর
+  // অপেক্ষা ছাড়াই, Router.go('home') কল হওয়ার আগেই cache load করা হচ্ছে —
+  // Home.render() প্রথমবার চলার সময়ই cached পণ্য (থাকলে) দেখাবে।
+  if (typeof ProductStore !== 'undefined' && !ProductStore.loaded) {
+    ProductStore.loadFromCache();
+  }
+
   const path=window.location.pathname.toLowerCase();
   const role=new URLSearchParams(window.location.search).get('role');
   const hash=window.location.hash.replace('#','');
