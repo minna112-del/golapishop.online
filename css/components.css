@@ -1289,7 +1289,7 @@ html[data-theme="dark"] .home-categories-section .cat-icon{background:rgba(255,9
 }
 .pcard .wish{
   z-index:3;
-  top:10px;
+  bottom:10px;
   right:10px;
   width:34px;
   height:34px;
@@ -1434,7 +1434,7 @@ html[data-theme="dark"] .pcard .add-btn:disabled{background:var(--elevated)}
   .pcard .price-now{font-size:15.5px}
   .pcard .wish{width:32px;height:32px}
   .product-badges{top:8px;left:8px}
-  .pcard .wish{top:8px;right:8px}
+  .pcard .wish{bottom:8px;right:8px}
   .product-meta-row{gap:4px}
   .product-meta-row .fast-tag,.product-meta-row .cod-tag,.product-stock{padding-inline:6px;font-size:8px}
   .pcard .add-btn{min-height:40px;margin-top:8px;font-size:10.5px}
