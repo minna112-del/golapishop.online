@@ -24,6 +24,7 @@ const DriverPortal = {
       const data = staffSnap.data();
       this.currentUid = cred.user.uid;
       this.currentDriver = { id: data.driverId || cred.user.uid, name: data.name, branchZone: data.branchZone, phone: data.phone };
+      if(typeof StaffChat !== 'undefined') StaffChat.init(this.currentUid, data.name || 'ড্রাইভার', 'driver');
       document.getElementById('driverLoginBox').style.display='none';
       document.getElementById('driverDashBox').style.display='block';
       document.getElementById('driverNameLabel').textContent=data.name;
@@ -50,6 +51,7 @@ const DriverPortal = {
         const data = staffSnap.data();
         this.currentUid = FB.auth.currentUser.uid;
         this.currentDriver = { id: data.driverId || FB.auth.currentUser.uid, name: data.name, branchZone: data.branchZone, phone: data.phone };
+        if(typeof StaffChat !== 'undefined') StaffChat.init(this.currentUid, data.name || 'ড্রাইভার', 'driver');
       }
     }catch(e){ devWarn('driver session restore failed', e.message); }
   },
