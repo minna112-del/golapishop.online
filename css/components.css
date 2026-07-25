@@ -932,7 +932,7 @@ section.sec {
   .home-hero-actions{display:flex;align-items:center;flex-wrap:wrap}
   .home-primary-cta,.home-secondary-cta{width:auto;min-width:180px}
   .home-location-check{width:auto;justify-content:flex-start;margin-top:12px;padding-inline:4px}
-  .home-trust-strip{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .home-trust-strip{grid-template-columns:repeat(4,minmax(0,1fr))}
 }
 @media(min-width:900px){
   .home-hero{padding-top:92px;padding-bottom:72px}
@@ -983,6 +983,29 @@ html[data-theme="dark"] .home-benefit-icon{background:rgba(255,92,135,.1);color:
   background:rgba(255,255,255,.82);
   box-shadow:0 24px 70px rgba(56,30,40,.11);
   backdrop-filter:blur(18px);
+}
+.home-hero-visual{
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:0;
+}
+.home-hero-visual img{
+  width:100%;
+  max-width:460px;
+  height:auto;
+  display:block;
+  margin-inline:auto;
+  filter:drop-shadow(0 30px 50px rgba(56,30,40,.18));
+  animation:heroVisualFloat 5s ease-in-out infinite;
+}
+@keyframes heroVisualFloat{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-10px)}
+}
+@media (prefers-reduced-motion:reduce){
+  .home-hero-visual img{animation:none}
 }
 .home-hero-showcase::before{
   content:"";
