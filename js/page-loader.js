@@ -24,7 +24,7 @@
   const pages = ['home','listing','product'];
 
   /* স্টাফ-অনলি + এখন থেকে বেশিরভাগ customer পেজও — শুধু প্রয়োজন হলে (Router.go কল হলে) লোড হবে */
-  window.__lazyPages = ['admin-dash','driver','zone-manager','checkout','myorders','wishlist','account','medical','custom-bazar','order-success','account-addresses','about-app','privacy-info','terms','contact'];
+  window.__lazyPages = ['admin-dash','driver','zone-manager','inventory-dash','finance-dash','support-dash','checkout','myorders','wishlist','account','medical','custom-bazar','order-success','account-addresses','about-app','privacy-info','terms','contact'];
   window.__loadedLazyPages = {};
 
   let pending = partials.length + pages.length;
