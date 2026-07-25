@@ -969,7 +969,7 @@ html[data-theme="dark"] .home-benefit-icon{background:rgba(255,92,135,.1);color:
   aspect-ratio:1624/969;
   border-radius:22px;
   overflow:hidden;
-  background-image:url('icons/hero-banner.webp');
+  background-image:url('../icons/hero-banner.webp');
   background-size:cover;
   background-position:center;
   background-repeat:no-repeat;
@@ -1129,7 +1129,15 @@ html[data-theme="dark"] .home-benefit-icon{background:rgba(255,92,135,.1);color:
   .home-showcase-icon{width:42px;height:42px;border-radius:14px}
 }
 @media(hover:none){.home-showcase-card:hover{transform:none}}
-html[data-theme="dark"] .home-hero-showcase{background:rgba(25,22,27,.84);border-color:rgba(255,255,255,.08);box-shadow:0 24px 70px rgba(0,0,0,.25)}
+html[data-theme="dark"] .home-hero-title{color:#181114!important}
+html[data-theme="dark"] .home-hero-title span{color:#F0356B!important}
+html[data-theme="dark"] .home-hero-copy{color:#5A4E52!important}
+html[data-theme="dark"] .home-eyebrow{background:rgba(255,255,255,.82)!important;border-color:rgba(240,53,107,.22)!important;color:#F0356B!important}
+html[data-theme="dark"] .home-primary-cta,
+html[data-theme="dark"] .home-secondary-cta{background:#181114!important;color:#fff!important}
+html[data-theme="dark"] .home-quick-zone-label{color:#8C7E82!important}
+html[data-theme="dark"] .home-quick-zone-btn{background:rgba(240,53,107,.1)!important;border-color:rgba(240,53,107,.3)!important;color:#F0356B!important}
+html[data-theme="dark"] .home-hero-subnote{color:#8C7E82!important}
 html[data-theme="dark"] .home-showcase-card{background:rgba(255,255,255,.035);border-color:rgba(255,255,255,.07)}
 html[data-theme="dark"] .home-showcase-assurance{background:rgba(255,92,135,.08)}
 
