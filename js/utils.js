@@ -147,6 +147,27 @@ async function loadLiveDeliveryZones(){
 if(window.__fb){ loadLiveDeliveryZones(); }
 else { window.addEventListener('firebase-ready', loadLiveDeliveryZones); }
 
+/* ============================================================
+   BRANCH_INFO — Owner Dashboard-এর "🏢 শাখা ব্যবস্থাপনা" থেকে নতুন শাখা
+   যোগ/এডিট করা হলে এখানে সাথে সাথে যোগ হয় ('setting'/'branches' ডকুমেন্টে
+   সেভ থাকে)। উপরের হার্ডকোডেড মান শুধু ডিফল্ট/ফলব্যাক — Firestore-এ কিছু
+   না থাকলে বা লোড ব্যর্থ হলে সাইট তখনও এই ২টা শাখা দিয়ে চলবে, ভাঙবে না।
+   ============================================================ */
+async function loadLiveBranches(){
+  const FB = window.__fb;
+  if(!FB) return;
+  try{
+    const snap = await FB.getDoc(FB.doc(FB.db,'setting','branches'));
+    if(snap.exists() && snap.data().branches){
+      Object.assign(BRANCH_INFO, snap.data().branches);
+      Object.keys(BRANCH_INFO).forEach(id=>{ AREA_LABELS[id] = BRANCH_INFO[id].label; });
+      document.dispatchEvent(new Event('branches-updated'));
+    }
+  }catch(e){ devWarn('branches load failed', e.message); }
+}
+if(window.__fb){ loadLiveBranches(); }
+else { window.addEventListener('firebase-ready', loadLiveBranches); }
+
 /* একটা GPS পয়েন্ট কোন zone-এ পড়ে সেটা বের করে — সবচেয়ে ছোট radius-এর zone প্রাধান্য পায়
    (যেমন Zone A ও Zone B দুটোর মধ্যেই পড়লে, বেশি নির্দিষ্ট/কাছের Zone A ধরা হয়) */
 function findDeliveryZone(branchId, lat, lng){
