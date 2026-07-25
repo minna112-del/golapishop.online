@@ -36,6 +36,16 @@ const AdminDash = {
     const fc=document.getElementById('fCod'); if(fc) fc.textContent = money(cod);
     const fo=document.getElementById('fOnline'); if(fo) fo.textContent = money(online);
 
+    this.populateZoneFilters();
+    this.renderBranches();
+    if(!this._branchListenerBound){
+      this._branchListenerBound = true;
+      document.addEventListener('branches-updated', ()=>{
+        this.populateZoneFilters();
+        this.renderBranches();
+        ProductForm.renderZoneCheckboxes();
+      });
+    }
     this.renderInventoryAlerts();
     this.renderRevenueChart(orders);
     this.renderRecentOrders(orders.slice(0,8));
@@ -52,6 +62,16 @@ const AdminDash = {
   },
 
   async refresh(){ await this.render(); toast('✓ আপডেট হয়েছে','success'); },
+
+  populateZoneFilters(){
+    ['productZoneFilter','orderZoneFilter'].forEach(id=>{
+      const sel = document.getElementById(id);
+      if(!sel) return;
+      const current = sel.value;
+      sel.innerHTML = '<option value="">সব শাখা</option>' + Object.entries(BRANCH_INFO).map(([zid,info])=>`<option value="${zid}">${esc(info.label)}</option>`).join('');
+      if(current && BRANCH_INFO[current]) sel.value = current;
+    });
+  },
 
   renderInventoryAlerts(){
     const low = ALL_PRODUCTS.filter(p=>p.stock >= 0 && p.stock <= 5);
@@ -835,7 +855,7 @@ const AdminDash = {
   },
 
   tab(btn,name){
-    ['overview','products','orders','analytics','customers','coupons','payments','settings','finance'].forEach(t=>{
+    ['overview','products','orders','analytics','customers','coupons','payments','settings','finance','branches'].forEach(t=>{
       const el = document.getElementById('admin'+t.charAt(0).toUpperCase()+t.slice(1)+'Pane');
       if(el) el.style.display = t===name?'block':'none';
     });
@@ -846,7 +866,115 @@ const AdminDash = {
     if(name==='customers') this.renderCustomers(this._allOrders);
     if(name==='coupons') CouponManage.render();
     if(name==='payments') PaymentVerify.render();
+    if(name==='branches') this.renderBranches();
     if(name==='settings'){ this.loadStoreSettings(); this.loadZmPins(); this.loadDeliverySettings(); this.loadDeliveryZonesEditor(); }
+  },
+
+  /* ---------- Branch/Zone Management — নতুন শাখা যোগ হলে সাথে সাথে
+     পুরো সাইটে (product form, filter dropdown, delivery zone editor) reflect হয়,
+     কোনো কোড পরিবর্তন বা ডিপ্লয় লাগে না */
+  _branchEditId: null,
+
+  renderBranches(){
+    const tbody = document.getElementById('aBranchesTable');
+    if(!tbody) return;
+    const entries = Object.entries(BRANCH_INFO);
+    tbody.innerHTML = entries.map(([id,info])=>`<tr>
+      <td>${esc(info.label)}</td>
+      <td style="font-size:11.5px;color:var(--ink-muted)">${esc(info.address||'—')}</td>
+      <td>${esc(info.managerName||'—')}</td>
+      <td style="font-size:11.5px">${esc(info.managerPhone||'—')}</td>
+      <td style="display:flex;gap:10px">
+        <a href="#" onclick="event.preventDefault();AdminDash.editBranchStart('${id}')" style="color:var(--gold);font-size:12px">এডিট</a>
+        <a href="#" onclick="event.preventDefault();AdminDash.deleteBranch('${id}')" style="color:#f87171;font-size:12px">মুছুন</a>
+      </td>
+    </tr>`).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--ink-muted);padding:16px">কোনো শাখা নেই</td></tr>';
+  },
+
+  openAddBranch(){
+    this._branchEditId = null;
+    const t=document.getElementById('brFormTitle'); if(t) t.textContent='🆕 নতুন শাখা যোগ করুন';
+    ['brId','brLabel','brAddress','brManagerName','brManagerPhone','brBkash','brNagad','brLat','brLng'].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';});
+    const idEl=document.getElementById('brId'); if(idEl) idEl.disabled=false;
+    const m=document.getElementById('brMsg'); if(m) m.className='form-msg';
+  },
+
+  editBranchStart(id){
+    const info = BRANCH_INFO[id]; if(!info) return;
+    this._branchEditId = id;
+    const t=document.getElementById('brFormTitle'); if(t) t.textContent='✏️ শাখা সম্পাদনা করুন — '+info.label;
+    const set=(elId,val)=>{const el=document.getElementById(elId); if(el) el.value=val??'';};
+    set('brId', id); const idEl=document.getElementById('brId'); if(idEl) idEl.disabled=true;
+    set('brLabel', info.label); set('brAddress', info.address); set('brManagerName', info.managerName);
+    set('brManagerPhone', info.managerPhone); set('brBkash', info.bkashNumber); set('brNagad', info.nagadNumber);
+    set('brLat', info.lat); set('brLng', info.lng);
+    const m=document.getElementById('brMsg'); if(m) m.className='form-msg';
+    window.scrollTo({top:0,behavior:'smooth'});
+  },
+
+  async saveBranch(){
+    const msgEl=document.getElementById('brMsg');
+    const rawId = document.getElementById('brId')?.value.trim()||'';
+    const label = document.getElementById('brLabel')?.value.trim()||'';
+    if(!rawId || !label){ msgEl.textContent='শাখা আইডি ও নাম আবশ্যক'; msgEl.className='form-msg err'; return; }
+    const branchId = this._branchEditId || rawId.toLowerCase().replace(/[^a-z0-9_]+/g,'_').replace(/^_+|_+$/g,'');
+    if(!branchId){ msgEl.textContent='সঠিক শাখা আইডি দিন (শুধু ইংরেজি অক্ষর/সংখ্যা/আন্ডারস্কোর)'; msgEl.className='form-msg err'; return; }
+    if(!this._branchEditId && BRANCH_INFO[branchId]){ msgEl.textContent='এই আইডি আগে থেকেই আছে, অন্য আইডি দিন'; msgEl.className='form-msg err'; return; }
+    if(!FB){ msgEl.textContent='সংযোগ সমস্যা'; msgEl.className='form-msg err'; return; }
+    const data = {
+      label,
+      address: document.getElementById('brAddress')?.value.trim()||'',
+      managerName: document.getElementById('brManagerName')?.value.trim()||'',
+      managerPhone: document.getElementById('brManagerPhone')?.value.trim()||'',
+      bkashNumber: document.getElementById('brBkash')?.value.trim()||'',
+      nagadNumber: document.getElementById('brNagad')?.value.trim()||'',
+      lat: Number(document.getElementById('brLat')?.value)||0,
+      lng: Number(document.getElementById('brLng')?.value)||0
+    };
+    try{
+      const snap = await FB.getDoc(FB.doc(FB.db,'setting','branches'));
+      const branches = snap.exists() ? {...snap.data().branches} : {};
+      branches[branchId] = data;
+      await FB.setDoc(FB.doc(FB.db,'setting','branches'), {branches, updatedAt:FB.serverTimestamp()}, {merge:true});
+      BRANCH_INFO[branchId] = data;
+      AREA_LABELS[branchId] = data.label;
+
+      // নতুন শাখায় ডিফল্ট Zone A/B/C — আগে থেকে না থাকলেই যোগ হবে, existing branch edit-এ ছোঁয়া হয় না
+      if(!DELIVERY_ZONES[branchId]){
+        DELIVERY_ZONES[branchId] = [
+          { id:`${branchId}_a`, label:'Zone A — কাছাকাছি এলাকা', radiusKm:3, fee:30 },
+          { id:`${branchId}_b`, label:'Zone B — মাঝারি দূরত্ব', radiusKm:7, fee:50 },
+          { id:`${branchId}_c`, label:'Zone C — দূরবর্তী এলাকা', radiusKm:12, fee:80 }
+        ];
+        const dzSnap = await FB.getDoc(FB.doc(FB.db,'setting','delivery_zones'));
+        const dzData = dzSnap.exists() ? {...dzSnap.data().zones} : {};
+        dzData[branchId] = DELIVERY_ZONES[branchId];
+        await FB.setDoc(FB.doc(FB.db,'setting','delivery_zones'), {zones:dzData, updatedAt:FB.serverTimestamp()}, {merge:true});
+      }
+
+      msgEl.textContent='✓ শাখা সংরক্ষণ হয়েছে এবং সাথে সাথে সাইটে চালু হয়েছে'; msgEl.className='form-msg ok';
+      this.renderBranches();
+      this.populateZoneFilters();
+      this.loadDeliveryZonesEditor();
+      ProductForm.renderZoneCheckboxes();
+      document.dispatchEvent(new Event('branches-updated'));
+    }catch(e){ msgEl.textContent='সমস্যা: '+e.message; msgEl.className='form-msg err'; }
+  },
+
+  async deleteBranch(id){
+    const info = BRANCH_INFO[id]; if(!info) return;
+    if(!confirm(`"${info.label}" শাখা মুছে ফেলতে চান? এই শাখার আগের প্রোডাক্ট/অর্ডার ডিলিট হবে না, কিন্তু নতুন ড্রপডাউন/ফর্মে আর দেখাবে না।`)) return;
+    if(!FB) return;
+    try{
+      const remaining = {...BRANCH_INFO}; delete remaining[id];
+      await FB.setDoc(FB.doc(FB.db,'setting','branches'), {branches:remaining, updatedAt:FB.serverTimestamp()}, {merge:true});
+      delete BRANCH_INFO[id]; delete AREA_LABELS[id];
+      toast('✓ শাখা মুছে ফেলা হয়েছে','success');
+      this.renderBranches();
+      this.populateZoneFilters();
+      ProductForm.renderZoneCheckboxes();
+      document.dispatchEvent(new Event('branches-updated'));
+    }catch(e){ toast('সমস্যা: '+e.message,'error'); }
   }
 };
 
@@ -1097,8 +1225,7 @@ const ProductForm = {
     const dp=document.getElementById('pfDeliveryPercent'); if(dp) dp.value='0';
     const pp=document.getElementById('pfProfitPercent'); if(pp) pp.value='5';
     const bd=document.getElementById('pfBreakdown'); if(bd) bd.textContent='৳0';
-    const zs=document.getElementById('pfZoneSadar'); if(zs){ zs.disabled=false; zs.checked=true; }
-    const zb=document.getElementById('pfZoneBegumganj'); if(zb){ zb.disabled=false; zb.checked=true; }
+    this.renderZoneCheckboxes();
     const c=document.getElementById('pfCategory'); if(c) c.value='grocery';
     const u=document.getElementById('pfUnit'); if(u) u.value='পিস';
     const cd=document.getElementById('pfCod'); if(cd) cd.checked=false;
@@ -1106,6 +1233,14 @@ const ProductForm = {
     const ft=document.getElementById('pfFeatured'); if(ft) ft.checked=false;
     const m=document.getElementById('pfMsg'); if(m) m.className='form-msg';
     document.getElementById('productModal').classList.add('show');
+  },
+  renderZoneCheckboxes(selectedZone, allDisabled){
+    const box = document.getElementById('pfZoneCheckboxes');
+    if(!box) return;
+    box.innerHTML = Object.entries(BRANCH_INFO).map(([id,info])=>{
+      const checked = selectedZone ? (id===selectedZone) : true;
+      return `<label class="filter-opt"><input type="checkbox" class="pfZoneCb" value="${id}" ${checked?'checked':''} ${allDisabled?'disabled':''}> ${esc(info.label)}</label>`;
+    }).join('') || '<span style="font-size:12px;color:var(--ink-muted)">কোনো শাখা নেই — আগে "🏢 শাখা ব্যবস্থাপনা" থেকে একটা শাখা যোগ করুন</span>';
   },
   recalc(){
     const cost=Number(bnDigitsToEn(document.getElementById('pfCostPrice')?.value))||0;
@@ -1130,8 +1265,7 @@ const ProductForm = {
     const t=document.getElementById('pfTitle'); if(t) t.textContent='প্রোডাক্ট সম্পাদনা করুন';
     const b=document.getElementById('pfSubmitBtn'); if(b) b.textContent='পরিবর্তন সংরক্ষণ করুন';
     const n=document.getElementById('pfName'); if(n) n.value=p.name;
-    const zs=document.getElementById('pfZoneSadar'); if(zs){ zs.checked = p.zone==='noakhali_sadar'; zs.disabled=true; }
-    const zb=document.getElementById('pfZoneBegumganj'); if(zb){ zb.checked = p.zone==='begumganj'; zb.disabled=true; }
+    this.renderZoneCheckboxes(p.zone, true);
     const c=document.getElementById('pfCategory'); if(c) c.value=p.category;
     const u=document.getElementById('pfUnit'); if(u) u.value=p.unit;
     const pr=document.getElementById('pfPrice'); if(pr) pr.value=p.price;
@@ -1154,7 +1288,7 @@ const ProductForm = {
   async submit(){
     const msgEl=document.getElementById('pfMsg');
     const name=document.getElementById('pfName').value.trim();
-    const selZones=[]; if(document.getElementById('pfZoneSadar')?.checked) selZones.push('noakhali_sadar'); if(document.getElementById('pfZoneBegumganj')?.checked) selZones.push('begumganj');
+    const selZones=[...document.querySelectorAll('.pfZoneCb:checked')].map(cb=>cb.value);
     const category=document.getElementById('pfCategory').value, unit=document.getElementById('pfUnit').value;
     const price=Number(bnDigitsToEn(document.getElementById('pfPrice').value)), salePrice=Number(bnDigitsToEn(document.getElementById('pfSalePrice').value)), stock=Number(bnDigitsToEn(document.getElementById('pfStock').value));
     const description=document.getElementById('pfDescription').value.trim();
