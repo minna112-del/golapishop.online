@@ -47,10 +47,7 @@
     <div class="field"><label>প্রোডাক্টের নাম *</label><input type="text" id="pfName" oninput="ProductForm.autoDetectCategory(this.value)" onblur="ProductForm.maybeAutoGenerate()"></div>
 
     <div class="field"><label>শাখা/জোন *</label>
-      <div style="display:flex;gap:16px;margin-top:4px">
-        <label class="filter-opt"><input type="checkbox" id="pfZoneSadar" checked> নোয়াখালী সদর</label>
-        <label class="filter-opt"><input type="checkbox" id="pfZoneBegumganj" checked> বেগমগঞ্জ</label>
-      </div>
+      <div id="pfZoneCheckboxes" style="display:flex;gap:16px;flex-wrap:wrap;margin-top:4px"></div>
     </div>
 
     <div class="field"><label>ক্যাটাগরি * <span style="font-size:10.5px;color:var(--ink-dim);font-weight:400">(নাম লিখলে অটো সাজেস্ট হবে, চাইলে বদলে দিন)</span></label>
