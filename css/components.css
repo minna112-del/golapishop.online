@@ -966,12 +966,23 @@ html[data-theme="dark"] .home-benefit-icon{background:rgba(255,92,135,.1);color:
   z-index:1;
   width:min(1180px,100%);
   margin-inline:auto;
-  display:grid;
-  grid-template-columns:1fr .95fr;
-  gap:14px;
-  align-items:center;
+  aspect-ratio:1624/969;
+  border-radius:22px;
+  overflow:hidden;
+  background-image:url('icons/hero-banner.webp');
+  background-size:cover;
+  background-position:center;
+  background-repeat:no-repeat;
+  box-shadow:0 20px 60px rgba(56,30,40,.14);
 }
-.home-hero-content{max-width:720px;margin:0}
+.home-hero-content{
+  position:absolute;
+  left:4%;
+  top:6%;
+  width:47%;
+  max-width:none;
+  margin:0;
+}
 .home-hero-title{max-width:760px;text-wrap:balance}
 .home-hero-copy{max-width:650px}
 .home-hero-showcase{
@@ -1012,9 +1023,8 @@ html[data-theme="dark"] .home-benefit-icon{background:rgba(255,92,135,.1);color:
    অনুপাত মিলিয়ে vw-ভিত্তিক স্কেলিং — ছবিটা যেভাবে ছোট স্ক্রিনে স্কেল হয়ে
    ছোট দেখায়, ঠিক সেই একই অনুপাতে টেক্সট/বাটনও স্কেল হবে ---------- */
 @media(max-width:899px){
-  .home-hero{padding:3.08vw 1.48vw 2.46vw}
-  .home-hero-shell{gap:2.46vw;align-items:start}
-  .home-hero-content{max-width:none}
+  .home-hero{padding:1.48vw}
+  .home-hero-content{left:4%;top:5%;width:48%}
   .home-eyebrow{min-height:auto;padding:0.55vw 0.99vw;font-size:0.92vw;gap:0.43vw;line-height:1.3;white-space:nowrap}
   .home-eyebrow .ic{width:0.86vw;height:0.86vw}
   .home-hero-title{
@@ -1037,7 +1047,6 @@ html[data-theme="dark"] .home-benefit-icon{background:rgba(255,92,135,.1);color:
   .home-quick-zone-btns{gap:0.49vw}
   .home-quick-zone-btn{padding:0.49vw 0.99vw;font-size:0.8vw;white-space:nowrap}
   .home-location-check{display:none}
-  .home-hero-visual img{max-width:100%;filter:drop-shadow(0 1.5vw 2.7vw rgba(56,30,40,.16))}
 }
 
 .home-hero-showcase::before{
@@ -1113,15 +1122,9 @@ html[data-theme="dark"] .home-benefit-icon{background:rgba(255,92,135,.1);color:
 .home-showcase-assurance strong{font-size:12.5px;color:var(--ink)}
 .home-showcase-assurance small{font-size:10.8px;color:var(--ink-muted)}
 @media(min-width:900px){
-  .home-hero-shell{grid-template-columns:minmax(0,1.25fr) minmax(330px,.75fr);gap:clamp(34px,5vw,70px)}
-  .home-hero-showcase{padding:20px}
+  .home-hero-content{left:4%;top:8%;width:46%}
 }
 @media(max-width:639px){
-  .home-hero{padding-top:30px}
-  .home-eyebrow{font-size:10.5px;line-height:1.45}
-  .home-hero-title{margin-top:17px;font-size:clamp(31px,10vw,43px);line-height:1.16}
-  .home-hero-copy{font-size:13.5px;line-height:1.72}
-  .home-hero-showcase{padding:14px;border-radius:22px}
   .home-showcase-card{min-height:66px;grid-template-columns:42px minmax(0,1fr) 16px;padding:10px}
   .home-showcase-icon{width:42px;height:42px;border-radius:14px}
 }
