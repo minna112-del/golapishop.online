@@ -23,6 +23,8 @@ const ZoneManagerDash = {
       const data = staffSnap.data();
       this.currentUid = cred.user.uid;
       this.currentZone = data.branchZone;
+      this.currentName = data.name || (BRANCH_INFO[data.branchZone]?.managerName) || 'জোন ম্যানেজার';
+      if(typeof StaffChat !== 'undefined') StaffChat.init(this.currentUid, this.currentName, 'zone_manager');
       document.getElementById('zmLoginBox').style.display='none';
       document.getElementById('zmDashBox').style.display='block';
       this.applyHeader(this.currentZone);
@@ -42,6 +44,8 @@ const ZoneManagerDash = {
       if(staffSnap.exists() && staffSnap.data().role==='zone_manager'){
         this.currentUid = FB.auth.currentUser.uid;
         this.currentZone = staffSnap.data().branchZone;
+        this.currentName = staffSnap.data().name || (BRANCH_INFO[this.currentZone]?.managerName) || 'জোন ম্যানেজার';
+        if(typeof StaffChat !== 'undefined') StaffChat.init(this.currentUid, this.currentName, 'zone_manager');
       }
     }catch(e){ devWarn('zone-manager session restore failed', e.message); }
   },
@@ -70,6 +74,9 @@ const ZoneManagerDash = {
     const st4=document.getElementById('zmStatPending'); if(st4) st4.textContent = bn(pending);
     const st5=document.getElementById('zmStatProducts'); if(st5) st5.textContent = bn(products.length);
 
+    this.renderCodSummary(orders);
+    this.renderEscalations();
+
     this.renderInventoryAlerts(products);
     this.renderRevenueChart(orders);
     this.renderRecentOrders(orders.slice(0,6));
@@ -78,6 +85,70 @@ const ZoneManagerDash = {
     this.renderAnalytics(orders);
     DriverManage.renderTable(this.currentZone);
   },
+  async renderCodSummary(orders){
+    const codOrders = orders.filter(o=>o.paymentMethod==='cod' && o.status==='delivered');
+    const collected = codOrders.reduce((s,o)=>s+this.orderTotal(o),0);
+    const deposited = codOrders.filter(o=>o.codDeposited).reduce((s,o)=>s+this.orderTotal(o),0);
+    const pending = collected - deposited;
+    const set=(id,val)=>{ const el=document.getElementById(id); if(el) el.textContent=val; };
+    set('zmCodCollected', money(collected));
+    set('zmCodDeposited', money(deposited));
+    set('zmCodPending', money(pending));
+    const bar = document.getElementById('zmCodBar');
+    if(bar) bar.style.width = collected>0 ? Math.round(deposited/collected*100)+'%' : '0%';
+  },
+
+  async markCodDeposited(orderId){
+    if(!FB) return;
+    try{
+      await FB.updateDoc(FB.doc(FB.db,'orders',orderId), { codDeposited:true, codDepositedAt: FB.serverTimestamp() });
+      const o = this._orders.find(x=>x.id===orderId); if(o) o.codDeposited=true;
+      toast('✓ জমা হিসেবে চিহ্নিত হয়েছে','success');
+      this.renderCodSummary(this._orders);
+      this.renderOrders(this._orders);
+    }catch(e){ toast('সমস্যা: '+e.message,'error'); }
+  },
+
+  async escalateOrder(orderId){
+    const o = this._orders.find(x=>x.id===orderId); if(!o || !FB) return;
+    const note = prompt('সমস্যার সংক্ষিপ্ত বিবরণ লিখুন (Owner/Support-কে পাঠানো হবে):');
+    if(note===null) return;
+    try{
+      await FB.addDoc(FB.collection(FB.db,'escalations'), {
+        orderId, orderNumber: o.orderNumber||orderId.slice(-6), zone:this.currentZone,
+        customerName:o.customerName||'—', customerPhone:o.customerPhone||'—',
+        note: note.trim() || 'বিস্তারিত দেওয়া হয়নি', status:'open',
+        raisedBy:'zone_manager', raisedByUid:this.currentUid,
+        createdAt: FB.serverTimestamp()
+      });
+      toast('✓ সমস্যাটি Owner/Support-কে জানানো হয়েছে','success');
+      await this.renderEscalations();
+    }catch(e){ toast('সমস্যা: '+e.message,'error'); }
+  },
+
+  async renderEscalations(){
+    const box = document.getElementById('zmEscalationList');
+    if(!box || !FB) return;
+    try{
+      const snap = await FB.getDocs(FB.query(
+        FB.collection(FB.db,'escalations'),
+        FB.where('zone','==',this.currentZone),
+        FB.where('status','==','open'),
+        FB.orderBy('createdAt','desc'),
+        FB.limit(10)
+      ));
+      const list = snap.docs.map(d=>({id:d.id, ...d.data()}));
+      const wrap = document.getElementById('zmEscalationCard');
+      if(!list.length){ if(wrap) wrap.style.display='none'; return; }
+      if(wrap) wrap.style.display='block';
+      box.innerHTML = list.map(e=>`
+        <div style="display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12.5px">
+          <div><span style="color:#fff">${esc(e.orderNumber)}</span> — ${esc(e.note)}</div>
+          <span style="color:#fbbf24;font-weight:600;white-space:nowrap">⏳ পেন্ডিং</span>
+        </div>`).join('');
+    }catch(e){ devWarn('escalations load failed', e.message); }
+  },
+
   renderInventoryAlerts(products){
     const low = products.filter(p=>p.stock>=0&&p.stock<=5);
     const el = document.getElementById('zmInventoryAlerts');
@@ -166,7 +237,10 @@ const ZoneManagerDash = {
             ${Object.entries(ORDER_STATUS).map(([k,v])=>`<option value="${k}" ${o.status===k?'selected':''}>${v.label}</option>`).join('')}
           </select>
         </td>
-        <td><a href="#" onclick="event.preventDefault();OrderDetail.open(${JSON.stringify(o).replace(/"/g,'&quot;')})" style="color:var(--gold);font-size:12px">বিস্তারিত</a></td>
+        <td><a href="#" onclick="event.preventDefault();OrderDetail.open(${JSON.stringify(o).replace(/"/g,'&quot;')})" style="color:var(--gold);font-size:12px;display:block;margin-bottom:3px">বিস্তারিত</a>
+          <a href="#" onclick="event.preventDefault();ZoneManagerDash.escalateOrder('${o.id}')" style="color:#f87171;font-size:11px;display:block;margin-bottom:3px">⚠️ এস্কেলেট</a>
+          ${o.paymentMethod==='cod'&&o.status==='delivered'&&!o.codDeposited?`<a href="#" onclick="event.preventDefault();ZoneManagerDash.markCodDeposited('${o.id}')" style="color:#22c55e;font-size:11px;display:block">💰 COD জমা দিন</a>`:''}
+        </td>
       </tr>`;
     }).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--ink-muted);padding:16px">কোনো অর্ডার নেই</td></tr>';
   },
@@ -218,8 +292,6 @@ const ZoneManagerDash = {
   },
   openAddProduct(){
     ProductForm.openAdd();
-    const isSadar = this.currentZone==='noakhali_sadar';
-    document.getElementById('pfZoneSadar').checked=isSadar; document.getElementById('pfZoneBegumganj').checked=!isSadar;
-    document.getElementById('pfZoneSadar').disabled=true; document.getElementById('pfZoneBegumganj').disabled=true;
+    ProductForm.renderZoneCheckboxes(this.currentZone, true);
   }
 };
