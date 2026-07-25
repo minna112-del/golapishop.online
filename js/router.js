@@ -81,6 +81,10 @@ const OwnerAuth = {
       this.currentUid = cred.user.uid;
       this._verifiedThisSession = true;
 
+      if (typeof StaffChat !== 'undefined') {
+        StaffChat.init(cred.user.uid, staffSnap.data().name || 'Owner', 'admin');
+      }
+
       document
         .getElementById('ownerGateModal')
         .classList
@@ -120,6 +124,9 @@ const OwnerAuth = {
       ) {
         this.currentUid = FB.auth.currentUser.uid;
         this._verifiedThisSession = true;
+        if (typeof StaffChat !== 'undefined') {
+          StaffChat.init(this.currentUid, staffSnap.data().name || 'Owner', 'admin');
+        }
         return true;
       }
     } catch (e) {
@@ -416,9 +423,12 @@ const Router = {
     /* ⚠️ admin/driver/zone-manager/payment/sms/memo/livemap আগে সবার জন্যই
        প্রথম লোডে ডাউনলোড হতো। এখন শুধু সংশ্লিষ্ট পেজে গেলেই লোড হয়। */
     const scriptMap = {
-      'admin-dash': ['./js/admin.js'],
-      'driver': ['./js/driver.js', './js/livemap.js'],
-      'zone-manager': ['./js/zone-manager.js'],
+      'admin-dash': ['./js/admin.js', './js/staff-chat.js'],
+      'driver': ['./js/driver.js', './js/livemap.js', './js/staff-chat.js'],
+      'zone-manager': ['./js/zone-manager.js', './js/staff-chat.js'],
+      'inventory-dash': ['./js/inventory.js', './js/staff-chat.js'],
+      'finance-dash': ['./js/finance.js', './js/staff-chat.js'],
+      'support-dash': ['./js/support.js', './js/staff-chat.js'],
       'checkout': ['./js/checkout.js', './js/payment.js', './js/sms.js'],
       'custom-bazar': ['./js/custom-bazar.js', './js/memo.js'],
       'myorders': ['./js/memo.js', './js/livemap.js']
@@ -546,6 +556,18 @@ const Router = {
       ZoneManagerDash.render();
     }
 
+    if (page === 'inventory-dash') {
+      InventoryDash.render();
+    }
+
+    if (page === 'finance-dash') {
+      FinanceDash.render();
+    }
+
+    if (page === 'support-dash') {
+      SupportDash.render();
+    }
+
     if (page === 'home') {
       Home.render();
     }
@@ -573,7 +595,10 @@ const Router = {
     const staffPage = [
       'admin-dash',
       'zone-manager',
-      'driver'
+      'driver',
+      'inventory-dash',
+      'finance-dash',
+      'support-dash'
     ].includes(page);
 
     const chatBtn =
@@ -633,6 +658,42 @@ Router.navigate = function(path) {
   ) {
     Router.go(
       'zone-manager',
+      {},
+      {
+        skipHistory: true
+      }
+    );
+
+    return;
+  }
+
+  if (normalizedPath === '/inventory') {
+    Router.go(
+      'inventory-dash',
+      {},
+      {
+        skipHistory: true
+      }
+    );
+
+    return;
+  }
+
+  if (normalizedPath === '/finance') {
+    Router.go(
+      'finance-dash',
+      {},
+      {
+        skipHistory: true
+      }
+    );
+
+    return;
+  }
+
+  if (normalizedPath === '/support') {
+    Router.go(
+      'support-dash',
       {},
       {
         skipHistory: true
