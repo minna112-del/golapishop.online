@@ -1,6 +1,6 @@
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* ═════════════════════════════════════════════════════════════════
    Firebase Auto-Update Check
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   ═════════════════════════════════════════════════════════════════
    
    Add this script to your website's <head> or at the end of <body>.
    It checks Firebase Firestore for the latest app version and
@@ -12,7 +12,7 @@
    
    Add to index.html before </body>:
    <script src="./js/update-check.js"></script>
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+   ═════════════════════════════════════════════════════════════════ */
 
 const UpdateCheck = {
   async check() {
@@ -34,7 +34,7 @@ const UpdateCheck = {
       const data = snap.data();
       const latestVersion = data.latestVersion || '1.0.0';
       const updateUrl = data.updateUrl || '';
-      const updateMessage = data.updateMessage || 'à¦¨à¦¤à§à¦¨ version à¦ªà¦¾à¦“à¦¯à¦¼à¦¾ à¦—à§‡à¦›à§‡! à¦†à¦ªà¦¡à§‡à¦Ÿ à¦•à¦°à§à¦¨à¥¤';
+      const updateMessage = data.updateMessage || 'নতুন version পাওয়া গেছে! আপডেট করুন।';
       const forceUpdate = data.forceUpdate || false;
 
       // Check stored version
@@ -82,21 +82,20 @@ const UpdateCheck = {
     `;
     
     card.innerHTML = `
-      <div style="font-size: 48px; margin-bottom: 12px">ðŸ”„</div>
-      <h3 style="font-size: 18px; margin-bottom: 8px; font-family: 'Hind Siliguri', sans-serif">à¦†à¦ªà¦¡à§‡à¦Ÿ à¦ªà¦¾à¦“à¦¯à¦¼à¦¾ à¦—à§‡à¦›à§‡</h3>
+      <div style="font-size: 48px; margin-bottom: 12px">🔄</div>
+      <h3 style="font-size: 18px; margin-bottom: 8px; font-family: 'Hind Siliguri', sans-serif">আপডেট পাওয়া গেছে</h3>
       <p style="font-size: 13px; color: rgba(255,255,255,0.6); margin-bottom: 20px; font-family: 'Hind Siliguri', sans-serif">${message}</p>
       <a href="${url || '#'}" onclick="UpdateCheck.updateNow(event, '${url}')" 
          style="display: block; background: linear-gradient(135deg, #e91e63, #c2185b); 
          color: #fff; padding: 12px 24px; border-radius: 10px; 
          text-decoration: none; font-weight: 600; font-size: 14px;
          font-family: 'Hind Siliguri', sans-serif">
-         â¬‡ï¸ à¦†à¦ªà¦¡à§‡à¦Ÿ à¦•à¦°à§à¦¨
+         ⬇️ আপডেট করুন
       </a>
       ${!force ? `<button onclick="UpdateCheck.later()" 
          style="margin-top: 12px; background: transparent; border: none; 
          color: rgba(255,255,255,0.4); font-size: 12px; cursor: pointer;
-         font-family: 'Hind Siliguri', sans-serif">
-         à¦ªà¦°à§‡ à¦•à¦°à¦¬</button>` : ''}
+         font-family: 'Hind Siliguri', sans-serif">পরে করব</button>` : ''}
     `;
     
     modal.appendChild(card);
