@@ -99,9 +99,9 @@ nav.catnav::-webkit-scrollbar{display:none}
 nav.catnav .inner{max-width:1280px;margin:0 auto;padding:0 16px;display:flex;gap:4px;align-items:center}
 nav.catnav a{display:block;padding:10px 13px;font-size:12.5px;color:var(--ink-muted);white-space:nowrap;transition:.2s}
 nav.catnav a:hover,nav.catnav a.active{color:var(--rose)}
-nav.catnav a.flash{background:var(--rose);color:#fff!important;border-radius:9px;font-weight:600;margin:6px 2px;padding:8px 15px}
-nav.catnav a.medical{background:var(--emerald);color:#fff!important;border-radius:9px;font-weight:600;margin:6px 2px;padding:8px 15px}
-nav.catnav a.gold{background:var(--gold);color:#fff!important;border-radius:9px;font-weight:700;margin:6px 2px;padding:8px 15px}
+nav.catnav a.flash{display:inline-flex;align-items:center;gap:6px;background:var(--rose);color:#fff!important;border-radius:9px;font-weight:600;margin:6px 2px;padding:8px 15px;white-space:nowrap}
+nav.catnav a.medical{display:inline-flex;align-items:center;gap:6px;background:var(--emerald);color:#fff!important;border-radius:9px;font-weight:600;margin:6px 2px;padding:8px 15px;white-space:nowrap}
+nav.catnav a.gold{display:inline-flex;align-items:center;gap:6px;background:var(--gold);color:#fff!important;border-radius:9px;font-weight:700;margin:6px 2px;padding:8px 15px;white-space:nowrap}
 
 /* ---------- pages ---------- */
 .page{display:none;opacity:0;transform:translateY(14px);transition:opacity .35s,transform .35s}
@@ -444,8 +444,8 @@ footer a:hover{color:var(--gold-light)}
 .status-pill.delivered{background:rgba(5,150,105,.1);color:var(--emerald)}
 .status-pill.cancelled{background:rgba(220,38,38,.1);color:#DC2626}
 
-.skip-link{position:absolute;top:-40px;left:0;background:var(--rose);color:#fff;padding:8px 16px;z-index:9999;border-radius:0 0 8px 0;font-weight:600;transition:.2s}
-.skip-link:focus{top:0}
+.skip-link{position:absolute;top:0;left:0;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;background:var(--rose);color:#fff;padding:8px 16px;z-index:9999;border-radius:0 0 8px 0;font-weight:600;transition:.2s}
+.skip-link:focus{width:auto;height:auto;overflow:visible;clip:auto;clip-path:none;white-space:normal}
 
 /* ---------- Mobile responsiveness fixes ---------- */
 @media(max-width:480px){
