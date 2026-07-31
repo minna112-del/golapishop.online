@@ -4,7 +4,7 @@ const Checkout = {
   locationData:null, // LocationPicker থেকে আসা {lat,lng,address,branchZone,distanceKm,etaMin,deliveryFee}
   async init(){
     const d=document.getElementById('ckDistrict'); if(d) d.value='';
-    const z=document.getElementById('ckZone'); if(z) z.innerHTML='<option value="">প্রথমে উপজেলা বেছে নিন</option>';
+    const z=document.getElementById('ckZone'); if(z) z.innerHTML=`<option value="">${currentLang==='bn'?'প্রথমে উপজেলা বেছে নিন':'Select upazila first'}</option>`;
     const v=document.getElementById('ckVillage'); if(v) v.value='';
     this.locationData = null;
     const ls=document.getElementById('ckLocationSummary'); if(ls){ ls.hidden=true; ls.innerHTML=''; }
@@ -39,11 +39,12 @@ const Checkout = {
       const summary = document.getElementById('ckLocationSummary');
       if(summary){
         summary.hidden=false;
-        summary.innerHTML = `<strong style="color:var(--ink)">📍 ${esc(data.address)}</strong><br>
-          ${data.zone?data.zone.label+' · ':''}দূরত্ব: ${data.distanceKm.toFixed(1)} কিমি · ETA: ~${data.etaMin} মিনিট · ডেলিভারি চার্জ: ${data.deliveryFee===0?'ফ্রি':'৳'+data.deliveryFee}`;
+        summary.innerHTML = currentLang==='bn'
+          ? `<strong style="color:var(--ink)">📍 ${esc(data.address)}</strong><br>${data.zone?data.zone.label+' · ':''}দূরত্ব: ${data.distanceKm.toFixed(1)} কিমি · ETA: ~${data.etaMin} মিনিট · ডেলিভারি চার্জ: ${data.deliveryFee===0?'ফ্রি':'৳'+data.deliveryFee}`
+          : `<strong style="color:var(--ink)">📍 ${esc(data.address)}</strong><br>${data.zone?data.zone.label+' · ':''}Distance: ${data.distanceKm.toFixed(1)} km · ETA: ~${data.etaMin} min · Delivery Fee: ${data.deliveryFee===0?'Free':'৳'+data.deliveryFee}`;
       }
       this.renderSummary();
-      toast('✓ লোকেশন সেভ হয়েছে','success');
+      toast(currentLang==='bn'?'✓ লোকেশন সেভ হয়েছে':'✓ Location saved','success');
     });
   },
   selectPay(el,method){
@@ -60,11 +61,14 @@ const Checkout = {
     if((method==='bkash'||method==='nagad') && info){
       const num = method==='bkash'?info.bkashNumber:info.nagadNumber;
       box.hidden=false;
-      box.innerHTML = `<div><strong>${method==='bkash'?'bKash':'Nagad'} পেমেন্ট নম্বর — ${info.label}</strong><br><b>${num}</b><br>অর্ডার কনফার্ম করার পর Send Money নির্দেশনা ও ট্রানজেকশন ID জমা দেওয়ার অপশন দেখানো হবে।</div>`;
+      box.innerHTML = currentLang==='bn'
+        ? `<div><strong>${method==='bkash'?'bKash':'Nagad'} পেমেন্ট নম্বর — ${info.label}</strong><br><b>${num}</b><br>অর্ডার কনফার্ম করার পর Send Money নির্দেশনা ও ট্রানজেকশন ID জমা দেওয়ার অপশন দেখানো হবে।</div>`
+        : `<div><strong>${method==='bkash'?'bKash':'Nagad'} Payment Number — ${info.label}</strong><br><b>${num}</b><br>After confirming the order, you'll get an option to submit the Send Money instructions and Transaction ID.</div>`;
+
     } else { box.hidden=true; box.innerHTML=''; }
   },
   goStep(n){
-    if(n>1 && this.currentStep===1 && !this.isStep1Valid()){ toast('⚠ ঠিকানা ও ডেলিভারি ইনস্ট্রাকশন সঠিকভাবে পূরণ করুন','error'); return; }
+    if(n>1 && this.currentStep===1 && !this.isStep1Valid()){ toast(currentLang==='bn'?'⚠ ঠিকানা ও ডেলিভারি ইনস্ট্রাকশন সঠিকভাবে পূরণ করুন':'⚠ Please fill in the address and delivery instructions correctly','error'); return; }
     if(n===2 && typeof dataLayer!=='undefined'){
       dataLayer.push({event:'begin_checkout', currency:'BDT', value: Cart.totalPrice()});
     }
@@ -89,9 +93,9 @@ const Checkout = {
     const phoneRe = /^(?:\+880|880|0)1[3-9]\d{8}$/;
     const nidRe = /^\d{10}$|^\d{13}$/;
     const nidOk = nid.length===0 || nidRe.test(nid);
-    if(!this.locationData){ toast('⚠ প্রথমে "ম্যাপে সঠিক লোকেশন পিন করুন" বাটনে ট্যাপ করে আপনার লোকেশন নির্বাচন করুন — এটা ছাড়া অর্ডার করা যাবে না','error'); return false; }
+    if(!this.locationData){ toast(currentLang==='bn'?'⚠ প্রথমে "ম্যাপে সঠিক লোকেশন পিন করুন" বাটনে ট্যাপ করে আপনার লোকেশন নির্বাচন করুন — এটা ছাড়া অর্ডার করা যাবে না':'⚠ Please tap "Pin Exact Location on Map" first to select your location — orders cannot be placed without it','error'); return false; }
     if(!this.locationData.zone){
-      toast('⚠ দুঃখিত, আপনার লোকেশন আমাদের ডেলিভারি জোনের বাইরে — এই মুহূর্তে সেখানে ডেলিভারি করা হয় না', 'error');
+      toast(currentLang==='bn'?'⚠ দুঃখিত, আপনার লোকেশন আমাদের ডেলিভারি জোনের বাইরে — এই মুহূর্তে সেখানে ডেলিভারি করা হয় না':"⚠ Sorry, your location is outside our delivery zone — we don't deliver there right now", 'error');
       return false;
     }
     return name.length>0 && phoneRe.test(phone) && nidOk && addr.length>=5 && upazila && zone && village.length>0 && instructions.length>0;
@@ -113,21 +117,21 @@ const Checkout = {
     const msgEl = document.getElementById('ckCouponMsg');
     const code = (codeEl?.value||'').trim().toUpperCase();
     if(!code){ msgEl.textContent=''; return; }
-    if(!FB){ msgEl.textContent='সংযোগ সমস্যা'; msgEl.style.color='#f87171'; return; }
+    if(!FB){ msgEl.textContent=currentLang==='bn'?'সংযোগ সমস্যা':'Connection issue'; msgEl.style.color='#f87171'; return; }
     try{
       const snap = await FB.getDocs(FB.query(FB.collection(FB.db,'coupons'), FB.where('code','==',code)));
-      if(snap.empty){ msgEl.textContent='❌ এই কুপন কোডটি সঠিক নয়'; msgEl.style.color='#f87171'; this.couponCode=null; this.couponData=null; this.renderSummary(); return; }
+      if(snap.empty){ msgEl.textContent=currentLang==='bn'?'❌ এই কুপন কোডটি সঠিক নয়':'❌ This coupon code is not valid'; msgEl.style.color='#f87171'; this.couponCode=null; this.couponData=null; this.renderSummary(); return; }
       const c = { id:snap.docs[0].id, ...snap.docs[0].data() };
       const today = new Date();
-      if(c.active===false){ msgEl.textContent='❌ এই কুপনটি বন্ধ আছে'; msgEl.style.color='#f87171'; return; }
-      if(c.expiresAt && new Date(c.expiresAt) < today){ msgEl.textContent='❌ কুপনের মেয়াদ শেষ হয়ে গেছে'; msgEl.style.color='#f87171'; return; }
-      if(c.usageLimit && (c.usedCount||0) >= c.usageLimit){ msgEl.textContent='❌ কুপনের ব্যবহারসীমা শেষ'; msgEl.style.color='#f87171'; return; }
+      if(c.active===false){ msgEl.textContent=currentLang==='bn'?'❌ এই কুপনটি বন্ধ আছে':'❌ This coupon is inactive'; msgEl.style.color='#f87171'; return; }
+      if(c.expiresAt && new Date(c.expiresAt) < today){ msgEl.textContent=currentLang==='bn'?'❌ কুপনের মেয়াদ শেষ হয়ে গেছে':'❌ This coupon has expired'; msgEl.style.color='#f87171'; return; }
+      if(c.usageLimit && (c.usedCount||0) >= c.usageLimit){ msgEl.textContent=currentLang==='bn'?'❌ কুপনের ব্যবহারসীমা শেষ':'❌ Coupon usage limit reached'; msgEl.style.color='#f87171'; return; }
       const sub = Cart.totalPrice();
-      if(c.minOrder && sub < c.minOrder){ msgEl.textContent=`❌ ন্যূনতম ${money(c.minOrder)} অর্ডারে এই কুপন প্রযোজ্য`; msgEl.style.color='#f87171'; return; }
+      if(c.minOrder && sub < c.minOrder){ msgEl.textContent=currentLang==='bn'?`❌ ন্যূনতম ${money(c.minOrder)} অর্ডারে এই কুপন প্রযোজ্য`:`❌ This coupon applies to orders of ${money(c.minOrder)} or more`; msgEl.style.color='#f87171'; return; }
       this.couponCode = code; this.couponData = c;
-      msgEl.textContent = `✓ কুপন প্রয়োগ হয়েছে!`; msgEl.style.color='#22c55e';
+      msgEl.textContent = currentLang==='bn'?'✓ কুপন প্রয়োগ হয়েছে!':'✓ Coupon applied!'; msgEl.style.color='#22c55e';
       this.renderSummary();
-    }catch(e){ msgEl.textContent='সমস্যা হয়েছে'; msgEl.style.color='#f87171'; }
+    }catch(e){ msgEl.textContent=currentLang==='bn'?'সমস্যা হয়েছে':'Something went wrong'; msgEl.style.color='#f87171'; }
   },
   getCouponDiscount(sub){
     if(!this.couponData) return 0;
@@ -174,20 +178,20 @@ const Checkout = {
   },
   validateCartForOrder(){
     const entries=Object.entries(Cart.items);
-    if(!entries.length){ toast('কার্টে কোনো পণ্য নেই','error'); Router.go('home'); return false; }
+    if(!entries.length){ toast(currentLang==='bn'?'কার্টে কোনো পণ্য নেই':'Your cart is empty','error'); Router.go('home'); return false; }
     for(const [id,qty] of entries){
       const p=ALL_PRODUCTS.find(x=>x.id===id);
-      if(!p){ toast('কার্টের একটি পণ্য আর উপলভ্য নেই। কার্ট আপডেট করুন।','error'); return false; }
+      if(!p){ toast(currentLang==='bn'?'কার্টের একটি পণ্য আর উপলভ্য নেই। কার্ট আপডেট করুন।':'One item in your cart is no longer available. Please update your cart.','error'); return false; }
       const stock=Number(p.stock||0);
-      if(stock<=0 || Number(qty)>stock){ toast(`${p.name} পণ্যের পর্যাপ্ত স্টক নেই। কার্ট আপডেট করুন।`,'error'); return false; }
+      if(stock<=0 || Number(qty)>stock){ toast(currentLang==='bn'?`${p.name} পণ্যের পর্যাপ্ত স্টক নেই। কার্ট আপডেট করুন।`:`Not enough stock for ${p.name}. Please update your cart.`,'error'); return false; }
     }
     return true;
   },
   async placeOrder(){
     if(this.isPlacingOrder) return;
     if(!this.validateCartForOrder()) return;
-    if(!this.locationData){ toast('⚠ লোকেশন নির্বাচন করা হয়নি — "ম্যাপে সঠিক লোকেশন পিন করুন" বাটনে ট্যাপ করুন','error'); this.goStep(1); return; }
-    if(!this.locationData.zone){ toast('⚠ এই লোকেশন ডেলিভারি জোনের বাইরে','error'); this.goStep(1); return; }
+    if(!this.locationData){ toast(currentLang==='bn'?'⚠ লোকেশন নির্বাচন করা হয়নি — "ম্যাপে সঠিক লোকেশন পিন করুন" বাটনে ট্যাপ করুন':'⚠ No location selected — tap "Pin Exact Location on Map"','error'); this.goStep(1); return; }
+    if(!this.locationData.zone){ toast(currentLang==='bn'?'⚠ এই লোকেশন ডেলিভারি জোনের বাইরে':'⚠ This location is outside the delivery zone','error'); this.goStep(1); return; }
     const name=document.getElementById('ckName').value.trim();
     const phone=document.getElementById('ckPhone').value.trim();
     const addr=document.getElementById('ckAddress').value.trim();
@@ -199,9 +203,9 @@ const Checkout = {
     const phoneRe = /^(?:\+880|880|0)1[3-9]\d{8}$/;
     const nidRe = /^\d{10}$|^\d{13}$/;
     const nidOk = nid.length===0 || nidRe.test(nid);
-    if(!name||!phoneRe.test(phone.replace(/[\s-]/g,''))||!nidOk||addr.length<5||!upazila||!zone||!village||!instructions){ toast('⚠ সব প্রয়োজনীয় তথ্য সঠিকভাবে পূরণ করুন','error'); this.goStep(1); return; }
-    if(!document.getElementById('ckTerms').checked){ toast('⚠ শর্তাবলীতে সম্মত হতে হবে','error'); return; }
-    if(!FB){ toast('⚠ সংযোগ সমস্যা — আবার চেষ্টা করুন','error'); return; }
+    if(!name||!phoneRe.test(phone.replace(/[\s-]/g,''))||!nidOk||addr.length<5||!upazila||!zone||!village||!instructions){ toast(currentLang==='bn'?'⚠ সব প্রয়োজনীয় তথ্য সঠিকভাবে পূরণ করুন':'⚠ Please fill in all required information correctly','error'); this.goStep(1); return; }
+    if(!document.getElementById('ckTerms').checked){ toast(currentLang==='bn'?'⚠ শর্তাবলীতে সম্মত হতে হবে':'⚠ You must agree to the Terms & Conditions','error'); return; }
+    if(!FB){ toast(currentLang==='bn'?'⚠ সংযোগ সমস্যা — আবার চেষ্টা করুন':'⚠ Connection issue — please try again','error'); return; }
     this.setPlaceOrderLoading(true);
     const orderNo = 'GS-'+new Date().getFullYear()+'-'+String(Math.floor(Math.random()*900000)+100000);
     const sub = Cart.totalPrice();
@@ -239,11 +243,11 @@ const Checkout = {
         for(let i=0; i<cartEntries.length; i++){
           const [id, qty] = cartEntries[i];
           const snap = productSnaps[i];
-          if(!snap.exists()) throw new Error('একটি পণ্য আর পাওয়া যাচ্ছে না, কার্ট আপডেট করুন।');
+          if(!snap.exists()) throw new Error(currentLang==='bn'?'একটি পণ্য আর পাওয়া যাচ্ছে না, কার্ট আপডেট করুন।':'One item is no longer available, please update your cart.');
           const data = snap.data();
           const latestStock = Number(data.stock||0);
           if(latestStock < Number(qty)){
-            throw new Error(`${data.name||'পণ্য'}-এর পর্যাপ্ত স্টক নেই (এই মুহূর্তে মাত্র ${latestStock}টি আছে)। কার্ট আপডেট করুন।`);
+            throw new Error(currentLang==='bn'?`${data.name||'পণ্য'}-এর পর্যাপ্ত স্টক নেই (এই মুহূর্তে মাত্র ${latestStock}টি আছে)। কার্ট আপডেট করুন।`:`Not enough stock for ${data.name||'this item'} (only ${latestStock} left). Please update your cart.`);
           }
           itemsForOrder.push({productId:id, name:data.name||'', qty:Number(qty), unitPrice:Number(data.salePrice||0)});
         }
@@ -271,7 +275,7 @@ const Checkout = {
     }catch(e){
       devWarn('order transaction failed', e.message);
       this.setPlaceOrderLoading(false);
-      toast('❌ ' + (e.message || 'অর্ডার সম্পন্ন হয়নি, আবার চেষ্টা করুন'), 'error');
+      toast('❌ ' + (e.message || (currentLang==='bn'?'অর্ডার সম্পন্ন হয়নি, আবার চেষ্টা করুন':'Order could not be placed, please try again')), 'error');
       return;
     }
     try{
@@ -314,6 +318,6 @@ const Checkout = {
       } else {
         Router.go('order-success');
       }
-    }catch(e){ devWarn('order failed', e.message); this.setPlaceOrderLoading(false); toast('❌ অর্ডার সম্পন্ন হয়নি, আবার চেষ্টা করুন','error'); }
+    }catch(e){ devWarn('order failed', e.message); this.setPlaceOrderLoading(false); toast(currentLang==='bn'?'❌ অর্ডার সম্পন্ন হয়নি, আবার চেষ্টা করুন':'❌ Order could not be placed, please try again','error'); }
   }
 };
