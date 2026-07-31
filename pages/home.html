@@ -9,16 +9,16 @@
       </div>
       <img class="home-hero-visual" src="icons/hero-banner.webp" alt="Golapi Shop Online-এর পণ্যসামগ্রী" aria-hidden="true">
       <div class="home-hero-content">
-        <div class="home-eyebrow">
+        <div class="home-eyebrow" data-bn="<span class=&quot;home-eyebrow-icon-bg&quot;><span class=&quot;ic ic-pin&quot; aria-hidden=&quot;true&quot;></span></span>নোয়াখালী সদর ও বেগমগঞ্জে নিজস্ব ডেলিভারি সেবা" data-en="<span class=&quot;home-eyebrow-icon-bg&quot;><span class=&quot;ic ic-pin&quot; aria-hidden=&quot;true&quot;></span></span>Own delivery service in Noakhali Sadar &amp; Begumganj">
           <span class="home-eyebrow-icon-bg"><span class="ic ic-pin" aria-hidden="true"></span></span>
           নোয়াখালী সদর ও বেগমগঞ্জে নিজস্ব ডেলিভারি সেবা
         </div>
 
-        <h1 id="homeHeroTitle" class="home-hero-title">
+        <h1 id="homeHeroTitle" class="home-hero-title" data-bn="আপনার লিস্ট,<br><span class=&quot;home-hero-title-grad1&quot;>আমাদের বাজার</span> <span class=&quot;home-hero-title-grad2&quot;>ও ডেলিভারি</span>" data-en="Your List,<br><span class=&quot;home-hero-title-grad1&quot;>Our Market</span> <span class=&quot;home-hero-title-grad2&quot;>&amp; Delivery</span>">
           আপনার লিস্ট,<br>
           <span class="home-hero-title-grad1">আমাদের বাজার</span> <span class="home-hero-title-grad2">ও ডেলিভারি</span>
         </h1>
-        <p class="home-hero-copy">
+        <p class="home-hero-copy" data-bn="মুদি বাজার, প্রয়োজনীয় ঔষধ ও গ্যাস সিলিন্ডার অর্ডার করুন। নোয়াখালী সদর ও বেগমগঞ্জে আমাদের স্থানীয় টিম অর্ডার নিশ্চিত করে আপনার ঠিকানায় পৌঁছে দেবে। সাধারণ অর্ডারে পণ্য হাতে পেয়ে মূল্য পরিশোধ করুন।" data-en="Order groceries, essential medicines, and gas cylinders. Our local team in Noakhali Sadar and Begumganj confirms your order and delivers it to your address. For regular orders, pay when you receive your items.">
           মুদি বাজার, প্রয়োজনীয় ঔষধ ও গ্যাস সিলিন্ডার অর্ডার করুন। নোয়াখালী সদর ও বেগমগঞ্জে আমাদের স্থানীয় টিম অর্ডার নিশ্চিত করে আপনার ঠিকানায় পৌঁছে দেবে। সাধারণ অর্ডারে পণ্য হাতে পেয়ে মূল্য পরিশোধ করুন।
         </p>
 
@@ -27,6 +27,8 @@
             type="button"
             class="home-primary-cta"
             onclick="Router.go('listing',{cat:'all'})"
+            data-bn="<span class=&quot;ic ic-cart&quot; aria-hidden=&quot;true&quot;></span>পণ্য দেখে অর্ডার করুন"
+            data-en="<span class=&quot;ic ic-cart&quot; aria-hidden=&quot;true&quot;></span>Browse &amp; Order"
           >
             <span class="ic ic-cart" aria-hidden="true"></span>
             পণ্য দেখে অর্ডার করুন
@@ -36,6 +38,8 @@
             type="button"
             class="home-secondary-cta"
             onclick="Router.go('custom-bazar')"
+            data-bn="<span class=&quot;ic ic-pencil&quot; aria-hidden=&quot;true&quot;></span>নিজের বাজারের তালিকা পাঠান"
+            data-en="<span class=&quot;ic ic-pencil&quot; aria-hidden=&quot;true&quot;></span>Send Your Shopping List"
           >
             <span class="ic ic-pencil" aria-hidden="true"></span>
             নিজের বাজারের তালিকা পাঠান
@@ -43,10 +47,10 @@
         </div>
 
         <div class="home-quick-zone" role="group" aria-label="আপনার উপজেলা নির্বাচন করুন">
-          <span class="home-quick-zone-label">আপনার উপজেলা নির্বাচন করুন:</span>
+          <span class="home-quick-zone-label" data-bn="আপনার উপজেলা নির্বাচন করুন:" data-en="Select your area:">আপনার উপজেলা নির্বাচন করুন:</span>
           <div class="home-quick-zone-btns">
-            <button type="button" class="home-quick-zone-btn" onclick="toast('✓ নোয়াখালী সদরে আমরা ডেলিভারি দিই','success');Router.go('listing',{cat:'all'})">নোয়াখালী সদর</button>
-            <button type="button" class="home-quick-zone-btn" onclick="toast('✓ বেগমগঞ্জে আমরা ডেলিভারি দিই','success');Router.go('listing',{cat:'all'})">বেগমগঞ্জ</button>
+            <button type="button" class="home-quick-zone-btn" onclick="toast('✓ নোয়াখালী সদরে আমরা ডেলিভারি দিই','success');Router.go('listing',{cat:'all'})" data-bn="নোয়াখালী সদর" data-en="Noakhali Sadar">নোয়াখালী সদর</button>
+            <button type="button" class="home-quick-zone-btn" onclick="toast('✓ বেগমগঞ্জে আমরা ডেলিভারি দিই','success');Router.go('listing',{cat:'all'})" data-bn="বেগমগঞ্জ" data-en="Begumganj">বেগমগঞ্জ</button>
           </div>
         </div>
       </div>
@@ -55,32 +59,32 @@
         <div class="home-trust-point">
           <span class="ic ic-truck" aria-hidden="true"></span>
           <div>
-            <strong>নিজস্ব ডেলিভারি</strong>
-            <small>দ্রুত ও নির্ভরযোগ্য</small>
+            <strong data-bn="নিজস্ব ডেলিভারি" data-en="Own Delivery">নিজস্ব ডেলিভারি</strong>
+            <small data-bn="দ্রুত ও নির্ভরযোগ্য" data-en="Fast &amp; Reliable">দ্রুত ও নির্ভরযোগ্য</small>
           </div>
         </div>
 
         <div class="home-trust-point">
           <span class="ic ic-shield" aria-hidden="true"></span>
           <div>
-            <strong>নিরাপদ পেমেন্ট</strong>
-            <small>bKash, Nagad &amp; COD</small>
+            <strong data-bn="নিরাপদ পেমেন্ট" data-en="Safe Payment">নিরাপদ পেমেন্ট</strong>
+            <small data-bn="bKash, Nagad &amp; COD" data-en="bKash, Nagad &amp; COD">bKash, Nagad &amp; COD</small>
           </div>
         </div>
 
         <div class="home-trust-point">
           <span class="ic ic-percent" aria-hidden="true"></span>
           <div>
-            <strong>সেরা দাম নিশ্চিত</strong>
-            <small>সাশ্রয়ী মূল্যে পণ্য</small>
+            <strong data-bn="সেরা দাম নিশ্চিত" data-en="Best Price Guaranteed">সেরা দাম নিশ্চিত</strong>
+            <small data-bn="সাশ্রয়ী মূল্যে পণ্য" data-en="Affordable Products">সাশ্রয়ী মূল্যে পণ্য</small>
           </div>
         </div>
 
         <div class="home-trust-point">
           <span class="ic ic-headset" aria-hidden="true"></span>
           <div>
-            <strong>সহায়তা সেন্টার</strong>
-            <small>সব সময় পাশে আছি</small>
+            <strong data-bn="সহায়তা সেন্টার" data-en="Support Center">সহায়তা সেন্টার</strong>
+            <small data-bn="সব সময় পাশে আছি" data-en="Always Here for You">সব সময় পাশে আছি</small>
           </div>
         </div>
       </section>
@@ -90,15 +94,17 @@
   <section class="sec home-section home-categories-section" aria-labelledby="categoriesTitle">
     <div class="home-categories-heading">
       <div>
-        <span class="home-section-kicker">প্রয়োজনীয় সবকিছু</span>
-        <h2 id="categoriesTitle" class="tiro">ক্যাটাগরি থেকে বেছে নিন</h2>
-        <p>আপনার প্রয়োজনের বিভাগে সরাসরি গিয়ে পণ্য খুঁজুন।</p>
+        <span class="home-section-kicker" data-bn="প্রয়োজনীয় সবকিছু" data-en="Everything You Need">প্রয়োজনীয় সবকিছু</span>
+        <h2 id="categoriesTitle" class="tiro" data-bn="ক্যাটাগরি থেকে বেছে নিন" data-en="Choose from Categories">ক্যাটাগরি থেকে বেছে নিন</h2>
+        <p data-bn="আপনার প্রয়োজনের বিভাগে সরাসরি গিয়ে পণ্য খুঁজুন।" data-en="Go straight to the category you need to find products.">আপনার প্রয়োজনের বিভাগে সরাসরি গিয়ে পণ্য খুঁজুন।</p>
       </div>
 
       <button
         type="button"
         class="home-category-all"
         onclick="Router.go('listing',{cat:'all'})"
+        data-bn="সব পণ্য দেখুন<span class=&quot;ic ic-arrow-r&quot; aria-hidden=&quot;true&quot;></span>"
+        data-en="View All Products<span class=&quot;ic ic-arrow-r&quot; aria-hidden=&quot;true&quot;></span>"
       >
         সব পণ্য দেখুন
         <span class="ic ic-arrow-r" aria-hidden="true"></span>
