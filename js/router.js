@@ -498,6 +498,13 @@ const Router = {
       targetPage.classList.add('active');
     }
 
+    // ⚠️ আগে applyLang() শুধু প্রথম পেজ লোডে একবারই চলতো — অন্য পেজে গেলে
+    // (বিশেষত lazy-loaded পেজ, যেগুলো এইমাত্র DOM-এ যোগ হলো) নতুন data-bn/
+    // data-en এলিমেন্টগুলো কখনো ভাষা-প্রয়োগ পেতোই না, তাই ইংরেজি মোডে থাকা
+    // অবস্থায় নতুন পেজে গেলে সেটা বাংলাতেই থেকে যেত। এখন প্রতিটা navigation-এ
+    // চলে, তাই সব পেজ সবসময় সঠিক ভাষায় দেখাবে।
+    if (typeof applyLang === 'function') applyLang();
+
     window.scrollTo({
       top: 0,
       behavior: 'smooth'
