@@ -2424,7 +2424,7 @@ html[data-theme="dark"] .cart-drawer,html[data-theme="dark"] .cart-drawer__foote
   color:#20181D!important;
   max-width:none!important;
 }
-.home-hero-title-grad1{
+.home-hero-title span.home-hero-title-grad1{
   display:inline-block;
   font-size:min(4.68vw,70px);
   line-height:1.17;
@@ -2433,7 +2433,7 @@ html[data-theme="dark"] .cart-drawer,html[data-theme="dark"] .cart-drawer__foote
   -webkit-background-clip:text;background-clip:text;color:transparent;
   -webkit-text-fill-color:transparent;
 }
-.home-hero-title-grad2{
+.home-hero-title span.home-hero-title-grad2{
   display:inline-block;
   font-size:min(4.55vw,68px);
   line-height:1.15;
@@ -2610,4 +2610,77 @@ html[data-theme="dark"] .cart-drawer,html[data-theme="dark"] .cart-drawer__foote
 
 @media(max-width:520px){
   .home-hero-orbit,.home-hero-float-icons{display:none}
+}
+
+/* ════════════════════════════════════════════════════════════════
+   HERO — ডার্ক মোড সম্পূর্ণ নিষ্ক্রিয় করা হলো এই কার্ডের জন্য
+   কারণ ব্যাকগ্রাউন্ড একটা ফিক্সড হালকা গোলাপি ছবি — ফোন ডার্ক মোডে
+   থাকলেও এই কার্ড সবসময় লাইট-থিমেই দেখাতে হবে। আগের dark-theme
+   rule গুলোর (html[data-theme="dark"] .home-hero-title span ইত্যাদি)
+   specificity আমার প্লেইন rule-এর চেয়ে বেশি ছিল বলে জিতে যাচ্ছিল —
+   এখন সেই একই selector-এ (বা বেশি specific) exact আমার intended
+   ভ্যালু বসিয়ে override করা হলো।
+   ════════════════════════════════════════════════════════════════ */
+
+html[data-theme="dark"] .home-hero{
+  background:linear-gradient(180deg,#FCE9DF 0%,#FCE6E6 45%,#F7DDE7 100%)!important;
+}
+html[data-theme="dark"] .home-hero-shell{
+  background:linear-gradient(110deg,#FFF9F7 0%,#FFF8F8 48%,#FFF4F7 100%)!important;
+  border-color:rgba(255,255,255,.75)!important;
+}
+html[data-theme="dark"] .home-eyebrow{
+  background:#FFFDFD!important;
+  border-color:#F8D6E0!important;
+  color:#EE3373!important;
+}
+html[data-theme="dark"] .home-hero-title{color:#20181D!important}
+html[data-theme="dark"] .home-hero-title span,
+html[data-theme="dark"] .home-hero-title span.home-hero-title-grad1{
+  background:linear-gradient(90deg,#EF286B 0%,#F14457 48%,#E4671E 100%)!important;
+  -webkit-background-clip:text!important;background-clip:text!important;
+  color:transparent!important;-webkit-text-fill-color:transparent!important;
+}
+html[data-theme="dark"] .home-hero-title span.home-hero-title-grad2{
+  background:linear-gradient(90deg,#E84941 0%,#DD6422 48%,#C98600 100%)!important;
+  -webkit-background-clip:text!important;background-clip:text!important;
+  color:transparent!important;-webkit-text-fill-color:transparent!important;
+}
+html[data-theme="dark"] .home-hero-copy{color:#555055!important}
+html[data-theme="dark"] .home-primary-cta,
+html[data-theme="dark"] .home-secondary-cta{
+  background:linear-gradient(180deg,#211A1D 0%,#181115 100%)!important;
+  color:#FFFFFF!important;
+}
+html[data-theme="dark"] .home-quick-zone-label{color:#5C565B!important}
+html[data-theme="dark"] .home-quick-zone-btn{
+  background:rgba(255,250,251,.68)!important;
+  border-color:#F4CED8!important;
+  color:#CB4B25!important;
+}
+html[data-theme="dark"] .home-trust-strip{
+  background:rgba(255,255,255,.84)!important;
+  border-color:rgba(245,225,231,.75)!important;
+}
+html[data-theme="dark"] .home-trust-point{background:transparent!important}
+html[data-theme="dark"] .home-trust-point>.ic{color:#F33479!important}
+html[data-theme="dark"] .home-trust-point strong{color:#292328!important}
+html[data-theme="dark"] .home-trust-point small{color:#5D585C!important}
+html[data-theme="dark"] .home-hero-orbit{border-color:#F5BDCC!important}
+html[data-theme="dark"] .home-float-icon{
+  background:rgba(255,250,252,.88)!important;
+  border-color:#F4B5C7!important;
+}
+html[data-theme="dark"] .home-float-icon .ic{color:#EF3374!important}
+
+/* ---------- খুব সরু স্ক্রিনে (৪০০px পর্যন্ত — অনেক Android ফোন এই রেঞ্জে)
+   কন্টেন্ট কলাম আরও সংকুচিত হয়ে যায় বলে (label+২টা পিল বাটন এক লাইনে না
+   এঁটে wrap করে), অতিরিক্ত উচ্চতা লাগে — তাই gap আরও কমিয়ে ফিচার প্যানেলের
+   সাথে ওভারল্যাপ ঠেকানো হলো ---------- */
+@media(max-width:400px){
+  .home-hero-title{margin-top:0.6%!important}
+  .home-hero-copy{margin-top:0.8%!important}
+  .home-hero-actions{margin-top:1%!important;gap:0.6%!important}
+  .home-primary-cta,.home-secondary-cta{height:min(7vw,94px)!important}
+  .home-quick-zone{margin-top:1%!important}
 }
