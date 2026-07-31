@@ -109,7 +109,7 @@ const Listing = {
   renderCategoryFilters(){
     const el = document.getElementById('filterCategoryList');
     if(!el) return;
-    el.innerHTML = CATEGORIES.map(c=>`<label class="filter-opt"><input type="checkbox" value="${c.id}" onchange="Listing.toggleCategory('${c.id}',this.checked)" ${this.selectedCategories.has(c.id)?'checked':''}> ${c.icon} ${c.label}</label>`).join('');
+    el.innerHTML = CATEGORIES.map(c=>`<label class="filter-opt"><input type="checkbox" value="${c.id}" onchange="Listing.toggleCategory('${c.id}',this.checked)" ${this.selectedCategories.has(c.id)?'checked':''}> ${c.icon} ${currentLang==='bn'?c.label:(c.labelEn||c.label)}</label>`).join('');
   },
   toggleCategory(id, checked){
     checked ? this.selectedCategories.add(id) : this.selectedCategories.delete(id);
@@ -140,11 +140,11 @@ const Listing = {
     }
     if(!document.getElementById('filterCategoryList')?.children.length) this.renderCategoryFilters();
     let items = zoneProducts();
-    let title = 'সব প্রোডাক্ট';
-    if(cat==='flash'){ items = items.filter(p=>p.isFlash); title='🔥 ফ্ল্যাশ সেল'; }
-    else if(cat==='bestseller'){ items = [...items].sort((a,b)=>b.sold-a.sold); title='⭐ বেস্ট সেলার'; }
-    else if(cat!=='all'){ items = items.filter(p=>p.category===cat); title = CATEGORIES.find(c=>c.id===cat)?.label || cat; }
-    if(q){ items = items.filter(p=>p.name.toLowerCase().includes(q)); title = `"${q}" — অনুসন্ধান`; }
+    let title = currentLang==='bn' ? 'সব প্রোডাক্ট' : 'All Products';
+    if(cat==='flash'){ items = items.filter(p=>p.isFlash); title = currentLang==='bn' ? '🔥 ফ্ল্যাশ সেল' : '🔥 Flash Sale'; }
+    else if(cat==='bestseller'){ items = [...items].sort((a,b)=>b.sold-a.sold); title = currentLang==='bn' ? '⭐ বেস্ট সেলার' : '⭐ Best Seller'; }
+    else if(cat!=='all'){ items = items.filter(p=>p.category===cat); const catObj=CATEGORIES.find(c=>c.id===cat); title = (currentLang==='bn' ? catObj?.label : (catObj?.labelEn||catObj?.label)) || cat; }
+    if(q){ items = items.filter(p=>p.name.toLowerCase().includes(q)); title = currentLang==='bn' ? `"${q}" — অনুসন্ধান` : `"${q}" — Search Results`; }
     if(this.selectedCategories.size) items = items.filter(p=>this.selectedCategories.has(p.category));
     const priceMax = Number(document.getElementById('priceRange')?.value||10000);
     if(priceMax < 10000) items = items.filter(p=>p.salePrice <= priceMax);
@@ -162,12 +162,12 @@ const Listing = {
     // "কোনো প্রোডাক্ট পাওয়া যায়নি" দেখাতো — বিভ্রান্তিকর, মনে হতো সত্যিই কোনো পণ্য নেই।
     // এখন লোড না হওয়া পর্যন্ত স্পষ্ট "লোড হচ্ছে" অবস্থা দেখানো হয়।
     if(!ProductStore.loaded){
-      const countEl=document.getElementById('listCount'); if(countEl) countEl.textContent = 'লোড হচ্ছে... (ধীর নেটওয়ার্কে একটু সময় লাগতে পারে)';
+      const countEl=document.getElementById('listCount'); if(countEl) countEl.textContent = currentLang==='bn' ? 'লোড হচ্ছে... (ধীর নেটওয়ার্কে একটু সময় লাগতে পারে)' : 'Loading... (may take a moment on slow networks)';
       if(grid) grid.innerHTML = skeletonCards(6);
       return;
     }
-    const countEl=document.getElementById('listCount'); if(countEl) countEl.textContent = `${bn(items.length)} টি প্রোডাক্ট পাওয়া গেছে`;
-    if(grid) grid.innerHTML = items.map(pcardHTML).join('') || `<div class="empty-state" style="grid-column:1/-1"><div class="em">🔍</div><h3>কোনো প্রোডাক্ট পাওয়া যায়নি</h3><button class="btn btn-outline" style="margin-top:10px" onclick="Listing.clearFilters()">ফিল্টার রিসেট করুন</button></div>`;
+    const countEl=document.getElementById('listCount'); if(countEl) countEl.textContent = currentLang==='bn' ? `${bn(items.length)} টি প্রোডাক্ট পাওয়া গেছে` : `${items.length} products found`;
+    if(grid) grid.innerHTML = items.map(pcardHTML).join('') || `<div class="empty-state" style="grid-column:1/-1"><div class="em">🔍</div><h3>${currentLang==='bn'?'কোনো প্রোডাক্ট পাওয়া যায়নি':'No products found'}</h3><button class="btn btn-outline" style="margin-top:10px" onclick="Listing.clearFilters()">${currentLang==='bn'?'ফিল্টার রিসেট করুন':'Reset Filters'}</button></div>`;
   }
 };
 
@@ -226,53 +226,75 @@ const PDP = {
   load(id){
     const zp = zoneProducts();
     this.product = zp.find(p=>p.id===id);
-    if(!this.product){ toast('প্রোডাক্ট পাওয়া যায়নি','error'); Router.go('listing',{cat:'all'}); return; }
+    if(!this.product){ toast(currentLang==='bn'?'প্রোডাক্ট পাওয়া যায়নি':'Product not found','error'); Router.go('listing',{cat:'all'}); return; }
     this.qty = 1;
     const p = this.product;
+    const homeLabel = currentLang==='bn'?'হোম':'Home';
+    const catObj = CATEGORIES.find(c=>c.id===p.category);
+    const catLabelCrumb = (currentLang==='bn' ? catObj?.label : (catObj?.labelEn||catObj?.label)) || '';
     const crumb=document.getElementById('pdpCrumb');
-    if(crumb) crumb.innerHTML = `<a href="#" onclick="Router.go('home')">হোম</a> &gt; <a href="#" onclick="Router.go('listing',{cat:'${p.category}'})">${esc(CATEGORIES.find(c=>c.id===p.category)?.label||'')}</a> &gt; ${esc(p.name)}`;
+    if(crumb) crumb.innerHTML = `<a href="#" onclick="Router.go('home')">${homeLabel}</a> &gt; <a href="#" onclick="Router.go('listing',{cat:'${p.category}'})">${esc(catLabelCrumb)}</a> &gt; ${esc(p.name)}`;
     const img=document.getElementById('pdpImg'); if(img){ img.src = p.img; img.alt = p.name; }
     const fullImg=document.getElementById('pdpImgFull'); if(fullImg) fullImg.alt = p.name;
-    const catLabel=CATEGORIES.find(c=>c.id===p.category)?.label||'পণ্য';
+    const catLabel = catLabelCrumb || (currentLang==='bn'?'পণ্য':'Product');
     const catEl=document.getElementById('pdpCategoryLabel'); if(catEl) catEl.textContent=catLabel;
     const relatedLink=document.getElementById('pdpRelatedLink'); if(relatedLink) relatedLink.onclick=()=>Router.go('listing',{cat:p.category});
     const name=document.getElementById('pdpName'); if(name) name.textContent = p.name;
     const meta=document.getElementById('pdpMeta');
     if(meta) meta.innerHTML = p.reviews>0
-      ? `<span aria-label="রেটিং">★ ${p.rating}</span> <span>(${bn(p.reviews)} রিভিউ)</span>`
-      : `<span>এই পণ্যে এখনো কোনো প্রকাশিত রিভিউ নেই</span>`;
+      ? (currentLang==='bn'
+          ? `<span aria-label="রেটিং">★ ${p.rating}</span> <span>(${bn(p.reviews)} রিভিউ)</span>`
+          : `<span aria-label="Rating">★ ${p.rating}</span> <span>(${p.reviews} reviews)</span>`)
+      : `<span>${currentLang==='bn'?'এই পণ্যে এখনো কোনো প্রকাশিত রিভিউ নেই':'No published reviews for this product yet'}</span>`;
     const price=document.getElementById('pdpPrice'); if(price) price.textContent = money(p.salePrice);
     const disc = p.price>p.salePrice ? Math.round((1-p.salePrice/p.price)*100) : 0;
     const old=document.getElementById('pdpOld'); if(old) old.textContent = disc? money(p.price):'';
-    // ⚠️ আগে এখানে "X% ছাড়" পিল দেখানো হতো — কখনো অনুরোধ করা হয়নি, আর ribbon-এই
-    // একই তথ্য (টাকায়) থাকায় এটা অপ্রয়োজনীয় ডুপ্লিকেট ছিল। এখন এই একই জায়গায়
-    // "কত পিছ বিক্রি হয়েছে" — সবসময় দেখানো হয় (শূন্য হলেও), রেফারেন্স ছবির স্টাইলে।
     const discEl=document.getElementById('pdpDisc');
-    if(discEl){ discEl.style.display='inline-block'; discEl.textContent = `${bn(p.sold||0)} বিক্রি হয়েছে`; }
+    if(discEl){ discEl.style.display='inline-block'; discEl.textContent = currentLang==='bn' ? `${bn(p.sold||0)} বিক্রি হয়েছে` : `${p.sold||0} sold`; }
     const ribbon=document.getElementById('pdpSavingsRibbon');
     if(ribbon){
-      if(disc){ ribbon.style.display='flex'; ribbon.innerHTML = `বাঁচলো<span class="amt">৳${bn(p.price - p.salePrice)}</span>`; }
+      if(disc){ ribbon.style.display='flex'; ribbon.innerHTML = currentLang==='bn' ? `বাঁচলো<span class="amt">৳${bn(p.price - p.salePrice)}</span>` : `Saved<span class="amt">৳${p.price - p.salePrice}</span>`; }
       else { ribbon.style.display='none'; }
     }
     const unit=document.getElementById('pdpUnit'); if(unit) unit.textContent = '/ '+p.unit;
+    const codTag = currentLang==='bn' ? 'ক্যাশ অন ডেলিভারি' : 'Cash on Delivery';
+    const fastTag = currentLang==='bn' ? 'লোকাল ডেলিভারি' : 'Local Delivery';
     const tags=document.getElementById('pdpTags');
-    if(tags) tags.innerHTML = `${p.cod?'<span class="cod-tag">ক্যাশ অন ডেলিভারি</span>':''}${p.fastDelivery?'<span class="fast-tag">লোকাল ডেলিভারি</span>':''}`;
+    if(tags) tags.innerHTML = `${p.cod?`<span class="cod-tag">${codTag}</span>`:''}${p.fastDelivery?`<span class="fast-tag">${fastTag}</span>`:''}`;
     const stock=document.getElementById('pdpStock');
     const inStock=Number(p.stock)>0;
     if(stock){
       stock.className='pdp-stock '+(!inStock?'is-unavailable':Number(p.stock)<=5?'is-low':'is-available');
-      stock.textContent=!inStock?'বর্তমানে স্টক নেই':Number(p.stock)<=5?`মাত্র ${bn(p.stock)}টি স্টকে আছে`:'স্টকে আছে';
+      if(currentLang==='bn'){
+        stock.textContent=!inStock?'বর্তমানে স্টক নেই':Number(p.stock)<=5?`মাত্র ${bn(p.stock)}টি স্টকে আছে`:'স্টকে আছে';
+      } else {
+        stock.textContent=!inStock?'Currently out of stock':Number(p.stock)<=5?`Only ${p.stock} left in stock`:'In Stock';
+      }
     }
-    const stockHelp=document.getElementById('pdpAssuranceStock'); if(stockHelp) stockHelp.textContent=inStock?`${bn(p.stock)} ${p.unit} উপলভ্য`:'বর্তমানে অনুপলভ্য';
-    const qtyHelp=document.getElementById('pdpQtyHelp'); if(qtyHelp) qtyHelp.textContent=inStock?`সর্বোচ্চ ${bn(p.stock)} ${p.unit}`:'পরিমাণ নির্বাচন বন্ধ';
+    const stockHelp=document.getElementById('pdpAssuranceStock');
+    if(stockHelp) stockHelp.textContent = currentLang==='bn'
+      ? (inStock?`${bn(p.stock)} ${p.unit} উপলভ্য`:'বর্তমানে অনুপলভ্য')
+      : (inStock?`${p.stock} ${p.unit} available`:'Currently unavailable');
+    const qtyHelp=document.getElementById('pdpQtyHelp');
+    if(qtyHelp) qtyHelp.textContent = currentLang==='bn'
+      ? (inStock?`সর্বোচ্চ ${bn(p.stock)} ${p.unit}`:'পরিমাণ নির্বাচন বন্ধ')
+      : (inStock?`Max ${p.stock} ${p.unit}`:'Quantity selection disabled');
     ['pdpCartBtn','pdpBuyBtn','pdpMobileCartBtn','pdpMobileBuyBtn'].forEach(id=>{ const el=document.getElementById(id); if(el){ el.disabled=!inStock; el.setAttribute('aria-disabled',String(!inStock)); } });
-    const qtyEl=document.getElementById('pdpQty'); if(qtyEl) qtyEl.textContent = '১';
+    const qtyEl=document.getElementById('pdpQty'); if(qtyEl) qtyEl.textContent = currentLang==='bn' ? '১' : '1';
     const desc=document.getElementById('pdpDesc');
-    if(desc) desc.textContent = p.description || 'এই পণ্যের বিস্তারিত বিবরণ এখনো প্রকাশ করা হয়নি। অর্ডারের আগে নাম, ইউনিট, মূল্য ও স্টক তথ্য যাচাই করুন।';
+    if(desc) desc.textContent = p.description || (currentLang==='bn'
+      ? 'এই পণ্যের বিস্তারিত বিবরণ এখনো প্রকাশ করা হয়নি। অর্ডারের আগে নাম, ইউনিট, মূল্য ও স্টক তথ্য যাচাই করুন।'
+      : "A detailed description for this product hasn't been published yet. Please verify the name, unit, price, and stock before ordering.");
     const spec=document.getElementById('pdpSpec');
-    if(spec) spec.innerHTML = `<tr><td>ক্যাটাগরি</td><td>${catLabel}</td></tr><tr><td>বিক্রয় ইউনিট</td><td>${esc(p.unit)}</td></tr><tr><td>স্টক</td><td>${inStock?`${bn(p.stock)} ${esc(p.unit)}`:'স্টক নেই'}</td></tr><tr><td>পেমেন্ট</td><td>${p.cod?'ক্যাশ অন ডেলিভারি উপলভ্য':'চেকআউটে উপলভ্য পদ্ধতি দেখুন'}</td></tr>`;
+    if(spec){
+      if(currentLang==='bn'){
+        spec.innerHTML = `<tr><td>ক্যাটাগরি</td><td>${catLabel}</td></tr><tr><td>বিক্রয় ইউনিট</td><td>${esc(p.unit)}</td></tr><tr><td>স্টক</td><td>${inStock?`${bn(p.stock)} ${esc(p.unit)}`:'স্টক নেই'}</td></tr><tr><td>পেমেন্ট</td><td>${p.cod?'ক্যাশ অন ডেলিভারি উপলভ্য':'চেকআউটে উপলভ্য পদ্ধতি দেখুন'}</td></tr>`;
+      } else {
+        spec.innerHTML = `<tr><td>Category</td><td>${catLabel}</td></tr><tr><td>Sales Unit</td><td>${esc(p.unit)}</td></tr><tr><td>Stock</td><td>${inStock?`${p.stock} ${esc(p.unit)}`:'Out of stock'}</td></tr><tr><td>Payment</td><td>${p.cod?'Cash on Delivery available':'See available methods at checkout'}</td></tr>`;
+      }
+    }
     const rel=document.getElementById('relatedRow');
-    if(rel){ const related=zp.filter(x=>x.category===p.category && x.id!==p.id).slice(0,8); rel.innerHTML=related.length?related.map(pcardHTML).join(''):'<div class="empty-state"><p>এই ক্যাটাগরিতে আরও পণ্য পাওয়া যায়নি।</p></div>'; }
+    if(rel){ const related=zp.filter(x=>x.category===p.category && x.id!==p.id).slice(0,8); rel.innerHTML=related.length?related.map(pcardHTML).join(''):`<div class="empty-state"><p>${currentLang==='bn'?'এই ক্যাটাগরিতে আরও পণ্য পাওয়া যায়নি।':'No more products found in this category.'}</p></div>`; }
     const mobilePrice=document.getElementById('pdpMobilePrice'); if(mobilePrice) mobilePrice.textContent=money(p.salePrice);
     this.syncWishlistButton();
     this.tab(null,'desc');
