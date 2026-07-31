@@ -970,7 +970,7 @@ html[data-theme="dark"] .home-benefit-icon{background:rgba(255,92,135,.1);color:
   border-radius:22px;
   overflow:hidden;
   background-image:url('../icons/hero-banner.webp');
-  background-size:cover;
+  background-size:100% 100%;
   background-position:center;
   background-repeat:no-repeat;
   box-shadow:0 20px 60px rgba(56,30,40,.14);
@@ -2337,3 +2337,235 @@ html[data-theme="dark"] .cart-drawer,html[data-theme="dark"] .cart-drawer__foote
 .zone-manager-page{background:linear-gradient(180deg,var(--surface-warm,#fffaf7),var(--bg,#fff));min-height:100vh}.zone-manager-shell{max-width:1440px;margin:auto}.zm-back-link{display:inline-flex;margin-bottom:20px;color:var(--ink-muted);font-size:.84rem}.zm-login-wrap{max-width:520px;margin:4vh auto 8vh}.zm-login-intro{text-align:center;margin-bottom:24px}.zm-login-intro h1{font-size:clamp(2rem,7vw,3.5rem);margin:.35rem 0}.zm-login-intro p{max-width:460px;margin:auto;color:var(--ink-muted);line-height:1.7}.zm-login-card{padding:clamp(20px,5vw,34px);box-shadow:0 24px 70px rgba(54,30,36,.1)}.zm-dashboard-head{display:flex;justify-content:space-between;gap:20px;align-items:center;padding:22px 0}.zm-dashboard-head h1{font-size:clamp(1.7rem,4vw,2.8rem);margin:.25rem 0}.zm-dashboard-head p{color:var(--ink-muted);margin:0}.zm-tabs{display:flex;gap:8px;overflow-x:auto;padding:6px;margin:0 0 22px;background:var(--card,#fff);border:1px solid var(--line);border-radius:18px;position:sticky;top:8px;z-index:12;box-shadow:0 10px 32px rgba(35,20,25,.07)}.zm-tabs button{border:0;background:transparent;color:var(--ink-muted);padding:11px 16px;border-radius:12px;white-space:nowrap;font-weight:700;cursor:pointer}.zm-tabs button.active{background:var(--rose,#c8486d);color:white}.zm-content{min-width:0}.zm-stat-grid{grid-template-columns:repeat(5,minmax(0,1fr));margin-bottom:18px}.zm-overview-grid{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:18px}.zm-overview-grid>.card-box{min-width:0}.section-head h2,.zm-pane-head h2,.zm-payment-card h2,.zm-alert-card h2{font-size:1rem;margin:.2rem 0 0}.zm-chart{display:flex;align-items:flex-end;gap:7px;height:150px;padding-top:18px}.zm-chart-labels{display:flex;gap:7px}.zm-alert-card{background:#fff8e7;border:1px solid #ecd8a1;border-radius:18px;padding:18px;margin-bottom:18px}.zm-alert-card h2{color:#7b5810;margin-bottom:10px}.zm-pane-head{display:flex;align-items:end;justify-content:space-between;gap:16px;margin-bottom:16px}.zm-toolbar{display:flex;gap:8px;flex-wrap:wrap}.zm-toolbar input,.zm-pane-head select{min-height:44px;border:1px solid var(--line);border-radius:12px;background:var(--card,#fff);color:var(--ink);padding:0 13px}.zm-payment-card{margin-top:18px}.zone-manager-page .data-table select,.zone-manager-page .data-table input{min-height:38px;border-radius:10px!important}.zone-manager-page .table-scroll.card-box{padding:0;overflow:auto}.zone-manager-page .data-table{min-width:760px}.zone-manager-page .data-table th{position:sticky;top:0;background:var(--card,#fff);z-index:1}.zone-manager-page .eyebrow{font-size:.68rem;letter-spacing:.14em;font-weight:800;color:var(--rose,#c8486d)}
 @media(max-width:900px){.zm-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.zm-overview-grid{grid-template-columns:1fr}.zm-dashboard-head{align-items:flex-start}.zm-pane-head{align-items:flex-start;flex-direction:column}.zm-toolbar{width:100%}.zm-toolbar input{flex:1;min-width:160px}.zm-pane-head select{width:100%}}
 @media(max-width:600px){.zone-manager-shell{padding-left:14px!important;padding-right:14px!important}.zm-dashboard-head{padding-top:8px}.zm-dashboard-head .btn{padding:10px 12px}.zm-tabs{margin-left:-6px;margin-right:-6px;border-radius:14px}.zm-tabs button{padding:10px 13px}.zm-stat-grid{gap:10px}.zm-stat-grid .stat-card{padding:14px}.zm-stat-grid .stat-card:last-child{grid-column:1/-1}.zm-login-wrap{margin-top:1vh}.zm-toolbar .btn{width:100%}.zone-manager-page .table-scroll{margin-left:-4px;margin-right:-4px}.zm-chart{height:120px}}
+/* ════════════════════════════════════════════════════════════════
+   HOMEPAGE HERO — EXACT DESIGN-SPEC REBUILD (Figma frame 1536×1024)
+   এই ব্লক আগের সব ছড়িয়ে থাকা hero CSS-এর উপরে বসে (ফাইলের একদম শেষে,
+   তাই cascade-এ সবচেয়ে বেশি priority পায়) — উপরের পুরনো নিয়মগুলো না
+   মুছেই এখানে সব exact স্পেক ভ্যালু (রঙ/সাইজ/পজিশন) দিয়ে override করা হলো।
+   Container query units (cqw/cqh) ব্যবহার করা হয়েছে যাতে shell যত বড়/
+   ছোটই হোক (মোবাইল বা ডেস্কটপ), সব ভেতরের এলিমেন্ট ঠিক স্পেকের অনুপাতে
+   স্কেল হয় — যেভাবে ছবিটা স্কেল হয়ে ছোট/বড় হয়, ঠিক সেভাবেই।
+   বেস: Main Container = 1494×969px
+   ════════════════════════════════════════════════════════════════ */
+
+.home-hero{
+  background:linear-gradient(180deg,#FCE9DF 0%,#FCE6E6 45%,#F7DDE7 100%)!important;
+  padding:16px!important;
+}
+
+.home-hero-shell{
+  position:relative!important;
+  width:min(1494px,100%)!important;
+  aspect-ratio:1494/969!important;
+  container-type:size!important;
+  container-name:heroShell!important;
+  border-radius:2.54cqw!important;
+  overflow:hidden!important;
+  display:block!important;
+  background:linear-gradient(110deg,#FFF9F7 0%,#FFF8F8 48%,#FFF4F7 100%)!important;
+  box-shadow:0 1.24cqh 3.6cqw rgba(198,79,117,.10)!important;
+  border:1px solid rgba(255,255,255,.75)!important;
+}
+
+.home-hero-visual{
+  position:absolute;
+  left:47.93cqw;
+  top:3.82cqh;
+  width:52.07cqw;
+  height:71.83cqh;
+  object-fit:contain;
+  object-position:center top;
+  pointer-events:none;
+  z-index:1;
+}
+
+.home-hero-content{
+  position:absolute!important;
+  left:3.01cqw!important;
+  top:5.88cqh!important;
+  width:44.44cqw!important;
+  max-width:44.44cqw!important;
+  z-index:2;
+  display:block!important;
+}
+
+/* ---------- Location Badge ---------- */
+.home-eyebrow{
+  display:inline-flex!important;
+  align-items:center!important;
+  gap:0.8cqw!important;
+  width:auto!important;
+  max-width:39.69cqw;
+  padding:1.24cqh 1.61cqw 1.24cqh 1.34cqw!important;
+  background:#FFFDFD!important;
+  border:1.5px solid #F8D6E0!important;
+  border-radius:999px!important;
+  box-shadow:0 0.72cqh 1.8cqw rgba(212,75,118,.09);
+  font-family:'Hind Siliguri','Noto Sans Bengali',sans-serif!important;
+  font-weight:700!important;
+  font-size:1.61cqw!important;
+  line-height:1.25!important;
+  letter-spacing:-0.15px;
+  color:#EE3373!important;
+  margin:0!important;
+}
+.home-eyebrow-icon-bg{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:2.28cqw;height:2.28cqw;border-radius:50%;
+  background:#FFF0F5;flex-shrink:0;
+}
+.home-eyebrow-icon-bg .ic{width:1.2cqw;height:1.47cqw;color:#F43478}
+
+/* ---------- Headline ---------- */
+.home-hero-title{
+  margin:2.27cqh 0 0!important;
+  font-family:'Hind Siliguri','Noto Sans Bengali',sans-serif!important;
+  font-weight:700!important;
+  font-size:4.82cqw!important;
+  line-height:1.19!important;
+  letter-spacing:-0.03em;
+  color:#20181D!important;
+  max-width:none!important;
+}
+.home-hero-title-grad1{
+  display:inline-block;
+  font-size:4.68cqw;
+  line-height:1.17;
+  letter-spacing:-0.03em;
+  background:linear-gradient(90deg,#EF286B 0%,#F14457 48%,#E4671E 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  -webkit-text-fill-color:transparent;
+}
+.home-hero-title-grad2{
+  display:inline-block;
+  font-size:4.55cqw;
+  line-height:1.15;
+  letter-spacing:-0.03em;
+  background:linear-gradient(90deg,#E84941 0%,#DD6422 48%,#C98600 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  -webkit-text-fill-color:transparent;
+}
+
+/* ---------- Description ---------- */
+.home-hero-copy{
+  margin:4.23cqh 0 0!important;
+  font-family:'Hind Siliguri','Noto Sans Bengali',sans-serif!important;
+  font-weight:400!important;
+  font-size:1.47cqw!important;
+  line-height:1.59!important;
+  letter-spacing:-0.15px;
+  color:#555055!important;
+  max-width:44.44cqw!important;
+}
+
+/* ---------- Buttons (স্ট্যাক করা, একটার নিচে একটা — রেফারেন্স ছবি অনুযায়ী) ---------- */
+.home-hero-actions{
+  display:flex!important;
+  flex-direction:column!important;
+  gap:1.44cqh!important;
+  margin:4.44cqh 0 0!important;
+  width:100%;
+}
+.home-primary-cta,.home-secondary-cta{
+  display:flex!important;
+  align-items:center!important;
+  gap:0.94cqw!important;
+  width:auto!important;
+  max-width:fit-content;
+  min-width:0!important;
+  height:9.70cqh!important;
+  min-height:auto!important;
+  padding:0 1.61cqw 0 1.81cqw!important;
+  border-radius:1.07cqw!important;
+  background:linear-gradient(180deg,#211A1D 0%,#181115 100%)!important;
+  border:1px solid rgba(255,255,255,.04)!important;
+  box-shadow:0 0.82cqh 2cqw rgba(68,22,38,.16)!important;
+  font-family:'Hind Siliguri','Noto Sans Bengali',sans-serif!important;
+  font-weight:600!important;
+  font-size:1.61cqw!important;
+  color:#FFFFFF!important;
+  cursor:pointer;
+}
+.home-primary-cta .ic,.home-secondary-cta .ic{
+  width:2.14cqw!important;height:2.14cqw!important;color:#fff!important;
+}
+
+/* ---------- Upazila Selector ---------- */
+.home-quick-zone{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  align-items:center!important;
+  gap:0.8cqw!important;
+  margin:5.99cqh 0 0!important;
+}
+.home-quick-zone-label{
+  font-family:'Hind Siliguri','Noto Sans Bengali',sans-serif!important;
+  font-weight:600!important;
+  font-size:1.54cqw!important;
+  color:#5C565B!important;
+}
+.home-quick-zone-btns{display:flex!important;flex-wrap:wrap!important;gap:0.8cqw!important}
+.home-quick-zone-btn{
+  padding:0.9cqh 1.74cqw!important;
+  background:rgba(255,250,251,.68)!important;
+  border:1.5px solid #F4CED8!important;
+  border-radius:2.28cqw!important;
+  font-family:'Hind Siliguri','Noto Sans Bengali',sans-serif!important;
+  font-weight:600!important;
+  font-size:1.47cqw!important;
+  color:#CB4B25!important;
+}
+
+/* ---------- Bottom Feature Panel (কার্ডের ভেতরেই, নিচের সারিতে) ---------- */
+.home-trust-strip{
+  position:absolute!important;
+  left:3.01cqw!important;
+  top:84.83cqh!important;
+  width:94.04cqw!important;
+  height:12.59cqh!important;
+  display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:0!important;
+  background:rgba(255,255,255,.84)!important;
+  backdrop-filter:blur(10px);
+  border:1px solid rgba(245,225,231,.75)!important;
+  border-radius:1.61cqw!important;
+  padding:1.72cqh 2.34cqw 1.58cqh 2.54cqw!important;
+  z-index:2;
+  box-shadow:0 0.72cqh 1.47cqw rgba(156,55,88,.07);
+}
+.home-trust-point{
+  display:flex!important;
+  align-items:center!important;
+  gap:0.8cqw!important;
+  padding:0 1cqw!important;
+  background:transparent!important;
+  border-left:1px solid #EEE6E8;
+}
+.home-trust-point:first-child{border-left:none;padding-left:0}
+.home-trust-point>.ic{
+  width:3.75cqw!important;height:3.75cqw!important;
+  color:#F33479!important;flex-shrink:0;
+}
+.home-trust-point div{display:flex;flex-direction:column;gap:0.2cqh}
+.home-trust-point strong{
+  font-family:'Hind Siliguri','Noto Sans Bengali',sans-serif!important;
+  font-weight:600!important;
+  font-size:1.67cqw!important;
+  color:#292328!important;
+  line-height:1.36;
+}
+.home-trust-point small{
+  font-family:'Hind Siliguri','Noto Sans Bengali',sans-serif!important;
+  font-weight:400!important;
+  font-size:1.34cqw!important;
+  color:#5D585C!important;
+  line-height:1.4;
+}
+
+/* ---------- ছোট স্ক্রিনে ফিচার প্যানেল টেক্সট লুকিয়ে শুধু আইকন রাখা (নাহলে অতিরিক্ত ছোট হয়ে অপাঠ্য হয়ে যায়) ---------- */
+@container heroShell (max-width:520px){
+  .home-trust-point div{display:none}
+  .home-trust-point{justify-content:center}
+  .home-trust-point>.ic{width:6cqw!important;height:6cqw!important}
+}
