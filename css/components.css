@@ -2354,8 +2354,8 @@ html[data-theme="dark"] .cart-drawer,html[data-theme="dark"] .cart-drawer__foote
 
 .home-hero-shell{
   position:relative!important;
-  width:min(1494px,100%)!important;
-  aspect-ratio:1494/969!important;
+  width:min(1624px,100%)!important;
+  aspect-ratio:1624/969!important;
   border-radius:min(2.54vw,38px)!important;
   overflow:hidden!important;
   display:block!important;
@@ -2382,6 +2382,8 @@ html[data-theme="dark"] .cart-drawer,html[data-theme="dark"] .cart-drawer__foote
   top:5.88%!important;
   width:44.44%!important;
   max-width:44.44%!important;
+  max-height:76%!important;
+  overflow:hidden;
   z-index:2;
   display:block!important;
 }
@@ -2462,9 +2464,10 @@ html[data-theme="dark"] .cart-drawer,html[data-theme="dark"] .cart-drawer__foote
 /* ---------- Buttons (স্ট্যাক করা, একটার নিচে একটা) ---------- */
 .home-hero-actions{
   display:flex!important;
-  flex-direction:column!important;
-  gap:1%!important;
-  margin:2% 0 0!important;
+  flex-direction:row!important;
+  flex-wrap:wrap!important;
+  gap:1.97%!important;
+  margin:0.6% 0 0!important;
   width:100%;
 }
 .home-primary-cta,.home-secondary-cta{
@@ -2677,10 +2680,17 @@ html[data-theme="dark"] .home-float-icon .ic{color:#EF3374!important}
    কন্টেন্ট কলাম আরও সংকুচিত হয়ে যায় বলে (label+২টা পিল বাটন এক লাইনে না
    এঁটে wrap করে), অতিরিক্ত উচ্চতা লাগে — তাই gap আরও কমিয়ে ফিচার প্যানেলের
    সাথে ওভারল্যাপ ঠেকানো হলো ---------- */
-@media(max-width:400px){
-  .home-hero-title{margin-top:0.6%!important}
-  .home-hero-copy{margin-top:0.8%!important}
-  .home-hero-actions{margin-top:1%!important;gap:0.6%!important}
-  .home-primary-cta,.home-secondary-cta{height:min(7vw,94px)!important}
-  .home-quick-zone{margin-top:1%!important}
+@media(max-width:340px){
+  .home-eyebrow{padding:1vw 1.4vw!important}
+  .home-hero-title{margin-top:0.2%!important}
+  .home-hero-copy{margin-top:0.3%!important;-webkit-line-clamp:1!important}
+  .home-hero-actions{margin-top:0.4%!important}
+  .home-quick-zone{margin-top:0.4%!important}
+}
+@media(max-width:700px){
+  .home-hero-title{margin-top:0.4%!important}
+  .home-hero-copy{margin-top:0.5%!important}
+  .home-hero-actions{margin-top:0.6%!important;gap:1.5%!important}
+  .home-primary-cta,.home-secondary-cta{height:min(6.3vw,94px)!important}
+  .home-quick-zone{margin-top:0.6%!important}
 }
