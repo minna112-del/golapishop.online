@@ -197,13 +197,13 @@ function initApp(){
           updateViaCache: 'none'
         });
 
-        // ⚠️ আগে প্রতিটা page load-এই registration.update() চলতো (বারবার
-        // network request)। এখন সেশনে একবারই যথেষ্ট — sessionStorage দিয়ে
-        // ট্র্যাক করা হয়, ট্যাব বন্ধ করে আবার খুললে (নতুন সেশন) আবার চেক হবে।
-        if (!sessionStorage.getItem('golapi_sw_update_checked')) {
-          sessionStorage.setItem('golapi_sw_update_checked', '1');
-          await registration.update();
-        }
+        // ⚠️ আগে সেশনে একবারই update() চলতো (sessionStorage গেট দিয়ে) — ফলে
+        // ট্যাব বন্ধ না করে রিফ্রেশ করলে নতুন ভার্সন থাকলেও সার্ভারে চেকই
+        // হতো না, ব্যবহারকারীকে বারবার ম্যানুয়ালি ট্যাব বন্ধ/ক্যাশ ক্লিয়ার
+        // করতে হতো। এখন প্রতিটা পেজ লোডেই update() চলবে (হালকা একটা মাত্র
+        // HEAD-জাতীয় রিকোয়েস্ট, বড় কোনো bandwidth খরচ না) যাতে নতুন ভার্সন
+        // দ্রুত ধরা পড়ে।
+        await registration.update();
 
         // নতুন worker control নিলে reload করে latest files দেখানো হয় — কিন্তু
         // কাস্টমার যদি সেই মুহূর্তে checkout/cart-এ থাকে (মাঝপথে অর্ডার/পেমেন্ট),
