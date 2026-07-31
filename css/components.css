@@ -2366,10 +2366,10 @@ html[data-theme="dark"] .cart-drawer,html[data-theme="dark"] .cart-drawer__foote
 
 .home-hero-visual{
   position:absolute;
-  left:47.93%;
-  top:3.82%;
-  width:52.07%;
-  height:71.83%;
+  left:43.1%;
+  top:6%;
+  width:56.5%;
+  height:76%;
   object-fit:contain;
   object-position:center top;
   pointer-events:none;
@@ -2473,22 +2473,25 @@ html[data-theme="dark"] .cart-drawer,html[data-theme="dark"] .cart-drawer__foote
 .home-primary-cta,.home-secondary-cta{
   display:flex!important;
   align-items:center!important;
+  justify-content:center!important;
   gap:min(0.94vw,14px)!important;
+  flex:1 1 0!important;
   width:auto!important;
-  max-width:fit-content;
   min-width:0!important;
   height:min(8vw,94px)!important;
-  min-height:auto!important;
-  padding:0 min(1.61vw,24px) 0 min(1.81vw,27px)!important;
+  min-height:min(8vw,94px)!important;
+  padding:min(1vw,10px) min(1.4vw,20px)!important;
   border-radius:min(1.07vw,16px)!important;
   background:linear-gradient(180deg,#211A1D 0%,#181115 100%)!important;
   border:1px solid rgba(255,255,255,.04)!important;
   box-shadow:0 min(0.82vw,12px) min(2vw,20px) rgba(68,22,38,.16)!important;
   font-family:'Hind Siliguri','Noto Sans Bengali',sans-serif!important;
   font-weight:600!important;
-  font-size:min(1.61vw,24px)!important;
+  font-size:min(1.35vw,20px)!important;
   color:#FFFFFF!important;
   cursor:pointer;
+  text-align:center;
+  line-height:1.2;
 }
 .home-primary-cta .ic,.home-secondary-cta .ic{
   width:min(2.14vw,32px)!important;height:min(2.14vw,32px)!important;color:#fff!important;
@@ -2523,10 +2526,10 @@ html[data-theme="dark"] .cart-drawer,html[data-theme="dark"] .cart-drawer__foote
 /* ---------- Bottom Feature Panel (কার্ডের ভেতরেই) ---------- */
 .home-trust-strip{
   position:absolute!important;
-  left:3.01%!important;
-  top:84.83%!important;
-  width:94.04%!important;
-  height:12.59%!important;
+  left:3.94%!important;
+  top:77.09%!important;
+  width:94%!important;
+  height:17.23%!important;
   display:grid!important;
   grid-template-columns:repeat(4,minmax(0,1fr))!important;
   gap:0!important;
@@ -2681,16 +2684,16 @@ html[data-theme="dark"] .home-float-icon .ic{color:#EF3374!important}
    এঁটে wrap করে), অতিরিক্ত উচ্চতা লাগে — তাই gap আরও কমিয়ে ফিচার প্যানেলের
    সাথে ওভারল্যাপ ঠেকানো হলো ---------- */
 @media(max-width:340px){
-  .home-eyebrow{padding:1vw 1.4vw!important}
-  .home-hero-title{margin-top:0.2%!important}
-  .home-hero-copy{margin-top:0.3%!important;-webkit-line-clamp:1!important}
-  .home-hero-actions{margin-top:0.4%!important}
-  .home-quick-zone{margin-top:0.4%!important}
+  .home-eyebrow{padding:0.8vw 1.2vw!important}
+  .home-hero-title{margin-top:0.1%!important}
+  .home-hero-copy{display:none!important}
+  .home-hero-actions{margin-top:0.3%!important}
+  .home-quick-zone{margin-top:0.3%!important}
 }
 @media(max-width:700px){
-  .home-hero-title{margin-top:0.4%!important}
-  .home-hero-copy{margin-top:0.5%!important}
-  .home-hero-actions{margin-top:0.6%!important;gap:1.5%!important}
-  .home-primary-cta,.home-secondary-cta{height:min(6.3vw,94px)!important}
-  .home-quick-zone{margin-top:0.6%!important}
+  .home-hero-title{margin-top:0.3%!important}
+  .home-hero-copy{margin-top:0.4%!important;line-height:1.35!important}
+  .home-hero-actions{margin-top:0.3%!important;gap:1.2%!important}
+  .home-primary-cta,.home-secondary-cta{height:min(5.2vw,94px)!important}
+  .home-quick-zone{margin-top:0.5%!important}
 }
