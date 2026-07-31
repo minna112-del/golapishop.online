@@ -701,16 +701,16 @@
   <section class="gs-footer-cta" aria-labelledby="footerCtaTitle">
     <div class="gs-footer-cta-inner">
       <div>
-        <span class="gs-footer-cta-label">
+        <span class="gs-footer-cta-label" data-bn="নোয়াখালীর দৈনন্দিন কেনাকাটা" data-en="Noakhali Everyday Shopping">
           <span class="gs-footer-cta-dot" aria-hidden="true"></span>
           নোয়াখালীর দৈনন্দিন কেনাকাটা
         </span>
 
-        <h2 id="footerCtaTitle">
+        <h2 id="footerCtaTitle" data-bn="দৈনন্দিন প্রয়োজন, এক জায়গায়" data-en="Everyday Needs, In One Place">
           দৈনন্দিন প্রয়োজন, এক জায়গায়
         </h2>
 
-        <p>
+        <p data-bn="প্রয়োজনীয় পণ্য বেছে অর্ডার করুন, অথবা আপনার সম্পূর্ণ বাজারের তালিকা পাঠান। স্থানীয় ডেলিভারি টিম অর্ডারের প্রয়োজনীয় তথ্য নিশ্চিত করবে।" data-en="Choose and order what you need, or send your entire shopping list. Our local delivery team will confirm your order details.">
           প্রয়োজনীয় পণ্য বেছে অর্ডার করুন, অথবা আপনার সম্পূর্ণ বাজারের তালিকা পাঠান।
           স্থানীয় ডেলিভারি টিম অর্ডারের প্রয়োজনীয় তথ্য নিশ্চিত করবে।
         </p>
@@ -720,6 +720,7 @@
         <button
           type="button"
           class="gs-footer-cta-primary"
+          data-bn="পণ্য দেখুন<span aria-hidden=&quot;true&quot;>→</span>" data-en="View Products<span aria-hidden=&quot;true&quot;>→</span>"
           onclick="Router.go('listing',{cat:'all'})"
         >
           পণ্য দেখুন
@@ -730,6 +731,7 @@
           type="button"
           class="gs-footer-cta-secondary"
           onclick="Router.go('custom-bazar')"
+          data-bn="বাজারের লিস্ট পাঠান" data-en="Send Shopping List"
         >
           বাজারের লিস্ট পাঠান
         </button>
@@ -757,13 +759,13 @@
               Golapi<span>Shop</span>.online
             </strong>
 
-            <span class="gs-footer-brand-type">
+            <span class="gs-footer-brand-type" data-bn="নোয়াখালীর স্থানীয় অনলাইন শপ" data-en="Noakhali's Local Online Shop">
               নোয়াখালীর স্থানীয় অনলাইন শপ
             </span>
           </div>
         </div>
 
-        <p class="gs-footer-description">
+        <p class="gs-footer-description" data-bn="নোয়াখালী সদর ও বেগমগঞ্জের মানুষের দৈনন্দিন প্রয়োজনীয় পণ্য সহজে অর্ডার ও ঘরে পৌঁছে দেওয়ার লক্ষ্য নিয়ে কাজ করা একটি নতুন স্থানীয় উদ্যোগ।" data-en="A new local venture working to make it easy for people in Noakhali Sadar and Begumganj to order everyday essentials and get them delivered home.">
           নোয়াখালী সদর ও বেগমগঞ্জের মানুষের দৈনন্দিন প্রয়োজনীয়
           পণ্য সহজে অর্ডার ও ঘরে পৌঁছে দেওয়ার লক্ষ্য নিয়ে কাজ করা
           একটি নতুন স্থানীয় উদ্যোগ।
@@ -778,7 +780,7 @@
               class="gs-footer-branch-dot"
               aria-hidden="true"
             ></span>
-            নোয়াখালী সদর
+            <span data-bn="নোয়াখালী সদর" data-en="Noakhali Sadar">নোয়াখালী সদর</span>
           </span>
 
           <span class="gs-footer-branch">
@@ -786,7 +788,7 @@
               class="gs-footer-branch-dot"
               aria-hidden="true"
             ></span>
-            বেগমগঞ্জ
+            <span data-bn="বেগমগঞ্জ" data-en="Begumganj">বেগমগঞ্জ</span>
           </span>
         </div>
       </section>
@@ -799,6 +801,7 @@
         <h3
           class="gs-footer-heading"
           id="footerLinksTitle"
+          data-bn="দ্রুত লিংক" data-en="Quick Links"
         >
           দ্রুত লিংক
         </h3>
@@ -808,6 +811,7 @@
             type="button"
             class="gs-footer-link"
             onclick="Router.go('listing',{cat:'all'})"
+            data-bn="<span class=&quot;gs-footer-link-icon&quot; aria-hidden=&quot;true&quot;><span class=&quot;ic ic-cart&quot;></span></span>সব পণ্য" data-en="<span class=&quot;gs-footer-link-icon&quot; aria-hidden=&quot;true&quot;><span class=&quot;ic ic-cart&quot;></span></span>All Products"
           >
             <span
               class="gs-footer-link-icon"
@@ -822,6 +826,7 @@
             type="button"
             class="gs-footer-link"
             onclick="Router.go('custom-bazar')"
+            data-bn="<span class=&quot;gs-footer-link-icon&quot; aria-hidden=&quot;true&quot;><span class=&quot;ic ic-pencil&quot;></span></span>কাস্টম বাজার" data-en="<span class=&quot;gs-footer-link-icon&quot; aria-hidden=&quot;true&quot;><span class=&quot;ic ic-pencil&quot;></span></span>Custom Bazar"
           >
             <span
               class="gs-footer-link-icon"
@@ -836,6 +841,7 @@
             type="button"
             class="gs-footer-link"
             onclick="Router.go('medical')"
+            data-bn="<span class=&quot;gs-footer-link-icon&quot; aria-hidden=&quot;true&quot;><span class=&quot;ic ic-heart-pulse&quot;></span></span>স্বাস্থ্য সেবা" data-en="<span class=&quot;gs-footer-link-icon&quot; aria-hidden=&quot;true&quot;><span class=&quot;ic ic-heart-pulse&quot;></span></span>Health Service"
           >
             <span
               class="gs-footer-link-icon"
@@ -850,6 +856,7 @@
             type="button"
             class="gs-footer-link"
             onclick="Router.go('myorders')"
+            data-bn="<span class=&quot;gs-footer-link-icon&quot; aria-hidden=&quot;true&quot;><span class=&quot;ic ic-clock&quot;></span></span>আমার অর্ডার" data-en="<span class=&quot;gs-footer-link-icon&quot; aria-hidden=&quot;true&quot;><span class=&quot;ic ic-clock&quot;></span></span>My Orders"
           >
             <span
               class="gs-footer-link-icon"
@@ -864,6 +871,7 @@
             type="button"
             class="gs-footer-link"
             onclick="Router.go('contact')"
+            data-bn="<span class=&quot;gs-footer-link-icon&quot; aria-hidden=&quot;true&quot;><span class=&quot;ic ic-phone&quot;></span></span>যোগাযোগ" data-en="<span class=&quot;gs-footer-link-icon&quot; aria-hidden=&quot;true&quot;><span class=&quot;ic ic-phone&quot;></span></span>Contact"
           >
             <span
               class="gs-footer-link-icon"
@@ -884,6 +892,7 @@
         <h3
           class="gs-footer-heading"
           id="footerContactTitle"
+          data-bn="সরাসরি যোগাযোগ" data-en="Direct Contact"
         >
           সরাসরি যোগাযোগ
         </h3>
@@ -902,7 +911,7 @@
             >
 
             <span class="gs-footer-contact-info">
-              <span class="gs-footer-contact-role">
+              <span class="gs-footer-contact-role" data-bn="হটলাইন ইনচার্জ" data-en="Hotline Manager">
                 হটলাইন ইনচার্জ
               </span>
 
@@ -936,7 +945,7 @@
             >
 
             <span class="gs-footer-contact-info">
-              <span class="gs-footer-contact-role">
+              <span class="gs-footer-contact-role" data-bn="সদর শাখা" data-en="Sadar Branch">
                 সদর শাখা
               </span>
 
@@ -970,7 +979,7 @@
             >
 
             <span class="gs-footer-contact-info">
-              <span class="gs-footer-contact-role">
+              <span class="gs-footer-contact-role" data-bn="বেগমগঞ্জ শাখা" data-en="Begumganj Branch">
                 বেগমগঞ্জ শাখা
               </span>
 
@@ -1001,7 +1010,7 @@
         <h3
           class="gs-footer-heading"
           id="footerSocialTitle"
-        >
+          data-bn="পেমেন্ট ও সোশ্যাল" data-en="Payment &amp; Social">
           পেমেন্ট ও সোশ্যাল
         </h3>
 
@@ -1036,7 +1045,7 @@
 
             <span class="gs-footer-social-text">
               <strong>Facebook</strong>
-              <small>আপডেট ও অফার দেখুন</small>
+              <small data-bn="আপডেট ও অফার দেখুন" data-en="See updates &amp; offers">আপডেট ও অফার দেখুন</small>
             </span>
 
             <span
@@ -1100,7 +1109,7 @@
 
             <span class="gs-footer-social-text">
               <strong>WhatsApp</strong>
-              <small>হটলাইনে মেসেজ পাঠান</small>
+              <small data-bn="হটলাইনে মেসেজ পাঠান" data-en="Message our hotline">হটলাইনে মেসেজ পাঠান</small>
             </span>
 
             <span
@@ -1144,7 +1153,7 @@
       <div class="gs-footer-assurance">
         <span class="gs-footer-assurance-icon" aria-hidden="true">✓</span>
         <span>
-          <strong>নিজস্ব ডেলিভারি টিম</strong>
+          <strong data-bn="নিজস্ব ডেলিভারি টিম" data-en="Own Delivery Team">নিজস্ব ডেলিভারি টিম</strong>
           <small>বর্তমান সেবা এলাকার অর্ডার স্থানীয় টিম পরিচালনা করে।</small>
         </span>
       </div>
@@ -1152,7 +1161,7 @@
       <div class="gs-footer-assurance">
         <span class="gs-footer-assurance-icon" aria-hidden="true">৳</span>
         <span>
-          <strong>ক্যাশ অন ডেলিভারি</strong>
+          <strong data-bn="ক্যাশ অন ডেলিভারি" data-en="Cash on Delivery">ক্যাশ অন ডেলিভারি</strong>
           <small>প্রযোজ্য অর্ডারে পণ্য গ্রহণের সময় মূল্য পরিশোধ করুন।</small>
         </span>
       </div>
@@ -1178,6 +1187,7 @@
               type="button"
               class="gs-footer-policy-btn"
               onclick="Router.go('about-app')"
+              data-bn="আমাদের সম্পর্কে" data-en="About Us"
             >
               আমাদের সম্পর্কে
             </button>
@@ -1186,6 +1196,7 @@
               type="button"
               class="gs-footer-policy-btn"
               onclick="Router.go('privacy-info')"
+              data-bn="প্রাইভেসি পলিসি" data-en="Privacy Policy"
             >
               প্রাইভেসি পলিসি
             </button>
@@ -1194,6 +1205,7 @@
               type="button"
               class="gs-footer-policy-btn"
               onclick="Router.go('terms')"
+              data-bn="শর্তাবলী" data-en="Terms &amp; Conditions"
             >
               শর্তাবলী
             </button>
@@ -1202,6 +1214,7 @@
               type="button"
               class="gs-footer-policy-btn"
               onclick="Router.go('admin-dash')"
+              data-bn="শপ ম্যানেজমেন্ট" data-en="Shop Management"
             >
               শপ ম্যানেজমেন্ট
             </button>
@@ -1210,12 +1223,13 @@
               type="button"
               class="gs-footer-policy-btn"
               onclick="Router.go('zone-manager')"
+              data-bn="শাখা ব্যবস্থাপনা" data-en="Branch Management"
             >
               শাখা ব্যবস্থাপনা
             </button>
           </nav>
 
-          <small class="gs-footer-copyright">
+          <small class="gs-footer-copyright" data-bn="© ২০২৬ Golapi Shop Online. সর্বস্বত্ব সংরক্ষিত।" data-en="© 2026 Golapi Shop Online. All rights reserved.">
             © ২০২৬ Golapi Shop Online. সর্বস্বত্ব সংরক্ষিত।
           </small>
         </div>
@@ -1230,7 +1244,7 @@
             <span class="mode-auto">🌗</span>
             <span class="mode-light">☀️</span>
             <span class="mode-dark">🌙</span>
-            থিম
+            <span data-bn="থিম" data-en="Theme">থিম</span>
           </button>
 
           <button
