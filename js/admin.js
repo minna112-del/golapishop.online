@@ -855,7 +855,7 @@ const AdminDash = {
   },
 
   tab(btn,name){
-    ['overview','products','orders','analytics','customers','coupons','payments','settings','finance','branches'].forEach(t=>{
+    ['overview','products','orders','analytics','customers','coupons','payments','settings','finance','employees','branches'].forEach(t=>{
       const el = document.getElementById('admin'+t.charAt(0).toUpperCase()+t.slice(1)+'Pane');
       if(el) el.style.display = t===name?'block':'none';
     });
@@ -866,6 +866,7 @@ const AdminDash = {
     if(name==='customers') this.renderCustomers(this._allOrders);
     if(name==='coupons') CouponManage.render();
     if(name==='payments') PaymentVerify.render();
+    if(name==='employees' && typeof EmployeeManagement!=='undefined') EmployeeManagement.load();
     if(name==='branches') this.renderBranches();
     if(name==='settings'){ this.loadStoreSettings(); this.loadZmPins(); this.loadDeliverySettings(); this.loadDeliveryZonesEditor(); }
   },
