@@ -22,6 +22,7 @@
         <a onclick="AdminDash.tab(this,'customers')">👥 কাস্টমার</a>
         <a onclick="AdminDash.tab(this,'coupons')">🎟️ কুপন</a>
         <a onclick="AdminDash.tab(this,'payments')">💳 পেমেন্ট ভেরিফিকেশন</a>
+        <a onclick="AdminDash.tab(this,'employees')">🪪 কর্মী ও অফিস ডেস্ক</a>
         <a onclick="AdminDash.tab(this,'branches')">🏢 শাখা ব্যবস্থাপনা</a>
         <a onclick="AdminDash.tab(this,'settings')">⚙️ সেটিংস</a>
       </aside>
@@ -267,6 +268,60 @@
             <div class="stat-card"><div class="lbl">মোট সেল</div><div class="val rose" id="fMonth">৳০</div></div>
             <div class="stat-card"><div class="lbl">COD পেন্ডিং</div><div class="val" id="fCod">৳০</div></div>
             <div class="stat-card"><div class="lbl">অনলাইন পেমেন্ট</div><div class="val" id="fOnline">৳০</div></div>
+          </div>
+        </div>
+        <div id="adminEmployeesPane" style="display:none">
+          <div class="employee-office-head">
+            <div>
+              <span class="employee-office-eyebrow">PEOPLE OPERATIONS OFFICE</span>
+              <h2>কর্মী নিয়োগ ও অফিস ডেস্ক বরাদ্দ</h2>
+              <p>প্রতিটি কর্মীর নাম, পদবি, ছবি, কোম্পানি আইডি, বিভাগ, শাখা, ইউনিফর্ম এবং নির্ধারিত Workspace এক জায়গা থেকে নিয়ন্ত্রণ করুন।</p>
+            </div>
+            <button class="btn btn-gold" onclick="EmployeeManagement.openCreate()">+ নতুন কর্মী নিয়োগ</button>
+          </div>
+          <div class="employee-office-stats">
+            <div><small>মোট কর্মী</small><strong id="empStatTotal">০</strong></div>
+            <div><small>সক্রিয় ডেস্ক</small><strong id="empStatActive">০</strong></div>
+            <div><small>নিয়োগ অপেক্ষমাণ</small><strong id="empStatPending">০</strong></div>
+            <div><small>বিভাগ</small><strong id="empStatDepartments">০</strong></div>
+          </div>
+          <div class="card-box employee-office-toolbar">
+            <input id="employeeSearch" type="search" placeholder="নাম, ID, পদবি বা ফোন দিয়ে খুঁজুন" oninput="EmployeeManagement.render()">
+            <select id="employeeRoleFilter" onchange="EmployeeManagement.render()"><option value="">সব পদ</option></select>
+            <select id="employeeStatusFilter" onchange="EmployeeManagement.render()"><option value="">সব স্ট্যাটাস</option><option value="active">সক্রিয়</option><option value="pending">অপেক্ষমাণ</option><option value="inactive">নিষ্ক্রিয়</option></select>
+          </div>
+          <div id="employeeDirectory" class="employee-directory"></div>
+          <div id="employeeFormModal" class="employee-modal" aria-hidden="true">
+            <div class="employee-modal-backdrop" onclick="EmployeeManagement.closeForm()"></div>
+            <section class="employee-modal-panel" role="dialog" aria-modal="true" aria-labelledby="employeeFormTitle">
+              <header><div><span>GOLAPI PEOPLE OPERATIONS</span><h3 id="employeeFormTitle">নতুন কর্মী নিয়োগ</h3></div><button onclick="EmployeeManagement.closeForm()" aria-label="বন্ধ করুন">×</button></header>
+              <div id="employeeFormMsg" class="form-msg"></div>
+              <div class="employee-form-grid">
+                <div class="employee-photo-field">
+                  <div class="employee-photo-preview"><img id="employeePhotoPreview" src="icons/head_logo.webp" alt="কর্মীর ছবি"></div>
+                  <label class="btn btn-outline">ছবি নির্বাচন<input id="employeePhotoFile" type="file" accept="image/*" hidden onchange="EmployeeManagement.previewPhoto(this)"></label>
+                  <small>কোম্পানির ড্রেস কোড অনুসারে পরিষ্কার অফিসিয়াল ছবি ব্যবহার করুন।</small>
+                </div>
+                <div>
+                  <div class="field"><label>পূর্ণ নাম *</label><input id="empName" type="text"></div>
+                  <div class="field"><label>Firebase User UID *</label><input id="empUid" type="text" placeholder="কর্মীর Auth UID"><small>কর্মী সাইন-আপ করার পর Firebase Authentication থেকে UID কপি করুন।</small></div>
+                  <div class="field"><label>ইমেইল</label><input id="empEmail" type="email"></div>
+                  <div class="field"><label>মোবাইল</label><input id="empPhone" type="tel"></div>
+                </div>
+              </div>
+              <div class="employee-form-columns">
+                <div class="field"><label>পদ / Role *</label><select id="empRole" onchange="EmployeeManagement.applyRoleDefaults()"></select></div>
+                <div class="field"><label>অফিসিয়াল পদবি *</label><input id="empDesignation" type="text"></div>
+                <div class="field"><label>বিভাগ *</label><input id="empDepartment" type="text"></div>
+                <div class="field"><label>Workspace / অফিস ডেস্ক *</label><input id="empWorkspace" type="text"></div>
+                <div class="field"><label>কোম্পানি Employee ID *</label><input id="empEmployeeId" type="text"></div>
+                <div class="field"><label>শাখা</label><select id="empBranch"></select></div>
+                <div class="field"><label>ড্রেস কোড / ইউনিফর্ম</label><input id="empUniform" type="text"></div>
+                <div class="field"><label>স্ট্যাটাস</label><select id="empStatus"><option value="active">সক্রিয়</option><option value="pending">নিয়োগ অপেক্ষমাণ</option><option value="inactive">নিষ্ক্রিয়</option></select></div>
+              </div>
+              <div class="field"><label>দায়িত্ব / নোট</label><textarea id="empResponsibilities" rows="3" placeholder="এই পদে কর্মীর প্রধান দায়িত্ব লিখুন"></textarea></div>
+              <footer><button class="btn btn-outline" onclick="EmployeeManagement.closeForm()">বাতিল</button><button id="employeeSaveBtn" class="btn btn-gold" onclick="EmployeeManagement.save()">কর্মীর ডেস্ক বরাদ্দ করুন</button></footer>
+            </section>
           </div>
         </div>
         <div id="adminBranchesPane" style="display:none">
