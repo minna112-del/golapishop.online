@@ -2,7 +2,7 @@
   <header class="admin-topbar">
     <a href="#" class="admin-brand" onclick="event.preventDefault();Router.go('home')" aria-label="স্টোর হোমে ফিরুন">
       <img src="icons/head_logo.webp" alt="Golapi Shop Online">
-      <span><small>Golapi Shop Online</small><strong>Owner Dashboard</strong></span>
+      <span><small>Golapi Shop Online</small><strong>Executive Command Center</strong></span>
     </a>
     <div class="admin-topbar-actions">
       <span id="adminLastUpdated" class="admin-updated" aria-live="polite"></span>
@@ -11,9 +11,10 @@
       <button onclick="OwnerAuth.lock()" class="admin-icon-btn admin-lock-btn">🔒 <span>লক</span></button>
     </div>
   </header>
+  <div id="adminEmployeeWorkspace"></div>
   <section class="sec admin-content">
     <div class="dash-layout admin-layout">
-      <aside class="dash-side admin-nav" aria-label="অ্যাডমিন নেভিগেশন">
+      <aside class="dash-side admin-nav" aria-label="Executive Office নেভিগেশন">
         <a class="active" onclick="AdminDash.tab(this,'overview')">📊 ওভারভিউ</a>
         <a onclick="AdminDash.tab(this,'products')">📦 প্রোডাক্ট</a>
         <a onclick="AdminDash.tab(this,'orders')">🧾 অর্ডার</a>

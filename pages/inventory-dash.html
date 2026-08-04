@@ -4,8 +4,8 @@
 
     <div id="invLoginBox" class="zm-login-wrap">
       <div class="zm-login-intro">
-        <span class="eyebrow">ইনভেন্টরি কার্যক্রম</span>
-        <h1 class="tiro">ইনভেন্টরি ম্যানেজার পোর্টাল</h1>
+        <span class="eyebrow">Supply & Inventory</span>
+        <h1 class="tiro">ইনভেন্টরি কন্ট্রোল রুম</h1>
         <p>নিজস্ব অনুমোদিত অ্যাকাউন্ট দিয়ে লগইন করুন। সব শাখার স্টক এখান থেকে নিয়ন্ত্রণ করা যাবে।</p>
       </div>
       <div class="card-box zm-login-card">
@@ -21,6 +21,7 @@
         <div><span class="eyebrow">ইনভেন্টরি কন্ট্রোল সেন্টার</span><h1 class="tiro">সব শাখার স্টক</h1><p id="invManagerLabel"></p></div>
         <button class="btn btn-outline" type="button" onclick="InventoryDash.logout()">লগআউট</button>
       </header>
+      <div id="invEmployeeWorkspace"></div>
 
       <nav class="zm-tabs" aria-label="ইনভেন্টরি ম্যানেজার নেভিগেশন">
         <button class="active" type="button" onclick="InventoryDash.tab(this,'overview')">ওভারভিউ</button>
