@@ -23,6 +23,7 @@ const FinanceDash = {
       if(typeof StaffChat !== 'undefined') StaffChat.init(this.currentUid, this.currentName, 'finance');
       document.getElementById('finLoginBox').style.display='none';
       document.getElementById('finDashBox').style.display='block';
+    if(typeof EmployeeWorkspace!=='undefined') await EmployeeWorkspace.mountCurrent('finEmployeeWorkspace');
       const ml=document.getElementById('finUserLabel'); if(ml) ml.textContent='পরিচালনায়: '+this.currentName;
       await this.render();
     }catch(e){ msgEl.textContent='লগইন ব্যর্থ: ইমেইল বা পাসওয়ার্ড সঠিক নয়'; msgEl.className='form-msg err'; }

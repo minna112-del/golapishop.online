@@ -22,6 +22,7 @@ const InventoryDash = {
       if(typeof StaffChat !== 'undefined') StaffChat.init(this.currentUid, this.currentName, 'inventory_manager');
       document.getElementById('invLoginBox').style.display='none';
       document.getElementById('invDashBox').style.display='block';
+    if(typeof EmployeeWorkspace!=='undefined') await EmployeeWorkspace.mountCurrent('invEmployeeWorkspace');
       const ml = document.getElementById('invManagerLabel'); if(ml) ml.textContent = 'পরিচালনায়: '+this.currentName;
       await this.render();
     }catch(e){ msgEl.textContent='লগইন ব্যর্থ: ইমেইল বা পাসওয়ার্ড সঠিক নয়'; msgEl.className='form-msg err'; }

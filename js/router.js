@@ -423,12 +423,12 @@ const Router = {
     /* ⚠️ admin/driver/zone-manager/payment/sms/memo/livemap আগে সবার জন্যই
        প্রথম লোডে ডাউনলোড হতো। এখন শুধু সংশ্লিষ্ট পেজে গেলেই লোড হয়। */
     const scriptMap = {
-      'admin-dash': ['./js/admin.js', './js/staff-chat.js'],
-      'driver': ['./js/driver.js', './js/livemap.js', './js/staff-chat.js'],
-      'zone-manager': ['./js/zone-manager.js', './js/staff-chat.js'],
-      'inventory-dash': ['./js/inventory.js', './js/staff-chat.js'],
-      'finance-dash': ['./js/finance.js', './js/staff-chat.js'],
-      'support-dash': ['./js/support.js', './js/staff-chat.js'],
+      'admin-dash': ['./js/admin.js', './js/staff-chat.js', './js/employee-workspace.js'],
+      'driver': ['./js/driver.js', './js/livemap.js', './js/staff-chat.js', './js/employee-workspace.js'],
+      'zone-manager': ['./js/zone-manager.js', './js/staff-chat.js', './js/employee-workspace.js'],
+      'inventory-dash': ['./js/inventory.js', './js/staff-chat.js', './js/employee-workspace.js'],
+      'finance-dash': ['./js/finance.js', './js/staff-chat.js', './js/employee-workspace.js'],
+      'support-dash': ['./js/support.js', './js/staff-chat.js', './js/employee-workspace.js'],
       'checkout': ['./js/checkout.js', './js/payment.js', './js/sms.js'],
       'custom-bazar': ['./js/custom-bazar.js', './js/memo.js'],
       'myorders': ['./js/memo.js', './js/livemap.js']
@@ -553,6 +553,7 @@ const Router = {
 
     if (page === 'admin-dash') {
       AdminDash.render();
+      if(typeof EmployeeWorkspace!=='undefined') EmployeeWorkspace.mountCurrent('adminEmployeeWorkspace');
     }
 
     if (page === 'driver') {

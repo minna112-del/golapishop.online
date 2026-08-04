@@ -111,6 +111,7 @@ const DriverPortal = {
     if(!this.currentDriver){ document.getElementById('driverLoginBox').style.display='block'; document.getElementById('driverDashBox').style.display='none'; return; }
     document.getElementById('driverLoginBox').style.display='none';
     document.getElementById('driverDashBox').style.display='block';
+    if(typeof EmployeeWorkspace!=='undefined') await EmployeeWorkspace.mountCurrent('driverEmployeeWorkspace');
     document.getElementById('driverNameLabel').textContent=this.currentDriver.name || 'ড্রাইভার';
     const zoneLabel=document.getElementById('driverZoneLabel');
     if(zoneLabel) zoneLabel.textContent=this.currentDriver.branchZone ? `কর্মরত এলাকা: ${this.currentDriver.branchZone}` : 'অ্যাসাইন করা ডেলিভারি পরিচালনা করুন';

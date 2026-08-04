@@ -55,6 +55,7 @@ const ZoneManagerDash = {
     document.getElementById('zmLoginBox').style.display='none';
     document.getElementById('zmDashBox').style.display='block';
     this.applyHeader(this.currentZone);
+    if(typeof EmployeeWorkspace!=='undefined') await EmployeeWorkspace.mountCurrent('zmEmployeeWorkspace');
     const allOrders = await OrdersService.loadAll();
     const orders = allOrders.filter(o=>o.branchZone===this.currentZone);
     this._orders = orders;

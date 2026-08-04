@@ -21,6 +21,7 @@ const SupportDash = {
       if(typeof StaffChat !== 'undefined') StaffChat.init(this.currentUid, this.currentName, 'support');
       document.getElementById('supLoginBox').style.display='none';
       document.getElementById('supDashBox').style.display='block';
+    if(typeof EmployeeWorkspace!=='undefined') await EmployeeWorkspace.mountCurrent('supEmployeeWorkspace');
       const ml=document.getElementById('supUserLabel'); if(ml) ml.textContent='পরিচালনায়: '+this.currentName;
       await this.render();
     }catch(e){ msgEl.textContent='লগইন ব্যর্থ: ইমেইল বা পাসওয়ার্ড সঠিক নয়'; msgEl.className='form-msg err'; }
