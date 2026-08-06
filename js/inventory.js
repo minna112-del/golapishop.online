@@ -102,11 +102,29 @@ const InventoryDash = {
       return d && d.toDateString()===todayStr;
     }).length;
 
+    const active = products.filter(p=>p.status!=='inactive');
+    const inactive = products.filter(p=>p.status==='inactive');
+    const unitsOnHand = products.reduce((sum,p)=>sum + Math.max(0, Number(p.stock)||0), 0);
+    const pendingRestock = this._restockRequests.filter(r=>r.status==='pending');
+    const riskPoints = (out.length*8) + (low.length*3) + (inactive.length*1.5);
+    const healthScore = Math.max(0, Math.min(100, Math.round(100 - ((riskPoints / Math.max(products.length,1))*5))));
+    const healthLabel = healthScore>=85?'স্বাস্থ্যকর':healthScore>=65?'মনোযোগ প্রয়োজন':healthScore>=40?'উচ্চ ঝুঁকি':'সংকটজনক';
+
     const set=(id,val)=>{ const el=document.getElementById(id); if(el) el.textContent=val; };
     set('invStatTotal', bn(products.length));
     set('invStatLow', bn(low.length));
     set('invStatOut', bn(out.length));
     set('invStatUpdatedToday', bn(updatedToday));
+
+    set('invUnitsOnHand', bn(unitsOnHand));
+    set('invActiveSku', bn(active.length));
+    set('invInactiveSku', bn(inactive.length));
+    set('invPendingRestock', bn(pendingRestock.length));
+    set('invHealthScore', bn(healthScore));
+    set('invHealthLabel', healthLabel);
+    const summary = document.getElementById('invHealthSummary');
+    if(summary) summary.textContent = out.length ? `${bn(out.length)}টি পণ্য স্টক আউট এবং ${bn(low.length)}টি লো স্টকে আছে। আজই সাপ্লাই সিদ্ধান্ত প্রয়োজন।` : low.length ? `${bn(low.length)}টি পণ্য লো স্টকে আছে; আগাম রিস্টক করলে অর্ডার ব্যর্থতা কমবে।` : 'সব শাখার গুরুত্বপূর্ণ পণ্য বর্তমানে নিরাপদ স্টক সীমায় আছে।';
+    this.renderPriorityActions({low,out,inactive,pendingRestock,healthScore});
 
     const alertBox = document.getElementById('invLowStockAlerts');
     const alertList = document.getElementById('invLowStockList');
@@ -121,6 +139,7 @@ const InventoryDash = {
     } else if(alertBox){ alertBox.style.display='none'; }
 
     const zones = [...new Set(products.map(p=>p.zone).filter(Boolean))];
+    this.renderBranchRisk(zones, products);
     const zoneTable = document.getElementById('invZoneStockTable');
     if(zoneTable){
       zoneTable.innerHTML = zones.map(z=>{
@@ -142,6 +161,60 @@ const InventoryDash = {
     }
   },
 
+  renderPriorityActions({low,out,inactive,pendingRestock,healthScore}){
+    const el=document.getElementById('invPriorityActions'); if(!el) return;
+    const actions=[];
+    if(out.length) actions.push({level:'critical',title:`${bn(out.length)}টি পণ্য স্টক আউট`,text:'অর্ডার হারানো ঠেকাতে জরুরি রিস্টক রিকোয়েস্ট তৈরি করুন।',action:'InventoryDash.createCriticalRestockRequests()',label:'রিস্টক তৈরি'});
+    if(low.length) actions.push({level:'warning',title:`${bn(low.length)}টি পণ্য লো স্টকে`,text:'পরবর্তী বিক্রয়চক্রের আগে সরবরাহ নিশ্চিত করুন।',action:"InventoryDash.openStockFilter('low')",label:'তালিকা দেখুন'});
+    if(pendingRestock.length) actions.push({level:'info',title:`${bn(pendingRestock.length)}টি রিস্টক সিদ্ধান্ত অপেক্ষমাণ`,text:'Owner/Procurement অনুমোদনের অবস্থা অনুসরণ করুন।',action:"InventoryDash.openRestockPane()",label:'রিকোয়েস্ট দেখুন'});
+    if(inactive.length) actions.push({level:'neutral',title:`${bn(inactive.length)}টি SKU নিষ্ক্রিয়`,text:'অপ্রয়োজনীয়, মৌসুমি বা ভুলভাবে নিষ্ক্রিয় পণ্য যাচাই করুন।',action:"InventoryDash.openStockFilter('inactive')",label:'পর্যালোচনা'});
+    if(!actions.length) actions.push({level:'success',title:'আজ কোনো জরুরি স্টক ঝুঁকি নেই',text:`ইনভেন্টরি হেলথ স্কোর ${bn(healthScore)}/১০০। নিয়মিত পর্যবেক্ষণ চালিয়ে যান।`,action:"InventoryDash.openStockFilter('healthy')",label:'স্বাস্থ্যকর স্টক'});
+    el.innerHTML=actions.slice(0,4).map(a=>`<article class="inv-priority inv-priority--${a.level}"><div><strong>${a.title}</strong><p>${a.text}</p></div><button type="button" onclick="${a.action}">${a.label}</button></article>`).join('');
+  },
+
+  renderBranchRisk(zones, products){
+    const el=document.getElementById('invBranchRiskGrid'); if(!el) return;
+    el.innerHTML=zones.map(z=>{
+      const list=products.filter(p=>p.zone===z), out=list.filter(p=>p.stock<=0).length, low=list.filter(p=>p.stock>0&&p.stock<=5).length;
+      const score=Math.max(0,Math.round(100-((out*9+low*3)/Math.max(list.length,1))*5));
+      const tone=score>=80?'good':score>=55?'warn':'danger';
+      return `<article class="inv-branch-risk inv-branch-risk--${tone}"><div><span>${esc(zoneLabel(z))}</span><strong>${bn(score)}/১০০</strong></div><p>${bn(list.length)} SKU · ${bn(low)} লো · ${bn(out)} আউট</p><div><i style="width:${score}%"></i></div></article>`;
+    }).join('');
+  },
+
+  openStockFilter(value){
+    const btn=[...document.querySelectorAll('#page-inventory-dash .zm-tabs button')].find(b=>b.textContent.includes('স্টক ম্যানেজমেন্ট'));
+    this.tab(btn,'stock'); const sel=document.getElementById('invStockFilter'); if(sel) sel.value=value; this.renderStockTable();
+  },
+
+  openRestockPane(){
+    const btn=[...document.querySelectorAll('#page-inventory-dash .zm-tabs button')].find(b=>b.textContent.includes('রিস্টক'));
+    this.tab(btn,'restock');
+  },
+
+  async createCriticalRestockRequests(){
+    const critical=this._products.filter(p=>Number(p.stock)<=5);
+    const pendingIds=new Set(this._restockRequests.filter(r=>r.status==='pending').map(r=>r.productId));
+    const targets=critical.filter(p=>!pendingIds.has(p.id));
+    if(!targets.length){ toast('সব জরুরি পণ্যের রিস্টক রিকোয়েস্ট ইতিমধ্যে আছে','info'); return; }
+    if(!confirm(`${targets.length}টি জরুরি পণ্যের রিস্টক রিকোয়েস্ট তৈরি করবেন?`)) return;
+    try{
+      for(const product of targets){
+        await FB.addDoc(FB.collection(FB.db,'restock_requests'), {productId:product.id,productName:product.name||'—',zone:product.zone||'',stockAtRequest:Number(product.stock)||0,status:'pending',priority:Number(product.stock)<=0?'critical':'high',requestedByUid:this.currentUid,requestedByName:this.currentName,createdAt:FB.serverTimestamp()});
+      }
+      await this.loadRestockRequests(); this.renderOverview(); this.renderRestockTable();
+      toast(`✓ ${targets.length}টি রিস্টক রিকোয়েস্ট তৈরি হয়েছে`,'success');
+    }catch(e){ toast('রিস্টক তৈরি ব্যর্থ: '+e.message,'error'); }
+  },
+
+  exportStockCsv(){
+    const rows=[['Product ID','Product','Branch','Stock','Status','Risk']];
+    this._products.forEach(p=>rows.push([p.id,p.name||'',zoneLabel(p.zone),Number(p.stock)||0,p.status||'active',Number(p.stock)<=0?'OUT':Number(p.stock)<=5?'LOW':'HEALTHY']));
+    const csv='\uFEFF'+rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+    a.href=url;a.download=`golapi-inventory-${new Date().toISOString().slice(0,10)}.csv`;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+  },
+
   // ---------- Stock Management ----------
   renderStockTable(){
     const q = (document.getElementById('invProductSearch')?.value || '').toLowerCase();
@@ -153,6 +226,8 @@ const InventoryDash = {
       if(zone && p.zone!==zone) return false;
       if(stockFilter==='low' && !(p.stock>0 && p.stock<=5)) return false;
       if(stockFilter==='out' && !(p.stock<=0)) return false;
+      if(stockFilter==='healthy' && !(p.stock>5 && p.status!=='inactive')) return false;
+      if(stockFilter==='inactive' && p.status!=='inactive') return false;
       return true;
     });
 

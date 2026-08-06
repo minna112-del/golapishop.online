@@ -1,285 +1,37 @@
-/* support.js — SupportDash (Firebase Auth secured, zone-manager.js প্যাটার্ন অনুসরণ করে) */
-const SupportDash = {
-  currentUid: null, currentName: null,
-  _tickets: [], _selectedId: null, _orders: [],
-
-  async login(){
-    const email = document.getElementById('supEmail').value.trim();
-    const pass = document.getElementById('supPassword').value;
-    const msgEl = document.getElementById('supLoginMsg');
-    if(!email || !pass){ msgEl.textContent='ইমেইল ও পাসওয়ার্ড দিন'; msgEl.className='form-msg err'; return; }
-    if(!FB){ msgEl.textContent='সংযোগ সমস্যা'; msgEl.className='form-msg err'; return; }
-    try{
-      const cred = await FB.signInWithEmailAndPassword(FB.auth, email, pass);
-      const staffSnap = await FB.getDoc(FB.doc(FB.db,'staff',cred.user.uid));
-      if(!staffSnap.exists() || staffSnap.data().role!=='support'){
-        await FB.signOut(FB.auth).catch(()=>{});
-        msgEl.textContent='এই অ্যাকাউন্ট সাপোর্ট এজেন্ট হিসেবে অনুমোদিত নয়'; msgEl.className='form-msg err'; return;
-      }
-      this.currentUid = cred.user.uid;
-      this.currentName = staffSnap.data().name || 'সাপোর্ট এজেন্ট';
-      if(typeof StaffChat !== 'undefined') StaffChat.init(this.currentUid, this.currentName, 'support');
-      document.getElementById('supLoginBox').style.display='none';
-      document.getElementById('supDashBox').style.display='block';
-    if(typeof EmployeeWorkspace!=='undefined') await EmployeeWorkspace.mountCurrent('supEmployeeWorkspace');
-      const ml=document.getElementById('supUserLabel'); if(ml) ml.textContent='পরিচালনায়: '+this.currentName;
-      await this.render();
-    }catch(e){ msgEl.textContent='লগইন ব্যর্থ: ইমেইল বা পাসওয়ার্ড সঠিক নয়'; msgEl.className='form-msg err'; }
-  },
-
-  async logout(){
-    if(FB) await FB.signOut(FB.auth).catch(()=>{});
-    this.currentUid=null; this.currentName=null;
-    document.getElementById('supLoginBox').style.display='block';
-    document.getElementById('supDashBox').style.display='none';
-  },
-
-  async _restoreSession(){
-    if(this.currentUid || !FB || !FB.auth.currentUser) return;
-    try{
-      const staffSnap = await FB.getDoc(FB.doc(FB.db,'staff',FB.auth.currentUser.uid));
-      if(staffSnap.exists() && staffSnap.data().role==='support'){
-        this.currentUid = FB.auth.currentUser.uid;
-        this.currentName = staffSnap.data().name || 'সাপোর্ট এজেন্ট';
-        if(typeof StaffChat !== 'undefined') StaffChat.init(this.currentUid, this.currentName, 'support');
-      }
-    }catch(e){ devWarn('support session restore failed', e.message); }
-  },
-
-  async render(){
-    await this._restoreSession();
-    if(!this.currentUid){
-      document.getElementById('supLoginBox').style.display='block';
-      document.getElementById('supDashBox').style.display='none';
-      return;
-    }
-    document.getElementById('supLoginBox').style.display='none';
-    document.getElementById('supDashBox').style.display='block';
-    const ml=document.getElementById('supUserLabel'); if(ml) ml.textContent='পরিচালনায়: '+this.currentName;
-
-    await this.loadTickets();
-    this.renderStats();
-    this.renderTicketList();
-  },
-
-  async refresh(){ await this.render(); toast('✓ আপডেট হয়েছে','success'); },
-
-  tab(btn,name){
-    ['tickets','newticket'].forEach(t=>{
-      const el=document.getElementById('sup'+t.charAt(0).toUpperCase()+t.slice(1)+'Pane');
-      if(el) el.style.display=t===name?'block':'none';
-    });
-    document.querySelectorAll('#page-support-dash .zm-tabs button').forEach(a=>a.classList.remove('active'));
-    if(btn) btn.classList.add('active');
-  },
-
-  // ---------- Tickets ----------
-  async loadTickets(){
-    try{
-      const snap = await FB.getDocs(FB.query(FB.collection(FB.db,'support_tickets'), FB.orderBy('updatedAt','desc'), FB.limit(150)));
-      this._tickets = snap.docs.map(d=>({ id:d.id, ...d.data() }));
-    }catch(e){ this._tickets = []; devWarn('tickets load failed', e.message); }
-  },
-
-  renderStats(){
-    const open = this._tickets.filter(t=>t.status==='open').length;
-    const pending = this._tickets.filter(t=>t.status==='open' || t.status==='in_progress').length;
-    const escalated = this._tickets.filter(t=>t.status==='escalated').length;
-    const todayStr = new Date().toDateString();
-    const resolvedToday = this._tickets.filter(t=>t.status==='resolved' && t.resolvedAt?.seconds && new Date(t.resolvedAt.seconds*1000).toDateString()===todayStr).length;
-    const set=(id,val)=>{ const el=document.getElementById(id); if(el) el.textContent=val; };
-    set('supStatOpen', bn(open));
-    set('supStatPending', bn(pending));
-    set('supStatResolvedToday', bn(resolvedToday));
-    set('supStatEscalated', bn(escalated));
-  },
-
-  renderTicketList(){
-    const q = (document.getElementById('supTicketSearch')?.value || '').toLowerCase();
-    const statusFilter = document.getElementById('supStatusFilter')?.value || '';
-    let list = this._tickets.filter(t=>{
-      if(statusFilter && t.status!==statusFilter) return false;
-      if(q && !( (t.customerName||'').toLowerCase().includes(q) || (t.customerPhone||'').includes(q) || (t.orderId||'').toLowerCase().includes(q) )) return false;
-      return true;
-    });
-    const tbody = document.getElementById('supTicketList');
-    if(!tbody) return;
-    const priorityColor = { urgent:'#f87171', high:'#d4930c', normal:'var(--ink-muted)' };
-    const statusLabel = { open:'ওপেন', in_progress:'প্রসেসিং', resolved:'সমাধান হয়েছে', escalated:'এস্কেলেটেড' };
-    const statusColor = { open:'#d4930c', in_progress:'#0ea5e9', resolved:'#22c55e', escalated:'#f87171' };
-    tbody.innerHTML = list.map(t=>`
-      <tr onclick="SupportDash.openTicket('${t.id}')" style="cursor:pointer;${this._selectedId===t.id?'background:rgba(240,53,107,.06)':''}">
-        <td><div style="font-size:12.5px;font-weight:600">${esc(t.customerName||'—')}</div><div style="font-size:10.5px;color:var(--ink-muted)">${esc(t.customerPhone||'—')}</div></td>
-        <td style="font-size:11.5px;max-width:150px">${esc(this.issueLabel(t.issueType))}</td>
-        <td><span style="font-size:11px;font-weight:700;color:${priorityColor[t.priority]||priorityColor.normal}">${t.priority==='urgent'?'🔴 অতি জরুরি':t.priority==='high'?'🟠 জরুরি':'⚪ সাধারণ'}</span></td>
-        <td><span style="font-size:11.5px;font-weight:600;color:${statusColor[t.status]||'inherit'}">${statusLabel[t.status]||t.status}</span></td>
-      </tr>
-    `).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--ink-muted);padding:16px">কোনো টিকেট নেই</td></tr>';
-  },
-
-  filterTickets(){ this.renderTicketList(); },
-
-  issueLabel(type){
-    const map = { delivery_delay:'ডেলিভারি বিলম্ব', damaged:'পণ্য ক্ষতিগ্রস্ত', wrong_item:'ভুল পণ্য', refund:'রিফান্ড অনুরোধ', payment_issue:'পেমেন্ট সমস্যা', other:'অন্যান্য' };
-    return map[type] || type || '—';
-  },
-
-  async openTicket(id){
-    this._selectedId = id;
-    this.renderTicketList();
-    const t = this._tickets.find(x=>x.id===id); if(!t) return;
-    const box = document.getElementById('supDetailBox'); if(box) box.style.display='block';
-
-    const header = document.getElementById('supDetailHeader');
-    if(header){
-      header.innerHTML = `
-        <h2 style="font-size:15px;margin:0 0 4px">${esc(t.customerName||'—')} <small style="color:var(--ink-muted);font-weight:400">${esc(t.customerPhone||'')}</small></h2>
-        <div style="font-size:12px;color:var(--ink-muted)">${esc(this.issueLabel(t.issueType))} ${t.orderId?' · অর্ডার: '+esc(t.orderId):''}</div>`;
-    }
-
-    const su = document.getElementById('supStatusUpdate'); if(su) su.value = ['open','in_progress','resolved'].includes(t.status) ? t.status : 'open';
-
-    // Order context lookup
-    const ctxBox = document.getElementById('supOrderContext');
-    if(ctxBox){
-      if(t.orderId){
-        try{
-          const orderSnap = await FB.getDoc(FB.doc(FB.db,'orders',t.orderId));
-          if(orderSnap.exists()){
-            const o = orderSnap.data();
-            const s = ORDER_STATUS[o.status]||ORDER_STATUS.pending;
-            ctxBox.style.display='block';
-            ctxBox.innerHTML = `<h2 style="font-size:13px;margin-bottom:6px">🧾 অর্ডার প্রসঙ্গ</h2>
-              <div style="font-size:12.5px;line-height:1.7">
-                মোট: <strong>${money(Number(o.total||o.subtotal||0))}</strong> · স্ট্যাটাস: <strong>${s.label}</strong><br>
-                শাখা: ${BRANCH_INFO[o.branchZone]?.label||o.branchZone||'—'} · পেমেন্ট: ${o.paymentMethod==='cod'?'COD':(o.paymentMethod||'—')}
-              </div>`;
-          } else { ctxBox.style.display='none'; }
-        }catch(e){ ctxBox.style.display='none'; }
-      } else { ctxBox.style.display='none'; }
-    }
-
-    this.renderConversation(t);
-    const refundForm = document.getElementById('supRefundForm'); if(refundForm) refundForm.style.display='none';
-  },
-
-  renderConversation(t){
-    const box = document.getElementById('supConversation');
-    if(!box) return;
-    const messages = t.messages || [{ sender:'customer', text:t.message||'—', at:t.createdAt }];
-    box.innerHTML = messages.map(m=>`
-      <div style="align-self:${m.sender==='agent'?'flex-end':'flex-start'};max-width:80%;background:${m.sender==='agent'?'var(--rose)':'var(--bg2)'};color:${m.sender==='agent'?'#fff':'var(--ink)'};padding:8px 12px;border-radius:12px;font-size:12.5px">
-        ${esc(m.text)}
-        <div style="font-size:9.5px;opacity:.7;margin-top:3px">${formatTime(m.at)}</div>
-      </div>
-    `).join('');
-    box.scrollTop = box.scrollHeight;
-  },
-
-  async sendReply(){
-    const t = this._tickets.find(x=>x.id===this._selectedId); if(!t || !FB) return;
-    const textEl = document.getElementById('supReplyText');
-    const text = textEl?.value.trim();
-    if(!text) return;
-    const newMsg = { sender:'agent', text, at: new Date() };
-    try{
-      const messages = [...(t.messages||[{sender:'customer',text:t.message||'—',at:t.createdAt}]), { sender:'agent', text, at: FB.serverTimestamp() }];
-      await FB.updateDoc(FB.doc(FB.db,'support_tickets',t.id), { messages, updatedAt: FB.serverTimestamp(), status: t.status==='open' ? 'in_progress' : t.status });
-      t.messages = [...(t.messages||[{sender:'customer',text:t.message||'—',at:t.createdAt}]), newMsg];
-      if(t.status==='open') t.status='in_progress';
-      textEl.value='';
-      this.renderConversation(t);
-      this.renderTicketList();
-      this.renderStats();
-      toast('✓ উত্তর পাঠানো হয়েছে','success');
-    }catch(e){ toast('সমস্যা: '+e.message,'error'); }
-  },
-
-  async updateStatus(status){
-    const t = this._tickets.find(x=>x.id===this._selectedId); if(!t || !FB) return;
-    try{
-      const update = { status, updatedAt:FB.serverTimestamp() };
-      if(status==='resolved') update.resolvedAt = FB.serverTimestamp();
-      await FB.updateDoc(FB.doc(FB.db,'support_tickets',t.id), update);
-      t.status = status;
-      toast('✓ স্ট্যাটাস আপডেট হয়েছে','success');
-      this.renderTicketList();
-      this.renderStats();
-    }catch(e){ toast('সমস্যা: '+e.message,'error'); }
-  },
-
-  async escalate(){
-    const t = this._tickets.find(x=>x.id===this._selectedId); if(!t || !FB) return;
-    if(!confirm('এই টিকেটটি Owner/Zone Manager-এর কাছে এস্কেলেট করতে চান?')) return;
-    try{
-      await FB.addDoc(FB.collection(FB.db,'escalations'), {
-        ticketId:t.id, orderId:t.orderId||null, orderNumber:t.orderId||'—',
-        zone: t.branchZone || null,
-        customerName:t.customerName||'—', customerPhone:t.customerPhone||'—',
-        note:`সাপোর্ট টিকেট এস্কেলেশন: ${this.issueLabel(t.issueType)}`,
-        status:'open', raisedBy:'support', raisedByUid:this.currentUid,
-        createdAt: FB.serverTimestamp()
-      });
-      await FB.updateDoc(FB.doc(FB.db,'support_tickets',t.id), { status:'escalated', updatedAt:FB.serverTimestamp() });
-      t.status='escalated';
-      toast('✓ Owner/Zone Manager-কে জানানো হয়েছে','success');
-      this.renderTicketList();
-      this.renderStats();
-    }catch(e){ toast('সমস্যা: '+e.message,'error'); }
-  },
-
-  openRefundForm(){
-    const form = document.getElementById('supRefundForm');
-    if(form) form.style.display = form.style.display==='none' ? 'block' : 'none';
-  },
-
-  async submitRefund(){
-    const t = this._tickets.find(x=>x.id===this._selectedId); if(!t || !FB) return;
-    const amount = Number(document.getElementById('supRefundAmount')?.value);
-    const reason = document.getElementById('supRefundReason')?.value.trim();
-    if(!amount || amount<=0){ toast('সঠিক পরিমাণ দিন','error'); return; }
-    if(!reason){ toast('কারণ লিখুন','error'); return; }
-    try{
-      await FB.addDoc(FB.collection(FB.db,'refund_requests'), {
-        orderId:t.orderId||null, orderNumber:t.orderId||'—',
-        customerName:t.customerName||'—', customerPhone:t.customerPhone||'—',
-        zone: t.branchZone || null,
-        amount, reason, status:'pending',
-        requestedBy:'support', requestedByUid:this.currentUid,
-        ticketId:t.id, createdAt: FB.serverTimestamp()
-      });
-      toast('✓ রিফান্ড রিকোয়েস্ট Finance টিমের কাছে পাঠানো হয়েছে','success');
-      document.getElementById('supRefundForm').style.display='none';
-      document.getElementById('supRefundAmount').value='';
-      document.getElementById('supRefundReason').value='';
-    }catch(e){ toast('সমস্যা: '+e.message,'error'); }
-  },
-
-  // ---------- New Ticket ----------
-  async createTicket(){
-    const msgEl = document.getElementById('supNewMsg');
-    const name = document.getElementById('ntName')?.value.trim();
-    const phone = document.getElementById('ntPhone')?.value.trim();
-    const orderId = document.getElementById('ntOrderId')?.value.trim();
-    const issueType = document.getElementById('ntIssueType')?.value;
-    const priority = document.getElementById('ntPriority')?.value;
-    const message = document.getElementById('ntMessage')?.value.trim();
-    if(!name || !phone || !message){ msgEl.textContent='* চিহ্নিত সব ঘর পূরণ করুন'; msgEl.className='form-msg err'; return; }
-    if(!FB){ msgEl.textContent='সংযোগ সমস্যা'; msgEl.className='form-msg err'; return; }
-    try{
-      await FB.addDoc(FB.collection(FB.db,'support_tickets'), {
-        customerName:name, customerPhone:phone, orderId:orderId||null,
-        issueType, priority, message, status:'open',
-        messages:[{ sender:'customer', text:message, at: FB.serverTimestamp() }],
-        createdBy:this.currentName, createdByUid:this.currentUid,
-        createdAt: FB.serverTimestamp(), updatedAt: FB.serverTimestamp()
-      });
-      msgEl.textContent='✓ টিকেট তৈরি হয়েছে'; msgEl.className='form-msg ok';
-      ['ntName','ntPhone','ntOrderId','ntMessage'].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';});
-      await this.loadTickets();
-      this.renderStats();
-      this.renderTicketList();
-      setTimeout(()=>{ this.tab(document.querySelector('#page-support-dash .zm-tabs button'), 'tickets'); }, 700);
-    }catch(e){ msgEl.textContent='সমস্যা: '+e.message; msgEl.className='form-msg err'; }
-  }
+/* support.js — Phase 10 Customer Care Center */
+const SupportDash={
+  currentUid:null,currentName:null,currentRole:null,_tickets:[],_selectedId:null,_agents:[],_orders:[],
+  _allowedRoles:['support','customer_care_manager','admin'],
+  _toDate(v){if(!v)return null;if(v instanceof Date)return v;if(v?.toDate)return v.toDate();if(v?.seconds)return new Date(v.seconds*1000);const d=new Date(v);return Number.isNaN(d.getTime())?null:d},
+  _ageHours(t){const d=this._toDate(t.updatedAt||t.createdAt);return d?Math.max(0,(Date.now()-d.getTime())/36e5):0},
+  _slaHours(t){return t.priority==='urgent'?1:t.priority==='high'?4:12},
+  _slaState(t){if(['resolved'].includes(t.status))return'ok';const age=this._ageHours(t),limit=this._slaHours(t);return age>=limit?'breached':age>=limit*.75?'risk':'ok'},
+  _fmtHours(h){if(!Number.isFinite(h))return'—';if(h<1)return`${bn(Math.max(1,Math.round(h*60)))} মিনিট`;return`${bn(h.toFixed(1))} ঘণ্টা`},
+  async login(){const email=document.getElementById('supEmail').value.trim(),pass=document.getElementById('supPassword').value,msg=document.getElementById('supLoginMsg');if(!email||!pass){msg.textContent='ইমেইল ও পাসওয়ার্ড দিন';msg.className='form-msg err';return}try{const cred=await FB.signInWithEmailAndPassword(FB.auth,email,pass),snap=await FB.getDoc(FB.doc(FB.db,'staff',cred.user.uid)),data=snap.exists()?snap.data():null;if(!data||!this._allowedRoles.includes(data.role)){await FB.signOut(FB.auth).catch(()=>{});msg.textContent='এই অ্যাকাউন্ট Customer Care Center-এর জন্য অনুমোদিত নয়';msg.className='form-msg err';return}this.currentUid=cred.user.uid;this.currentName=data.name||'Customer Care Team';this.currentRole=data.role;if(typeof StaffChat!=='undefined')StaffChat.init(this.currentUid,this.currentName,'support');await this.render()}catch(e){msg.textContent='লগইন ব্যর্থ: ইমেইল বা পাসওয়ার্ড সঠিক নয়';msg.className='form-msg err'}},
+  async logout(){if(FB)await FB.signOut(FB.auth).catch(()=>{});this.currentUid=this.currentName=this.currentRole=null;document.getElementById('supLoginBox').style.display='block';document.getElementById('supDashBox').style.display='none'},
+  async _restoreSession(){if(this.currentUid||!FB?.auth?.currentUser)return;try{const snap=await FB.getDoc(FB.doc(FB.db,'staff',FB.auth.currentUser.uid)),d=snap.exists()?snap.data():null;if(d&&this._allowedRoles.includes(d.role)){this.currentUid=FB.auth.currentUser.uid;this.currentName=d.name||'Customer Care Team';this.currentRole=d.role}}catch(e){devWarn('support restore failed',e.message)}},
+  async render(){await this._restoreSession();if(!this.currentUid){document.getElementById('supLoginBox').style.display='block';document.getElementById('supDashBox').style.display='none';return}document.getElementById('supLoginBox').style.display='none';document.getElementById('supDashBox').style.display='block';document.getElementById('supUserLabel').textContent=`পরিচালনায়: ${this.currentName}`;if(typeof EmployeeWorkspace!=='undefined')await EmployeeWorkspace.mountCurrent('supEmployeeWorkspace');await Promise.all([this.loadTickets(),this.loadAgents()]);this.renderStats();this.renderPriorityDesk();this.renderTicketList()},
+  async refresh(){await this.render();toast('✓ Customer Care Center আপডেট হয়েছে','success')},
+  tab(btn,name){['tickets','newticket'].forEach(t=>{const e=document.getElementById('sup'+t.charAt(0).toUpperCase()+t.slice(1)+'Pane');if(e)e.style.display=t===name?'block':'none'});document.querySelectorAll('#page-support-dash .zm-tabs button').forEach(x=>x.classList.remove('active'));btn?.classList.add('active')},
+  async loadTickets(){try{const snap=await FB.getDocs(FB.query(FB.collection(FB.db,'support_tickets'),FB.orderBy('updatedAt','desc'),FB.limit(250)));this._tickets=snap.docs.map(d=>({id:d.id,...d.data()}))}catch(e){this._tickets=[];devWarn('tickets load failed',e.message)}},
+  async loadAgents(){try{const snap=await FB.getDocs(FB.collection(FB.db,'staff'));this._agents=snap.docs.map(d=>({uid:d.id,...d.data()})).filter(x=>['support','customer_care_manager'].includes(x.role)&&x.active!==false);const sel=document.getElementById('supAssignee');if(sel)sel.innerHTML='<option value="">অনির্ধারিত</option>'+this._agents.map(a=>`<option value="${esc(a.uid)}">${esc(a.name||a.employeeId||a.uid)}</option>`).join('')}catch(e){this._agents=[]}},
+  renderStats(){const open=this._tickets.filter(t=>t.status==='open').length,escalated=this._tickets.filter(t=>t.status==='escalated').length,sla=this._tickets.filter(t=>['risk','breached'].includes(this._slaState(t))).length,today=new Date().toDateString(),resolvedToday=this._tickets.filter(t=>t.status==='resolved'&&this._toDate(t.resolvedAt)?.toDateString()===today).length;const first=this._tickets.map(t=>{const created=this._toDate(t.createdAt),m=(t.messages||[]).find(x=>x.sender==='agent');const replied=this._toDate(m?.at);return created&&replied?(replied-created)/36e5:null}).filter(Number.isFinite);const avg=first.length?first.reduce((a,b)=>a+b,0)/first.length:null;const resolved=this._tickets.filter(t=>t.status==='resolved').length,total=this._tickets.length||1;let score=Math.round(100-(open/total*25)-(sla/total*45)-(escalated/total*20)+(resolved/total*10));score=Math.max(0,Math.min(100,score));const put=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};put('supStatOpen',bn(open));put('supStatSlaRisk',bn(sla));put('supStatResolvedToday',bn(resolvedToday));put('supStatEscalated',bn(escalated));put('supStatFirstResponse',avg===null?'—':this._fmtHours(avg));put('supHealthScore',bn(score));put('supHealthLabel',score>=85?'চমৎকার সেবা নিয়ন্ত্রণ':score>=65?'স্থিতিশীল, কিছু টিকেটে নজর দিন':'তাৎক্ষণিক ব্যবস্থাপনা প্রয়োজন');const bar=document.getElementById('supHealthBar');if(bar)bar.style.width=score+'%'},
+  renderPriorityDesk(){const host=document.getElementById('supPriorityDesk');if(!host)return;const breached=this._tickets.filter(t=>this._slaState(t)==='breached'&&t.status!=='resolved').sort((a,b)=>this._ageHours(b)-this._ageHours(a));const urgent=this._tickets.filter(t=>t.priority==='urgent'&&!['resolved'].includes(t.status));const unassigned=this._tickets.filter(t=>!t.assignedToUid&&!['resolved'].includes(t.status));const items=[];if(breached.length)items.push({icon:'⏱️',title:`${bn(breached.length)}টি টিকেট SLA অতিক্রম করেছে`,text:'সবচেয়ে পুরোনো টিকেট আগে খুলে সমাধান বা এস্কেলেট করুন',id:breached[0].id});if(urgent.length)items.push({icon:'🔴',title:`${bn(urgent.length)}টি অতি জরুরি টিকেট`,text:'এক ঘণ্টার মধ্যে প্রথম উত্তর নিশ্চিত করুন',id:urgent[0].id});if(unassigned.length)items.push({icon:'👤',title:`${bn(unassigned.length)}টি টিকেটে এজেন্ট নির্ধারিত নেই`,text:'দায়িত্বপ্রাপ্ত Customer Care Executive নির্বাচন করুন',id:unassigned[0].id});if(!items.length)items.push({icon:'✅',title:'জরুরি কোনো Service Risk নেই',text:'বর্তমান টিকেট প্রবাহ নিয়ন্ত্রণে আছে'});host.innerHTML=items.map(x=>`<button type="button" ${x.id?`onclick="SupportDash.openTicket('${x.id}')"`:''}><span>${x.icon}</span><div><strong>${esc(x.title)}</strong><small>${esc(x.text)}</small></div></button>`).join('')},
+  filterTickets(){this.renderTicketList()},
+  renderTicketList(){const q=(document.getElementById('supTicketSearch')?.value||'').toLowerCase(),status=document.getElementById('supStatusFilter')?.value||'',priority=document.getElementById('supPriorityFilter')?.value||'',sla=document.getElementById('supSlaFilter')?.value||'';const list=this._tickets.filter(t=>(!status||t.status===status)&&(!priority||t.priority===priority)&&(!sla||this._slaState(t)===sla)&&(!q||[t.customerName,t.customerPhone,t.orderId].some(v=>String(v||'').toLowerCase().includes(q))));const body=document.getElementById('supTicketList');if(!body)return;const sl={ok:'সময় আছে',risk:'ঝুঁকি',breached:'অতিক্রম'},st={open:'ওপেন',in_progress:'প্রসেসিং',resolved:'সমাধান',escalated:'এস্কেলেটেড'};body.innerHTML=list.map(t=>`<tr onclick="SupportDash.openTicket('${t.id}')" class="${this._selectedId===t.id?'cc-selected-row':''}"><td><strong>${esc(t.customerName||'—')}</strong><small>${esc(t.customerPhone||'—')}</small></td><td>${esc(this.issueLabel(t.issueType))}</td><td><span class="cc-priority ${esc(t.priority||'normal')}">${t.priority==='urgent'?'অতি জরুরি':t.priority==='high'?'জরুরি':'সাধারণ'}</span></td><td><span class="cc-sla ${this._slaState(t)}">${sl[this._slaState(t)]}</span></td><td>${st[t.status]||esc(t.status||'—')}</td></tr>`).join('')||'<tr><td colspan="5" class="cc-empty">কোনো টিকেট পাওয়া যায়নি</td></tr>'},
+  issueLabel(type){return({delivery_delay:'ডেলিভারি বিলম্ব',damaged:'পণ্য ক্ষতিগ্রস্ত',wrong_item:'ভুল পণ্য',refund:'রিফান্ড অনুরোধ',payment_issue:'পেমেন্ট সমস্যা',other:'অন্যান্য'})[type]||type||'—'},
+  async openTicket(id){this._selectedId=id;this.renderTicketList();const t=this._tickets.find(x=>x.id===id);if(!t)return;document.getElementById('supDetailBox').style.display='block';document.getElementById('supDetailHeader').innerHTML=`<div class="cc-ticket-title"><div><span class="eyebrow">Service Case</span><h2>${esc(t.customerName||'—')}</h2><p>${esc(t.customerPhone||'')} · ${esc(this.issueLabel(t.issueType))}${t.orderId?' · অর্ডার '+esc(t.orderId):''}</p></div><span class="cc-ticket-age">${this._fmtHours(this._ageHours(t))}</span></div>`;document.getElementById('supStatusUpdate').value=['open','in_progress','resolved'].includes(t.status)?t.status:'open';document.getElementById('supAssignee').value=t.assignedToUid||'';await this.renderOrderContext(t);this.renderCustomerHistory(t);this.renderConversation(t);document.getElementById('supRefundForm').style.display='none'},
+  async renderOrderContext(t){const box=document.getElementById('supOrderContext');if(!t.orderId){box.style.display='none';return}try{const snap=await FB.getDoc(FB.doc(FB.db,'orders',t.orderId));if(!snap.exists()){box.style.display='none';return}const o=snap.data(),s=ORDER_STATUS[o.status]||{label:o.status||'—'};box.style.display='block';box.innerHTML=`<strong>🧾 অর্ডার প্রসঙ্গ</strong><span>মোট ${money(Number(o.total||o.subtotal||0))} · ${esc(s.label)} · ${esc(BRANCH_INFO[o.branchZone]?.label||o.branchZone||'—')} · ${o.paymentMethod==='cod'?'COD':esc(o.paymentMethod||'—')}</span>`}catch(e){box.style.display='none'}},
+  renderCustomerHistory(t){const related=this._tickets.filter(x=>x.id!==t.id&&x.customerPhone&&x.customerPhone===t.customerPhone);const box=document.getElementById('supCustomerHistory');box.innerHTML=related.length?`<strong>পূর্বের যোগাযোগ</strong><span>${bn(related.length)}টি আগের টিকেট · ${bn(related.filter(x=>x.status==='resolved').length)}টি সমাধান</span>`:'<strong>নতুন কাস্টমার যোগাযোগ</strong><span>এই ফোন নম্বরে আগের টিকেট নেই</span>'},
+  renderConversation(t){const box=document.getElementById('supConversation'),messages=t.messages||[{sender:'customer',text:t.message||'—',at:t.createdAt}];box.innerHTML=messages.map(m=>`<div class="cc-message ${m.sender==='agent'?'agent':'customer'}"><p>${esc(m.text)}</p><small>${formatTime(m.at)}</small></div>`).join('');box.scrollTop=box.scrollHeight},
+  useQuickReply(type){const replies={delay:'আপনার অর্ডারটি বিলম্বিত হওয়ায় আমরা আন্তরিকভাবে দুঃখিত। ডেলিভারি টিমকে অগ্রাধিকার ভিত্তিতে জানানো হয়েছে।',refund:'আপনার রিফান্ড অনুরোধটি যাচাই করে Finance Office-এ পাঠানো হচ্ছে। অনুমোদনের পর আপনাকে জানানো হবে।',resolved:'আপনার সমস্যাটি সমাধান করা হয়েছে। অনুগ্রহ করে নিশ্চিত করুন এখন সবকিছু ঠিক আছে কি না।'};const el=document.getElementById('supReplyText');el.value=replies[type]||'';el.focus()},
+  async sendReply(){const t=this._tickets.find(x=>x.id===this._selectedId),el=document.getElementById('supReplyText'),text=el?.value.trim();if(!t||!text)return;try{const base=t.messages||[{sender:'customer',text:t.message||'—',at:t.createdAt}],messages=[...base,{sender:'agent',text,at:FB.serverTimestamp(),agentUid:this.currentUid,agentName:this.currentName}],update={messages,status:t.status==='open'?'in_progress':t.status,updatedAt:FB.serverTimestamp()};if(!t.firstResponseAt)update.firstResponseAt=FB.serverTimestamp();await FB.updateDoc(FB.doc(FB.db,'support_tickets',t.id),update);t.messages=[...base,{sender:'agent',text,at:new Date()}];t.status=update.status;t.firstResponseAt=t.firstResponseAt||new Date();el.value='';this.renderConversation(t);this.renderStats();this.renderTicketList();toast('✓ উত্তর পাঠানো হয়েছে','success')}catch(e){toast('সমস্যা: '+e.message,'error')}},
+  async assignTicket(uid){const t=this._tickets.find(x=>x.id===this._selectedId);if(!t)return;const a=this._agents.find(x=>x.uid===uid);try{await FB.updateDoc(FB.doc(FB.db,'support_tickets',t.id),{assignedToUid:uid||null,assignedToName:a?.name||null,assignedAt:uid?FB.serverTimestamp():null,updatedAt:FB.serverTimestamp()});t.assignedToUid=uid;t.assignedToName=a?.name||'';this.renderPriorityDesk();toast(uid?'✓ এজেন্ট নির্ধারণ হয়েছে':'এজেন্ট সরানো হয়েছে','success')}catch(e){toast(e.message,'error')}},
+  async updateStatus(status){const t=this._tickets.find(x=>x.id===this._selectedId);if(!t)return;try{const u={status,updatedAt:FB.serverTimestamp()};if(status==='resolved')u.resolvedAt=FB.serverTimestamp();await FB.updateDoc(FB.doc(FB.db,'support_tickets',t.id),u);t.status=status;if(status==='resolved')t.resolvedAt=new Date();this.renderStats();this.renderPriorityDesk();this.renderTicketList();toast('✓ স্ট্যাটাস আপডেট হয়েছে','success')}catch(e){toast(e.message,'error')}},
+  async escalate(){const t=this._tickets.find(x=>x.id===this._selectedId);if(!t||!confirm('এই টিকেটটি Executive/Zone Operations-এ এস্কেলেট করবেন?'))return;try{await FB.addDoc(FB.collection(FB.db,'escalations'),{ticketId:t.id,orderId:t.orderId||null,orderNumber:t.orderId||'—',zone:t.branchZone||null,customerName:t.customerName||'—',customerPhone:t.customerPhone||'—',note:`Customer Care escalation: ${this.issueLabel(t.issueType)}`,status:'open',raisedBy:'support',raisedByUid:this.currentUid,createdAt:FB.serverTimestamp()});await FB.updateDoc(FB.doc(FB.db,'support_tickets',t.id),{status:'escalated',updatedAt:FB.serverTimestamp()});t.status='escalated';this.renderStats();this.renderPriorityDesk();this.renderTicketList();toast('✓ টিকেট এস্কেলেট হয়েছে','success')}catch(e){toast(e.message,'error')}},
+  openRefundForm(){const f=document.getElementById('supRefundForm');f.style.display=f.style.display==='none'?'grid':'none'},
+  async submitRefund(){const t=this._tickets.find(x=>x.id===this._selectedId),amount=Number(document.getElementById('supRefundAmount').value),reason=document.getElementById('supRefundReason').value.trim();if(!t||!amount||amount<=0||!reason){toast('পরিমাণ ও কারণ লিখুন','error');return}try{await FB.addDoc(FB.collection(FB.db,'refund_requests'),{orderId:t.orderId||null,orderNumber:t.orderId||'—',customerName:t.customerName||'—',customerPhone:t.customerPhone||'—',zone:t.branchZone||null,amount,reason,status:'pending',requestedBy:'support',requestedByUid:this.currentUid,ticketId:t.id,createdAt:FB.serverTimestamp()});document.getElementById('supRefundForm').style.display='none';toast('✓ Finance Office-এ রিফান্ড অনুরোধ পাঠানো হয়েছে','success')}catch(e){toast(e.message,'error')}},
+  async createTicket(){const g=id=>document.getElementById(id)?.value.trim()||'',msg=document.getElementById('supNewMsg'),name=g('ntName'),phone=g('ntPhone'),orderId=g('ntOrderId'),issueType=g('ntIssueType'),priority=g('ntPriority'),message=g('ntMessage');if(!name||!phone||!message){msg.textContent='* চিহ্নিত সব ঘর পূরণ করুন';msg.className='form-msg err';return}try{await FB.addDoc(FB.collection(FB.db,'support_tickets'),{customerName:name,customerPhone:phone,orderId:orderId||null,issueType,priority,message,status:'open',messages:[{sender:'customer',text:message,at:FB.serverTimestamp()}],createdBy:this.currentName,createdByUid:this.currentUid,createdAt:FB.serverTimestamp(),updatedAt:FB.serverTimestamp()});msg.textContent='✓ টিকেট তৈরি হয়েছে';msg.className='form-msg ok';['ntName','ntPhone','ntOrderId','ntMessage'].forEach(id=>document.getElementById(id).value='');await this.refresh()}catch(e){msg.textContent='সমস্যা: '+e.message;msg.className='form-msg err'}},
+  exportCsv(){const rows=[['Ticket ID','Customer','Phone','Issue','Priority','Status','SLA','Assigned Agent','Order ID','Created At'],...this._tickets.map(t=>[t.id,t.customerName||'',t.customerPhone||'',this.issueLabel(t.issueType),t.priority||'',t.status||'',this._slaState(t),t.assignedToName||'',t.orderId||'',this._toDate(t.createdAt)?.toISOString()||''])];const csv='\ufeff'+rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n'),blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`customer-care-${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(url)}
 };
+window.SupportDash=SupportDash;

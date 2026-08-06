@@ -160,6 +160,35 @@ const OwnerAuth = {
 const Router = {
   current: 'home',
   params: {},
+  staffPaths: {
+    'admin-dash': '/admin',
+    driver: '/driver',
+    'zone-manager': '/zone-manager',
+    'inventory-dash': '/inventory',
+    'finance-dash': '/finance',
+    'support-dash': '/support',
+    'procurement-dash': '/procurement',
+    'warehouse-dash': '/warehouse',
+    'analytics-dash': '/analytics',
+    'company-settings': '/company-settings',
+    'documents-dash': '/documents',
+    'attendance-dash': '/attendance',
+    'payroll-dash': '/payroll',
+    'branch-dash': '/branches',
+    'crm-dash': '/crm',
+    'company-os': '/company-os',
+    'ai-control': '/ai-control',
+    'hr-erp': '/hr-erp',
+    'finance-erp': '/finance-erp',
+    'warehouse-erp': '/warehouse-erp',
+    'marketing-erp': '/marketing-erp',
+    'workflow-erp': '/workflow-erp',
+    'bi-erp': '/bi-erp',
+    'asset-erp': '/asset-erp',
+    'crm-erp': '/crm-erp',
+    'procurement-erp': '/procurement-erp',
+    'facilities-erp': '/facilities-erp'
+  },
 
   /*
    * প্রতিটি public page-এর জন্য shareable URL,
@@ -294,24 +323,19 @@ const Router = {
   updateSeoTags(page, params, skipHistory) {
     const meta = this.seoMeta[page];
 
-    if (!meta) {
-      return;
-    }
-
-    const path =
-      typeof meta.path === 'function'
-        ? meta.path(params)
-        : meta.path;
+    const path = meta
+      ? (typeof meta.path === 'function' ? meta.path(params) : meta.path)
+      : this.staffPaths[page];
 
     const title =
-      typeof meta.title === 'function'
+      typeof meta?.title === 'function'
         ? meta.title(params)
-        : meta.title;
+        : meta?.title;
 
     const desc =
-      typeof meta.desc === 'function'
+      typeof meta?.desc === 'function'
         ? meta.desc(params)
-        : meta.desc;
+        : meta?.desc;
 
     if (title) {
       document.title = title;
@@ -429,6 +453,27 @@ const Router = {
       'inventory-dash': ['./js/inventory.js', './js/staff-chat.js', './js/employee-workspace.js'],
       'finance-dash': ['./js/finance.js', './js/staff-chat.js', './js/employee-workspace.js'],
       'support-dash': ['./js/support.js', './js/staff-chat.js', './js/employee-workspace.js'],
+      'procurement-dash': ['./js/procurement.js', './js/staff-chat.js', './js/employee-workspace.js'],
+      'warehouse-dash': ['./js/warehouse.js', './js/staff-chat.js', './js/employee-workspace.js'],
+      'analytics-dash': ['./js/analytics.js', './js/staff-chat.js', './js/employee-workspace.js'],
+      'company-settings': ['./js/company-settings.js', './js/employee-workspace.js'],
+      'documents-dash': ['./js/documents.js', './js/employee-workspace.js'],
+      'attendance-dash': ['./js/attendance.js', './js/employee-workspace.js'],
+      'payroll-dash': ['./js/payroll.js', './js/employee-workspace.js'],
+      'branch-dash': ['./js/branch.js', './js/employee-workspace.js'],
+      'crm-dash': ['./js/crm.js', './js/employee-workspace.js'],
+      'company-os': ['./js/company-os.js'],
+      'ai-control': ['./js/ai-control.js', './js/employee-workspace.js'],
+      'hr-erp': ['./js/hr-erp.js', './js/employee-workspace.js'],
+      'finance-erp': ['./js/finance-erp.js', './js/employee-workspace.js'],
+      'warehouse-erp': ['./js/warehouse-erp.js', './js/employee-workspace.js'],
+      'marketing-erp': ['./js/marketing-erp.js', './js/employee-workspace.js'],
+      'workflow-erp': ['./js/workflow-erp.js', './js/employee-workspace.js'],
+      'bi-erp': ['./js/bi-erp.js', './js/employee-workspace.js'],
+      'asset-erp': ['./js/asset-erp.js', './js/employee-workspace.js'],
+      'crm-erp': ['./js/crm-erp.js', './js/employee-workspace.js'],
+      'procurement-erp': ['./js/procurement-erp.js', './js/employee-workspace.js'],
+      'facilities-erp': ['./js/facilities-erp.js', './js/employee-workspace.js'],
       'checkout': ['./js/checkout.js', './js/payment.js', './js/sms.js'],
       'custom-bazar': ['./js/custom-bazar.js', './js/memo.js'],
       'myorders': ['./js/memo.js', './js/livemap.js']
@@ -467,6 +512,17 @@ const Router = {
       });
     }
 
+    const routeTarget = document.getElementById('page-' + page);
+    if (!routeTarget) {
+      if (typeof toast === 'function') {
+        toast('এই Workspace-এর প্রয়োজনীয় ফাইল পাওয়া যায়নি', 'error');
+      }
+      if (page !== 'home') {
+        return this.go('home');
+      }
+      return;
+    }
+
     this.current = page;
     this.params = params;
 
@@ -490,9 +546,7 @@ const Router = {
         pageElement.classList.remove('active');
       });
 
-    const targetPage = document.getElementById(
-      'page-' + page
-    );
+    const targetPage = routeTarget;
 
     if (targetPage) {
       targetPage.classList.add('active');
@@ -576,6 +630,90 @@ const Router = {
       SupportDash.render();
     }
 
+    if (page === 'procurement-dash') {
+      ProcurementDash.render();
+    }
+
+    if (page === 'warehouse-dash') {
+      WarehouseDash.render();
+    }
+
+    if (page === 'analytics-dash') {
+      AnalyticsCenter.render();
+    }
+
+    if (page === 'company-settings') {
+      CompanySettings.render();
+    }
+
+    if (page === 'documents-dash') {
+      DocumentOffice.render();
+    }
+
+    if (page === 'payroll-dash') {
+      if (typeof PayrollOffice !== 'undefined') PayrollOffice.render();
+    }
+
+    if (page === 'attendance-dash') {
+      AttendanceOffice.render();
+    }
+
+    if (page === 'branch-dash') {
+      if (typeof BranchOffice !== 'undefined') BranchOffice.render();
+    }
+
+    if (page === 'crm-dash') {
+      if (typeof CRMOffice !== 'undefined') CRMOffice.render();
+    }
+
+    if (page === 'company-os') {
+      if (typeof CompanyOS !== 'undefined') CompanyOS.render();
+    }
+
+    if (page === 'ai-control') {
+      if (typeof AIControl !== 'undefined') AIControl.render();
+    }
+
+    if (page === 'hr-erp') {
+      if (typeof HRERP !== 'undefined') HRERP.render();
+    }
+
+    if (page === 'finance-erp') {
+      if (typeof FinanceERP !== 'undefined') FinanceERP.render();
+    }
+
+    if (page === 'warehouse-erp') {
+      if (typeof WarehouseERP !== 'undefined') WarehouseERP.render();
+    }
+
+    if (page === 'marketing-erp') {
+      if (typeof MarketingERP !== 'undefined') MarketingERP.render();
+    }
+
+    if (page === 'workflow-erp') {
+      if (typeof WorkflowERP !== 'undefined') WorkflowERP.render();
+    }
+
+    if (page === 'bi-erp') {
+      if (typeof BusinessIntelligence !== 'undefined') BusinessIntelligence.render();
+    }
+
+    if (page === 'asset-erp') {
+      if (typeof AssetERP !== 'undefined') AssetERP.render();
+    }
+
+    if (page === 'crm-erp') {
+      if (typeof CustomerCRM !== 'undefined') CustomerCRM.render();
+    }
+
+    if (page === 'procurement-erp') {
+      if (typeof ProcurementERP !== 'undefined') ProcurementERP.render();
+    }
+
+    if (page === 'facilities-erp') {
+      if (typeof FacilitiesERP !== 'undefined') FacilitiesERP.render();
+    }
+
     if (page === 'home') {
       Home.render();
     }
@@ -606,7 +744,28 @@ const Router = {
       'driver',
       'inventory-dash',
       'finance-dash',
-      'support-dash'
+      'support-dash',
+      'procurement-dash',
+      'warehouse-dash',
+      'analytics-dash',
+      'company-settings',
+      'documents-dash',
+      'attendance-dash',
+      'payroll-dash',
+      'branch-dash',
+      'crm-dash',
+      'company-os',
+      'ai-control',
+      'hr-erp',
+      'finance-erp',
+      'warehouse-erp',
+      'marketing-erp',
+      'workflow-erp',
+      'bi-erp',
+      'asset-erp',
+      'crm-erp',
+      'procurement-erp',
+      'facilities-erp'
     ].includes(page);
 
     const chatBtn =
@@ -644,78 +803,82 @@ const Router = {
   }
 };
 
+
+/* একটি registry থেকেই initial load, back/forward ও shareable staff URL resolve হয়। */
+Router.resolvePath = function(path) {
+  const normalizedPath = ('/' + String(path || '/').trim().replace(/^\/+|\/+$/g, '')).toLowerCase();
+  const productMatch = normalizedPath.match(/^\/product\/([a-z0-9_-]+)$/i);
+  if (productMatch) return { page: 'product', params: { id: productMatch[1] } };
+  const categoryMatch = normalizedPath.match(/^\/category\/([a-z0-9_-]+)$/i);
+  if (categoryMatch) return { page: 'listing', params: { cat: categoryMatch[1] } };
+
+  const routes = {
+    '/': 'home',
+    '/admin': 'admin-dash',
+    '/executive': 'admin-dash',
+    '/driver': 'driver',
+    '/manager': 'zone-manager',
+    '/zone-manager': 'zone-manager',
+    '/inventory': 'inventory-dash',
+    '/finance': 'finance-dash',
+    '/support': 'support-dash',
+    '/procurement': 'procurement-dash',
+    '/procurement-office': 'procurement-dash',
+    '/vendors': 'procurement-dash',
+    '/warehouse': 'warehouse-dash',
+    '/analytics': 'analytics-dash',
+    '/reports': 'analytics-dash',
+    '/company-settings': 'company-settings',
+    '/access-control': 'company-settings',
+    '/documents': 'documents-dash',
+    '/document-office': 'documents-dash',
+    '/attendance': 'attendance-dash',
+    '/time-office': 'attendance-dash',
+    '/payroll': 'payroll-dash',
+    '/payroll-office': 'payroll-dash',
+    '/branches': 'branch-dash',
+    '/branch-office': 'branch-dash',
+    '/crm': 'crm-dash',
+    '/customer-relationship': 'crm-dash',
+    '/company-os': 'company-os',
+    '/office': 'company-os',
+    '/ai-control': 'ai-control',
+    '/ai-center': 'ai-control',
+    '/hr-erp': 'hr-erp',
+    '/people-erp': 'hr-erp',
+    '/finance-erp': 'finance-erp',
+    '/accounting': 'finance-erp',
+    '/warehouse-erp': 'warehouse-erp',
+    '/wms': 'warehouse-erp',
+    '/marketing-erp': 'marketing-erp',
+    '/marketing-automation': 'marketing-erp',
+    '/workflow-erp': 'workflow-erp',
+    '/automation-engine': 'workflow-erp',
+    '/bi-erp': 'bi-erp',
+    '/business-intelligence': 'bi-erp',
+    '/asset-erp': 'asset-erp',
+    '/asset-management': 'asset-erp',
+    '/crm-erp': 'crm-erp',
+    '/customer-service-crm': 'crm-erp',
+    '/procurement-erp': 'procurement-erp',
+    '/vendor-erp': 'procurement-erp',
+    '/facilities-erp': 'facilities-erp',
+    '/branch-operations': 'facilities-erp',
+    '/custom-bazar': 'custom-bazar',
+    '/medical': 'medical',
+    '/myorders': 'myorders',
+    '/account': 'account',
+    '/about': 'about-app',
+    '/contact': 'contact',
+    '/terms': 'terms',
+    '/privacy': 'privacy-info'
+  };
+  return routes[normalizedPath] ? { page: routes[normalizedPath], params: {} } : null;
+};
+
 Router.navigate = function(path) {
-  const normalizedPath =
-    String(path || '/').toLowerCase();
-
-  if (normalizedPath === '/driver') {
-    Router.go(
-      'driver',
-      {},
-      {
-        skipHistory: true
-      }
-    );
-
-    return;
-  }
-
-  if (
-    normalizedPath === '/manager' ||
-    normalizedPath === '/zone-manager'
-  ) {
-    Router.go(
-      'zone-manager',
-      {},
-      {
-        skipHistory: true
-      }
-    );
-
-    return;
-  }
-
-  if (normalizedPath === '/inventory') {
-    Router.go(
-      'inventory-dash',
-      {},
-      {
-        skipHistory: true
-      }
-    );
-
-    return;
-  }
-
-  if (normalizedPath === '/finance') {
-    Router.go(
-      'finance-dash',
-      {},
-      {
-        skipHistory: true
-      }
-    );
-
-    return;
-  }
-
-  if (normalizedPath === '/support') {
-    Router.go(
-      'support-dash',
-      {},
-      {
-        skipHistory: true
-      }
-    );
-
-    return;
-  }
-
-  Router.go(
-    'home',
-    {},
-    {
-      skipHistory: true
-    }
-  );
+  const target = this.resolvePath(path);
+  if (!target) return false;
+  this.go(target.page, target.params, { skipHistory: true });
+  return true;
 };

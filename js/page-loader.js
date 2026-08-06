@@ -8,23 +8,21 @@
     { url: 'pages/cart-drawer.html',  slot: 'slot-cart-drawer' },
     { url: 'pages/mobnav.html',       slot: 'slot-mobnav' },
     { url: 'pages/chat-widget.html',  slot: 'slot-chat' },
-    { url: 'pages/toast.html',        slot: 'slot-toast' }
+    { url: 'pages/toast.html',        slot: 'slot-toast' },
+    { url: 'pages/modals.html',       slot: 'slot-modals' }
   ];
 
-  /* ⚠️ footer.html (~৩২KB) ও modals.html (~৩২KB) আগে blocking partials-এর
-     অংশ ছিল — home page দেখানোর আগেই এই ৬৪KB লোড+parse হতে হতো, যদিও এগুলো
-     নিচের দিকে/প্রয়োজন হলে দেখা যায়। এখন এগুলো pages-ready-এর পরে, নীরবে
-     ব্যাকগ্রাউন্ডে লোড হয় — first paint আটকায় না। */
+  /* Footer নিচের দিকে থাকে, তাই first paint-এর পরে নীরবে লোড হয়।
+     Auth ও form modal navigation-এর আগেই প্রয়োজন, তাই modals blocking partial। */
   const deferredPartials = [
-    { url: 'pages/footer.html', slot: 'slot-footer' },
-    { url: 'pages/modals.html', slot: 'slot-modals' }
+    { url: 'pages/footer.html', slot: 'slot-footer' }
   ];
 
   /* শুধু browsing-এর জন্য একদম প্রথমেই দরকার — বাকি সব পেজ এখন lazy */
   const pages = ['home','listing','product'];
 
   /* স্টাফ-অনলি + এখন থেকে বেশিরভাগ customer পেজও — শুধু প্রয়োজন হলে (Router.go কল হলে) লোড হবে */
-  window.__lazyPages = ['admin-dash','driver','zone-manager','inventory-dash','finance-dash','support-dash','checkout','myorders','wishlist','account','medical','custom-bazar','order-success','account-addresses','about-app','privacy-info','terms','contact'];
+  window.__lazyPages = ['admin-dash','driver','zone-manager','inventory-dash','finance-dash','support-dash','procurement-dash','warehouse-dash','analytics-dash','company-settings','documents-dash','attendance-dash','payroll-dash','branch-dash','crm-dash','company-os','ai-control','hr-erp','finance-erp','warehouse-erp','marketing-erp','workflow-erp','bi-erp','asset-erp','crm-erp','procurement-erp','facilities-erp','checkout','myorders','wishlist','account','medical','custom-bazar','order-success','account-addresses','about-app','privacy-info','terms','contact'];
   window.__loadedLazyPages = {};
 
   let pending = partials.length + pages.length;

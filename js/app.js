@@ -141,14 +141,14 @@ function initApp(){
   const role=new URLSearchParams(window.location.search).get('role');
   const hash=window.location.hash.replace('#','');
 
-  if(role==='driver'||path==='/driver'){
-    setTimeout(()=>Router.go('driver'),200);
-  } else if(role==='zone-manager'||path==='/manager'||path==='/zone-manager'){
-    setTimeout(()=>Router.go('zone-manager'),200);
- } else if(hash && (document.getElementById('page-'+hash) || (window.__lazyPages||[]).includes(hash))){
-    setTimeout(()=>Router.go(hash),200);
-  } else {
-    Router.go('home',{},{skipHash:true});
+  if(role==='driver'){
+    Router.go('driver',{}, {skipHistory:true});
+  } else if(role==='zone-manager'||role==='manager'){
+    Router.go('zone-manager',{}, {skipHistory:true});
+  } else if(hash && (document.getElementById('page-'+hash) || (window.__lazyPages||[]).includes(hash))){
+    Router.go(hash,{}, {skipHistory:true});
+  } else if(!Router.navigate(path)) {
+    Router.go('home',{}, {skipHistory:true});
   }
 
   if ('serviceWorker' in navigator) {

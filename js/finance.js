@@ -66,12 +66,13 @@ const FinanceDash = {
     this.renderRefunds();
     this.renderZoneBreakdown();
     this.renderCodByZone();
+    this.renderLedger();
   },
 
   async refresh(){ await this.render(); toast('✓ আপডেট হয়েছে','success'); },
 
   tab(btn,name){
-    ['overview','refunds','zones','cod'].forEach(t=>{
+    ['overview','refunds','zones','cod','ledger'].forEach(t=>{
       const el=document.getElementById('fin'+t.charAt(0).toUpperCase()+t.slice(1)+'Pane');
       if(el) el.style.display=t===name?'block':'none';
     });
@@ -80,6 +81,7 @@ const FinanceDash = {
     if(name==='refunds') this.renderRefunds();
     if(name==='zones') this.renderZoneBreakdown();
     if(name==='cod') this.renderCodByZone();
+    if(name==='ledger') this.renderLedger();
   },
 
   // ---------- Overview ----------
@@ -105,6 +107,90 @@ const FinanceDash = {
 
     this.renderRevenueChart(active);
     this.renderPayBreakdown(active);
+    this.renderFinanceCommand(active);
+  },
+
+  renderFinanceCommand(active){
+    const now=new Date();
+    const start=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+    const today=active.filter(o=>new Date(o.createdAt?.seconds*1000||o.createdAt||0)>=start);
+    const gross=active.reduce((s,o)=>s+this.orderTotal(o),0);
+    const todayRevenue=today.reduce((s,o)=>s+this.orderTotal(o),0);
+    const deliveredCod=active.filter(o=>o.paymentMethod==='cod'&&o.status==='delivered');
+    const codCollected=deliveredCod.reduce((s,o)=>s+this.orderTotal(o),0);
+    const codDeposited=deliveredCod.filter(o=>o.codDeposited).reduce((s,o)=>s+this.orderTotal(o),0);
+    const codReceivable=Math.max(0,codCollected-codDeposited);
+    const online=active.filter(o=>o.paymentMethod!=='cod').reduce((s,o)=>s+this.orderTotal(o),0);
+    const pendingRefunds=this._refunds.filter(r=>r.status==='pending');
+    const refundLiability=pendingRefunds.reduce((s,r)=>s+(Number(r.amount)||0),0);
+    const approvedRefunds=this._refunds.filter(r=>r.status==='approved').reduce((s,r)=>s+(Number(r.amount)||0),0);
+    const netCash=Math.max(0,online+codDeposited-approvedRefunds);
+    const avgOrder=active.length?gross/active.length:0;
+    const onlineShare=gross?Math.round((online/gross)*100):0;
+    const cancelled=this._orders.filter(o=>o.status==='cancelled').length;
+    const cancelRate=this._orders.length?Math.round(cancelled/this._orders.length*100):0;
+
+    let score=100;
+    if(codReceivable>0) score-=Math.min(30,Math.round(codReceivable/1000)*3);
+    score-=Math.min(25,pendingRefunds.length*5);
+    score-=Math.min(20,cancelRate);
+    const health=score>=80?['নিয়ন্ত্রিত','good']:score>=60?['মনোযোগ প্রয়োজন','watch']:['ঝুঁকিপূর্ণ','danger'];
+    const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+    set('finHealthScore',bn(Math.max(0,score))+'%'); set('finHealthLabel',health[0]);
+    const h=document.getElementById('finHealthScore'); if(h) h.dataset.state=health[1];
+    set('finTodayRevenue',money(todayRevenue)); set('finNetCash',money(netCash));
+    set('finReceivableCod',money(codReceivable)); set('finRefundLiability',money(refundLiability));
+    set('finAvgOrder',money(avgOrder)); set('finOnlineShare',bn(onlineShare)+'%');
+
+    const actions=[];
+    if(codReceivable>0) actions.push({level:'danger',icon:'💵',title:'COD আদায় বাকি',note:`${money(codReceivable)} শাখা থেকে জমা নেওয়া দরকার`,tab:'cod',label:'রিকনসাইল'});
+    if(pendingRefunds.length) actions.push({level:'watch',icon:'↩️',title:'রিফান্ড অনুমোদন বাকি',note:`${bn(pendingRefunds.length)}টি অনুরোধ, মোট ${money(refundLiability)}`,tab:'refunds',label:'রিভিউ'});
+    if(cancelRate>=10) actions.push({level:'watch',icon:'⚠️',title:'ক্যানসেলেশন বেশি',note:`মোট অর্ডারের ${bn(cancelRate)}% বাতিল হয়েছে`,tab:'ledger',label:'লেজার দেখুন'});
+    if(!actions.length) actions.push({level:'good',icon:'✓',title:'কোনো জরুরি আর্থিক ঝুঁকি নেই',note:'আজকের আর্থিক কার্যক্রম নিয়ন্ত্রণে আছে',tab:'overview',label:'ঠিক আছে'});
+    set('finActionCount',bn(actions.length)+'টি');
+    const list=document.getElementById('finActionList');
+    if(list) list.innerHTML=actions.map(a=>`<article class="finance-action-item ${a.level}"><span>${a.icon}</span><div><strong>${a.title}</strong><p>${a.note}</p></div><button onclick="FinanceDash.openTab('${a.tab}')">${a.label}</button></article>`).join('');
+    this.renderCashFlow(active);
+  },
+
+  openTab(name){
+    const btn=[...document.querySelectorAll('#page-finance-dash .zm-tabs button')].find(b=>b.getAttribute('onclick')?.includes(`'${name}'`));
+    if(btn) this.tab(btn,name);
+  },
+
+  renderCashFlow(orders){
+    const days=[]; const now=new Date();
+    for(let i=6;i>=0;i--){
+      const d=new Date(now); d.setDate(d.getDate()-i); const ds=d.toDateString();
+      const day=orders.filter(o=>new Date(o.createdAt?.seconds*1000||o.createdAt||0).toDateString()===ds);
+      const inflow=day.reduce((s,o)=>s+this.orderTotal(o),0);
+      const refunds=this._refunds.filter(r=>new Date(r.createdAt?.seconds*1000||r.createdAt||0).toDateString()===ds&&r.status==='approved').reduce((s,r)=>s+(Number(r.amount)||0),0);
+      days.push({label:['রবি','সোম','মঙ্গ','বুধ','বৃহ','শুক্র','শনি'][d.getDay()],net:inflow-refunds});
+    }
+    const max=Math.max(...days.map(d=>Math.abs(d.net)),1);
+    const total=days.reduce((s,d)=>s+d.net,0); const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+    set('finCashFlowTotal',money(total));
+    const el=document.getElementById('finCashFlowBars');
+    if(el) el.innerHTML=days.map(d=>`<div><span>${money(d.net)}</span><i style="height:${Math.max(8,Math.abs(d.net)/max*100)}%" class="${d.net<0?'negative':''}"></i><small>${d.label}</small></div>`).join('');
+  },
+
+  renderLedger(){
+    const tbody=document.getElementById('finLedgerTable'); if(!tbody) return;
+    const method=document.getElementById('finLedgerMethod')?.value||'';
+    const status=document.getElementById('finLedgerStatus')?.value||'';
+    let rows=this._orders.slice().filter(o=>(!method||o.paymentMethod===method)&&(!status||o.status===status));
+    rows.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+    const labels={cod:'COD',bkash:'bKash',nagad:'Nagad'};
+    tbody.innerHTML=rows.slice(0,200).map(o=>`<tr><td>${formatTime(o.createdAt)}</td><td>${esc(o.orderNumber||o.id?.slice(-6)||'—')}</td><td>${esc(BRANCH_INFO[o.branchZone]?.label||o.branchZone||'—')}</td><td>${labels[o.paymentMethod]||o.paymentMethod||'COD'}</td><td style="font-weight:700;color:var(--rose)">${money(this.orderTotal(o))}</td><td>${o.paymentMethod==='cod'?(o.codDeposited?'<span style="color:#16a34a">জমা</span>':'<span style="color:#dc2626">বাকি</span>'):'—'}</td><td>${esc(ORDER_STATUS[o.status]?.label||o.status||'—')}</td></tr>`).join('')||'<tr><td colspan="7" style="text-align:center;padding:18px;color:var(--ink-muted)">কোনো লেনদেন পাওয়া যায়নি</td></tr>';
+  },
+
+  exportFinanceReport(){
+    const active=this._orders.filter(o=>o.status!=='cancelled');
+    const rows=[['Order','Date','Branch','Payment','Status','Amount','COD Deposited']];
+    active.forEach(o=>rows.push([o.orderNumber||o.id||'',formatTime(o.createdAt),BRANCH_INFO[o.branchZone]?.label||o.branchZone||'',o.paymentMethod||'cod',o.status||'',this.orderTotal(o),o.codDeposited?'yes':'no']));
+    const csv=rows.map(r=>r.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\n');
+    const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}); const url=URL.createObjectURL(blob);
+    const a=document.createElement('a'); a.href=url; a.download=`golapi-finance-report-${new Date().toISOString().slice(0,10)}.csv`; a.click(); URL.revokeObjectURL(url);
   },
 
   renderRevenueChart(orders){

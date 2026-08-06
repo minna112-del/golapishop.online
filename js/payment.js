@@ -182,7 +182,8 @@ const PaymentGateway = {
       try{ localStorage.removeItem('golapi_pending_payment'); }catch(e){}
       this.closeModal();
       toast('✓ অর্ডার বাতিল হয়েছে, পণ্য আবার কার্টে ফিরিয়ে দেওয়া হয়েছে', 'success');
-      Router.go('cart');
+      Router.go('home');
+      setTimeout(() => Cart.open(), 0);
     }catch(e){
       toast('বাতিল ব্যর্থ: ' + e.message, 'error');
     }

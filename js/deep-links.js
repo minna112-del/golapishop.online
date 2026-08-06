@@ -19,7 +19,11 @@
 
 const DeepLinkHandler = {
   init() {
-    this.handleCurrentUrl();
+    if (document.getElementById('page-home')) {
+      this.handleCurrentUrl();
+    } else {
+      document.addEventListener('pages-ready', () => this.handleCurrentUrl(), { once: true });
+    }
 
     // Listen for URL changes (TWA navigation, back/forward)
     window.addEventListener('popstate', () => this.handleCurrentUrl());
@@ -45,67 +49,43 @@ const DeepLinkHandler = {
     const path = window.location.pathname.toLowerCase();
     const search = new URLSearchParams(window.location.search);
 
-    // ── Static route mapping ──
-    const routes = {
-      '/': 'home',
-      '/driver': 'driver',
-      '/manager': 'zone-manager',
-      '/zone-manager': 'zone-manager',
-      '/custom-bazar': 'custom-bazar',
-      '/medical': 'medical',
-      '/myorders': 'myorders',
-      '/account': 'account',
-      '/about': 'about-app',
-      '/contact': 'contact',
-      '/terms': 'terms',
-      '/privacy': 'privacy-info'
-    };
-
     // Check role param (legacy support: ?role=driver)
     const role = search.get('role');
-    if (role === 'driver') { this.navigate('driver'); return; }
-    if (role === 'zone-manager' || role === 'manager') { this.navigate('zone-manager'); return; }
+    if (role === 'driver') return this.navigate('driver');
+    if (role === 'zone-manager' || role === 'manager') return this.navigate('zone-manager');
 
-    // ── Dynamic route: /product/:id ──
-    const productMatch = path.match(/^\/product\/([a-z0-9_-]+)$/i);
-    if (productMatch) { this.navigate('product', { id: productMatch[1] }); return; }
-
-    // ── Dynamic route: /category/:cat ──
-    const categoryMatch = path.match(/^\/category\/([a-z0-9_-]+)$/i);
-    if (categoryMatch) { this.navigate('listing', { cat: categoryMatch[1] }); return; }
-
-    // Check static path-based routing
-    const targetRoute = routes[path];
-    if (targetRoute && targetRoute !== 'home') { this.navigate(targetRoute); return; }
+    // Public, staff, alias ও dynamic URL একই registry থেকে resolve হয়।
+    if (typeof Router !== 'undefined') {
+      const target = Router.resolvePath(path);
+      if (target) return this.navigate(target.page, target.params);
+    }
 
     // Check hash-based routing (পুরনো #লিংক-এর ব্যাকওয়ার্ড কম্প্যাটিবিলিটি)
     const hash = window.location.hash.replace('#', '');
-    if (hash && routes['/' + hash]) { this.navigate(routes['/' + hash]); return; }
+    if (hash && (document.getElementById('page-' + hash) || (window.__lazyPages || []).includes(hash))) {
+      return this.navigate(hash);
+    }
+
+    return false;
   },
 
   navigate(page, params = {}) {
     // Only navigate if Router is available and page/params actually changed
-    if (typeof Router === 'undefined') return;
+    if (typeof Router === 'undefined') return false;
     const sameParams = JSON.stringify(Router.params||{}) === JSON.stringify(params);
-    if (Router.current === page && sameParams) return;
+    if (Router.current === page && sameParams) return true;
     console.log(`DeepLink: Navigating to ${page}`, params);
     Router.go(page, params, { skipHistory: true }); // URL ইতিমধ্যেই সঠিক, তাই router আবার pushState করবে না
+    return true;
   },
 
   // Helper: Build shareable deep link URLs (Share বাটন/কপি-লিংক ফিচারের জন্য ব্যবহার করা যায়)
   buildUrl(page, params = {}) {
-    const pathMap = {
-      'home': '/',
-      'driver': '/driver',
-      'zone-manager': '/manager',
-      'custom-bazar': '/custom-bazar',
-      'medical': '/medical',
-      'myorders': '/myorders',
-      'about-app': '/about',
-      'contact': '/contact',
-      'terms': '/terms',
-      'privacy-info': '/privacy'
-    };
+    const pathMap = Object.assign({
+      home: '/', 'zone-manager': '/zone-manager', 'custom-bazar': '/custom-bazar',
+      medical: '/medical', myorders: '/myorders', 'about-app': '/about',
+      contact: '/contact', terms: '/terms', 'privacy-info': '/privacy'
+    }, typeof Router !== 'undefined' ? Router.staffPaths : {});
     let path = pathMap[page] || '/';
     if (page === 'product' && params.id) path = `/product/${params.id}`;
     if (page === 'listing' && params.cat) path = `/category/${params.cat}`;
