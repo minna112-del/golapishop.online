@@ -1,5 +1,5 @@
 /* sw.js — Golapi Shop Offline Service Worker (network-first) */
-const CACHE = 'golapi-v78';
+const CACHE = 'golapi-v79-phase35-final';
 const OFFLINE_URL = '/offline.html';
 /* ⚠️ আগে এখানে admin/driver/zone-manager/checkout/account ইত্যাদি সব পেজ+JS
    pre-cache হতো — যদিও page-loader.js/router.js এগুলো lazy করে দিয়েছে, Service
@@ -14,6 +14,7 @@ const ASSETS = [
   '/manifest.json',
   OFFLINE_URL,
   '/css/style.css',
+  '/css/components.css',
   '/js/utils.js',
   '/js/data.js',
   '/js/store.js',
@@ -35,6 +36,7 @@ const ASSETS = [
   '/pages/header.html',
   '/pages/mobnav.html',
   '/pages/toast.html',
+  '/pages/modals.html',
   '/icons/head_logo.webp',
   '/icons/head_logo-192.webp',
   '/icons/dr_logo.webp',
