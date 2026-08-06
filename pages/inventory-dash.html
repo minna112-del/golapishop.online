@@ -32,6 +32,34 @@
 
       <main class="zm-content">
         <section id="invOverviewPane">
+          <section class="inv-command" aria-labelledby="invCommandTitle">
+            <div class="inv-health-card">
+              <div class="inv-health-copy">
+                <span class="eyebrow">Inventory Intelligence</span>
+                <h2 id="invCommandTitle">স্টক স্বাস্থ্য ও আজকের অগ্রাধিকার</h2>
+                <p id="invHealthSummary">স্টক ডেটা বিশ্লেষণ করা হচ্ছে…</p>
+              </div>
+              <div class="inv-health-score" aria-label="ইনভেন্টরি হেলথ স্কোর">
+                <strong id="invHealthScore">০</strong><span>/১০০</span>
+                <small id="invHealthLabel">বিশ্লেষণ চলছে</small>
+              </div>
+            </div>
+            <div class="inv-command-actions">
+              <button class="btn btn-primary" type="button" onclick="InventoryDash.createCriticalRestockRequests()">জরুরি রিস্টক তৈরি</button>
+              <button class="btn btn-outline" type="button" onclick="InventoryDash.exportStockCsv()">CSV রিপোর্ট</button>
+              <button class="btn btn-outline" type="button" onclick="InventoryDash.refresh()">↻ রিফ্রেশ</button>
+            </div>
+          </section>
+
+          <div class="inv-kpi-grid">
+            <article class="inv-kpi"><span>মোট ইউনিট হাতে</span><strong id="invUnitsOnHand">০</strong><small>সব শাখা মিলিয়ে</small></article>
+            <article class="inv-kpi"><span>সক্রিয় SKU</span><strong id="invActiveSku">০</strong><small>বিক্রির জন্য প্রস্তুত</small></article>
+            <article class="inv-kpi"><span>নিষ্ক্রিয় SKU</span><strong id="invInactiveSku">০</strong><small>পর্যালোচনা প্রয়োজন</small></article>
+            <article class="inv-kpi"><span>পেন্ডিং রিস্টক</span><strong id="invPendingRestock">০</strong><small>সাপ্লাই সিদ্ধান্ত অপেক্ষমাণ</small></article>
+          </div>
+
+          <div id="invPriorityActions" class="inv-priority-list" aria-live="polite"></div>
+
           <div class="stat-grid zm-stat-grid">
             <article class="stat-card"><div class="lbl">মোট প্রোডাক্ট</div><div class="val" id="invStatTotal">০</div></article>
             <article class="stat-card"><div class="lbl">লো স্টক</div><div class="val rose" id="invStatLow">০</div></article>
@@ -39,6 +67,7 @@
             <article class="stat-card"><div class="lbl">আজকের আপডেট</div><div class="val" id="invStatUpdatedToday">০</div></article>
           </div>
           <div id="invLowStockAlerts" class="zm-alert-card" style="display:none"><h2>স্টক সতর্কতা</h2><div id="invLowStockList"></div></div>
+          <div id="invBranchRiskGrid" class="inv-branch-risk-grid"></div>
           <div class="zm-overview-grid">
             <article class="card-box">
               <div class="section-head"><div><span class="eyebrow">পারফরম্যান্স</span><h2>শাখাভিত্তিক স্টক অবস্থা</h2></div></div>
@@ -63,6 +92,8 @@
                 <option value="">সব স্টক</option>
                 <option value="low">লো স্টক (≤৫)</option>
                 <option value="out">স্টক আউট</option>
+                <option value="healthy">স্বাস্থ্যকর স্টক (&gt;৫)</option>
+                <option value="inactive">নিষ্ক্রিয় পণ্য</option>
               </select>
             </div>
           </div>
