@@ -216,13 +216,13 @@
 
 <div class="modal" id="ownerGateModal">
   <div class="modal-box" style="position:relative;text-align:center">
-    <button class="close" onclick="OwnerAuth.cancel()">✕</button>
-    <h3 class="tiro" style="font-size:18px;margin-bottom:6px">🔒 Owner Dashboard</h3>
-    <p style="color:var(--ink-muted);font-size:13px;margin-bottom:16px">ইমেইল ও পাসওয়ার্ড দিয়ে আনলক করুন</p>
+    <button class="close" type="button" onclick="StaffAccess.cancel()">✕</button>
+    <h3 class="tiro" id="ownerGateTitle" style="font-size:18px;margin-bottom:6px" data-bn="Staff Workspace" data-en="Staff Workspace">Staff Workspace</h3>
+    <p id="ownerGateText" style="color:var(--ink-muted);font-size:13px;margin-bottom:16px" data-bn="অনুমোদিত staff account দিয়ে প্রবেশ করুন" data-en="Sign in with an authorized staff account">অনুমোদিত staff account দিয়ে প্রবেশ করুন</p>
     <div id="ownerGateMsg" class="form-msg"></div>
     <input type="email" id="ownerEmail" placeholder="ইমেইল" autocomplete="username" style="width:100%;background:color-mix(in srgb,var(--ink) 4%,transparent);border:1px solid var(--line-l);border-radius:11px;padding:13px;color:var(--ink);margin-bottom:10px;font-size:14px">
     <input type="password" id="ownerPassword" placeholder="পাসওয়ার্ড" autocomplete="current-password" style="width:100%;background:color-mix(in srgb,var(--ink) 4%,transparent);border:1px solid var(--line-l);border-radius:11px;padding:13px;color:var(--ink);margin-bottom:14px;font-size:14px">
-    <button class="btn btn-gold btn-block" onclick="OwnerAuth.unlock()">আনলক করুন</button>
+    <button class="btn btn-gold btn-block" id="ownerGateSubmit" type="button" onclick="StaffAccess.unlock()" data-bn="Workspace খুলুন" data-en="Open workspace">Workspace খুলুন</button>
   </div>
 </div>
 

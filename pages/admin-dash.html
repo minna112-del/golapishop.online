@@ -113,6 +113,7 @@
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
             <h2 class="tiro" style="font-size:19px">অর্ডার ম্যানেজমেন্ট</h2>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <input id="orderSearch" type="search" placeholder="অর্ডার, কাস্টমার বা ফোন খুঁজুন" oninput="AdminDash.filterOrders()" style="padding:8px 12px;border-radius:10px;background:color-mix(in srgb,var(--ink) 4%,transparent);border:1px solid var(--line);color:var(--ink);font-size:13px;min-width:210px">
               <select id="orderStatusFilter" onchange="AdminDash.filterOrders()" style="padding:8px 12px;border-radius:10px;background:color-mix(in srgb,var(--ink) 4%,transparent);border:1px solid var(--line);color:var(--ink);font-size:13px">
                 <option value="">সব স্ট্যাটাস</option>
                 <option value="pending">পেন্ডিং</option>

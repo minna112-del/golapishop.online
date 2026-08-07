@@ -74,6 +74,7 @@
           <article><strong>2</strong><h3>Command Search</h3><p>Ctrl/⌘ + K চাপলে যেকোনো অনুমোদিত Workspace দ্রুত খুঁজে পাবেন।</p></article>
           <article><strong>3</strong><h3>Access Control</h3><p>Workspace না দেখালে Executive Office থেকে permission matrix যাচাই করুন।</p></article>
           <article><strong>4</strong><h3>Account Security</h3><p>কাজ শেষে Sign Out করুন এবং নিজের account অন্য কারও সঙ্গে শেয়ার করবেন না।</p></article>
+          <article><strong>5</strong><h3>Always-on Session</h3><p>Company OS খোলার পর session সক্রিয় থাকে। সমর্থিত ব্রাউজারে নিচের “ডিসপ্লে সচল” control স্ক্রিন জাগ্রত রাখে এবং tab-এ ফিরে এলে স্বয়ংক্রিয়ভাবে আবার চালু হয়।</p></article>
         </div>
       </section>
     </main>
@@ -81,7 +82,7 @@
     <footer class="company-os-taskbar">
       <button class="company-os-start" type="button" onclick="CompanyOS.toggleStart()">◈ <span>Start</span></button>
       <div class="company-os-pinned-apps" id="companyOsPinnedApps"></div>
-      <div class="company-os-taskbar-status"><span id="companyOsConnection">● Online</span><b id="companyOsTaskClock">--:--</b></div>
+      <div class="company-os-taskbar-status"><button class="company-os-wake-lock" id="companyOsWakeLock" type="button" data-state="idle" aria-pressed="false" onclick="BusinessOSRuntime.requestWakeLock()">○ ডিসপ্লে সচল রাখুন</button><span id="companyOsConnection">● Online</span><b id="companyOsTaskClock">--:--</b></div>
     </footer>
   </div>
 

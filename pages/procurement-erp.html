@@ -11,7 +11,7 @@
   </div>
 </header>
 
-<div id="procEmployeeWorkspace"></div>
+<div id="procErpEmployeeWorkspace"></div>
 
 <main class="sec procurement-office">
   <section class="procurement-hero">
@@ -46,7 +46,7 @@
     <button onclick="ProcurementERP.tab('invoices',this)">Invoice Matching</button>
   </section>
 
-  <section id="procRequestsPane">
+  <section id="procErpRequestsPane">
     <div class="office-panel-head"><h2>Purchase Requests</h2><button class="btn btn-gold" onclick="ProcurementERP.open('procRequestModal')">+ Request</button></div>
     <div id="procRequestList" class="procurement-list"></div>
   </section>
@@ -61,7 +61,7 @@
     <div id="procQuoteList" class="procurement-list"></div>
   </section>
 
-  <section id="procOrdersPane" hidden>
+  <section id="procErpOrdersPane" hidden>
     <div class="office-panel-head"><h2>Purchase Orders</h2></div>
     <div id="procOrderList" class="procurement-list"></div>
   </section>
@@ -114,19 +114,19 @@
   </div>
 </div>
 
-<div class="employee-modal" id="procQuoteModal">
-  <div class="employee-modal-backdrop" onclick="ProcurementERP.close('procQuoteModal')"></div>
+<div class="employee-modal" id="procErpQuoteModal">
+  <div class="employee-modal-backdrop" onclick="ProcurementERP.close('procErpQuoteModal')"></div>
   <div class="employee-modal-card procurement-modal">
-    <button class="employee-modal-close" onclick="ProcurementERP.close('procQuoteModal')">×</button>
+    <button class="employee-modal-close" onclick="ProcurementERP.close('procErpQuoteModal')">×</button>
     <h2>Vendor Quotation</h2>
     <div class="procurement-form">
       <label>Purchase Request<select id="procQuoteRequest"></select></label>
-      <label>Vendor<select id="procQuoteVendor"></select></label>
+      <label>Vendor<select id="procErpQuoteVendor"></select></label>
       <label>Unit Price<input id="procQuotePrice" type="number" min="0"></label>
       <label>Delivery Days<input id="procQuoteDays" type="number" min="0"></label>
-      <label>Payment Terms<input id="procQuoteTerms"></label>
+      <label>Payment Terms<input id="procErpQuoteTerms"></label>
       <label>Validity Date<input id="procQuoteValidity" type="date"></label>
-      <label class="procurement-full">Notes<textarea id="procQuoteNotes" rows="4"></textarea></label>
+      <label class="procurement-full">Notes<textarea id="procErpQuoteNotes" rows="4"></textarea></label>
     </div>
     <button class="btn btn-gold" onclick="ProcurementERP.saveQuote()">Save Quotation</button>
   </div>

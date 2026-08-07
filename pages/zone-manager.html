@@ -42,6 +42,17 @@
           </div>
           <div id="zmInventoryAlerts" class="zm-alert-card" style="display:none"><h2>স্টক সতর্কতা</h2><div id="zmInventoryAlertList"></div></div>
           <div class="zm-overview-grid">
+            <article class="card-box">
+              <div class="section-head"><div><span class="eyebrow">COD হিসাব</span><h2>ক্যাশ জমার অগ্রগতি</h2></div></div>
+              <div class="stat-grid"><div class="stat-card"><div class="lbl">সংগ্রহ</div><div class="val" id="zmCodCollected">৳০</div></div><div class="stat-card"><div class="lbl">জমা</div><div class="val" id="zmCodDeposited">৳০</div></div><div class="stat-card"><div class="lbl">বাকি</div><div class="val rose" id="zmCodPending">৳০</div></div></div>
+              <div style="height:8px;border-radius:999px;background:var(--line);overflow:hidden;margin-top:12px"><div id="zmCodBar" style="height:100%;width:0;background:var(--gold);transition:width .25s ease"></div></div>
+            </article>
+            <article class="card-box" id="zmEscalationCard" style="display:none">
+              <div class="section-head"><div><span class="eyebrow">জরুরি সহায়তা</span><h2>খোলা Escalation</h2></div></div>
+              <div id="zmEscalationList"></div>
+            </article>
+          </div>
+          <div class="zm-overview-grid">
             <article class="card-box"><div class="section-head"><div><span class="eyebrow">পারফরম্যান্স</span><h2>গত ৭ দিনের বিক্রি</h2></div></div><div id="zmRevenueChart" class="zm-chart"></div><div id="zmChartLabels" class="zm-chart-labels"></div></article>
             <article class="card-box"><div class="section-head"><div><span class="eyebrow">সাম্প্রতিক</span><h2>সাম্প্রতিক অর্ডার</h2></div></div><div class="table-scroll"><table class="data-table"><thead><tr><th>ID</th><th>কাস্টমার</th><th>মোট</th><th>স্ট্যাটাস</th><th></th></tr></thead><tbody id="zmRecentOrders"></tbody></table></div></article>
           </div>
