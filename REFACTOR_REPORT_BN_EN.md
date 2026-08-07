@@ -1,5 +1,20 @@
 # Golapi Shop Refactor Report / রিফ্যাক্টর রিপোর্ট
 
+## v2.4 unified Website + Customer APK + Driver APK
+
+- একই repository থেকে Netlify website, `/driver/` web app, Customer APK এবং Driver APK পরিচালিত হয়।
+- Customer/Driver Android shell live HTTPS deploy চালায়; website deploy-ই app content update। Visible app সর্বোচ্চ পাঁচ মিনিটে নতুন release দেখে নিরাপদ অবস্থায় নিজে refresh করে।
+- Active checkout/staff form বা live Driver delivery চলাকালে forced refresh হয় না; পরের safe state/launch-এ update নেয়।
+- Driver-এর simulation/test delivery, hardcoded offer/date/referral, fake earnings hours, stock avatar এবং Dhaka fallback coordinate অপসারণ করা হয়েছে।
+- Driver orders, branches, opportunities, tips, earnings, payouts, profile ও preferences live Firestore records থেকে আসে।
+- এক GitHub Actions matrix Customer ও Driver APK বানায়; configured secrets থাকলে stable signed release, না থাকলে test APK তৈরি হয়।
+- সব public, Admin, Business OS এবং staff dashboard-এর canonical URL `docs/DASHBOARD-URLS-BN.md`-এ নথিভুক্ত।
+
+- One repository now owns the Netlify storefront, `/driver/` web app, Customer APK, and Driver APK.
+- Both Android shells load the live HTTPS deployment, making a site deployment the app-content update.
+- Driver mock/simulation paths were removed in favor of live Firestore data and honest empty states.
+- A single matrix workflow builds both Android applications and supports stable release signing.
+
 ## v2.2 production audit / প্রোডাকশন অডিট
 
 - Firebase ready event-এর আগে `window.FB` bridge তৈরি হয়েছে; Admin, Attendance, Payroll, CRM, HR/Finance ERP ও Company OS আর ভুল connection error দেখাবে না।

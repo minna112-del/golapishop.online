@@ -1,18 +1,34 @@
 # Golapi Shop Online — Unified Repository
 
-এই repository-তেই customer storefront, admin/Business OS এবং নিজস্ব delivery
-Driver app রাখা হয়েছে। Storefront source root-এ এবং React/Vite/Capacitor Driver
-source `driver-app/`-এ থাকে। Netlify `npm run build` চালিয়ে একই deploy-এর মধ্যে
+এই repository-তেই customer storefront, admin/Business OS, Customer Android shell
+এবং নিজস্ব delivery Driver app রাখা হয়েছে। Storefront source root-এ, Customer
+Capacitor shell `customer-app/`-এ এবং React/Vite/Capacitor Driver source
+`driver-app/`-এ থাকে। Netlify `npm run build` চালিয়ে একই deploy-এর মধ্যে
 storefront `/` এবং Driver app `/driver/` URL-এ প্রকাশ করে।
 
 - Website deploy: repository root Netlify-তে connect করুন; build configuration
   `netlify.toml` থেকেই নেওয়া হবে।
 - Driver web app: `https://www.golapishop.online/driver/`
-- Driver Android APK: GitHub Actions-এর `Build Golapi Driver Android APK`
-  workflow manually run করুন।
+- Customer ও Driver APK: GitHub Actions-এর `Build Golapi Customer and Driver APKs`
+  workflow manually run করলে একই run-এ দুইটি artifact তৈরি হয়।
 - Firebase: storefront ও Driver app একই Firebase project/collections ব্যবহার করে।
+- Dashboard URL: `docs/DASHBOARD-URLS-BN.md`।
 
-পুরোনো আলাদা Driver repository বা Driver ZIP আর দরকার নেই।
+## Website update = App update
+
+Customer APK live `https://www.golapishop.online/` এবং Driver APK live
+`https://www.golapishop.online/driver/` চালায়। তাই website/Driver web deploy হলেই
+installed app পরের launch-এ সর্বশেষ UI/logic নেয়; app খোলা থাকলে release checker
+সর্বোচ্চ পাঁচ মিনিটের মধ্যে নতুন deploy দেখে নিজে refresh করে। Customer বা Driver-কে
+APK download/install করতে হয় না।
+
+শুধু native Android package, permission বা Capacitor engine বদলালে নতুন signed APK
+লাগে। Normal Android security অনুযায়ী Play Store/MDM/device-owner ছাড়া কোনো app
+নিজের APK silently replace করতে পারে না। একই signing key ব্যবহার করলে নতুন APK
+পুরোনোটির ওপর install করা যায়; workflow `ANDROID_KEYSTORE_*` GitHub secrets পেলে
+stable signed release APK বানায়, না পেলে শুধু test APK বানায়।
+
+পুরোনো আলাদা Customer/Driver repository বা Driver ZIP আর দরকার নেই।
 
 # Previous project documentation
 
@@ -68,7 +84,8 @@ index.html (~3 KB স্কেলিটন, শুধু <div id="slot-...">/<ma
 | `js/pages.js` | Home, Listing, PDP, Cart, Checkout, CustomBazar — মূল কাস্টমার লজিক |
 | `js/core/app-registry.js` | ৪২টি route, ২৭টি staff workspace, controller ও lazy dependency registry |
 | `js/core/i18n.js` | Static ও dynamic বাংলা/English UI lifecycle |
-| `js/driver.js` | ড্রাইভার পোর্টাল — Accept/Reject, GPS/battery প্যানেল, নেভিগেশন |
+| `driver-app/` | React Driver web app ও Capacitor Android shell — live orders, GPS, earnings, payout ও navigation |
+| `customer-app/` | Customer Capacitor Android shell — live storefront URL |
 | `js/admin.js` | Admin Dashboard — প্রোডাক্ট, অর্ডার, Delivery Pricing, Delivery Zone এডিটর |
 | `js/zone-manager.js` | শাখা ম্যানেজার পোর্টাল |
 | `js/firebase-init.js` | Firebase config, Auth/Firestore/Storage/Messaging সেটআপ, push token registration |
@@ -90,7 +107,7 @@ index.html (~3 KB স্কেলিটন, শুধু <div id="slot-...">/<ma
 - **Google Maps** (Places Autocomplete + Geocoding + Distance Matrix) — `index.html`-এ `window.GOOGLE_MAPS_API_KEY` বসাতে হয়
 - **Delivery Zone:** প্রতিটা শাখার (সদর/বেগমগঞ্জ) নিচে বৃত্তাকার Zone A/B/C (radius + flat fee) — Admin Panel থেকে লাইভ-এডিটেবল, `setting/delivery_zones` Firestore ডকুমেন্টে সেভ থাকে
 - **Checkout-এ লোকেশন বাধ্যতামূলক** — ম্যাপে পিন না করলে অর্ডার confirm হয় না; Zone-এর বাইরে হলে ব্লক
-- **LocationService** (`location.js`) — GPS watch, battery status, bearing calculation — একটাই শেয়ার্ড মডিউল, driver.js ও ভবিষ্যতের native app (TWA/Android/iOS WebView) একই কোড ব্যবহার করবে
+- **Customer tracking** (`location.js`, `livemap.js`) এবং **Driver tracking** (`driver-app/src/context/DriverContext.tsx`) একই order-এর Firestore coordinates/status ব্যবহার করে।
 
 ---
 
@@ -133,4 +150,4 @@ Admin Panel → সেটিংস → "🚚 ডেলিভারি প্র�
 
 - **Netlify** — `netlify.toml`-এ SPA rewrite + security headers + TWA `assetlinks.json` হেডার সেট করা আছে
 - **Cache বাম্প করতে ভুলো না** — `sw.js`-এর `CACHE = 'golapi-vX'` সংখ্যা প্রতিবার বড় আপডেটে বাড়াতে হবে, নইলে পুরনো ইউজারদের কাছে পুরনো ভার্সন cache-এ আটকে থাকবে
-- **TWA/Native-ready** — সব লোকেশন/নোটিফিকেশন লজিক browser-standard API (Geolocation, Battery, Web Push) দিয়ে বানানো, তাই ভবিষ্যতে Android/iOS WebView wrapper-এও কোড rewrite ছাড়াই কাজ করবে
+- **Native live shells** — Customer ও Driver Capacitor config live HTTPS deploy চালায়; Android project ও APK একই repository workflow থেকে তৈরি হয়।

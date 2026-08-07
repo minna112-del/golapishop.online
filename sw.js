@@ -1,5 +1,5 @@
 /* sw.js — Golapi Shop Offline Service Worker (network-first) */
-const CACHE = 'golapi-v84-unified-driver-app';
+const CACHE = 'golapi-v85-live-customer-driver-apps';
 const OFFLINE_URL = '/offline.html';
 /* ⚠️ আগে এখানে admin/driver/zone-manager/checkout/account ইত্যাদি সব পেজ+JS
    pre-cache হতো — যদিও page-loader.js/router.js এগুলো lazy করে দিয়েছে, Service
@@ -123,6 +123,7 @@ self.addEventListener('fetch', event => {
   // Let its own hashed assets and navigation responses bypass the storefront
   // cache so an older cached storefront /driver route can never cover it.
   const requestUrl = new URL(request.url);
+  if (requestUrl.pathname === '/app-version.json') return;
   if (requestUrl.pathname === '/driver' || requestUrl.pathname.startsWith('/driver/')) return;
 
   // ⚠️ আগে img retry-এর সময় যোগ করা "?retry=timestamp" প্যারামিটার সহ প্রতিটা
