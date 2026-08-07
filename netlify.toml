@@ -2,14 +2,15 @@
 # Place this file in the ROOT of your golapishop.online repository
 
 [build]
-  publish = "."
+  command = "npm run build"
+  publish = "dist"
 
 # ─── SPA Rewrites ─────────────────────────────────────────────
 # All unknown paths serve index.html so the JS router can handle them
 
 [[redirects]]
   from = "/driver"
-  to = "/index.html"
+  to = "/driver/index.html"
   status = 200
   force = false
 
@@ -21,7 +22,7 @@
 
 [[redirects]]
   from = "/driver/*"
-  to = "/index.html"
+  to = "/driver/index.html"
   status = 200
   force = false
 
@@ -56,7 +57,7 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "geolocation=(self)"
     Strict-Transport-Security = "max-age=31536000; includeSubDomains"
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://maps.googleapis.com https://unpkg.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.googleapis.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebasestorage.googleapis.com https://golapi-chat-proxy.studiomt46.workers.dev https://www.google-analytics.com https://analytics.google.com https://api.sslwireless.com https://api.bdbulksms.net wss://*.firebaseio.com; frame-src 'self' https://www.googletagmanager.com; object-src 'none'; base-uri 'self'; frame-ancestors 'self'; upgrade-insecure-requests"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://maps.googleapis.com https://unpkg.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.googleapis.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebasestorage.googleapis.com https://golapi-chat-proxy.studiomt46.workers.dev https://golapi-sms-proxy.studiomt46.workers.dev https://www.google-analytics.com https://analytics.google.com wss://*.firebaseio.com; frame-src 'self' https://www.googletagmanager.com; object-src 'none'; base-uri 'self'; frame-ancestors 'self'; upgrade-insecure-requests"
 
 # Asset Links — required for TWA deep linking
 [[headers]]
@@ -109,6 +110,16 @@
   for = "/sw.js"
   [headers.values]
     Cache-Control = "no-cache, no-store, must-revalidate"
+
+[[headers]]
+  for = "/driver/index.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+[[headers]]
+  for = "/driver/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
 # ─── Static images/icons — এগুলো কার্যত অপরিবর্তনীয়, তাই দীর্ঘমেয়াদি cache ───
 # (নতুন ছবি সবসময় নতুন filename-এ যোগ হয়, তাই stale হওয়ার ঝুঁকি নেই)
 [[headers]]

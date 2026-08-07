@@ -1,5 +1,5 @@
 /* sw.js — Golapi Shop Offline Service Worker (network-first) */
-const CACHE = 'golapi-v79-phase35-final';
+const CACHE = 'golapi-v84-unified-driver-app';
 const OFFLINE_URL = '/offline.html';
 /* ⚠️ আগে এখানে admin/driver/zone-manager/checkout/account ইত্যাদি সব পেজ+JS
    pre-cache হতো — যদিও page-loader.js/router.js এগুলো lazy করে দিয়েছে, Service
@@ -15,6 +15,12 @@ const ASSETS = [
   OFFLINE_URL,
   '/css/style.css',
   '/css/components.css',
+  '/css/home.css',
+  '/css/runtime.css',
+  '/js/core/translations-en.js',
+  '/js/core/i18n.js',
+  '/js/core/app-registry.js',
+  '/js/core/business-os-runtime.js',
   '/js/utils.js',
   '/js/data.js',
   '/js/store.js',
@@ -23,7 +29,6 @@ const ASSETS = [
   '/js/auth.js',
   '/js/widgets.js',
   '/js/pages.js',
-  '/js/features.js',
   '/js/page-loader.js',
   '/js/app.js',
   '/js/update-check.js',
@@ -39,6 +44,8 @@ const ASSETS = [
   '/pages/modals.html',
   '/icons/head_logo.webp',
   '/icons/head_logo-192.webp',
+  '/icons/hero-banner.webp',
+  '/icons/hero-showcase.webp',
   '/icons/dr_logo.webp',
   '/icons/chat_logo.webp',
   '/icons/driver_logo.webp',
@@ -112,6 +119,12 @@ self.addEventListener('fetch', event => {
   // native নেটওয়ার্কিং-এ চলে যায়, কোনো cache/timeout logic প্রযোজ্য না।
   if (new URL(request.url).origin !== self.location.origin) return;
 
+  // /driver/ is a separately built React application in the same repository.
+  // Let its own hashed assets and navigation responses bypass the storefront
+  // cache so an older cached storefront /driver route can never cover it.
+  const requestUrl = new URL(request.url);
+  if (requestUrl.pathname === '/driver' || requestUrl.pathname.startsWith('/driver/')) return;
+
   // ⚠️ আগে img retry-এর সময় যোগ করা "?retry=timestamp" প্যারামিটার সহ প্রতিটা
   // চেষ্টা আলাদা cache entry হিসেবে জমা হতো (কখনো মুছতো না)। এখন এই ধরনের
   // one-off cache-busting URL কখনোই cache-এ সেভ করা হয় না।
@@ -120,7 +133,7 @@ self.addEventListener('fetch', event => {
   // dynamic response সহ)। এখন শুধু নির্দিষ্ট static file extension/path allowlist
   // অনুযায়ী cache হয় — cache-এ অপ্রয়োজনীয় entry জমা হওয়া বন্ধ।
   const cacheableAllowlist = /\.(html|js|css|webp|png|jpg|jpeg|svg|json|woff2?)$/i;
-  const isCacheableStatic = cacheableAllowlist.test(new URL(request.url).pathname) || request.mode === 'navigate';
+  const isCacheableStatic = cacheableAllowlist.test(requestUrl.pathname) || request.mode === 'navigate';
 
   event.respondWith((async () => {
     // ⚠️ আগে cache-এ কপি থাকা বা না-থাকা নির্বিশেষে সবসময় একই ৪ সেকেন্ড timeout

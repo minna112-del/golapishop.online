@@ -1,7 +1,7 @@
 {
   "name": "Golapi Shop Online",
   "short_name": "Golapi Shop",
-  "description": "নোয়াখালীর নিত্যপ্রয়োজনীয় পণ্যের অনলাইন শপ — ঔষধ, মুদি, গ্যাস, মোবাইল, কসমেটিকস সহ সব কিছু",
+  "description": "নোয়াখালীর নিত্যপ্রয়োজনীয় পণ্যের অনলাইন শপ — Noakhali's online shop for groceries, medicine, gas, mobile products and cosmetics",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",
@@ -28,8 +28,8 @@
   ],
   "shortcuts": [
     {
-      "name": "কাস্টম বাজার অর্ডার",
-      "short_name": "কাস্টম বাজার",
+      "name": "কাস্টম বাজার অর্ডার / Custom Shopping Order",
+      "short_name": "কাস্টম বাজার / Custom Shopping",
       "url": "/#custom-bazar",
       "icons": [
         {
@@ -40,8 +40,8 @@
       ]
     },
     {
-      "name": "আমার অর্ডার",
-      "short_name": "অর্ডার",
+      "name": "আমার অর্ডার / My Orders",
+      "short_name": "অর্ডার / Orders",
       "url": "/#myorders",
       "icons": [
         {

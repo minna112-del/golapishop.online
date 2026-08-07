@@ -1,4 +1,20 @@
-# Golapi Shop Online
+# Golapi Shop Online — Unified Repository
+
+এই repository-তেই customer storefront, admin/Business OS এবং নিজস্ব delivery
+Driver app রাখা হয়েছে। Storefront source root-এ এবং React/Vite/Capacitor Driver
+source `driver-app/`-এ থাকে। Netlify `npm run build` চালিয়ে একই deploy-এর মধ্যে
+storefront `/` এবং Driver app `/driver/` URL-এ প্রকাশ করে।
+
+- Website deploy: repository root Netlify-তে connect করুন; build configuration
+  `netlify.toml` থেকেই নেওয়া হবে।
+- Driver web app: `https://www.golapishop.online/driver/`
+- Driver Android APK: GitHub Actions-এর `Build Golapi Driver Android APK`
+  workflow manually run করুন।
+- Firebase: storefront ও Driver app একই Firebase project/collections ব্যবহার করে।
+
+পুরোনো আলাদা Driver repository বা Driver ZIP আর দরকার নেই।
+
+# Previous project documentation
 
 নোয়াখালী সদর ও বেগমগঞ্জের নিজস্ব অনলাইন শপ — মুদি, ঔষধ, গ্যাস, কসমেটিকস, কাস্টম বাজার ও স্বাস্থ্য সেবা (ডাক্তার এপয়েন্টমেন্ট/সিরিয়াল বুকিং সহায়তা)। PWA আর্কিটেকচার, Firebase ব্যাকএন্ড, Google Maps-ভিত্তিক লোকেশন সিস্টেম।
 
@@ -27,12 +43,13 @@ index.html (~3 KB স্কেলিটন, শুধু <div id="slot-...">/<ma
 
 **লোড হওয়ার ক্রম:**
 1. `index.html` লোড হয় → স্পিনার দেখায়
-2. `page-loader.js` সব পার্শিয়াল + প্রথম-দরকারি পেজগুলো (`home, listing, product, checkout, myorders, account, medical, custom-bazar, order-success, account-addresses, about-app, privacy-info, terms, contact`) একসাথে fetch করে
-3. **স্টাফ-অনলি পেজ** (`admin-dash`, `driver`, `zone-manager`) **lazy-load** হয় — শুধু `Router.go()` কল হলে তখনই `window.__ensureLazyPage()` দিয়ে আনা হয়, প্রথম লোডে না
+2. `page-loader.js` blocking shared partials এবং প্রথম-দরকারি `home`, `listing`, `product` page load করে; footer idle time-এ load হয়
+3. Checkout/account/order এবং ২৭টি **staff workspace** lazy-load হয় — শুধু `Router.go()` কল হলে তখনই আনা হয়
 4. সব রেডি হলে `pages-ready` ইভেন্ট ফায়ার হয়, স্পিনার সরে যায়
 
 **রাউটিং:**
-- `js/router.js` — `Router.go(page, params)` দিয়ে পেজ বদলানো, `OwnerAuth` (Firebase Auth + `staff` কালেকশনে role চেক) দিয়ে admin-dash সুরক্ষিত
+- `js/core/app-registry.js` — route, lazy script, staff catalog ও access metadata-এর single source of truth
+- `js/router.js` — `Router.go(page, params)` দিয়ে পেজ বদলানো; shared `StaffAccess` gate Firebase Auth, active staff profile এবং permission matrix যাচাই করে
 - `js/deep-links.js` — TWA/native app path-based রাউটিং (`/driver`, `/manager` ইত্যাদি URL থেকে সরাসরি সঠিক পেজ খোলে)
 - `netlify.toml` — SPA fallback rewrite (`/driver`, `/manager`, `/*` → `index.html`)
 
@@ -49,12 +66,13 @@ index.html (~3 KB স্কেলিটন, শুধু <div id="slot-...">/<ma
 | `js/location.js` | LocationPicker (Google Maps সার্চ+পিন) + LocationService (GPS/battery শেয়ার্ড লজিক) |
 | `js/livemap.js` | কাস্টমার-facing লাইভ ট্র্যাকিং ম্যাপ (Leaflet/OpenStreetMap — ফ্রি) |
 | `js/pages.js` | Home, Listing, PDP, Cart, Checkout, CustomBazar — মূল কাস্টমার লজিক |
+| `js/core/app-registry.js` | ৪২টি route, ২৭টি staff workspace, controller ও lazy dependency registry |
+| `js/core/i18n.js` | Static ও dynamic বাংলা/English UI lifecycle |
 | `js/driver.js` | ড্রাইভার পোর্টাল — Accept/Reject, GPS/battery প্যানেল, নেভিগেশন |
 | `js/admin.js` | Admin Dashboard — প্রোডাক্ট, অর্ডার, Delivery Pricing, Delivery Zone এডিটর |
 | `js/zone-manager.js` | শাখা ম্যানেজার পোর্টাল |
 | `js/firebase-init.js` | Firebase config, Auth/Firestore/Storage/Messaging সেটআপ, push token registration |
-| `firebase-messaging-sw.js` | ব্যাকগ্রাউন্ড push notification হ্যান্ডলার |
-| `sw.js` | PWA অফলাইন সাপোর্ট (network-first, ক্যাশ ভার্সন বদলালে সব ইউজার অটো-আপডেট পায়) |
+| `sw.js` | PWA offline cache এবং Firebase background push handler—একটি service worker-এ একীভূত |
 
 ---
 
@@ -89,8 +107,8 @@ index.html (~3 KB স্কেলিটন, শুধু <div id="slot-...">/<ma
 ## 🔔 Push Notification
 
 - Firebase Cloud Messaging — VAPID key `firebase-init.js`-এ সেট করা আছে
-- `registerPushToken()` — লগইন করলেই অনুমতি চেয়ে token সেভ করে (`fcmTokens` কালেকশনে)
-- `firebase-messaging-sw.js` — ব্যাকগ্রাউন্ড নোটিফিকেশন রিসিভ করে
+- `registerPushToken()` — permission আগে থেকেই granted থাকলে token সেভ করে (`fcmTokens` কালেকশনে); স্বয়ংক্রিয় prompt দেখায় না
+- `sw.js` — ব্যাকগ্রাউন্ড নোটিফিকেশন রিসিভ করে
 - ⚠️ **এখনো বাকি:** actual notification **পাঠানোর** ট্রিগার (Cloud Function দরকার — Blaze plan + Firebase CLI/কম্পিউটার লাগবে, iPhone থেকে সম্ভব না)
 
 ---
