@@ -1,134 +1,121 @@
-/* page-loader.js — Loads slot partials + page views, all from /pages/ folder
-   Hardened: SPA fallback (index.html) কখনো ভুলবশত inject না হওয়ার সুরক্ষা সহ
-   পারফরম্যান্স: স্টাফ প্যানেল (admin/driver/zone-manager) প্রয়োজন হলে তখনই লোড হয় */
-(function(){
-  const partials = [
-    { url: 'pages/topbar.html',       slot: 'slot-topbar' },
-    { url: 'pages/header.html',       slot: 'slot-header' },
-    { url: 'pages/cart-drawer.html',  slot: 'slot-cart-drawer' },
-    { url: 'pages/mobnav.html',       slot: 'slot-mobnav' },
-    { url: 'pages/chat-widget.html',  slot: 'slot-chat' },
-    { url: 'pages/toast.html',        slot: 'slot-toast' },
-    { url: 'pages/modals.html',       slot: 'slot-modals' }
+/* page-loader.js — reusable, promise-based fragment loader */
+(function createPageLoader(global) {
+  'use strict';
+
+  const blockingPartials = [
+    ['pages/topbar.html', 'slot-topbar'],
+    ['pages/header.html', 'slot-header'],
+    ['pages/cart-drawer.html', 'slot-cart-drawer'],
+    ['pages/mobnav.html', 'slot-mobnav'],
+    ['pages/chat-widget.html', 'slot-chat'],
+    ['pages/toast.html', 'slot-toast'],
+    ['pages/modals.html', 'slot-modals']
   ];
-
-  /* Footer নিচের দিকে থাকে, তাই first paint-এর পরে নীরবে লোড হয়।
-     Auth ও form modal navigation-এর আগেই প্রয়োজন, তাই modals blocking partial। */
-  const deferredPartials = [
-    { url: 'pages/footer.html', slot: 'slot-footer' }
-  ];
-
-  /* শুধু browsing-এর জন্য একদম প্রথমেই দরকার — বাকি সব পেজ এখন lazy */
-  const pages = ['home','listing','product'];
-
-  /* স্টাফ-অনলি + এখন থেকে বেশিরভাগ customer পেজও — শুধু প্রয়োজন হলে (Router.go কল হলে) লোড হবে */
-  window.__lazyPages = ['admin-dash','driver','zone-manager','inventory-dash','finance-dash','support-dash','procurement-dash','warehouse-dash','analytics-dash','company-settings','documents-dash','attendance-dash','payroll-dash','branch-dash','crm-dash','company-os','ai-control','hr-erp','finance-erp','warehouse-erp','marketing-erp','workflow-erp','bi-erp','asset-erp','crm-erp','procurement-erp','facilities-erp','checkout','myorders','wishlist','account','medical','custom-bazar','order-success','account-addresses','about-app','privacy-info','terms','contact'];
-  window.__loadedLazyPages = {};
-
-  let pending = partials.length + pages.length;
+  const deferredPartials = [['pages/footer.html', 'slot-footer']];
   const container = document.getElementById('pageContainer');
+  const requests = new Map();
+  let ready = false;
+  let readyTimeout = null;
 
-  let donePagesReadyFired = false;
-  const maxLoaderTimeout = setTimeout(function(){
-    if(donePagesReadyFired) return;
-    donePagesReadyFired = true;
-    const loader = document.getElementById('pageLoader');
-    if(loader) loader.style.display = 'none';
-    document.dispatchEvent(new Event('pages-ready'));
-  }, 10000);
+  global.__lazyPages = global.AppRegistry.lazyPages();
+  global.__loadedLazyPages = Object.create(null);
 
-  function done(){
-    pending--;
-    if(pending > 0) return;
-    clearTimeout(maxLoaderTimeout);
-    if(donePagesReadyFired) return;
-    donePagesReadyFired = true;
-    const loader = document.getElementById('pageLoader');
-    if(loader) loader.style.display = 'none';
-    document.dispatchEvent(new Event('pages-ready'));
-    // মূল পেজ দেখানোর পরে, নীরবে footer/modals লোড করা (blocking না, pending counter-এর সাথে জড়িত না)
-    deferredPartials.forEach(function(p){
-      const slot = document.getElementById(p.slot);
-      if(!slot) return;
-      const xhr = new XMLHttpRequest();
-      xhr.open('GET', p.url, true);
-    xhr.timeout = 15000;
-      xhr.onload = function(){
-        if(xhr.status === 200 && isSafeFragment(xhr.responseText)){
-          slot.innerHTML = xhr.responseText;
-        }
-      };
-      xhr.send();
-    });
+  function isSafeFragment(text) {
+    return typeof text === 'string' && !/<!doctype\s+html|<html[\s>]/i.test(text);
   }
 
-  function isSafeFragment(text){
-    return !/<!DOCTYPE html>/i.test(text) && !/<html[\s>]/i.test(text);
+  async function fetchFragment(url) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+    try {
+      const response = await fetch(url, { signal: controller.signal, credentials: 'same-origin' });
+      if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+      const text = await response.text();
+      if (!isSafeFragment(text)) throw new Error('SPA fallback is not a valid fragment');
+      return text;
+    } finally {
+      clearTimeout(timeout);
+    }
   }
 
-  function fetchInto(url, targetEl){
-    const xhr = new XMLHttpRequest();
-    xhr.open('GET', url, true);
-    xhr.timeout = 15000;
-    xhr.onload = function(){
-      if(xhr.status === 200 && targetEl){
-        if(isSafeFragment(xhr.responseText)){
-          targetEl.innerHTML = xhr.responseText;
-        } else {
-          console.warn('[page-loader] ফাইল পাওয়া যায়নি (fallback পেজ ফেরত এসেছে), বাদ দেওয়া হলো:', url);
-        }
-      }
-      done();
-    };
-    xhr.onerror = function(){ done(); };
-    xhr.ontimeout = function(){ done(); };
-    xhr.send();
+  function translate(root) {
+    if (global.I18n) global.I18n.apply(root);
   }
 
-  partials.forEach(function(p){
-    const slot = document.getElementById(p.slot);
-    if(slot){ fetchInto(p.url, slot); }
-    else { done(); }
-  });
+  async function loadPartial(url, slotId) {
+    const slot = document.getElementById(slotId);
+    if (!slot) return false;
+    try {
+      slot.innerHTML = await fetchFragment(url);
+      translate(slot);
+      return true;
+    } catch (error) {
+      console.warn('[page-loader] partial load failed:', url, error.message);
+      return false;
+    }
+  }
 
-  pages.forEach(function(name){
-    const xhr = new XMLHttpRequest();
-    xhr.open('GET', 'pages/' + name + '.html', true);
-    xhr.timeout = 15000;
-    xhr.onload = function(){
-      if(xhr.status === 200 && container && isSafeFragment(xhr.responseText)){
+  async function ensurePage(name) {
+    if (document.getElementById(`page-${name}`)) {
+      global.__loadedLazyPages[name] = true;
+      return true;
+    }
+    if (!global.AppRegistry.definition(name)) return false;
+    if (requests.has(name)) return requests.get(name);
+
+    const request = (async () => {
+      try {
+        const html = await fetchFragment(`pages/${name}.html`);
         const wrapper = document.createElement('div');
-        wrapper.innerHTML = xhr.responseText;
-        while(wrapper.firstChild) container.appendChild(wrapper.firstChild);
-      } else if(xhr.status === 200){
-        console.warn('[page-loader] পেজ পাওয়া যায়নি (fallback পেজ ফেরত এসেছে), বাদ দেওয়া হলো:', name);
+        wrapper.innerHTML = html;
+        const fragment = document.createDocumentFragment();
+        while (wrapper.firstChild) fragment.appendChild(wrapper.firstChild);
+        container.appendChild(fragment);
+        const page = document.getElementById(`page-${name}`);
+        if (!page) throw new Error(`Missing #page-${name}`);
+        global.__loadedLazyPages[name] = true;
+        translate(page);
+        return true;
+      } catch (error) {
+        // A transient network failure must not poison this page for the rest
+        // of the SPA session. Remove the rejected/resolved-false request so a
+        // later navigation can retry the fragment.
+        requests.delete(name);
+        console.warn('[page-loader] page load failed:', name, error.message);
+        return false;
       }
-      done();
-    };
-    xhr.onerror = function(){ done(); };
-    xhr.ontimeout = function(){ done(); };
-    xhr.send();
-  });
+    })();
+    requests.set(name, request);
+    return request;
+  }
 
-  /* স্টাফ পেজ চাহিদামতো লোড করার ফাংশন — router.js থেকে কল হবে */
-  window.__ensureLazyPage = function(name, callback){
-    if(window.__loadedLazyPages[name]){ callback(); return; }
-    const xhr = new XMLHttpRequest();
-    xhr.open('GET', 'pages/' + name + '.html', true);
-    xhr.timeout = 15000;
-    xhr.onload = function(){
-      if(xhr.status === 200 && container && isSafeFragment(xhr.responseText)){
-        const wrapper = document.createElement('div');
-        wrapper.innerHTML = xhr.responseText;
-        while(wrapper.firstChild) container.appendChild(wrapper.firstChild);
-        window.__loadedLazyPages[name] = true;
-      } else {
-        console.warn('[page-loader] স্টাফ পেজ লোড ব্যর্থ:', name);
-      }
-      callback();
-    };
-    xhr.onerror = function(){ callback(); };
-    xhr.ontimeout = function(){ callback(); };
-    xhr.send();
+  function dispatchReady() {
+    if (ready) return;
+    ready = true;
+    clearTimeout(readyTimeout);
+    const loader = document.getElementById('pageLoader');
+    if (loader) loader.hidden = true;
+    document.dispatchEvent(new Event('pages-ready'));
+  }
+
+  function loadDeferredPartials() {
+    const run = () => deferredPartials.forEach(([url, slot]) => loadPartial(url, slot));
+    if ('requestIdleCallback' in global) global.requestIdleCallback(run, { timeout: 3000 });
+    else setTimeout(run, 1000);
+  }
+
+  global.PageLoader = Object.freeze({ ensurePage, loadPartial, fetchFragment });
+  global.__ensureLazyPage = function ensureLazyPage(name, callback) {
+    ensurePage(name).then(() => callback?.());
   };
-})();
+
+  Promise.allSettled([
+    ...blockingPartials.map(([url, slot]) => loadPartial(url, slot)),
+    ...global.AppRegistry.initialPages().map(ensurePage)
+  ]).then(() => {
+    dispatchReady();
+    loadDeferredPartials();
+  });
+
+  readyTimeout = setTimeout(dispatchReady, 15000);
+})(window);

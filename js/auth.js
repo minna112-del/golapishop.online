@@ -4,8 +4,8 @@ const Auth = {
   init(){
     FB.onAuthStateChanged(FB.auth, user=>{
       this.currentUser = user;
-      const labelEl = document.getElementById('accLabel');
-      if(labelEl) labelEl.textContent = user ? (user.displayName||'অ্যাকাউন্ট').split(' ')[0] : 'লগইন';
+      const accountButton = document.getElementById('loginBtn');
+      if(accountButton) accountButton.setAttribute('aria-label', user ? I18n.t('আমার অ্যাকাউন্ট খুলুন','Open my account') : I18n.t('লগইন বা অ্যাকাউন্ট খুলুন','Sign in or open account'));
     });
   }
 };
@@ -155,21 +155,12 @@ const AccountPage = {
       await FB.setDoc(FB.doc(FB.db,'users',u.uid),{name,phone,email:u.email||this.profileData?.email||'',updatedAt:FB.serverTimestamp()},{merge:true});
       this.profileData={...(this.profileData||{}),name,phone,email:u.email||''};
       this.setIdentity(name,u.email||'',phone);
-      const labelEl=document.getElementById('accLabel'); if(labelEl) labelEl.textContent=name.split(' ')[0];
       msg.textContent='✓ প্রোফাইল সফলভাবে আপডেট হয়েছে।'; msg.className='form-msg ok';
       toast('✓ প্রোফাইল আপডেট হয়েছে','success');
       setTimeout(()=>this.toggleEditor(false),700);
     }catch(e){ msg.textContent='প্রোফাইল সংরক্ষণ করা যায়নি। আবার চেষ্টা করুন।'; msg.className='form-msg err'; devWarn('profile save failed',e.message); }
     finally{ if(btn){ btn.disabled=false; btn.textContent='পরিবর্তন সংরক্ষণ'; } }
   },
-  showWishlist(){
-    const section=document.getElementById('accountWishlist');
-    if(!section) return;
-    section.hidden=false;
-    Wishlist.render();
-    requestAnimationFrame(()=>section.scrollIntoView({behavior:'smooth',block:'start'}));
-  },
-  hideWishlist(){ const section=document.getElementById('accountWishlist'); if(section) section.hidden=true; },
   async renderLoyalty(prefetched){
     const box=document.getElementById('loyaltyBox');
     if(!box) return;

@@ -45,6 +45,10 @@ try{
     query, where, orderBy, limit, onSnapshot, serverTimestamp, increment, runTransaction,
     storageRef, uploadBytes, getDownloadURL
   };
+  // Classic staff/ERP scripts use both the lexical `FB` binding and
+  // `window.FB` readiness checks. Keep one canonical SDK facade available
+  // through both paths before announcing that Firebase is ready.
+  window.FB = window.__fb;
   window.dispatchEvent(new Event('firebase-ready'));
 
   /* ---------- Analytics: lazy-loaded, ৫সে পরে, ব্যর্থ হলেও কোনো প্রভাব নেই ---------- */

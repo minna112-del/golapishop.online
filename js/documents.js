@@ -6,8 +6,8 @@
   const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
   const dateValue=v=>{ if(!v)return ''; const d=v.toDate?v.toDate():new Date(v); return isNaN(d)?'':d.toLocaleDateString('bn-BD'); };
   const today=()=>new Date().toISOString().slice(0,10);
-  const db=()=>window.firebaseDb||window.db;
-  const api=()=>window.firebaseFirestore||window.firestoreApi||{};
+  const db=()=>window.__fb?.db||null;
+  const api=()=>window.__fb||{};
   function template(type,s){ const n=s?.name||'[কর্মীর নাম]', d=s?.designation||'[পদবি]', id=s?.employeeId||'[Employee ID]'; const company='Golapi Shop Online';
     const map={
       offer_letter:`প্রিয় ${n},\n\nআপনাকে ${company}-এ ${d} পদে যোগদানের প্রস্তাব দিতে পেরে আমরা আনন্দিত। আপনার Employee ID হবে ${id}। নিয়োগের শর্তাবলি, কর্মঘণ্টা, পারিশ্রমিক ও কোম্পানির নীতিমালা নিয়োগপত্রে বিস্তারিত উল্লেখ থাকবে।\n\nআপনার সম্মতি লিখিতভাবে জানানোর অনুরোধ করা হলো।`,

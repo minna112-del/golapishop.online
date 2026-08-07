@@ -151,44 +151,124 @@ const OwnerAuth = {
 
     this.currentUid = null;
     this._verifiedThisSession = false;
+    if (window.StaffAccess) window.StaffAccess.clear();
 
     toast('🔒 লক করা হয়েছে');
     Router.go('home');
   }
 };
 
+/* Shared role/permission gate for staff offices that do not provide their own
+   embedded login screen. This is a navigation guard; Firestore Security Rules
+   remain the authoritative backend enforcement layer. */
+const StaffAccess = {
+  pendingPage:'company-os',staff:null,permissions:null,
+  legacyRoleAliases:{hr:['people_officer'],procurement:['procurement_officer'],customer_care_manager:['support_manager']},
+  v3WorkspaceIds:['hr-erp','warehouse-erp','marketing-erp','workflow-erp','bi-erp','asset-erp','crm-erp','procurement-erp','facilities-erp'],
+  t(bn,en){return window.I18n?I18n.t(bn,en):bn;},
+  async waitForFirebase(){
+    if(window.__fb){window.FB=window.__fb;if(typeof FB!=='undefined'&&!FB)FB=window.__fb;return window.__fb;}
+    await new Promise(resolve=>{
+      const done=()=>{clearTimeout(timer);window.removeEventListener('firebase-ready',done);resolve();};
+      const timer=setTimeout(done,12000);
+      window.addEventListener('firebase-ready',done,{once:true});
+    });
+    if(window.__fb){window.FB=window.__fb;if(typeof FB!=='undefined'&&!FB)FB=window.__fb;}
+    return window.__fb||null;
+  },
+  active(staff){return !!staff&&staff.active!==false&&!['inactive','suspended','resigned'].includes(staff.status);},
+  permissionList(role){
+    const matrix=this.permissions?.matrix||this.permissions?.rolePermissions||this.permissions||{};
+    if(Array.isArray(matrix[role]))return matrix[role];
+    for(const alias of this.legacyRoleAliases[role]||[]){if(Array.isArray(matrix[alias]))return matrix[alias];}
+    return null;
+  },
+  usesMatrix(){
+    if(Number(this.permissions?.schemaVersion)>=2)return true;
+    const ids=new Set(AppRegistry.staffPages()),matrix=this.permissions?.matrix||this.permissions?.rolePermissions||this.permissions||{};
+    return Object.values(matrix).some(list=>Array.isArray(list)&&list.some(id=>id==='*'||ids.has(id)));
+  },
+  canOpen(page,staff=this.staff){
+    const meta=AppRegistry.staffMeta(page);
+    if(!meta||!this.active(staff))return false;
+    const role=staff.role||'staff',custom=staff.allowedWorkspaces||staff.permissions?.workspaces||[];
+    if(role==='admin'||meta.roles.includes('*')||custom.includes(page)||custom.includes(meta.name))return true;
+    const list=this.permissionList(role);
+    if(this.usesMatrix()&&Array.isArray(list)){
+      if(list.includes('*')||list.includes(page))return true;
+      if(Number(this.permissions?.schemaVersion||0)<3&&this.v3WorkspaceIds.includes(page))return meta.roles.includes(role);
+      return false;
+    }
+    return meta.roles.includes(role);
+  },
+  request(page){
+    this.pendingPage=page||'company-os';
+    const meta=AppRegistry.staffMeta(this.pendingPage),modal=document.getElementById('ownerGateModal');
+    const title=document.getElementById('ownerGateTitle'),text=document.getElementById('ownerGateText'),button=document.getElementById('ownerGateSubmit');
+    if(title)title.textContent=meta?.name||'Staff Workspace';
+    if(text)text.textContent=this.t('অনুমোদিত staff email ও password দিয়ে প্রবেশ করুন','Sign in with an authorized staff email and password');
+    if(button)button.textContent=this.t('Workspace খুলুন','Open workspace');
+    const email=document.getElementById('ownerEmail'),password=document.getElementById('ownerPassword'),message=document.getElementById('ownerGateMsg');
+    if(email)email.value='';if(password)password.value='';if(message){message.textContent='';message.className='form-msg';}
+    modal?.classList.add('show');setTimeout(()=>email?.focus(),20);
+  },
+  cancel(){document.getElementById('ownerGateModal')?.classList.remove('show');},
+  async load(user){
+    const fb=await this.waitForFirebase();if(!fb||!user)return false;
+    const [staffSnap,permissionSnap]=await Promise.all([
+      fb.getDoc(fb.doc(fb.db,'staff',user.uid)),
+      fb.getDoc(fb.doc(fb.db,'company_settings','permissions')).catch(()=>null)
+    ]);
+    if(!staffSnap.exists())throw new Error(this.t('Staff profile পাওয়া যায়নি','Staff profile was not found'));
+    this.staff={uid:user.uid,...staffSnap.data()};
+    this.permissions=permissionSnap?.exists()?permissionSnap.data():null;
+    if(!this.active(this.staff))throw new Error(this.t('এই staff account বর্তমানে সক্রিয় নয়','This staff account is not active'));
+    OwnerAuth.currentUid=user.uid;OwnerAuth._verifiedThisSession=true;
+    return true;
+  },
+  async authorize(page){
+    const fb=await this.waitForFirebase();
+    if(!fb){toast(this.t('Firebase সংযোগ পাওয়া যায়নি','Firebase is unavailable'),'error');return false;}
+    const user=fb.auth.currentUser;
+    if(!user){this.request(page);return false;}
+    try{
+      if(!this.staff||this.staff.uid!==user.uid)await this.load(user);
+      if(!this.canOpen(page)){
+        this.request(page);
+        const message=document.getElementById('ownerGateMsg');
+        if(message){message.textContent=this.t('বর্তমান account-এর এই Workspace ব্যবহারের অনুমতি নেই','The current account does not have access to this workspace');message.className='form-msg err';}
+        return false;
+      }
+      return true;
+    }catch(error){
+      this.request(page);
+      const message=document.getElementById('ownerGateMsg');
+      if(message){message.textContent=error.message;message.className='form-msg err';}
+      return false;
+    }
+  },
+  async unlock(){
+    const email=document.getElementById('ownerEmail')?.value.trim(),password=document.getElementById('ownerPassword')?.value,message=document.getElementById('ownerGateMsg');
+    if(!email||!password){if(message){message.textContent=this.t('ইমেইল ও পাসওয়ার্ড দিন','Enter your email and password');message.className='form-msg err';}return;}
+    const fb=await this.waitForFirebase();
+    if(!fb){if(message){message.textContent=this.t('Firebase সংযোগ পাওয়া যায়নি','Firebase is unavailable');message.className='form-msg err';}return;}
+    try{
+      const credential=await fb.signInWithEmailAndPassword(fb.auth,email,password);
+      await this.load(credential.user);
+      if(!this.canOpen(this.pendingPage))throw new Error(this.t('এই Workspace ব্যবহারের অনুমতি নেই','You do not have access to this workspace'));
+      this.cancel();
+      if(typeof StaffChat!=='undefined')StaffChat.init(credential.user.uid,this.staff.name||'Staff',this.staff.role||'staff');
+      Router.go(this.pendingPage);
+    }catch(error){if(message){message.textContent=error.message||'লগইন ব্যর্থ';message.className='form-msg err';}}
+  },
+  clear(){this.staff=null;this.permissions=null;this.pendingPage='company-os';}
+};
+window.StaffAccess=StaffAccess;
+
 const Router = {
   current: 'home',
   params: {},
-  staffPaths: {
-    'admin-dash': '/admin',
-    driver: '/driver',
-    'zone-manager': '/zone-manager',
-    'inventory-dash': '/inventory',
-    'finance-dash': '/finance',
-    'support-dash': '/support',
-    'procurement-dash': '/procurement',
-    'warehouse-dash': '/warehouse',
-    'analytics-dash': '/analytics',
-    'company-settings': '/company-settings',
-    'documents-dash': '/documents',
-    'attendance-dash': '/attendance',
-    'payroll-dash': '/payroll',
-    'branch-dash': '/branches',
-    'crm-dash': '/crm',
-    'company-os': '/company-os',
-    'ai-control': '/ai-control',
-    'hr-erp': '/hr-erp',
-    'finance-erp': '/finance-erp',
-    'warehouse-erp': '/warehouse-erp',
-    'marketing-erp': '/marketing-erp',
-    'workflow-erp': '/workflow-erp',
-    'bi-erp': '/bi-erp',
-    'asset-erp': '/asset-erp',
-    'crm-erp': '/crm-erp',
-    'procurement-erp': '/procurement-erp',
-    'facilities-erp': '/facilities-erp'
-  },
+  staffPaths: AppRegistry.staffPaths(),
 
   /*
    * প্রতিটি public page-এর জন্য shareable URL,
@@ -444,53 +524,26 @@ const Router = {
   },
 
   async go(page, params = {}, opts = {}) {
-    /* ⚠️ admin/driver/zone-manager/payment/sms/memo/livemap আগে সবার জন্যই
-       প্রথম লোডে ডাউনলোড হতো। এখন শুধু সংশ্লিষ্ট পেজে গেলেই লোড হয়। */
-    const scriptMap = {
-      'admin-dash': ['./js/admin.js', './js/staff-chat.js', './js/employee-workspace.js', './js/employee-management.js'],
-      'driver': ['./js/driver.js', './js/livemap.js', './js/staff-chat.js', './js/employee-workspace.js'],
-      'zone-manager': ['./js/zone-manager.js', './js/staff-chat.js', './js/employee-workspace.js'],
-      'inventory-dash': ['./js/inventory.js', './js/staff-chat.js', './js/employee-workspace.js'],
-      'finance-dash': ['./js/finance.js', './js/staff-chat.js', './js/employee-workspace.js'],
-      'support-dash': ['./js/support.js', './js/staff-chat.js', './js/employee-workspace.js'],
-      'procurement-dash': ['./js/procurement.js', './js/staff-chat.js', './js/employee-workspace.js'],
-      'warehouse-dash': ['./js/warehouse.js', './js/staff-chat.js', './js/employee-workspace.js'],
-      'analytics-dash': ['./js/analytics.js', './js/staff-chat.js', './js/employee-workspace.js'],
-      'company-settings': ['./js/company-settings.js', './js/employee-workspace.js'],
-      'documents-dash': ['./js/documents.js', './js/employee-workspace.js'],
-      'attendance-dash': ['./js/attendance.js', './js/employee-workspace.js'],
-      'payroll-dash': ['./js/payroll.js', './js/employee-workspace.js'],
-      'branch-dash': ['./js/branch.js', './js/employee-workspace.js'],
-      'crm-dash': ['./js/crm.js', './js/employee-workspace.js'],
-      'company-os': ['./js/company-os.js'],
-      'ai-control': ['./js/ai-control.js', './js/employee-workspace.js'],
-      'hr-erp': ['./js/hr-erp.js', './js/employee-workspace.js'],
-      'finance-erp': ['./js/finance-erp.js', './js/employee-workspace.js'],
-      'warehouse-erp': ['./js/warehouse-erp.js', './js/employee-workspace.js'],
-      'marketing-erp': ['./js/marketing-erp.js', './js/employee-workspace.js'],
-      'workflow-erp': ['./js/workflow-erp.js', './js/employee-workspace.js'],
-      'bi-erp': ['./js/bi-erp.js', './js/employee-workspace.js'],
-      'asset-erp': ['./js/asset-erp.js', './js/employee-workspace.js'],
-      'crm-erp': ['./js/crm-erp.js', './js/employee-workspace.js'],
-      'procurement-erp': ['./js/procurement-erp.js', './js/employee-workspace.js'],
-      'facilities-erp': ['./js/facilities-erp.js', './js/employee-workspace.js'],
-      'checkout': ['./js/checkout.js', './js/payment.js', './js/sms.js'],
-      'custom-bazar': ['./js/custom-bazar.js', './js/memo.js'],
-      'myorders': ['./js/memo.js', './js/livemap.js']
-    };
-    if(scriptMap[page]){
-      await Promise.all(scriptMap[page].map(src => window.loadScriptOnce(src).catch(()=>{})));
+    const externalTarget = AppRegistry.external(page);
+    if (externalTarget) {
+      window.location.assign(externalTarget);
+      return;
     }
 
-    if (
-      page === 'admin-dash' &&
-      !OwnerAuth.isUnlocked()
-    ) {
-      const restored =
-        await OwnerAuth._restoreSession();
-
-      if (!restored) {
-        OwnerAuth.requestAccess();
+    if(AppRegistry.isStaff(page)&&!AppRegistry.selfAuth(page)){
+      const allowed=await StaffAccess.authorize(page);
+      if(!allowed)return;
+    }
+    /* ⚠️ admin/driver/zone-manager/payment/sms/memo/livemap আগে সবার জন্যই
+       প্রথম লোডে ডাউনলোড হতো। এখন শুধু সংশ্লিষ্ট পেজে গেলেই লোড হয়। */
+    const scripts = AppRegistry.scripts(page);
+    if (scripts.length) {
+      try {
+        await Promise.all(scripts.map(src => window.loadScriptOnce(src)));
+      } catch (error) {
+        if (typeof toast === 'function') {
+          toast(I18n.t('এই Workspace চালু করা যায়নি। আবার চেষ্টা করুন।', 'This workspace could not be started. Please try again.'), 'error');
+        }
         return;
       }
     }
@@ -499,17 +552,8 @@ const Router = {
      * Staff page হলে প্রয়োজনীয় HTML fragment
      * আগে lazy load করা হয়।
      */
-    if (
-      window.__lazyPages &&
-      window.__lazyPages.includes(page) &&
-      !window.__loadedLazyPages[page]
-    ) {
-      await new Promise(resolve => {
-        window.__ensureLazyPage(
-          page,
-          resolve
-        );
-      });
+    if (!document.getElementById('page-' + page) && window.PageLoader) {
+      await PageLoader.ensurePage(page);
     }
 
     const routeTarget = document.getElementById('page-' + page);
@@ -552,12 +596,8 @@ const Router = {
       targetPage.classList.add('active');
     }
 
-    // ⚠️ আগে applyLang() শুধু প্রথম পেজ লোডে একবারই চলতো — অন্য পেজে গেলে
-    // (বিশেষত lazy-loaded পেজ, যেগুলো এইমাত্র DOM-এ যোগ হলো) নতুন data-bn/
-    // data-en এলিমেন্টগুলো কখনো ভাষা-প্রয়োগ পেতোই না, তাই ইংরেজি মোডে থাকা
-    // অবস্থায় নতুন পেজে গেলে সেটা বাংলাতেই থেকে যেত। এখন প্রতিটা navigation-এ
-    // চলে, তাই সব পেজ সবসময় সঠিক ভাষায় দেখাবে।
-    if (typeof applyLang === 'function') applyLang();
+    // Lazy fragment ও controller-generated content বর্তমান ভাষায় sync রাখে।
+    if (window.I18n) I18n.apply(targetPage, false);
 
     window.scrollTo({
       top: 0,
@@ -581,192 +621,9 @@ const Router = {
         );
       });
 
-    if (page === 'listing') {
-      Listing.render();
-    }
+    AppRegistry.invoke(page, params);
 
-    if (page === 'product') {
-      PDP.load(params.id);
-    }
-
-    if (page === 'checkout') {
-      Checkout.init();
-    }
-
-    if (page === 'myorders') {
-      MyOrders.render();
-    }
-
-    if (page === 'wishlist') {
-      Wishlist.render();
-    }
-
-    if (page === 'order-success') {
-      OrderSuccess.render();
-    }
-
-    if (page === 'admin-dash') {
-      AdminDash.render();
-      if(typeof EmployeeWorkspace!=='undefined') EmployeeWorkspace.mountCurrent('adminEmployeeWorkspace');
-    }
-
-    if (page === 'driver') {
-      DriverPortal.render();
-    }
-
-    if (page === 'zone-manager') {
-      ZoneManagerDash.render();
-    }
-
-    if (page === 'inventory-dash') {
-      InventoryDash.render();
-    }
-
-    if (page === 'finance-dash') {
-      FinanceDash.render();
-    }
-
-    if (page === 'support-dash') {
-      SupportDash.render();
-    }
-
-    if (page === 'procurement-dash') {
-      ProcurementDash.render();
-    }
-
-    if (page === 'warehouse-dash') {
-      WarehouseDash.render();
-    }
-
-    if (page === 'analytics-dash') {
-      AnalyticsCenter.render();
-    }
-
-    if (page === 'company-settings') {
-      CompanySettings.render();
-    }
-
-    if (page === 'documents-dash') {
-      DocumentOffice.render();
-    }
-
-    if (page === 'payroll-dash') {
-      if (typeof PayrollOffice !== 'undefined') PayrollOffice.render();
-    }
-
-    if (page === 'attendance-dash') {
-      AttendanceOffice.render();
-    }
-
-    if (page === 'branch-dash') {
-      if (typeof BranchOffice !== 'undefined') BranchOffice.render();
-    }
-
-    if (page === 'crm-dash') {
-      if (typeof CRMOffice !== 'undefined') CRMOffice.render();
-    }
-
-    if (page === 'company-os') {
-      if (typeof CompanyOS !== 'undefined') CompanyOS.render();
-    }
-
-    if (page === 'ai-control') {
-      if (typeof AIControl !== 'undefined') AIControl.render();
-    }
-
-    if (page === 'hr-erp') {
-      if (typeof HRERP !== 'undefined') HRERP.render();
-    }
-
-    if (page === 'finance-erp') {
-      if (typeof FinanceERP !== 'undefined') FinanceERP.render();
-    }
-
-    if (page === 'warehouse-erp') {
-      if (typeof WarehouseERP !== 'undefined') WarehouseERP.render();
-    }
-
-    if (page === 'marketing-erp') {
-      if (typeof MarketingERP !== 'undefined') MarketingERP.render();
-    }
-
-    if (page === 'workflow-erp') {
-      if (typeof WorkflowERP !== 'undefined') WorkflowERP.render();
-    }
-
-    if (page === 'bi-erp') {
-      if (typeof BusinessIntelligence !== 'undefined') BusinessIntelligence.render();
-    }
-
-    if (page === 'asset-erp') {
-      if (typeof AssetERP !== 'undefined') AssetERP.render();
-    }
-
-    if (page === 'crm-erp') {
-      if (typeof CustomerCRM !== 'undefined') CustomerCRM.render();
-    }
-
-    if (page === 'procurement-erp') {
-      if (typeof ProcurementERP !== 'undefined') ProcurementERP.render();
-    }
-
-    if (page === 'facilities-erp') {
-      if (typeof FacilitiesERP !== 'undefined') FacilitiesERP.render();
-    }
-
-    if (page === 'home') {
-      Home.render();
-    }
-
-    if (page === 'medical') {
-      Medical.render();
-    }
-
-    if (page === 'custom-bazar') {
-      CustomBazar.init();
-    }
-
-    if (page === 'about-app') {
-      SiteReview.render();
-    }
-
-    if (page === 'account') {
-      AccountPage.render();
-    }
-
-    if (page === 'account-addresses') {
-      AccountPage.renderAddresses();
-    }
-
-    const staffPage = [
-      'admin-dash',
-      'zone-manager',
-      'driver',
-      'inventory-dash',
-      'finance-dash',
-      'support-dash',
-      'procurement-dash',
-      'warehouse-dash',
-      'analytics-dash',
-      'company-settings',
-      'documents-dash',
-      'attendance-dash',
-      'payroll-dash',
-      'branch-dash',
-      'crm-dash',
-      'company-os',
-      'ai-control',
-      'hr-erp',
-      'finance-erp',
-      'warehouse-erp',
-      'marketing-erp',
-      'workflow-erp',
-      'bi-erp',
-      'asset-erp',
-      'crm-erp',
-      'procurement-erp',
-      'facilities-erp'
-    ].includes(page);
+    const staffPage = AppRegistry.isStaff(page);
 
     const chatBtn =
       document.getElementById('chatBtn');
@@ -806,74 +663,7 @@ const Router = {
 
 /* একটি registry থেকেই initial load, back/forward ও shareable staff URL resolve হয়। */
 Router.resolvePath = function(path) {
-  const normalizedPath = ('/' + String(path || '/').trim().replace(/^\/+|\/+$/g, '')).toLowerCase();
-  const productMatch = normalizedPath.match(/^\/product\/([a-z0-9_-]+)$/i);
-  if (productMatch) return { page: 'product', params: { id: productMatch[1] } };
-  const categoryMatch = normalizedPath.match(/^\/category\/([a-z0-9_-]+)$/i);
-  if (categoryMatch) return { page: 'listing', params: { cat: categoryMatch[1] } };
-
-  const routes = {
-    '/': 'home',
-    '/admin': 'admin-dash',
-    '/executive': 'admin-dash',
-    '/driver': 'driver',
-    '/manager': 'zone-manager',
-    '/zone-manager': 'zone-manager',
-    '/inventory': 'inventory-dash',
-    '/finance': 'finance-dash',
-    '/support': 'support-dash',
-    '/procurement': 'procurement-dash',
-    '/procurement-office': 'procurement-dash',
-    '/vendors': 'procurement-dash',
-    '/warehouse': 'warehouse-dash',
-    '/analytics': 'analytics-dash',
-    '/reports': 'analytics-dash',
-    '/company-settings': 'company-settings',
-    '/access-control': 'company-settings',
-    '/documents': 'documents-dash',
-    '/document-office': 'documents-dash',
-    '/attendance': 'attendance-dash',
-    '/time-office': 'attendance-dash',
-    '/payroll': 'payroll-dash',
-    '/payroll-office': 'payroll-dash',
-    '/branches': 'branch-dash',
-    '/branch-office': 'branch-dash',
-    '/crm': 'crm-dash',
-    '/customer-relationship': 'crm-dash',
-    '/company-os': 'company-os',
-    '/office': 'company-os',
-    '/ai-control': 'ai-control',
-    '/ai-center': 'ai-control',
-    '/hr-erp': 'hr-erp',
-    '/people-erp': 'hr-erp',
-    '/finance-erp': 'finance-erp',
-    '/accounting': 'finance-erp',
-    '/warehouse-erp': 'warehouse-erp',
-    '/wms': 'warehouse-erp',
-    '/marketing-erp': 'marketing-erp',
-    '/marketing-automation': 'marketing-erp',
-    '/workflow-erp': 'workflow-erp',
-    '/automation-engine': 'workflow-erp',
-    '/bi-erp': 'bi-erp',
-    '/business-intelligence': 'bi-erp',
-    '/asset-erp': 'asset-erp',
-    '/asset-management': 'asset-erp',
-    '/crm-erp': 'crm-erp',
-    '/customer-service-crm': 'crm-erp',
-    '/procurement-erp': 'procurement-erp',
-    '/vendor-erp': 'procurement-erp',
-    '/facilities-erp': 'facilities-erp',
-    '/branch-operations': 'facilities-erp',
-    '/custom-bazar': 'custom-bazar',
-    '/medical': 'medical',
-    '/myorders': 'myorders',
-    '/account': 'account',
-    '/about': 'about-app',
-    '/contact': 'contact',
-    '/terms': 'terms',
-    '/privacy': 'privacy-info'
-  };
-  return routes[normalizedPath] ? { page: routes[normalizedPath], params: {} } : null;
+  return AppRegistry.resolve(path);
 };
 
 Router.navigate = function(path) {

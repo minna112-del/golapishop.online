@@ -1,4 +1,4 @@
-/* store.js — Wishlist + Referral */
+/* store.js — Wishlist state and rendering */
 const Wishlist = {
   storageKey:'golapi_wishlist',
   items:[],
@@ -80,31 +80,3 @@ const Wishlist = {
   }
 };
 Wishlist.load();
-
-const Referral = {
-  getCode(){
-    let code = localStorage.getItem('golapi_referral_code');
-    if(!code){ code = 'GOLAPI' + Math.random().toString(36).substr(2,6).toUpperCase(); localStorage.setItem('golapi_referral_code', code); }
-    return code;
-  },
-  render(){
-    const el = document.getElementById('referralBox');
-    if(!el) return;
-    const code = this.getCode();
-    el.innerHTML = `<div class="card-box" style="text-align:center">
-      <div style="font-size:32px;margin-bottom:10px">🎁</div>
-      <h3 class="tiro" style="font-size:18px;margin-bottom:6px">রেফার করে পুরস্কার পান</h3>
-      <p style="font-size:12.5px;color:var(--ink-muted);margin-bottom:14px">আপনার রেফার কোড শেয়ার করুন। প্রতিটি সফল রেফারের জন্য আপনি পাবেন ৫০ টাকা ছাড়!</p>
-      <div style="background:rgba(212,175,55,.08);border:1px solid var(--gold-line);border-radius:12px;padding:14px;margin-bottom:12px">
-        <div style="font-size:11px;color:var(--ink-muted);margin-bottom:4px">আপনার রেফার কোড</div>
-        <div style="font-size:22px;font-weight:700;color:var(--gold);letter-spacing:2px;font-family:Poppins">${code}</div>
-      </div>
-      <button class="btn btn-gold btn-block" onclick="Referral.copyCode()">📋 কোড কপি করুন</button>
-    </div>`;
-  },
-  copyCode(){
-    const code = this.getCode();
-    if(navigator.clipboard){ navigator.clipboard.writeText(code).then(()=>toast('✓ কোড কপি হয়েছে','success')); }
-    else { const ta=document.createElement('textarea'); ta.value=code; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');toast('✓ কোড কপি হয়েছে','success');}catch(e){toast('কপি করা যায়নি','error');} ta.remove(); }
-  }
-};

@@ -297,8 +297,15 @@ window.loadScriptOnce = function(src){
   window.__loadedScripts[src] = new Promise((resolve, reject)=>{
     const s = document.createElement('script');
     s.src = src;
-    s.onload = resolve;
-    s.onerror = reject;
+    const timeout = setTimeout(()=>fail(new Error('Script load timed out: '+src)), 15000);
+    const fail = error => {
+      clearTimeout(timeout);
+      delete window.__loadedScripts[src];
+      s.remove();
+      reject(error);
+    };
+    s.onload = () => { clearTimeout(timeout); resolve(); };
+    s.onerror = () => fail(new Error('Script load failed: '+src));
     document.head.appendChild(s);
   });
   return window.__loadedScripts[src];

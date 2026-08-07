@@ -63,6 +63,7 @@ function startFirebaseFeatures() {
 
   firebaseStarted = true;
   FB = window.__fb;
+  window.FB = FB;
 
   /*
    * Auth-এর কোনো সমস্যা হলেও product loading বন্ধ হবে না।
@@ -101,9 +102,9 @@ window.addEventListener(
 if (window.__fb) {
   startFirebaseFeatures();
 }
-let currentLang=localStorage.getItem('golapi_lang')||'bn';
-function applyLang(){document.querySelectorAll('[data-bn][data-en]').forEach(el=>{el.innerHTML=el.dataset[currentLang];});document.documentElement.lang=currentLang;const l=document.getElementById('langBtnLabel');if(l)l.textContent=currentLang==='bn'?'EN':'বাং';}
-function toggleLang(){currentLang=currentLang==='bn'?'en':'bn';localStorage.setItem('golapi_lang',currentLang);applyLang();}
+var currentLang = I18n.language();
+function applyLang(){ currentLang = I18n.apply(document); }
+function toggleLang(){ currentLang = I18n.toggle(); }
 applyLang();
 
 /* ---------- Cart abandonment reminder (client-side, no backend needed) ---------- */
@@ -167,7 +168,7 @@ function initApp(){
         // localStorage-এ একটা version marker রাখে, marker না মিললে
         // (মানে এই ব্রাউজার পুরনো কোনো ভার্সন থেকে আসছে) সব service worker
         // registration ও cache মুছে একবার reload করে, তারপর normal flow।
-        const HEAL_VERSION = 'v2-selfheal';
+        const HEAL_VERSION = 'v5-access-checkout-atomic';
         const storedVersion = localStorage.getItem('golapi_heal_version');
         // ⚠️ আগে একদম নতুন ব্রাউজারেও (যেখানে পুরনো cache/SW কিছুই নেই, তাই
         // পরিষ্কার করার কিছু নেই) এই marker না থাকার কারণে unregister+cache

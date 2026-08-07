@@ -3,12 +3,16 @@
 const Home = {
   render(){
     const catGrid=document.getElementById('catGrid');
-    if(catGrid) catGrid.innerHTML = CATEGORIES.map((c,index)=>
-      `<button type="button" class="cat-item" onclick="Router.go('listing',{cat:'${c.id}'})" aria-label="${c.label} ক্যাটাগরি দেখুন">
+    const featuredCategoryIds=['grocery','medicine','gas','vegetables','fish_meat','rice_pulses','edible_oil','dairy_bakery','personal_care','home_care'];
+    const featuredCategories=featuredCategoryIds.map(id=>CATEGORIES.find(c=>c.id===id)).filter(Boolean);
+    if(catGrid) catGrid.innerHTML = featuredCategories.map(c=>{
+      const label=currentLang==='en'?(c.labelEn||c.label):c.label;
+      return `<button type="button" class="cat-item" onclick="Router.go('listing',{cat:'${c.id}'})" aria-label="${esc(label)} ক্যাটাগরি দেখুন">
         <span class="cat-icon" aria-hidden="true">${c.icon}</span>
-        <span class="cat-label">${c.label}</span>
+        <span class="cat-label">${esc(label)}</span>
         <span class="cat-arrow ic ic-arrow-r" aria-hidden="true"></span>
-      </button>`).join('');
+      </button>`;
+    }).join('');
     const zp = zoneProducts();
     const loading = !ProductStore.loaded;
     // ⚠️ আগে শুধু loaded (boolean) চেক হতো, তাই সব retry ব্যর্থ হওয়ার পরও UI

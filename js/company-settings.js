@@ -1,24 +1,22 @@
 /* company-settings.js — Phase 12: Company Settings & Access Control */
 const CompanySettings = {
   uid:null, staff:null, branches:[], config:{}, permissions:{},
-  modules:[
-    ['admin-dash','Executive Office'],['attendance-dash','Attendance'],['payroll-dash','Payroll'],
-    ['documents-dash','Documents'],['inventory-dash','Inventory'],['procurement-dash','Procurement'],
-    ['warehouse-dash','Warehouse'],['support-dash','Customer Care'],
-    ['finance-dash','Finance'],['analytics-dash','Analytics'],
-    ['branch-dash','Branches'],['crm-dash','CRM'],['company-settings','Settings'],
-    ['ai-control','AI Control'],['finance-erp','Finance ERP'],['zone-manager','Zone Office'],['driver','Rider Office']
-  ],
+  modules:AppRegistry.staffCatalog().filter(x=>x.id!=='company-os').map(x=>[x.id,x.name]),
+  v3WorkspaceIds:['hr-erp','warehouse-erp','marketing-erp','workflow-erp','bi-erp','asset-erp','crm-erp','procurement-erp','facilities-erp'],
   roles:{
-    admin:'CEO / Executive',zone_manager:'Zone Operations Manager',inventory_manager:'Inventory Manager',
+    admin:'CEO / Executive',chief_executive_officer:'Chief Executive Officer',zone_manager:'Zone Operations Manager',inventory_manager:'Inventory Manager',
     warehouse_manager:'Warehouse Manager',attendance_officer:'Attendance & Time Officer',
-    payroll_officer:'Payroll Officer',procurement:'Procurement Officer',chief_procurement_officer:'Chief Procurement Officer',
+    payroll_officer:'Payroll Officer',procurement:'Procurement Officer',procurement_officer:'Procurement Officer (Legacy)',chief_procurement_officer:'Chief Procurement Officer',
     vendor_relationship_officer:'Vendor Relationship Officer',branch_manager:'Branch Manager',
     crm_manager:'CRM Manager',company_systems_officer:'Company Systems Officer',ai_operations_manager:'AI Operations Manager',
     financial_controller:'Financial Controller',document_officer:'Document & Records Officer',governance_officer:'Governance & Compliance Officer',
     analytics_manager:'BI & Analytics Manager',finance:'Finance Officer',support:'Customer Care Executive',
-    customer_care_manager:'Customer Care Manager',driver:'Delivery Rider',hr:'People & Culture Officer',
-    marketing:'Growth & Marketing',designer:'Creative Designer',developer:'Software Engineer'
+    support_manager:'Support Manager',customer_care_manager:'Customer Care Manager',customer_experience_manager:'Customer Experience Manager',
+    driver:'Delivery Rider',hr:'People & Culture Officer',people_officer:'People Operations Officer',talent_development_manager:'Talent Development Manager',
+    marketing:'Growth & Marketing',growth_automation_manager:'Growth Automation Manager',workflow_automation_manager:'Workflow Automation Manager',
+    business_intelligence_manager:'Business Intelligence Manager',warehouse_systems_manager:'Warehouse Systems Manager',logistics_manager:'Logistics Manager',fleet_operations_manager:'Fleet Operations Manager',
+    asset_officer:'Asset Officer',asset_manager:'Asset Manager',asset_lifecycle_manager:'Asset Lifecycle Manager',procurement_vendor_manager:'Procurement Vendor Manager',
+    facilities_operations_manager:'Facilities Operations Manager',designer:'Creative Designer',developer:'Software Engineer'
   },
   legacyModules:{
     executive:['admin-dash'],people:['attendance-dash','payroll-dash','documents-dash'],
@@ -28,22 +26,13 @@ const CompanySettings = {
   },
   legacyRoleAliases:{hr:['people_officer'],procurement:['procurement_officer'],customer_care_manager:['support_manager']},
   defaultMatrix(){
-    const all=this.modules.map(([key])=>key);
-    return {
-      admin:all,zone_manager:['zone-manager','inventory-dash','procurement-dash','warehouse-dash','support-dash','finance-dash','analytics-dash','branch-dash','crm-dash','ai-control'],
-      inventory_manager:['inventory-dash','warehouse-dash'],warehouse_manager:['warehouse-dash','inventory-dash'],
-      attendance_officer:['attendance-dash'],payroll_officer:['payroll-dash'],procurement:['procurement-dash','inventory-dash'],
-      chief_procurement_officer:['procurement-dash','inventory-dash','finance-dash'],vendor_relationship_officer:['procurement-dash'],
-      branch_manager:['branch-dash','inventory-dash'],crm_manager:['crm-dash','support-dash'],
-      company_systems_officer:['analytics-dash','ai-control'],ai_operations_manager:['ai-control','analytics-dash'],
-      financial_controller:['finance-erp','finance-dash'],
-      document_officer:['documents-dash'],governance_officer:['company-settings'],analytics_manager:['analytics-dash','ai-control'],
-      finance:['finance-dash','finance-erp','payroll-dash','analytics-dash'],support:['support-dash','crm-dash'],
-      customer_care_manager:['support-dash','crm-dash','analytics-dash'],driver:['driver'],hr:['attendance-dash','payroll-dash','documents-dash'],
-      marketing:['crm-dash','analytics-dash'],designer:[],developer:[]
-    };
+    const catalog=AppRegistry.staffCatalog().filter(x=>x.id!=='company-os'),matrix={};
+    Object.keys(this.roles).forEach(role=>{
+      matrix[role]=catalog.filter(item=>role==='admin'||item.roles.includes(role)).map(item=>item.id);
+    });
+    return matrix;
   },
-  normalizePermissions(saved={}){
+  normalizePermissions(saved={},schemaVersion=0){
     const defaults=this.defaultMatrix(),known=new Set(this.modules.map(([key])=>key)),out={};
     Object.entries(saved||{}).forEach(([role,list])=>{if(Array.isArray(list))out[role]=[...list];});
     Object.keys(this.roles).forEach(role=>{
@@ -52,7 +41,8 @@ const CompanySettings = {
       if(!source){out[role]=[...(defaults[role]||[])];return;}
       const direct=source.filter(key=>known.has(key));
       const expanded=source.flatMap(key=>this.legacyModules[key]||[]).filter(key=>(defaults[role]||[]).includes(key));
-      out[role]=[...new Set([...direct,...expanded])];
+      const v3Defaults=Number(schemaVersion)<3?(defaults[role]||[]).filter(key=>this.v3WorkspaceIds.includes(key)):[];
+      out[role]=[...new Set([...direct,...expanded,...v3Defaults])];
     });
     return out;
   },
@@ -81,7 +71,8 @@ const CompanySettings = {
         FB.getDocs(FB.collection(FB.db,'branches')).catch(()=>null)
       ]);
       this.config=cfg.exists()?cfg.data():{};
-      this.permissions=this.normalizePermissions(perm.exists()?(perm.data().matrix||perm.data().rolePermissions||{}):{});
+      const permissionData=perm.exists()?perm.data():{};
+      this.permissions=this.normalizePermissions(permissionData.matrix||permissionData.rolePermissions||{},permissionData.schemaVersion||0);
       this.branches=[];if(branchSnap)branchSnap.forEach(d=>this.branches.push({id:d.id,...d.data()}));
       this.fillForms();this.renderPermissions();this.renderSummary();await this.loadAudit();
       const u=document.getElementById('companySettingsUpdated');if(u)u.textContent='আপডেট: '+new Date().toLocaleTimeString('bn-BD',{hour:'2-digit',minute:'2-digit'});
@@ -117,7 +108,7 @@ const CompanySettings = {
     const matrix={};Object.entries(this.permissions).forEach(([role,list])=>{if(Array.isArray(list)&&!this.roles[role])matrix[role]=[...list];});Object.keys(this.roles).forEach(r=>matrix[r]=[]);
     document.querySelectorAll('#permissionBody input[data-role]').forEach(i=>{if(i.checked)matrix[i.dataset.role].push(i.dataset.module);});
     if(!matrix.admin.includes('company-settings'))matrix.admin.push('company-settings');
-    try{await FB.setDoc(FB.doc(FB.db,'company_settings','permissions'),{schemaVersion:2,matrix,updatedAt:FB.serverTimestamp(),updatedByUid:this.uid,updatedByName:this.staff.name||'Executive'},{merge:true});await this.audit('permission_matrix',{roles:Object.keys(matrix).length,schemaVersion:2});this.permissions=matrix;toast('Permission Matrix সংরক্ষণ হয়েছে','success');this.renderSummary();}catch(e){toast('Permission সংরক্ষণ হয়নি: '+e.message,'error');}
+    try{await FB.setDoc(FB.doc(FB.db,'company_settings','permissions'),{schemaVersion:3,matrix,updatedAt:FB.serverTimestamp(),updatedByUid:this.uid,updatedByName:this.staff.name||'Executive'},{merge:true});await this.audit('permission_matrix',{roles:Object.keys(matrix).length,schemaVersion:3});this.permissions=matrix;toast('Permission Matrix সংরক্ষণ হয়েছে','success');this.renderSummary();}catch(e){toast('Permission সংরক্ষণ হয়নি: '+e.message,'error');}
   },
   resetPermissions(){if(!confirm('সব Permission ডিফল্ট নীতিতে ফিরিয়ে দেবেন?'))return;this.permissions=this.defaultMatrix();this.renderPermissions();},
   async audit(action,details){try{await FB.addDoc(FB.collection(FB.db,'settings_audit_logs'),{action,details,actorUid:this.uid,actorName:this.staff.name||this.staff.fullName||'Executive',createdAt:FB.serverTimestamp()});}catch(e){}},

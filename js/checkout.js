@@ -112,6 +112,13 @@ const Checkout = {
     const payable = Math.max(0, sub + ship - couponDiscount);
     return Math.min(this.walletAvailable, payable);
   },
+  rejectCoupon(msgEl, message){
+    this.couponCode=null;
+    this.couponData=null;
+    msgEl.textContent=message;
+    msgEl.style.color='#f87171';
+    this.renderSummary();
+  },
   async applyCoupon(){
     const codeEl = document.getElementById('ckCouponCode');
     const msgEl = document.getElementById('ckCouponMsg');
@@ -120,25 +127,31 @@ const Checkout = {
     if(!FB){ msgEl.textContent=currentLang==='bn'?'সংযোগ সমস্যা':'Connection issue'; msgEl.style.color='#f87171'; return; }
     try{
       const snap = await FB.getDocs(FB.query(FB.collection(FB.db,'coupons'), FB.where('code','==',code)));
-      if(snap.empty){ msgEl.textContent=currentLang==='bn'?'❌ এই কুপন কোডটি সঠিক নয়':'❌ This coupon code is not valid'; msgEl.style.color='#f87171'; this.couponCode=null; this.couponData=null; this.renderSummary(); return; }
+      if(snap.empty){ this.rejectCoupon(msgEl,currentLang==='bn'?'❌ এই কুপন কোডটি সঠিক নয়':'❌ This coupon code is not valid'); return; }
       const c = { id:snap.docs[0].id, ...snap.docs[0].data() };
-      const today = new Date();
-      if(c.active===false){ msgEl.textContent=currentLang==='bn'?'❌ এই কুপনটি বন্ধ আছে':'❌ This coupon is inactive'; msgEl.style.color='#f87171'; return; }
-      if(c.expiresAt && new Date(c.expiresAt) < today){ msgEl.textContent=currentLang==='bn'?'❌ কুপনের মেয়াদ শেষ হয়ে গেছে':'❌ This coupon has expired'; msgEl.style.color='#f87171'; return; }
-      if(c.usageLimit && (c.usedCount||0) >= c.usageLimit){ msgEl.textContent=currentLang==='bn'?'❌ কুপনের ব্যবহারসীমা শেষ':'❌ Coupon usage limit reached'; msgEl.style.color='#f87171'; return; }
+      if(c.active===false){ this.rejectCoupon(msgEl,currentLang==='bn'?'❌ এই কুপনটি বন্ধ আছে':'❌ This coupon is inactive'); return; }
+      if(this.couponExpired(c.expiresAt)){ this.rejectCoupon(msgEl,currentLang==='bn'?'❌ কুপনের মেয়াদ শেষ হয়ে গেছে':'❌ This coupon has expired'); return; }
+      if(c.usageLimit && (c.usedCount||0) >= c.usageLimit){ this.rejectCoupon(msgEl,currentLang==='bn'?'❌ কুপনের ব্যবহারসীমা শেষ':'❌ Coupon usage limit reached'); return; }
       const sub = Cart.totalPrice();
-      if(c.minOrder && sub < c.minOrder){ msgEl.textContent=currentLang==='bn'?`❌ ন্যূনতম ${money(c.minOrder)} অর্ডারে এই কুপন প্রযোজ্য`:`❌ This coupon applies to orders of ${money(c.minOrder)} or more`; msgEl.style.color='#f87171'; return; }
+      if(c.minOrder && sub < c.minOrder){ this.rejectCoupon(msgEl,currentLang==='bn'?`❌ ন্যূনতম ${money(c.minOrder)} অর্ডারে এই কুপন প্রযোজ্য`:`❌ This coupon applies to orders of ${money(c.minOrder)} or more`); return; }
       this.couponCode = code; this.couponData = c;
       msgEl.textContent = currentLang==='bn'?'✓ কুপন প্রয়োগ হয়েছে!':'✓ Coupon applied!'; msgEl.style.color='#22c55e';
       this.renderSummary();
-    }catch(e){ msgEl.textContent=currentLang==='bn'?'সমস্যা হয়েছে':'Something went wrong'; msgEl.style.color='#f87171'; }
+    }catch(e){ this.rejectCoupon(msgEl,currentLang==='bn'?'সমস্যা হয়েছে':'Something went wrong'); }
   },
   getCouponDiscount(sub){
-    if(!this.couponData) return 0;
-    const c = this.couponData;
+    return this.couponDiscountFor(this.couponData, sub);
+  },
+  couponDiscountFor(c, sub){
+    if(!c) return 0;
     let disc = c.type==='percent' ? Math.round(sub * c.value/100) : c.value;
     if(c.maxDiscount) disc = Math.min(disc, c.maxDiscount);
     return Math.min(disc, sub);
+  },
+  couponExpired(value){
+    if(!value) return false;
+    const date = typeof value.toDate==='function' ? value.toDate() : new Date(value);
+    return Number.isFinite(date.getTime()) && date < new Date();
   },
   renderSummary(){
     const entries = Object.entries(Cart.items);
@@ -208,11 +221,8 @@ const Checkout = {
     if(!FB){ toast(currentLang==='bn'?'⚠ সংযোগ সমস্যা — আবার চেষ্টা করুন':'⚠ Connection issue — please try again','error'); return; }
     this.setPlaceOrderLoading(true);
     const orderNo = 'GS-'+new Date().getFullYear()+'-'+String(Math.floor(Math.random()*900000)+100000);
-    const sub = Cart.totalPrice();
     const itemCount = Object.values(Cart.items).reduce((a,b)=>a+b,0);
-    const ship = (this.locationData?.deliveryFee != null) ? this.locationData.deliveryFee : calcDeliveryCharge(itemCount, sub, this.locationData?.distanceKm ?? null);
-    const walletUsed = this.getWalletUsed(sub, ship);
-    const couponDiscount = this.getCouponDiscount(sub);
+    const wantsWallet = !!document.getElementById('ckUseWallet')?.checked && !!Auth.currentUser;
     // প্রেসক্রিপশন ছবি (থাকলে) আগে আপলোড করে নেওয়া হয়, যাতে অর্ডার ডকুমেন্টে সাথে সাথে URL যুক্ত করা যায়
     let prescriptionUrl = null;
     const presFile = document.getElementById('ckPrescriptionFile')?.files[0];
@@ -224,7 +234,7 @@ const Checkout = {
       }catch(e){ devWarn('prescription upload failed', e.message); }
     }
     const cartEntries = Object.entries(Cart.items);
-    let orderId;
+    let committedOrder;
     try{
       // ⚠️ আগে এখানে সরাসরি FB.addDoc() দিয়ে order তৈরি হতো, স্টক শুধু ব্রাউজারে
       // cache করা (সম্ভবত পুরনো) ডেটা দেখে চেক হতো — কখনো Firestore-এর latest
@@ -235,11 +245,19 @@ const Checkout = {
       // transaction-এর ভেতরে atomic ভাবে হচ্ছে — transaction নিজেই latest
       // stock আবার পড়ে, তাই দুইজন একসাথে চেষ্টা করলে Firestore নিজে থেকেই
       // একজনকে retry/fail করাবে, দুজনকেই সফল হতে দেবে না।
-      orderId = await FB.runTransaction(FB.db, async (transaction) => {
+      committedOrder = await FB.runTransaction(FB.db, async (transaction) => {
         const productRefs = cartEntries.map(([id]) => FB.doc(FB.db,'products',id));
-        const productSnaps = await Promise.all(productRefs.map(ref => transaction.get(ref)));
+        const userRef = wantsWallet ? FB.doc(FB.db,'users',Auth.currentUser.uid) : null;
+        const couponRef = this.couponData?.id ? FB.doc(FB.db,'coupons',this.couponData.id) : null;
+        const readRefs = [...productRefs, ...(userRef?[userRef]:[]), ...(couponRef?[couponRef]:[])];
+        const readSnaps = await Promise.all(readRefs.map(ref => transaction.get(ref)));
+        const productSnaps = readSnaps.slice(0, productRefs.length);
+        let readIndex = productRefs.length;
+        const userSnap = userRef ? readSnaps[readIndex++] : null;
+        const couponSnap = couponRef ? readSnaps[readIndex] : null;
 
         const itemsForOrder = [];
+        let transactionSub = 0;
         for(let i=0; i<cartEntries.length; i++){
           const [id, qty] = cartEntries[i];
           const snap = productSnaps[i];
@@ -249,12 +267,44 @@ const Checkout = {
           if(latestStock < Number(qty)){
             throw new Error(currentLang==='bn'?`${data.name||'পণ্য'}-এর পর্যাপ্ত স্টক নেই (এই মুহূর্তে মাত্র ${latestStock}টি আছে)। কার্ট আপডেট করুন।`:`Not enough stock for ${data.name||'this item'} (only ${latestStock} left). Please update your cart.`);
           }
-          itemsForOrder.push({productId:id, name:data.name||'', qty:Number(qty), unitPrice:Number(data.salePrice||0)});
+          const unitPrice = Number(data.salePrice ?? data.price ?? 0);
+          const cachedProduct = ALL_PRODUCTS.find(product=>product.id===id);
+          if(cachedProduct && Math.abs(unitPrice-Number(cachedProduct.salePrice||0))>0.001){
+            throw new Error(currentLang==='bn'?`${data.name||'পণ্য'}-এর দাম পরিবর্তন হয়েছে। নতুন মূল্য দেখে আবার অর্ডার নিশ্চিত করুন।`:`The price of ${data.name||'an item'} changed. Review the new price and confirm again.`);
+          }
+          transactionSub += unitPrice * Number(qty);
+          itemsForOrder.push({productId:id, name:data.name||'', qty:Number(qty), unitPrice});
         }
+
+        const transactionShip = (this.locationData?.deliveryFee != null)
+          ? Number(this.locationData.deliveryFee)
+          : calcDeliveryCharge(itemCount, transactionSub, this.locationData?.distanceKm ?? null);
+
+        let liveCoupon = null;
+        let transactionCouponDiscount = 0;
+        if(couponRef){
+          if(!couponSnap?.exists()) throw new Error(currentLang==='bn'?'কুপনটি আর পাওয়া যাচ্ছে না।':'The coupon is no longer available.');
+          liveCoupon = {id:couponSnap.id,...couponSnap.data()};
+          if(liveCoupon.active===false || this.couponExpired(liveCoupon.expiresAt)) throw new Error(currentLang==='bn'?'কুপনটি আর সক্রিয় নেই।':'The coupon is no longer active.');
+          if(liveCoupon.usageLimit && Number(liveCoupon.usedCount||0)>=Number(liveCoupon.usageLimit)) throw new Error(currentLang==='bn'?'কুপনের ব্যবহারসীমা শেষ।':'The coupon usage limit has been reached.');
+          if(liveCoupon.minOrder && transactionSub<Number(liveCoupon.minOrder)) throw new Error(currentLang==='bn'?'এই অর্ডারে কুপনের ন্যূনতম মূল্য পূরণ হয়নি।':'This order does not meet the coupon minimum.');
+          transactionCouponDiscount = this.couponDiscountFor(liveCoupon, transactionSub);
+        }
+
+        const liveWallet = userSnap?.exists() ? Math.max(0, Number(userSnap.data().walletBalance||0)) : 0;
+        const payableBeforeWallet = Math.max(0, transactionSub + transactionShip - transactionCouponDiscount);
+        const transactionWalletUsed = wantsWallet ? Math.min(liveWallet, payableBeforeWallet) : 0;
+        const transactionTotal = Math.max(0, payableBeforeWallet - transactionWalletUsed);
 
         productRefs.forEach((ref, i) => {
           transaction.update(ref, { stock: FB.increment(-Number(cartEntries[i][1])), sold: FB.increment(Number(cartEntries[i][1])) });
         });
+        if(userRef && transactionWalletUsed>0){
+          transaction.update(userRef,{walletBalance:FB.increment(-transactionWalletUsed)});
+        }
+        if(couponRef){
+          transaction.update(couponRef,{usedCount:FB.increment(1)});
+        }
 
         const newOrderRef = FB.doc(FB.collection(FB.db,'orders'));
         transaction.set(newOrderRef, {
@@ -266,11 +316,11 @@ const Checkout = {
           prescriptionUrl,
           instructions, paymentMethod:this.pay, paymentStatus:this.pay==='cod'?'cod':'pending_submission', deliverySlot:'express',
           items: itemsForOrder,
-          subtotal:sub, shippingCost:ship, walletUsed, couponCode:this.couponCode||null, couponDiscount, total:Math.max(0, sub+ship-walletUsed-couponDiscount),
+          subtotal:transactionSub, shippingCost:transactionShip, walletUsed:transactionWalletUsed, couponCode:liveCoupon?.code||this.couponCode||null, couponDiscount:transactionCouponDiscount, total:transactionTotal,
           status:'pending', driverId:null, driverName:null,
           userId:Auth.currentUser?.uid||null, createdAt:FB.serverTimestamp()
         });
-        return newOrderRef.id;
+        return {orderId:newOrderRef.id,subtotal:transactionSub,shippingCost:transactionShip,walletUsed:transactionWalletUsed,couponDiscount:transactionCouponDiscount,total:transactionTotal};
       });
     }catch(e){
       devWarn('order transaction failed', e.message);
@@ -279,25 +329,22 @@ const Checkout = {
       return;
     }
     try{
-      if(walletUsed>0 && Auth.currentUser){
-        await FB.updateDoc(FB.doc(FB.db,'users',Auth.currentUser.uid), { walletBalance: FB.increment(-walletUsed) }).catch(e=>devWarn('wallet deduct failed', e.message));
-      }
+      const {orderId,subtotal:sub,shippingCost:ship,walletUsed,couponDiscount,total} = committedOrder;
       const appliedCouponCode = this.couponCode;
       if(this.couponData){
-        await FB.updateDoc(FB.doc(FB.db,'coupons',this.couponData.id), { usedCount: FB.increment(1) }).catch(()=>{});
         this.couponCode=null; this.couponData=null;
       }
       if(typeof dataLayer!=='undefined'){
         dataLayer.push({event:'purchase',
           transaction_id: orderNo, currency:'BDT',
-          value: Math.max(0, sub+ship-walletUsed-couponDiscount), shipping: ship,
+          value: total, shipping: ship,
           coupon: appliedCouponCode||undefined,
           items: Object.entries(Cart.items).map(([id,qty])=>{ const p=ALL_PRODUCTS.find(x=>x.id===id); return {item_id:id, item_name:p?.name||'', quantity:qty, price:p?.salePrice||0}; })
         });
       }
       OrderSuccess.save({
         orderNumber:orderNo,
-        total:Math.max(0, sub+ship-walletUsed-couponDiscount),
+        total,
         itemCount,
         paymentMethod:this.pay,
         deliveryArea:this.locationData?.zone?.label || AREA_LABELS[upazila] || upazila
@@ -311,13 +358,22 @@ const Checkout = {
         // banner দেখাবে — order হারিয়ে গেছে ভাবার সুযোগ থাকবে না।
         try{
           localStorage.setItem('golapi_pending_payment', JSON.stringify({
-            orderId, method:this.pay, amount: sub+ship-walletUsed-couponDiscount, zone, orderNo, at: Date.now()
+            orderId, method:this.pay, amount:total, zone, orderNo, at: Date.now()
           }));
         }catch(e){}
-        PaymentGateway.showPaymentModal(this.pay, sub+ship-walletUsed-couponDiscount, orderId, upazila);
+        PaymentGateway.showPaymentModal(this.pay, total, orderId, upazila);
       } else {
         Router.go('order-success');
       }
-    }catch(e){ devWarn('order failed', e.message); this.setPlaceOrderLoading(false); toast(currentLang==='bn'?'❌ অর্ডার সম্পন্ন হয়নি, আবার চেষ্টা করুন':'❌ Order could not be placed, please try again','error'); }
+    }catch(e){
+      // The transaction has already committed at this point. Never tell the
+      // customer to retry and accidentally create a duplicate order because a
+      // local analytics/payment UI step failed afterwards.
+      devWarn('post-order UI failed', e.message);
+      this.setPlaceOrderLoading(false);
+      Cart.items={}; Cart.save();
+      toast(currentLang==='bn'?'✓ অর্ডার তৈরি হয়েছে। অর্ডার তালিকা থেকে অবস্থা দেখুন।':'✓ Your order was created. Check My Orders for its status.','success');
+      Router.go('myorders');
+    }
   }
 };
