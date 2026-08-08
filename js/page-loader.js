@@ -94,7 +94,7 @@
     ready = true;
     clearTimeout(readyTimeout);
     const loader = document.getElementById('pageLoader');
-    if (loader) loader.hidden = true;
+    if (loader) { loader.hidden = true; loader.style.display = 'none'; }
     document.dispatchEvent(new Event('pages-ready'));
   }
 
