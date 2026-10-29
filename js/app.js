@@ -18,7 +18,10 @@ setTimeout(() => {
       try { ProductStore.handleFirebaseUnavailable(); } catch (e) { console.error(e); }
     }
   }
-}, 15000);
+  // FAST-LOAD FIX: was 15000ms, matching the old loader ceiling. The loader
+  // no longer waits that long, so a dead Firebase SDK should surface its
+  // cached/error state in 8s instead of leaving the product grid hanging.
+}, 8000);
 
 /* ⚠️ bug fix (orphan pending order): payment.js শুধু checkout পেজে lazy-load
    হয়, তাই এই check-টা এখানে self-contained রাখা হলো যাতে অ্যাপ যেকোনো পেজ
