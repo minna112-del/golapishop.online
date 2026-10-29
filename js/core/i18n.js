@@ -133,6 +133,7 @@
     'দেখুন': 'View', 'সম্পাদনা': 'Edit', 'বিস্তারিত': 'Details', 'নিশ্চিত করুন': 'Confirm', 'রিসেট করুন': 'Reset',
     'অ্যাকাউন্ট': 'Account', 'অ্যাডমিন': 'Admin', 'স্টাফ': 'Staff', 'কর্মী': 'Employee', 'কর্মচারী': 'Employee',
     'গ্রাহক': 'Customer', 'ড্রাইভার': 'Driver', 'রাইডার': 'Rider', 'ম্যানেজার': 'Manager', 'শাখা': 'Branch',
+    'ম্যানেজার, Zone-A শাখা': 'Manager, Zone-A Branch', 'ম্যানেজার, Zone-B শাখা': 'Manager, Zone-B Branch', 'ম্যানেজার, Zone-C শাখা': 'Manager, Zone-C Branch', 'ম্যানেজার, Zone-D শাখা': 'Manager, Zone-D Branch',
     'পণ্য': 'Product', 'প্রোডাক্ট': 'Product', 'অর্ডার': 'Order', 'কার্ট': 'Cart', 'ক্যাটাগরি': 'Category',
     'ইনভেন্টরি': 'Inventory', 'স্টক': 'Stock', 'পরিমাণ': 'Quantity', 'মূল্য': 'Price', 'ছাড়': 'Discount',
     'পেমেন্ট': 'Payment', 'ডেলিভারি': 'Delivery', 'ঠিকানা': 'Address', 'লোকেশন': 'Location', 'এলাকা': 'Area',
@@ -262,6 +263,10 @@
       attributeSource.set(element, originals);
     }
     Object.entries(originals).forEach(([name, source]) => {
+      /* Paired labels own their button's aria-label (see above); the
+         frozen attribute source would otherwise restore the render-time
+         language and undo the paired switch. */
+      if (name === 'aria-label' && element.querySelector('[data-bn][data-en]')) return;
       const next = language === 'en' ? toEnglish(source) : source;
       if (element.getAttribute(name) !== next) element.setAttribute(name, next);
     });
@@ -269,7 +274,15 @@
 
   function translatePairedElement(element) {
     const next = language === 'en' ? element.dataset.en : element.dataset.bn;
-    if (typeof next === 'string' && element.innerHTML !== next) element.innerHTML = next;
+    if (typeof next !== 'string') return;
+    if (element.innerHTML !== next) element.innerHTML = next;
+    /* AUDIT FIX 2026-10-29 (round 2d): a category button rendered in
+       English mode had aria-label="Grocery" frozen as its attribute
+       source, so toggling back to Bengali left the button's accessible
+       name in English even though its visible label was Bengali. The
+       paired label owns the button's name, so keep them in sync. */
+    const button = element.closest('button');
+    if (button && button.hasAttribute('aria-label') && button.getAttribute('aria-label') !== next) button.setAttribute('aria-label', next);
   }
 
   function apply(root = document, notify = root === document) {
