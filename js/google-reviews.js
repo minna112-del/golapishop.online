@@ -82,11 +82,30 @@
     rendered = true;
   }
 
+  var DEBUG = /[?&]grdebug=1/.test(global.location.search || '');
+  function debug(msg) {
+    if (!DEBUG) return;
+    try {
+      var section = document.querySelector('.home-reviews-section');
+      if (!section) return;
+      var el = section.querySelector('[data-gr-debug]');
+      if (!el) {
+        el = document.createElement('p');
+        el.setAttribute('data-gr-debug', '1');
+        el.setAttribute('data-i18n-ignore', '');
+        el.style.cssText = 'font-size:12px;color:#b00;padding:8px;border:1px dashed #b00;border-radius:8px;';
+        section.insertBefore(el, section.firstChild);
+      }
+      el.textContent = 'Google Reviews debug: ' + msg;
+    } catch (e) { /* never break the page for debug output */ }
+  }
+
   function fetchDetails(service, placeId) {
     PLACE_ID = placeId;
     service.getDetails(
       { placeId: placeId, fields: ['name', 'rating', 'user_ratings_total', 'reviews'] },
       function (place, status) {
+        debug('getDetails status=' + status + ' place=' + (place ? place.name : 'none'));
         if (status === global.google.maps.places.PlacesServiceStatus.OK && place) {
           cached = place;
           render(place);
@@ -102,11 +121,15 @@
     if (cached) { render(cached); return; }
     if (!global.google || !global.google.maps || !global.google.maps.places) {
       /* Maps API not loaded yet (e.g. location picker never opened). */
+      debug('Maps API not loaded yet, calling LocationPicker.loadApi()');
       if (global.LocationPicker && typeof global.LocationPicker.loadApi === 'function') {
-        global.LocationPicker.loadApi().then(fetchReviews, function () {});
+        global.LocationPicker.loadApi().then(fetchReviews, function () { debug('loadApi failed'); });
+      } else {
+        debug('LocationPicker.loadApi not available');
       }
       return;
     }
+    debug('Maps API ready, finding place by query');
     try {
       var service = new global.google.maps.places.PlacesService(document.createElement('div'));
       if (PLACE_ID) { fetchDetails(service, PLACE_ID); return; }
@@ -115,6 +138,7 @@
       service.findPlaceFromQuery(
         { query: FIND_QUERY, fields: ['place_id'] },
         function (results, status) {
+          debug('findPlace status=' + status + ' results=' + (results ? results.length : 0));
           if (status === global.google.maps.places.PlacesServiceStatus.OK && results && results[0] && results[0].place_id) {
             fetchDetails(service, results[0].place_id);
           }
