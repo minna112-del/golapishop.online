@@ -7,9 +7,14 @@ const Home = {
     const featuredCategories=featuredCategoryIds.map(id=>CATEGORIES.find(c=>c.id===id)).filter(Boolean);
     if(catGrid) catGrid.innerHTML = featuredCategories.map(c=>{
       const label=currentLang==='en'?(c.labelEn||c.label):c.label;
+      /* AUDIT FIX 2026-10-29 (round 2b): the label used to be baked in at
+         render time in the then-current language, so after navigating in
+         English mode and toggling back, Bengali could never return for
+         these buttons. A paired bn/en span lets the toggle restore either
+         language regardless of render language. */
       return `<button type="button" class="cat-item" onclick="Router.go('listing',{cat:'${c.id}'})" aria-label="${esc(label)}">
         <span class="cat-icon" aria-hidden="true">${c.icon}</span>
-        <span class="cat-label">${esc(label)}</span>
+        <span class="cat-label" data-bn="${esc(c.label)}" data-en="${esc(c.labelEn||c.label)}">${esc(label)}</span>
         <span class="cat-arrow ic ic-arrow-r" aria-hidden="true"></span>
       </button>`;
     }).join('');
