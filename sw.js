@@ -1,5 +1,5 @@
 /* sw.js — Golapi Shop Offline Service Worker (network-first) */
-const CACHE = 'golapi-v107-round2b';
+const CACHE = 'golapi-v108-round2d';
 const OFFLINE_URL = '/offline.html';
 /* ⚠️ আগে এখানে admin/driver/zone-manager/checkout/account ইত্যাদি সব পেজ+JS
    pre-cache হতো — যদিও page-loader.js/router.js এগুলো lazy করে দিয়েছে, Service
