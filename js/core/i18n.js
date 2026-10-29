@@ -25,6 +25,10 @@
        dictionary translated standalone names into nouns ("creation",
        "the heart", "bang"); these curated entries win over it. */
     'সৃজন': 'Srijon',
+    'রাজু': 'Raju',
+    'শিবলু': 'Shiblu',
+    'বাবু': 'Babu',
+    'বাবলু': 'Bablu',
     'হৃদয়': 'Hridoy',
     'হৃদয় — হটলাইন ও অপারেশন মনিটরিং': 'Hridoy — Hotline and Operations Monitoring',
     'হটলাইন ইনচার্জ হৃদয়কে কল করুন': 'Call the hotline in-charge Hridoy',
