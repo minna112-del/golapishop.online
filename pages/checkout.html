@@ -32,14 +32,14 @@
 
           <button type="button" class="checkout-location-btn" onclick="Checkout.openLocationPicker()">
             <span class="checkout-location-btn__icon"><span class="ic ic-pin"></span></span>
-            <span><strong data-bn="ম্যাপে সঠিক লোকেশন পিন করুন *" data-en="Pin Exact Location on Map *">ম্যাপে সঠিক লোকেশন পিন করুন *</strong><small data-bn="চার্জ ও এলাকা ঠিক করতে দরকার" data-en="Needed to verify delivery zone, distance, and charge">চার্জ ও এলাকা ঠিক করতে দরকার</small></span>
+            <span><strong data-bn="ম্যাপে সঠিক লোকেশন পিন করুন (ঐচ্ছিক)" data-en="Pin Exact Location on Map (Optional)">ম্যাপে সঠিক লোকেশন পিন করুন (ঐচ্ছিক)</strong><small data-bn="পিন দিলে চার্জ ও সময় আরও নিখুঁত হবে; না দিলেও অর্ডার হবে" data-en="Pinning gives a more accurate fee & time; ordering works without it too">পিন দিলে চার্জ ও সময় আরও নিখুঁত হবে; না দিলেও অর্ডার হবে</small></span>
             <span aria-hidden="true">→</span>
           </button>
           <div id="ckLocationSummary" class="checkout-location-summary" hidden></div>
 
           <div class="field"><label for="ckVillage" data-bn="গ্রাম / এলাকার নাম *" data-en="Village / Area Name *">গ্রাম / এলাকার নাম *</label><input type="text" id="ckVillage" placeholder="যেমন: পশ্চিম নাজিরপুর, ৩নং ওয়ার্ড" autocomplete="address-level3" required></div>
           <div class="field"><label for="ckAddress" data-bn="বাড়ি, রোড ও ল্যান্ডমার্ক *" data-en="House, Road &amp; Landmark *">বাড়ি, রোড ও ল্যান্ডমার্ক *</label><textarea id="ckAddress" rows="3" placeholder="বাড়ি নম্বর, রোড নম্বর, কাছাকাছি পরিচিত স্থান" autocomplete="street-address" required></textarea></div>
-          <div class="field"><label for="ckInstructions" data-bn="ডেলিভারির জন্য কিছু বলার থাকলে লিখুন *" data-en="Delivery Instructions *">ডেলিভারির জন্য কিছু বলার থাকলে লিখুন *</label><textarea id="ckInstructions" rows="2" placeholder="যেমন: সবুজ গেট, মসজিদের পাশের গলি, পৌঁছে কল করবেন" required></textarea></div>
+          <div class="field"><label for="ckInstructions" data-bn="ডেলিভারির জন্য কিছু বলার থাকলে লিখুন (ঐচ্ছিক)" data-en="Delivery Instructions (Optional)">ডেলিভারির জন্য কিছু বলার থাকলে লিখুন (ঐচ্ছিক)</label><textarea id="ckInstructions" rows="2" placeholder="যেমন: সবুজ গেট, মসজিদের পাশের গলি, পৌঁছে কল করবেন"></textarea></div>
           <div class="field"><label for="ckNid" data-bn="জাতীয় পরিচয়পত্র নম্বর <span>(না দিলেও চলবে)</span>" data-en="National ID Number <span>(Optional)</span>">জাতীয় পরিচয়পত্র নম্বর <span>(না দিলেও চলবে)</span></label><input type="text" id="ckNid" placeholder="১০, ১৩ বা ১৭ সংখ্যার NID" inputmode="numeric" autocomplete="off"></div>
 
           <div id="ckPrescriptionBox" class="checkout-prescription" hidden>

@@ -22,9 +22,9 @@
             এখনই বাজার করুন
             <span class="ic ic-arrow-r" aria-hidden="true"></span>
           </button>
-          <button type="button" class="home-secondary-cta" onclick="Router.go('listing',{cat:'all'})" data-bn="<span class='ic ic-cart' aria-hidden='true'></span>ক্যাটালগ দেখুন" data-en="<span class='ic ic-cart' aria-hidden='true'></span>View Catalog">
-            <span class="ic ic-cart" aria-hidden="true"></span>
-            ক্যাটালগ দেখুন
+          <button type="button" class="home-secondary-cta" onclick="Router.go('custom-bazar')" data-bn="<span class='ic ic-pencil' aria-hidden='true'></span>তালিকা দিয়ে বাজার করুন" data-en="<span class='ic ic-pencil' aria-hidden='true'></span>Order with a list">
+            <span class="ic ic-pencil" aria-hidden="true"></span>
+            তালিকা দিয়ে বাজার করুন
           </button>
         </div>
 
@@ -32,6 +32,7 @@
           <span><span class="ic ic-check" aria-hidden="true"></span>ডেলিভারির সময় পেমেন্ট</span>
           <span><span class="ic ic-check" aria-hidden="true"></span>লোকাল সাপোর্ট</span>
           <span><span class="ic ic-check" aria-hidden="true"></span>অর্ডারের খবর</span>
+          <span><span class="ic ic-check" aria-hidden="true"></span>ডেলিভারি চার্জ ৳৩০ থেকে</span>
         </div>
 
         <button type="button" class="home-location-check" onclick="LocationPicker.open(d=>{ toast(d.zone ? '✓ আপনার এলাকা কভার করি — '+d.zone.label : '⚠ দুঃখিত, এই এলাকায় এখনো ডেলিভারি নেই', d.zone?'success':'error') })">
@@ -151,6 +152,8 @@
         <h3>নোয়াখালিতে</h3>
         <p>Zone-A, Zone-B, Zone-C ও Zone-D এলাকায় নিজস্ব ডেলিভারি চলছে। অর্ডারের আগে আপনার এলাকা মিলিয়ে নিন।</p>
         <div class="home-zone-chips"><span>Zone-A</span><span>Zone-B</span><span>Zone-C</span><span>Zone-D</span></div>
+        <p class="home-fee-note">ডেলিভারি চার্জ (দূরত্ব অনুযায়ী): ৩ কিমি পর্যন্ত ৳৩০ · ৭ কিমি পর্যন্ত ৳৫০ · ১২ কিমি পর্যন্ত ৳৮০। সঠিক চার্জ চেকআউটে দেখাবে।</p>
+        <p class="home-fee-note">লিস্ট লিখতে কষ্ট হলে <a href="https://wa.me/8801612057371" target="_blank" rel="noopener">WhatsApp-এ পাঠান</a> — আমরা মিলিয়ে নেব।</p>
         <button type="button" onclick="LocationPicker.open(d=>{ toast(d.zone ? '✓ আপনার এলাকা কভার করি — '+d.zone.label : '⚠ দুঃখিত, এই এলাকায় এখনো ডেলিভারি নেই', d.zone?'success':'error') })">এলাকা যাচাই করুন <span class="ic ic-arrow-r" aria-hidden="true"></span></button>
       </aside>
     </div>
@@ -187,15 +190,15 @@
   <section class="sec home-section home-human-section" aria-labelledby="homeHumanTitle">
     <div class="home-human-card">
       <div class="home-human-people" aria-hidden="true">
-        <img src="icons/team-mahsin-card.webp" alt="" loading="lazy">
-        <img src="icons/team-rimon.webp" alt="" loading="lazy">
-        <img src="icons/team-srijon.webp" alt="" loading="lazy">
-        <img src="icons/team-hridoy.webp" alt="" loading="lazy">
+        <img src="icons/team-mahsin-card.webp" alt="টিম সদস্য" loading="lazy">
+        <img src="icons/team-rimon.webp" alt="জোন ম্যানেজার রিমন (Zone-B)" loading="lazy">
+        <img src="icons/team-srijon.webp" alt="জোন ম্যানেজার সৃজন (Zone-A)" loading="lazy">
+        <img src="icons/team-hridoy.webp" alt="টিম সদস্য" loading="lazy">
       </div>
       <div class="home-human-copy">
         <span class="home-section-kicker">কাস্টমার কেয়ার</span>
         <h2 id="homeHumanTitle" class="tiro">কথা বলুন আমাদের সাথে</h2>
-        <p>প্রশ্ন থাকলে সরাসরি ফোন করুন। সেবা এলাকা, পেমেন্ট, রিটার্ন বা অর্ডারের নিয়ম—সবকিছু পরিষ্কারভাবে জানানো হয়।</p>
+        <p>প্রশ্ন থাকলে সরাসরি ফোন করুন। সেবা এলাকা, পেমেন্ট, রিটার্ন বা অর্ডারের নিয়ম—সবকিছু পরিষ্কারভাবে জানানো হয়। নোয়াখালীর স্থানীয় টিম — Zone-A: সৃজন, Zone-B: রিমন, Zone-C: রাজু, Zone-D: শিবলু।</p>
       </div>
       <div class="home-human-actions">
         <a href="tel:+8801612057371"><span class="ic ic-phone" aria-hidden="true"></span>+880 1612-057371</a>
