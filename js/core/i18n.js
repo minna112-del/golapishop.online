@@ -189,21 +189,14 @@
     if (!/[\u0980-\u09FF]/.test(value)) return value;
     const compact = value.replace(/\s+/g, ' ').trim();
     if (phrases.has(compact)) return value.replace(compact, phrases.get(compact));
-    let translated = value;
-    const initials = new Set(translated.match(/[\u0980-\u09FF]/g) || []);
-    const candidates = [];
-    initials.forEach(initial => candidates.push(...(phraseBuckets.get(initial) || [])));
-    candidates.sort((a, b) => b[0].length - a[0].length);
-    for (const [bn, en] of candidates) {
-      if (translated.includes(bn)) translated = translated.split(bn).join(en);
-    }
-    for (const [bn, en] of vocabulary) translated = translated.split(bn).join(en);
-    translated = translated.replace(/[০-৯]/g, digit => digits[digit]);
-    /* Unmapped Bangla may be a product, customer, staff or place name. */
-    return translated
-      .replace(/\s{2,}/g, ' ')
-      .replace(/\s+([,.;:!?])/g, '$1')
-      .trim();
+    /* AUDIT FIX 2026-10-29: word-by-word substring replacement garbled
+       Bengali (e.g. a short word inside a longer word got swapped, leaving
+       mixed fragments) and broke the EN->BN round-trip. Only an exact
+       whole-phrase match is translated now; unmatched text is left as-is
+       (still Bengali) instead of being mangled. Paired [data-bn][data-en]
+       elements and the curated phrase map still cover the main UI. */
+    /* Unmapped Bangla may be a product, customer, staff or place name — leave it untouched. */
+    return value;
   }
 
   function shouldIgnore(node) {
@@ -214,8 +207,17 @@
   function translateTextNode(node) {
     if (shouldIgnore(node)) return;
     const current = node.nodeValue || '';
-    if (!textSource.has(node) || (language === 'en' && /[\u0980-\u09FF]/.test(current) && current !== textSource.get(node))) {
+    if (!textSource.has(node)) {
+      /* First encounter: freeze the original source forever. */
       textSource.set(node, current);
+    } else {
+      /* AUDIT FIX 2026-10-29: never overwrite the frozen source with a
+         (partially) translated rendering. Only treat the text as new
+         content when it differs from BOTH the source and its own
+         translation — that means app code genuinely changed it. */
+      const source = textSource.get(node);
+      const expected = language === 'en' ? toEnglish(source) : source;
+      if (current !== source && current !== expected) textSource.set(node, current);
     }
     const source = textSource.get(node);
     const next = language === 'en' ? toEnglish(source) : source;

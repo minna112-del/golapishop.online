@@ -68,7 +68,7 @@ const Checkout = {
     } else { box.hidden=true; box.innerHTML=''; }
   },
   goStep(n){
-    if(n>1 && this.currentStep===1 && !this.isStep1Valid()){ toast(currentLang==='bn'?'ঠিকানা ও ডেলিভারি নির্দেশনা সঠিকভাবে পূরণ করুন':'Please fill in the address and delivery instructions correctly','error'); return; }
+    if(n>1 && this.currentStep===1 && !this.isStep1Valid()){ toast(currentLang==='bn'?'ঠিকানা সঠিকভাবে পূরণ করুন':'Please fill in the address correctly','error'); return; }
     if(n===2 && typeof dataLayer!=='undefined'){
       dataLayer.push({event:'begin_checkout', currency:'BDT', value: Cart.totalPrice()});
     }
@@ -89,7 +89,6 @@ const Checkout = {
     const deliveryZone = document.getElementById('ckDistrict')?.value||'';
     const zone = document.getElementById('ckZone')?.value||'';
     const village = document.getElementById('ckVillage')?.value.trim()||'';
-    const instructions = document.getElementById('ckInstructions')?.value.trim()||'';
     const nid = document.getElementById('ckNid')?.value.trim().replace(/\s/g,'')||'';
     const phoneRe = /^(?:\+880|880|0)1[3-9]\d{8}$/;
     const nidRe = /^\d{10}$|^\d{13}$/;
@@ -101,13 +100,14 @@ const Checkout = {
       ['ckZone', !!zone, currentLang==='bn'?'এলাকা বেছে নিন':'Select an area'],
       ['ckVillage', village.length>0, currentLang==='bn'?'গ্রাম বা এলাকার নাম লিখুন':'Enter village or area'],
       ['ckAddress', addr.length>=5, currentLang==='bn'?'বাড়ি, রোড বা ল্যান্ডমার্ক একটু বিস্তারিত লিখুন':'Enter house, road, or landmark details'],
-      ['ckInstructions', instructions.length>0, currentLang==='bn'?'ডেলিভারি নির্দেশনা লিখুন':'Enter delivery instructions'],
       ['ckNid', nidOk, currentLang==='bn'?'NID ১০ বা ১৩ সংখ্যার হতে হবে':'NID must be 10 or 13 digits']
     ];
     const failed = checks.find(([,ok])=>!ok);
     if(failed){ this.markFieldError(failed[0], failed[2]); return false; }
-    if(!this.locationData){ this.markLocationError(currentLang==='bn'?'ম্যাপে সঠিক লোকেশন পিন করুন। এটা ছাড়া অর্ডার করা যাবে না।':'Pin your exact location on the map. Orders cannot be placed without it.'); return false; }
-    if(!this.locationData.zone){
+    /* AUDIT FIX 2026-10-29: map pin is optional now. Zone/area/village/
+       address from the form are enough to place the order; without a pin
+       the delivery fee falls back to the average-distance estimate. */
+    if(this.locationData && !this.locationData.zone){
       this.markLocationError(currentLang==='bn'?'দুঃখিত, আপনার লোকেশন আমাদের ডেলিভারি জোনের বাইরে।':'Sorry, your location is outside our delivery zone.');
       return false;
     }
@@ -240,8 +240,7 @@ const Checkout = {
   async placeOrder(){
     if(this.isPlacingOrder) return;
     if(!this.validateCartForOrder()) return;
-    if(!this.locationData){ toast(currentLang==='bn'?'⚠ লোকেশন নির্বাচন করা হয়নি — "ম্যাপে সঠিক লোকেশন পিন করুন" বাটনে ট্যাপ করুন':'⚠ No location selected — tap "Pin Exact Location on Map"','error'); this.goStep(1); return; }
-    if(!this.locationData.zone){ toast(currentLang==='bn'?'⚠ এই লোকেশন ডেলিভারি জোনের বাইরে':'⚠ This location is outside the delivery zone','error'); this.goStep(1); return; }
+    if(this.locationData && !this.locationData.zone){ toast(currentLang==='bn'?'⚠ এই লোকেশন ডেলিভারি জোনের বাইরে':'⚠ This location is outside the delivery zone','error'); this.goStep(1); return; }
     const name=document.getElementById('ckName').value.trim();
     const phone=document.getElementById('ckPhone').value.trim();
     const addr=document.getElementById('ckAddress').value.trim();
@@ -253,7 +252,7 @@ const Checkout = {
     const phoneRe = /^(?:\+880|880|0)1[3-9]\d{8}$/;
     const nidRe = /^\d{10}$|^\d{13}$/;
     const nidOk = nid.length===0 || nidRe.test(nid);
-    if(!name||!phoneRe.test(phone.replace(/[\s-]/g,''))||!nidOk||addr.length<5||!deliveryZone||!zone||!village||!instructions){ toast(currentLang==='bn'?'⚠ সব প্রয়োজনীয় তথ্য সঠিকভাবে পূরণ করুন':'⚠ Please fill in all required information correctly','error'); this.goStep(1); return; }
+    if(!name||!phoneRe.test(phone.replace(/[\s-]/g,''))||!nidOk||addr.length<5||!deliveryZone||!zone||!village){ toast(currentLang==='bn'?'⚠ সব প্রয়োজনীয় তথ্য সঠিকভাবে পূরণ করুন':'⚠ Please fill in all required information correctly','error'); this.goStep(1); return; }
     if(!document.getElementById('ckTerms').checked){ toast(currentLang==='bn'?'⚠ শর্তাবলীতে সম্মত হতে হবে':'⚠ You must agree to the Terms & Conditions','error'); return; }
     if(!FB){ toast(currentLang==='bn'?'⚠ সংযোগ সমস্যা — আবার চেষ্টা করুন':'⚠ Connection issue — please try again','error'); return; }
     this.setPlaceOrderLoading(true);

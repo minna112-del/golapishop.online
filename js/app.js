@@ -228,15 +228,26 @@ function initApp(){
         // কাস্টমার যদি সেই মুহূর্তে checkout/cart-এ থাকে (মাঝপথে অর্ডার/পেমেন্ট),
         // তাহলে reload disrupt করবে বলে সেটা এড়ানো হচ্ছে; home/listing/product
         // browsing-এর সময় হলে স্বাভাবিকভাবে reload হবে।
+        /* AUDIT FIX 2026-10-29: a new service worker taking control must
+           never reload the page by itself — not even while browsing.
+           Show the same update banner update-check.js uses; refresh only
+           when the user taps it. */
         navigator.serviceWorker.addEventListener('controllerchange', () => {
-          if (sessionStorage.getItem('golapi_sw_reloaded') === '1') return;
-          const disruptivePages = ['checkout', 'cart'];
-          if (typeof Router !== 'undefined' && disruptivePages.includes(Router.current)) {
-            devWarn('SW update হয়েছে, কিন্তু checkout/cart-এ থাকায় reload পিছিয়ে দেওয়া হলো');
-            return;
-          }
-          sessionStorage.setItem('golapi_sw_reloaded', '1');
-          window.location.reload();
+          if (document.getElementById('golapi-update-banner')) return;
+          const bar = document.createElement('div');
+          bar.id = 'golapi-update-banner';
+          bar.setAttribute('role', 'status');
+          bar.style.cssText = 'position:fixed;left:12px;right:12px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:9999;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;background:#181114;color:#fff;box-shadow:0 12px 32px rgba(0,0,0,.3);font-size:13px;line-height:1.5';
+          const msg = document.createElement('span');
+          msg.style.flex = '1';
+          msg.textContent = 'নতুন ভার্সন এসেছে — রিফ্রেশ করলে নতুন সুবিধা পাবেন।';
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.textContent = 'রিফ্রেশ করুন';
+          btn.style.cssText = 'flex:0 0 auto;padding:10px 14px;border:0;border-radius:10px;background:#DC3062;color:#fff;font-weight:800;cursor:pointer';
+          btn.addEventListener('click', () => window.location.reload());
+          bar.append(msg, btn);
+          document.body.appendChild(bar);
         });
       } catch (error) {
         console.warn('Service worker registration failed:', error);
