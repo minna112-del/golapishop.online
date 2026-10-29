@@ -100,6 +100,23 @@
     } catch (e) { /* never break the page for debug output */ }
   }
 
+  var _mapsLoading = null;
+  function loadMapsApi() {
+    if (_mapsLoading) return _mapsLoading;
+    _mapsLoading = new Promise(function (resolve, reject) {
+      if (global.google && global.google.maps && global.google.maps.places) { resolve(); return; }
+      var key = global.GOOGLE_MAPS_API_KEY || '';
+      if (!key) { debug('No GOOGLE_MAPS_API_KEY on window'); reject(new Error('no key')); return; }
+      global.__onGMapsReviewsLoaded = function () { resolve(); };
+      var script = document.createElement('script');
+      script.src = 'https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(key) + '&libraries=places&callback=__onGMapsReviewsLoaded&language=bn&region=BD';
+      script.async = true;
+      script.onerror = function () { reject(new Error('maps script error')); };
+      document.head.appendChild(script);
+    });
+    return _mapsLoading;
+  }
+
   function fetchDetails(service, placeId) {
     PLACE_ID = placeId;
     service.getDetails(
@@ -120,13 +137,15 @@
     if (rendered) return;
     if (cached) { render(cached); return; }
     if (!global.google || !global.google.maps || !global.google.maps.places) {
-      /* Maps API not loaded yet (e.g. location picker never opened). */
-      debug('Maps API not loaded yet, calling LocationPicker.loadApi()');
-      if (global.LocationPicker && typeof global.LocationPicker.loadApi === 'function') {
-        global.LocationPicker.loadApi().then(fetchReviews, function () { debug('loadApi failed'); });
-      } else {
-        debug('LocationPicker.loadApi not available');
-      }
+      /* Maps API not loaded yet (e.g. location picker never opened).
+         ROOT CAUSE FOUND 2026-10-29: the previous code relied on
+         window.LocationPicker.loadApi, but location.js declares
+         LocationPicker with top-level const, which does NOT create a
+         window property — so window.LocationPicker is undefined even
+         though the picker itself works. Load the Maps API directly
+         here instead of depending on another script's global. */
+      debug('Maps API not loaded yet, loading it directly');
+      loadMapsApi().then(fetchReviews, function () { debug('direct Maps API load failed'); });
       return;
     }
     debug('Maps API ready, finding place by query');
