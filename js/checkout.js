@@ -104,10 +104,10 @@ const Checkout = {
     ];
     const failed = checks.find(([,ok])=>!ok);
     if(failed){ this.markFieldError(failed[0], failed[2]); return false; }
-    /* AUDIT FIX 2026-10-29: map pin is optional now. Zone/area/village/
-       address from the form are enough to place the order; without a pin
-       the delivery fee falls back to the average-distance estimate. */
-    if(this.locationData && !this.locationData.zone){
+    /* 2026-10-29 user decision: the map pin is MANDATORY again. An order
+       cannot proceed without a pinned location. */
+    if(!this.locationData){ this.markLocationError(currentLang==='bn'?'ম্যাপে সঠিক লোকেশন পিন করুন। এটা ছাড়া অর্ডার করা যাবে না।':'Pin your exact location on the map. Orders cannot be placed without it.'); return false; }
+    if(!this.locationData.zone){
       this.markLocationError(currentLang==='bn'?'দুঃখিত, আপনার লোকেশন আমাদের ডেলিভারি জোনের বাইরে।':'Sorry, your location is outside our delivery zone.');
       return false;
     }
@@ -240,7 +240,8 @@ const Checkout = {
   async placeOrder(){
     if(this.isPlacingOrder) return;
     if(!this.validateCartForOrder()) return;
-    if(this.locationData && !this.locationData.zone){ toast(currentLang==='bn'?'⚠ এই লোকেশন ডেলিভারি জোনের বাইরে':'⚠ This location is outside the delivery zone','error'); this.goStep(1); return; }
+    if(!this.locationData){ toast(currentLang==='bn'?'⚠ লোকেশন নির্বাচন করা হয়নি — "ম্যাপে সঠিক লোকেশন পিন করুন" বাটনে ট্যাপ করুন':'⚠ No location selected — tap "Pin Exact Location on Map"','error'); this.goStep(1); return; }
+    if(!this.locationData.zone){ toast(currentLang==='bn'?'⚠ এই লোকেশন ডেলিভারি জোনের বাইরে':'⚠ This location is outside the delivery zone','error'); this.goStep(1); return; }
     const name=document.getElementById('ckName').value.trim();
     const phone=document.getElementById('ckPhone').value.trim();
     const addr=document.getElementById('ckAddress').value.trim();

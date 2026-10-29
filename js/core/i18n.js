@@ -21,6 +21,16 @@
      below intentionally win when product-specific wording is better. */
   const phrases = new Map(Object.entries({
     ...(global.GOLAPI_TRANSLATIONS_EN || {}),
+    /* Person names are proper nouns, not common words. The generated
+       dictionary translated standalone names into nouns ("creation",
+       "the heart", "bang"); these curated entries win over it. */
+    'সৃজন': 'Srijon',
+    'হৃদয়': 'Hridoy',
+    'হৃদয় — হটলাইন ও অপারেশন মনিটরিং': 'Hridoy — Hotline and Operations Monitoring',
+    'হটলাইন ইনচার্জ হৃদয়কে কল করুন': 'Call the hotline in-charge Hridoy',
+    '🔴 হটলাইন — হৃদয়': '🔴 Hotline — Hridoy',
+    'বাং': 'BN',
+    'গোলাপি শপ অনলাইন': 'Golapi Shop Online',
     'আপনার কার্ট খালি': 'Your cart is empty',
     'কোনো পণ্য পাওয়া যায়নি': 'No products found',
     'কোনো প্রোডাক্ট পাওয়া যায়নি': 'No products found',
@@ -201,6 +211,10 @@
 
   function shouldIgnore(node) {
     const parent = node.parentElement;
+    /* The language button's own label (EN / বাং) is set by apply() itself.
+       Translating it corrupted it to "bang" in English mode, and the
+       corruption then poisoned the round-trip. Never translate it. */
+    if (parent && (parent.id === 'langBtnLabel' || parent.closest('#langBtn'))) return true;
     return !parent || ignoredParents.has(parent.tagName) || parent.closest('[data-i18n-ignore], [contenteditable="true"]');
   }
 
@@ -217,7 +231,13 @@
          translation — that means app code genuinely changed it. */
       const source = textSource.get(node);
       const expected = language === 'en' ? toEnglish(source) : source;
-      if (current !== source && current !== expected) textSource.set(node, current);
+      /* AUDIT FIX 2026-10-29 (round 2): the previous "any different text is
+         new content" rule let English strings written by app code in
+         English mode overwrite the frozen Bengali source, so toggling
+         back to Bengali showed English. Only a string that still contains
+         Bengali may become the new source (genuinely new Bengali content
+         from the app); English renderings never replace it. */
+      if (current !== source && current !== expected && /[\u0980-\u09FF]/.test(current)) textSource.set(node, current);
     }
     const source = textSource.get(node);
     const next = language === 'en' ? toEnglish(source) : source;
