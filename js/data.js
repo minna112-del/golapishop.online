@@ -155,7 +155,7 @@ const ProductStore = {
       if (delivered) return;
       devWarn('onSnapshot timeout — falling back to getDocs() with retry');
       await this.refreshWithRetry();
-    }, hadCache ? 12000 : 5000);
+    }, hadCache ? 8000 : 5000);
 
     try {
       this.unsubscribe = FB.onSnapshot(
