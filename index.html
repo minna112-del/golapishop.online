@@ -470,7 +470,20 @@
   <div id="slot-modals"></div>
   <div id="slot-toast"></div>
 
-  <script defer src="./js/core/translations-en.js"></script>
+  <!-- FAST-LOAD FIX: translations-en.js (~255KB) was parsed on every first
+       paint even though the default language is Bengali and most visitors
+       never switch to English. Only returning English users load it up
+       front (parser-inserted, so it still runs before the deferred i18n
+       runtime). Everyone else gets it in the background after the homepage
+       is ready, via I18n.ensureEnglishTranslations(), so toggling to EN
+       later is still instant-ish and never half-translated. -->
+  <script>
+    try {
+      if (localStorage.getItem('golapi_lang') === 'en') {
+        document.write('<script src="./js/core/translations-en.js"><\/script>');
+      }
+    } catch (e) {}
+  </script>
   <script defer src="./js/core/i18n.js"></script>
   <script defer src="./js/core/app-registry.js"></script>
   <script defer src="./js/core/business-os-runtime.js"></script>
@@ -487,6 +500,22 @@
   <script defer src="./js/update-check.js"></script>
   <script defer src="./js/location.js"></script>
   <script defer src="./js/deep-links.js"></script>
+
+  <script>
+    // Preload the English dictionary only after the homepage is visible,
+    // so a later EN toggle does not wait on a fresh 255KB download.
+    // This never blocks the loader: it runs on pages-ready + idle time.
+    window.addEventListener('pages-ready', function preloadEnglishDict() {
+      if (window.GOLAPI_TRANSLATIONS_EN) return;
+      var run = function () {
+        if (window.I18n && window.I18n.ensureEnglishTranslations) {
+          window.I18n.ensureEnglishTranslations();
+        }
+      };
+      if ('requestIdleCallback' in window) window.requestIdleCallback(run, { timeout: 8000 });
+      else setTimeout(run, 3000);
+    }, { once: true });
+  </script>
 
   <script>
     /*
