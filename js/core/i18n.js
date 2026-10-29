@@ -9,6 +9,13 @@
   const observedAttributes = ['placeholder', 'title', 'aria-label', 'alt', 'content'];
   const ignoredParents = new Set(['SCRIPT', 'STYLE', 'CODE', 'PRE', 'TEXTAREA']);
   let language = supported.has(localStorage.getItem(STORAGE_KEY)) ? localStorage.getItem(STORAGE_KEY) : 'bn';
+  // FAST-LOAD FIX: the generated English dictionary (~255KB) is no longer
+  // parsed on every first paint. It is loaded on demand for English users
+  // (see index.html + ensureEnglishTranslations below). Track whether it
+  // is already available so toggling to English never silently falls back
+  // to the small built-in vocabulary.
+  let translationsLoaded = Boolean(global.GOLAPI_TRANSLATIONS_EN);
+  let translationsLoading = null;
 
   /* Generated exact UI copy is loaded before this runtime. Curated entries
      below intentionally win when product-specific wording is better. */
@@ -143,6 +150,41 @@
   }
   phraseBuckets.forEach(entries => entries.sort((a, b) => b[0].length - a[0].length));
 
+  // Merge a late-loaded English dictionary into the live phrases map.
+  // Curated entries above intentionally win, so existing entries are
+  // never overwritten by the generated dictionary.
+  function addTranslations(dict) {
+    if (!dict || typeof dict !== 'object') return;
+    for (const [bn, en] of Object.entries(dict)) {
+      if (phrases.has(bn)) continue;
+      phrases.set(bn, en);
+      if (bn.length > 160) continue;
+      const initial = bn.match(/[\u0980-\u09FF]/)?.[0];
+      if (!initial) continue;
+      if (!phraseBuckets.has(initial)) phraseBuckets.set(initial, []);
+      phraseBuckets.get(initial).push([bn, en]);
+      phraseBuckets.get(initial).sort((a, b) => b[0].length - a[0].length);
+    }
+    translationsLoaded = true;
+    if (language === 'en') apply(document);
+  }
+
+  function ensureEnglishTranslations() {
+    if (translationsLoaded) return Promise.resolve(true);
+    if (translationsLoading) return translationsLoading;
+    translationsLoading = new Promise(resolve => {
+      const script = document.createElement('script');
+      script.src = './js/core/translations-en.js';
+      script.onload = () => {
+        if (global.GOLAPI_TRANSLATIONS_EN) addTranslations(global.GOLAPI_TRANSLATIONS_EN);
+        resolve(true);
+      };
+      script.onerror = () => resolve(false);
+      document.head.appendChild(script);
+    }).finally(() => { translationsLoading = null; });
+    return translationsLoading;
+  }
+
   function toEnglish(value) {
     if (!/[\u0980-\u09FF]/.test(value)) return value;
     const compact = value.replace(/\s+/g, ' ').trim();
@@ -233,6 +275,11 @@
     language = supported.has(nextLanguage) ? nextLanguage : 'bn';
     localStorage.setItem(STORAGE_KEY, language);
     apply(document);
+    // If English was requested before its dictionary arrived, apply again
+    // once it loads instead of leaving the page half-translated.
+    if (language === 'en' && !translationsLoaded) {
+      ensureEnglishTranslations().then(() => apply(document));
+    }
     return language;
   }
 
@@ -260,6 +307,8 @@
     start,
     toggle,
     setLanguage,
+    addTranslations,
+    ensureEnglishTranslations,
     language: () => language,
     t: (bn, en) => language === 'bn' ? bn : (en || toEnglish(bn)),
     toEnglish
