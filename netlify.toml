@@ -5,6 +5,14 @@
   command = "npm run build"
   publish = "dist"
 
+# Canonical host: live site resolves to the apex domain, so www
+# is redirected to apex (avoids www/non-www duplicate content).
+[[redirects]]
+  from = "https://www.golapishop.online/*"
+  to = "https://golapishop.online/:splat"
+  status = 301
+  force = true
+
 # ─── SPA Rewrites ─────────────────────────────────────────────
 # All unknown paths serve index.html so the JS router can handle them
 

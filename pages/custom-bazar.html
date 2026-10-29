@@ -5,21 +5,21 @@
     <p style="color:var(--ink-muted);font-size:13.5px;margin-bottom:16px">সাপ্তাহিক মুদি, মাসিক বাজার, বিয়ের বাজার, রমজানের বাজার, কুরবানির বাজার — যেকোনো লিস্ট লিখে দিন। আমাদের ড্রাইভার বাজার করে বাসায় পৌঁছে দেবে। ফর্মটা পূরণ করতে ২-৩ মিনিট লাগবে।</p>
     <div id="cbPastOrdersBox" style="display:none;margin-bottom:16px"></div>
     <div class="card-box">
-      <div class="field"><label>আপনার নাম *</label><input type="text" id="cbName"></div>
-      <div class="field"><label>মোবাইল নম্বর *</label><input type="tel" id="cbPhone" placeholder="01XXXXXXXXX"></div>
-      <div class="field"><label>সম্পূর্ণ ঠিকানা *</label><textarea id="cbAddress" rows="2" placeholder="বাড়ি/রোড/এলাকা"></textarea></div>
+      <div class="field"><label for="cbName">আপনার নাম *</label><input type="text" id="cbName"></div>
+      <div class="field"><label for="cbPhone">মোবাইল নম্বর *</label><input type="tel" id="cbPhone" placeholder="01XXXXXXXXX"></div>
+      <div class="field"><label for="cbAddress">সম্পূর্ণ ঠিকানা *</label><textarea id="cbAddress" rows="2" placeholder="বাড়ি/রোড/এলাকা"></textarea></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
         <div class="field"><label for="cbDistrict">ডেলিভারি জোন *</label><select id="cbDistrict" onchange="onDeliveryZoneChange('cb')"><option value="">বেছে নিন</option><option value="zone_a">Zone-A</option><option value="zone_b">Zone-B</option><option value="zone_c">Zone-C</option><option value="zone_d">Zone-D</option></select></div>
-        <div class="field"><label>এলাকা *</label><select id="cbZone"><option value="">প্রথমে ডেলিভারি জোন বেছে নিন</option></select></div>
+        <div class="field"><label for="cbZone">এলাকা *</label><select id="cbZone"><option value="">প্রথমে ডেলিভারি জোন বেছে নিন</option></select></div>
       </div>
-      <div class="field"><label>গ্রাম / এলাকার নাম *</label><input type="text" id="cbVillage" placeholder="যেমন: পশ্চিম নাজিরপুর, ৩নং ওয়ার্ড"></div>
+      <div class="field"><label for="cbVillage">গ্রাম / এলাকার নাম *</label><input type="text" id="cbVillage" placeholder="যেমন: পশ্চিম নাজিরপুর, ৩নং ওয়ার্ড"></div>
       <div class="field"><label>বাজারের ধরন *</label>
         <select id="cbType"><option value="weekly">সাপ্তাহিক মুদি বাজার</option><option value="monthly">মাসিক মুদি বাজার</option><option value="wedding">বিয়ের বাজার</option><option value="ramadan">রমজানের বাজার</option><option value="qurbani">কুরবানির বাজার</option><option value="other">অন্যান্য</option></select>
       </div>
       <div class="field"><label>বাজারের লিস্ট * <span style="color:var(--ink-dim)">(প্রতিটা আইটেম আলাদা লাইনে, পরিমাণ সহ)</span></label>
         <textarea id="cbList" rows="7" placeholder="চাল মিনিকেট — ৫ কেজি&#10;মসুর ডাল — ২ কেজি&#10;সয়াবিন তেল — ২ লিটার&#10;পেঁয়াজ — ৩ কেজি..."></textarea>
       </div>
-      <div class="field"><label>ডেলিভারির জন্য কিছু বলার থাকলে লিখুন *</label><textarea id="cbInstructions" rows="2" placeholder="যেমন: বাড়ির সামনে সবুজ গেট, কল করে আসবেন"></textarea></div>
+      <div class="field"><label for="cbInstructions">ডেলিভারির জন্য কিছু বলার থাকলে লিখুন (ঐচ্ছিক)</label><textarea id="cbInstructions" rows="2" placeholder="যেমন: বাড়ির সামনে সবুজ গেট, কল করে আসবেন"></textarea></div>
       <div class="field"><label>বিশেষ কিছু বলার থাকলে লিখুন</label><textarea id="cbNotes" rows="2" placeholder="যেমন: সবচেয়ে ভালো মানের চাল নিবেন"></textarea></div>
       <div class="card" style="padding:14px;margin-bottom:16px;border-color:var(--gold-line);background:rgba(212,175,55,.05)">
         <strong style="font-size:12.5px;color:var(--gold)">বিল কীভাবে দেবেন</strong>

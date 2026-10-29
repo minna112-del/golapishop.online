@@ -1,0 +1,17 @@
+/* audit-fixes.css — 2026-10-29 audit follow-ups, kept as a small separate
+   stylesheet (loaded last) so these overrides don't require re-pushing the
+   200KB+ shared stylesheets. */
+/* Darker muted text for 4.5:1-ish contrast on small text. */
+:root { --ink-muted: #6B5F63; }
+/* Display headings actually use Tiro Bangla (style.css redefined .tiro as Hind Siliguri). */
+.tiro { font-family: 'Tiro Bangla', 'Hind Siliguri', sans-serif; font-weight: 700; }
+/* The most important action, add-to-cart, is the loudest: solid rose. */
+.pcard .add-btn {
+  border: 1px solid var(--brand-600, #d62962);
+  background: var(--brand-600, #d62962);
+  color: #fff;
+}
+/* Thumb zone: keep the floating chat button clear of the bottom nav labels. */
+#chatBtn { bottom: 88px; }
+/* Toasts sit above both the bottom nav and the chat button. */
+.toast-wrap { bottom: 140px; }
