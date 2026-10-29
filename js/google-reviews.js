@@ -8,18 +8,21 @@
  * replacing the generic service-description cards — but ONLY when a
  * Place ID is configured. Until then the existing cards stay untouched.
  *
- * TO ACTIVATE — one value, in this file or in index.html before this script:
- *   window.GOLAPI_GOOGLE_PLACE_ID = 'ChIJ...';   // from the business's
- * Google Maps link: open the business on Google Maps, copy the link, and
- * take the value after "place/" ... "/data=" or the "place_id=" parameter
- * (a "ChIJ..." string). The shop owner can also paste the Maps link and
- * the Place ID can be read from it. Reviews then appear automatically on
- * every homepage visit, straight from Google — nothing is typed by hand.
+ * BUSINESS (verified from the owner's Maps link, 2026-10-29):
+ * "Golapi Shop Online", grocery delivery service, Begumganj 3822,
+ * Bangladesh (plus code W3JR+RX). At that check Google showed 5.0 stars
+ * from 2 reviews. The short Maps link does NOT expose a Place ID
+ * (only an ftid), so this module does NOT depend on one: if
+ * window.GOLAPI_GOOGLE_PLACE_ID is set it is used directly, otherwise the
+ * business is found by its verified name + address query and its reviews
+ * are then fetched. Reviews appear automatically on every homepage visit,
+ * straight from Google — nothing is typed by hand.
  */
 (function createGoogleReviews(global) {
   'use strict';
 
   var PLACE_ID = global.GOLAPI_GOOGLE_PLACE_ID || '';
+  var FIND_QUERY = 'Golapi Shop Online, Begumganj 3822, Bangladesh';
   var rendered = false;
   var cached = null;
 
@@ -79,8 +82,23 @@
     rendered = true;
   }
 
+  function fetchDetails(service, placeId) {
+    PLACE_ID = placeId;
+    service.getDetails(
+      { placeId: placeId, fields: ['name', 'rating', 'user_ratings_total', 'reviews'] },
+      function (place, status) {
+        if (status === global.google.maps.places.PlacesServiceStatus.OK && place) {
+          cached = place;
+          render(place);
+        }
+        /* Any failure (bad Place ID, API not enabled, quota): silently
+           keep the existing homepage cards. Never show fake reviews. */
+      }
+    );
+  }
+
   function fetchReviews() {
-    if (rendered || !PLACE_ID) return;
+    if (rendered) return;
     if (cached) { render(cached); return; }
     if (!global.google || !global.google.maps || !global.google.maps.places) {
       /* Maps API not loaded yet (e.g. location picker never opened). */
@@ -91,15 +109,16 @@
     }
     try {
       var service = new global.google.maps.places.PlacesService(document.createElement('div'));
-      service.getDetails(
-        { placeId: PLACE_ID, fields: ['name', 'rating', 'user_ratings_total', 'reviews'] },
-        function (place, status) {
-          if (status === global.google.maps.places.PlacesServiceStatus.OK && place) {
-            cached = place;
-            render(place);
+      if (PLACE_ID) { fetchDetails(service, PLACE_ID); return; }
+      /* No Place ID configured: find the verified business by name +
+         address, then fetch its reviews. */
+      service.findPlaceFromQuery(
+        { query: FIND_QUERY, fields: ['place_id'] },
+        function (results, status) {
+          if (status === global.google.maps.places.PlacesServiceStatus.OK && results && results[0] && results[0].place_id) {
+            fetchDetails(service, results[0].place_id);
           }
-          /* Any failure (bad Place ID, API not enabled, quota): silently
-             keep the existing homepage cards. Never show fake reviews. */
+          /* No match: keep the existing homepage cards. */
         }
       );
     } catch (e) { /* keep existing cards */ }
