@@ -44,7 +44,7 @@ const assertions = [
   [router.includes('AppRegistry.external(page)'), 'Router does not open the Driver app'],
   [worker.includes("requestUrl.pathname.startsWith('/driver/')"), 'Storefront service worker does not bypass Driver'],
   [worker.includes("requestUrl.pathname === '/app-version.json'"), 'Release metadata is still service-worker cached'],
-  [worker.includes("golapi-v106-audit-fixes"), 'Fast cache service-worker version is missing'],
+  [worker.includes("golapi-v107-round2b"), 'Fast cache service-worker version is missing'],
   [worker.includes('stale-while-revalidate'), 'Static stale-while-revalidate strategy is missing'],
   [netlify.includes('/driver/assets/*') && netlify.includes('immutable'), 'Driver hashed assets are not immutable-cached'],
   [/\/driver\/assets\//.test(driverIndex), 'Driver web build does not use the /driver/ base path'],
