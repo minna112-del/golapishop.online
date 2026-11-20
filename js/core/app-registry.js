@@ -23,7 +23,7 @@
     contact: { path: '/contact' },
 
     'admin-dash': {
-      path: '/admin', aliases: ['/executive'], staff: true,
+      path: '/admin', aliases: ['/executive', '/bussines-os', '/business-os'], staff: true,
       scripts: ['./js/admin.js', staffChatScript, employeeWorkspaceScript, './js/employee-management.js'],
       controller: ['AdminDash', 'render'], employeeHost: 'adminEmployeeWorkspace', persistent: true
     },
