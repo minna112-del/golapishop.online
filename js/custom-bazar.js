@@ -1,7 +1,7 @@
 /* custom-bazar.js — Custom Bazar page logic (lazy-loaded, শুধু custom-bazar পেজে গেলে লোড হয়) */
 const CustomBazar = {
   init(){
-    ['cbName','cbPhone','cbAddress','cbList','cbNotes','cbTrxId','cbVillage','cbInstructions'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+    ['cbName','cbPhone','cbNid','cbAddress','cbList','cbNotes','cbTrxId','cbVillage','cbInstructions'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
     const d=document.getElementById('cbDistrict'); if(d) d.value='';
     const z=document.getElementById('cbZone'); if(z) z.innerHTML='<option value="">প্রথমে ডেলিভারি জোন বেছে নিন</option>';
     const method=document.getElementById('cbAdvanceMethod'); if(method) method.value='bkash';
@@ -26,6 +26,7 @@ const CustomBazar = {
       ));
       const orders=[]; snap.forEach(d=>orders.push({id:d.id,...d.data()}));
       orders.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+      this.pastOrders=orders;
       if(!orders.length){ box.style.display='none'; return; }
       const recent = orders.slice(0,3);
       box.style.display='block';
@@ -40,14 +41,16 @@ const CustomBazar = {
                 <div style="font-size:12px;color:var(--ink)">${o.bazarTypeLabel||'বাজার'} — ${date}</div>
                 <div style="font-size:11px;color:var(--ink-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(preview)}...</div>
               </div>
-              <button class="btn btn-outline" style="font-size:11.5px;padding:6px 10px;white-space:nowrap" onclick='CustomBazar.reuseOrder(${JSON.stringify(o).replace(/'/g,"&#39;")})'>এই লিস্ট ব্যবহার করুন</button>
+              <button class="btn btn-outline" style="font-size:11.5px;padding:6px 10px;white-space:nowrap" onclick="CustomBazar.reuseOrder('${o.id}')">এই লিস্ট ব্যবহার করুন</button>
             </div>`;
           }).join('')}
         </div>
       </div>`;
     }catch(e){ devWarn('past bazar orders load failed', e.message); box.style.display='none'; }
   },
-  reuseOrder(o){
+  reuseOrder(id){
+    const o=this.pastOrders?.find(order=>order.id===id);
+    if(!o)return;
     document.getElementById('cbName').value = o.customerName||'';
     document.getElementById('cbPhone').value = o.customerPhone||'';
     document.getElementById('cbAddress').value = o.address||'';
@@ -68,6 +71,7 @@ const CustomBazar = {
     const msgEl=document.getElementById('cbMsg');
     const name=document.getElementById('cbName')?.value.trim()||'';
     const phone=document.getElementById('cbPhone')?.value.trim()||'';
+    const customerNid=document.getElementById('cbNid')?.value.trim().replace(/\s/g,'')||'';
     const address=document.getElementById('cbAddress')?.value.trim()||'';
     const district=document.getElementById('cbDistrict')?.value||'';
     const zone=document.getElementById('cbZone')?.value||'';
@@ -79,6 +83,7 @@ const CustomBazar = {
     const trxId=document.getElementById('cbTrxId')?.value.trim()||'';
     const advanceMethod=document.getElementById('cbAdvanceMethod')?.value==='nagad'?'nagad':'bkash';
     if(!name||!phone||!address||!district||!zone||!village||!list||!trxId){ msgEl.textContent='সব প্রয়োজনীয় তথ্য পূরণ করুন'; msgEl.className='form-msg err'; return; }
+    if(!/^(?:\d{10}|\d{13}|\d{17})$/.test(customerNid)){ msgEl.textContent='NID নম্বর ১০, ১৩ বা ১৭ সংখ্যার লিখুন'; msgEl.className='form-msg err'; return; }
     const phoneRe=/^(?:\+880|880|0)1[3-9]\d{8}$/;
     if(!phoneRe.test(phone.replace(/[\s-]/g,''))){ msgEl.textContent='সঠিক মোবাইল নম্বর দিন'; msgEl.className='form-msg err'; return; }
     // ⚠️ duplicate submission guard: form reset না হওয়ায় ও বাটন সাথে সাথে আবার
@@ -104,7 +109,7 @@ const CustomBazar = {
       // ডুপ্লিকেট bKash ট্রানজেকশন ID চেকও এখন সার্ভার-সাইডে হয়।
       const createBazarOrder = FB.httpsCallable(FB.functions, 'createCustomBazarOrderSecure');
       const res = await createBazarOrder({
-        customerName:name, customerPhone:phone, address, village, instructions,
+        customerName:name, customerPhone:phone, customerNid, address, village, instructions,
         branchZone:district, district:AREA_LABELS[district]||'',
         zone, bazarType:type, bazarList:list, notes, bkashTrxId:trxId, advanceMethod
       });
@@ -122,7 +127,7 @@ const CustomBazar = {
       // যেতো, আর বাটন সাথে সাথেই আবার enable হয়ে যেতো — customer ভুলবশত আবার
       // চাপলে হুবহু একই তথ্য দিয়ে duplicate অর্ডার তৈরি হয়ে যেতো। এখন সফল হলে
       // পুরো ফর্ম খালি করে দেওয়া হয়।
-      ['cbName','cbPhone','cbAddress','cbList','cbNotes','cbTrxId','cbVillage','cbInstructions'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+      ['cbName','cbPhone','cbNid','cbAddress','cbList','cbNotes','cbTrxId','cbVillage','cbInstructions'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
       const dEl=document.getElementById('cbDistrict'); if(dEl) dEl.value='';
       const zEl=document.getElementById('cbZone'); if(zEl) zEl.innerHTML='<option value="">প্রথমে ডেলিভারি জোন বেছে নিন</option>';
 

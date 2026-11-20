@@ -1,6 +1,6 @@
 /* company-os.js — Phase 20: Golapi Company OS */
 const CompanyOS = {
-  staff:null, permissions:null, notices:[], notifications:[], activities:[], apps:[], recent:[],
+  staff:null, permissions:null, notices:[], notifications:[], orderNotifications:[], activities:[], apps:[], recent:[],
   legacyRoleAliases:{hr:['people_officer'],procurement:['procurement_officer'],customer_care_manager:['support_manager']},
   v3WorkspaceIds:['hr-erp','warehouse-erp','marketing-erp','workflow-erp','bi-erp','asset-erp','crm-erp','procurement-erp','facilities-erp'],
   appCatalog:AppRegistry.staffCatalog(),
@@ -27,7 +27,7 @@ const CompanyOS = {
       }
       this.apps=this.allowedApps();this.recent=this.loadRecent();
       await Promise.all([this.loadNotices(),this.loadNotifications(),this.loadActivities()]);
-      gate.hidden=true;desktop.hidden=false;this.renderIdentity();this.renderWorkspaceGrid();this.renderAllApps();this.renderRecent();this.renderNotices();this.renderNotifications();this.renderActivities();this.renderBrief();this.renderPinned();this.renderStartApps();this.updateClock();if(!this.unsubscribeClock&&window.BusinessOSRuntime)this.unsubscribeClock=BusinessOSRuntime.subscribe(()=>this.updateClock());this.bindKeys();this.logActivity('company_os_opened','Company OS opened');
+      gate.hidden=true;desktop.hidden=false;this.renderIdentity();this.renderWorkspaceGrid();this.renderAllApps();this.renderRecent();this.renderNotices();this.renderNotifications();this.renderActivities();this.renderBrief();this.renderPinned();this.renderStartApps();this.updateClock();if(!this.unsubscribeClock&&window.BusinessOSRuntime)this.unsubscribeClock=BusinessOSRuntime.subscribe(()=>this.updateClock());this.bindKeys();this.startOrderAlerts();this.logActivity('company_os_opened','Company OS opened');
     }catch(e){gate.querySelector('h1').textContent='Company OS চালু হয়নি';gate.querySelector('p').textContent=e.message;}
   },
   permissionList(role){
@@ -97,6 +97,37 @@ const CompanyOS = {
   async loadNotifications(){
     try{const s=await FB.getDocs(FB.collection(FB.db,'company_notifications'));this.notifications=s.docs.map(d=>({id:d.id,...d.data()})).filter(n=>!n.userId||n.userId===this.uid()||n.role===this.staff.role||n.audience==='all').sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0)).slice(0,50);}catch{this.notifications=[];}
     this.createLocalRiskNotifications();
+    this.notifications=[...this.orderNotifications,...this.notifications];
+  },
+  startOrderAlerts(){
+    if(this.orderListener || !FB || !['admin','zone_manager'].includes(this.staff?.role))return;
+    const orders=FB.collection(FB.db,'orders');
+    const query=this.staff.role==='admin'
+      ? FB.query(orders,FB.orderBy('createdAt','desc'),FB.limit(30))
+      : FB.query(orders,FB.where('branchZone','==',this.staff.branchZone));
+    let initialized=false;
+    this.orderListener=FB.onSnapshot(query,snapshot=>{
+      if(!initialized){initialized=true;return;}
+      for(const change of snapshot.docChanges()){
+        if(change.type!=='added')continue;
+        const order={id:change.doc.id,...change.doc.data()};
+        const id=`new_order_${order.id}`;
+        if(this.orderNotifications.some(item=>item.id===id))continue;
+        this.orderNotifications.unshift({id,title:'নতুন অর্ডার',message:`${order.orderNumber||order.id} · ${order.branchZone||'জোন'}`,priority:'urgent',createdAt:order.createdAt});
+        this.orderNotifications=this.orderNotifications.slice(0,30);
+        if(!window.AdminDash?._listener){
+          toast(`নতুন অর্ডার: ${order.orderNumber||order.id}`,'success');
+          if(typeof Notification!=='undefined'&&Notification.permission==='granted'&&'serviceWorker' in navigator){
+            navigator.serviceWorker.ready.then(reg=>reg.showNotification('নতুন অর্ডার এসেছে',{
+              body:`${order.orderNumber||order.id} · ${order.branchZone||'জোন'}`,
+              tag:`live-order-${order.id}`,data:{type:'new_order',orderId:order.id}
+            })).catch(()=>{});
+          }
+        }
+      }
+      this.notifications=[...this.orderNotifications,...this.notifications.filter(item=>!item.id?.startsWith('new_order_'))];
+      this.renderNotifications();
+    },()=>{this.orderListener=null;});
   },
   createLocalRiskNotifications(){
     const local=[];if(this.staff.status&&['suspended','inactive'].includes(this.staff.status))local.push({id:'profile_status',title:'Employment status attention',message:`আপনার staff status: ${this.staff.status}`,priority:'urgent',read:false,local:true});

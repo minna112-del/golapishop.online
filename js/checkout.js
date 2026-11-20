@@ -91,8 +91,8 @@ const Checkout = {
     const village = document.getElementById('ckVillage')?.value.trim()||'';
     const nid = document.getElementById('ckNid')?.value.trim().replace(/\s/g,'')||'';
     const phoneRe = /^(?:\+880|880|0)1[3-9]\d{8}$/;
-    const nidRe = /^\d{10}$|^\d{13}$/;
-    const nidOk = nid.length===0 || nidRe.test(nid);
+    const nidRe = /^(?:\d{10}|\d{13}|\d{17})$/;
+    const nidOk = nidRe.test(nid);
     const checks = [
       ['ckName', name.length>0, currentLang==='bn'?'নাম লিখুন':'Enter your name'],
       ['ckPhone', phoneRe.test(phone), currentLang==='bn'?'সঠিক মোবাইল নম্বর লিখুন':'Enter a valid mobile number'],
@@ -100,7 +100,7 @@ const Checkout = {
       ['ckZone', !!zone, currentLang==='bn'?'এলাকা বেছে নিন':'Select an area'],
       ['ckVillage', village.length>0, currentLang==='bn'?'গ্রাম বা এলাকার নাম লিখুন':'Enter village or area'],
       ['ckAddress', addr.length>=5, currentLang==='bn'?'বাড়ি, রোড বা ল্যান্ডমার্ক একটু বিস্তারিত লিখুন':'Enter house, road, or landmark details'],
-      ['ckNid', nidOk, currentLang==='bn'?'NID ১০ বা ১৩ সংখ্যার হতে হবে':'NID must be 10 or 13 digits']
+      ['ckNid', nidOk, currentLang==='bn'?'NID ১০, ১৩ বা ১৭ সংখ্যার হতে হবে':'NID must be 10, 13 or 17 digits']
     ];
     const failed = checks.find(([,ok])=>!ok);
     if(failed){ this.markFieldError(failed[0], failed[2]); return false; }
@@ -251,8 +251,8 @@ const Checkout = {
     const instructions=document.getElementById('ckInstructions').value.trim();
     const nid = document.getElementById('ckNid').value.trim().replace(/\s/g,'');
     const phoneRe = /^(?:\+880|880|0)1[3-9]\d{8}$/;
-    const nidRe = /^\d{10}$|^\d{13}$/;
-    const nidOk = nid.length===0 || nidRe.test(nid);
+    const nidRe = /^(?:\d{10}|\d{13}|\d{17})$/;
+    const nidOk = nidRe.test(nid);
     if(!name||!phoneRe.test(phone.replace(/[\s-]/g,''))||!nidOk||addr.length<5||!deliveryZone||!zone||!village){ toast(currentLang==='bn'?'⚠ সব প্রয়োজনীয় তথ্য সঠিকভাবে পূরণ করুন':'⚠ Please fill in all required information correctly','error'); this.goStep(1); return; }
     if(!document.getElementById('ckTerms').checked){ toast(currentLang==='bn'?'⚠ শর্তাবলীতে সম্মত হতে হবে':'⚠ You must agree to the Terms & Conditions','error'); return; }
     if(!FB){ toast(currentLang==='bn'?'⚠ সংযোগ সমস্যা — আবার চেষ্টা করুন':'⚠ Connection issue — please try again','error'); return; }

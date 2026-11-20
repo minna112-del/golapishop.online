@@ -53,6 +53,11 @@ const OrdersService = {
   async updateStatus(orderId, status) {
     if (!FB) return false;
     try {
+      const orderSnap = await FB.getDoc(FB.doc(FB.db, 'orders', orderId));
+      if (!orderSnap.exists()) throw new Error('অর্ডার পাওয়া যায়নি');
+      if (orderSnap.data().orderType === 'custom-bazar' && orderSnap.data().paymentStatus !== 'verified' && !['pending', 'cancelled'].includes(status)) {
+        throw new Error('৳১০০ অগ্রিম যাচাইয়ের পর কাজ শুরু করুন');
+      }
       await FB.updateDoc(FB.doc(FB.db, 'orders', orderId), { status });
       const order = this.cache.find(o => o.id === orderId) || { id: orderId };
       if (status === 'delivered') {
@@ -61,7 +66,7 @@ const OrdersService = {
       }
       if (status === 'cancelled') SMSGateway.onCancelled(order);
       return true;
-    } catch (e) { toast('স্ট্যাটাস আপডেট ব্যর্থ', 'error'); return false; }
+    } catch (e) { toast('স্ট্যাটাস আপডেট ব্যর্থ: ' + e.message, 'error'); return false; }
   },
   async giveReferralBonusIfEligible(order){
     if(!FB || !order.userId) return;

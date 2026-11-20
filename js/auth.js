@@ -340,11 +340,8 @@ const PhoneAuth = {
       const userRef = FB.doc(FB.db,'users',uid);
       const snap = await FB.getDoc(userRef);
       if(!snap.exists()){
-        await FB.setDoc(userRef, {
-          phone: cred.user.phoneNumber, name:'গ্রাহক', role:'customer',
-          createdAt:FB.serverTimestamp(), referralCode: uid.slice(0,6).toUpperCase(),
-          referredBy:null, referralBonusGiven:false, walletBalance:0
-        });
+        const createProfile = FB.httpsCallable(FB.functions, 'createCustomerProfileSecure');
+        await createProfile({name:'গ্রাহক', phone:cred.user.phoneNumber});
         if(typeof dataLayer!=='undefined') dataLayer.push({event:'sign_up', method:'phone'});
       }
       AuthUI.showMsg('✓ লগইন সফল','ok');

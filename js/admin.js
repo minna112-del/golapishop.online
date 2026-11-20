@@ -4,7 +4,7 @@ const AdminDash = {
   _orders: [], _allOrders: [],
 
   orderTotal(order){
-    const value = Number(order?.total ?? order?.payableTotal ?? order?.subtotal ?? 0);
+    const value = Number(order?.orderType === 'custom-bazar' ? (order.billAmount ?? 0) : (order?.total ?? order?.payableTotal ?? order?.subtotal ?? 0));
     return Number.isFinite(value) ? value : 0;
   },
 
@@ -31,7 +31,8 @@ const AdminDash = {
     const st6=document.getElementById('aStatCustomers'); if(st6) st6.textContent = bn(customers.length);
 
     const cod = orders.filter(o=>o.paymentMethod==='cod'&&!['delivered','cancelled'].includes(o.status)).reduce((s,o)=>s+this.orderTotal(o),0);
-    const online = orders.filter(o=>o.paymentMethod!=='cod').reduce((s,o)=>s+this.orderTotal(o),0);
+    const online = orders.filter(o=>['bkash','nagad'].includes(o.paymentMethod)&&o.paymentStatus==='verified').reduce((s,o)=>s+this.orderTotal(o),0)
+      + orders.filter(o=>o.orderType==='custom-bazar'&&o.paymentStatus==='verified').length*100;
     const fm=document.getElementById('fMonth'); if(fm) fm.textContent = money(sales);
     const fc=document.getElementById('fCod'); if(fc) fc.textContent = money(cod);
     const fo=document.getElementById('fOnline'); if(fo) fo.textContent = money(online);
@@ -521,16 +522,18 @@ const AdminDash = {
     if(!FB || this._listener) return;
     let initialized = false;
     this._listener = FB.onSnapshot(
-      FB.query(FB.collection(FB.db,'orders'), FB.orderBy('createdAt','desc'), FB.limit(1)),
+      FB.query(FB.collection(FB.db,'orders'), FB.orderBy('createdAt','desc'), FB.limit(30)),
       (snap) => {
         if(!initialized){ initialized=true; return; }
+        let hasNewOrder=false;
         snap.docChanges().forEach(change=>{
           if(change.type==='added'){
             const o = {id:change.doc.id,...change.doc.data()};
             AdminDash.showNewOrderAlert(o);
-            AdminDash.render();
+            hasNewOrder=true;
           }
         });
+        if(hasNewOrder) AdminDash.render({force:true});
       }
     );
   },
@@ -543,7 +546,13 @@ const AdminDash = {
       bell.textContent = `🔔 ${count}`;
       bell.style.display='inline-block';
     }
-    toast(`🚨 নতুন অর্ডার! ${order.customerName||'কাস্টমার'} — ${money(this.orderTotal(order))}`,'success');
+    toast(`🚨 নতুন অর্ডার! ${order.customerName||'কাস্টমার'} — ${order.orderType==='custom-bazar'?'৳১০০ অগ্রিম যাচাই করুন':money(this.orderTotal(order))}`,'success');
+    if(typeof Notification!=='undefined' && Notification.permission==='granted' && 'serviceWorker' in navigator){
+      navigator.serviceWorker.ready.then(reg=>reg.showNotification('নতুন অর্ডার এসেছে',{
+        body:`${order.orderNumber||order.id} · ${AREA_LABELS[order.branchZone]||order.branchZone||'জোন'}`,
+        tag:`live-order-${order.id}`,data:{type:'new_order',orderId:order.id}
+      })).catch(()=>{});
+    }
     try{
       const ctx = new(window.AudioContext||window.webkitAudioContext)();
       const osc = ctx.createOscillator();
@@ -1508,11 +1517,22 @@ const OrderDetail = {
       const p = ALL_PRODUCTS.find(x=>x.id===item.productId);
       return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line)"><div style="width:36px;height:36px;border-radius:7px;overflow:hidden;background:var(--elevated);flex-shrink:0"><img src="${safeImgSrc(p?.imageUrl||p?.img)}" style="width:100%;height:100%;object-fit:cover" loading="lazy" decoding="async" width="36" height="36"></div><div style="flex:1;min-width:0"><div style="font-size:12.5px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p?.name)||item.productId}</div><div style="font-size:11px;color:var(--ink-muted)">${money(p?.salePrice||0)} × ${item.qty}</div></div><span style="color:var(--gold);font-weight:600;font-size:13px">${money((p?.salePrice||0)*item.qty)}</span></div>`;
     }).join('') || '<p style="color:var(--ink-muted);font-size:13px">আইটেম তথ্য নেই</p>';
+    const customBox=document.getElementById('odCustomBazarBox');
+    if(customBox){
+      customBox.style.display=order.orderType==='custom-bazar'?'block':'none';
+      if(order.orderType==='custom-bazar'){
+        document.getElementById('odBazarList').textContent=order.bazarList||'—';
+        document.getElementById('odAdvanceStatus').textContent=`৳১০০ ${order.advanceMethod==='nagad'?'নগদ':'বিকাশ'} · ${order.paymentStatus==='verified'?'ম্যানুয়ালি যাচাই হয়েছে':'যাচাই বাকি/সমস্যা আছে'}`;
+        document.getElementById('odBillAmount').value=order.billAmount??'';
+        document.getElementById('odBalanceDue').textContent=order.billAmount==null?'বিল এখনও দেওয়া হয়নি':money(Math.max(0,Number(order.billAmount)-100));
+        document.getElementById('odBillSave').disabled=order.paymentStatus!=='verified';
+      }
+    }
     const ship = order.shippingCost||0;
     const sub = Number(order?.total ?? order?.payableTotal ?? order?.subtotal ?? 0) - ship;
     document.getElementById('odSubtotal').textContent = money(sub>0?sub:order.subtotal||0);
     document.getElementById('odShipping').textContent = ship>0?money(ship):'ফ্রি';
-    document.getElementById('odTotal').textContent = moneyNumber(order?.total ?? order?.payableTotal ?? order?.subtotal ?? 0);
+    document.getElementById('odTotal').textContent = order.orderType==='custom-bazar' && order.billAmount==null ? 'বিল অপেক্ষমাণ' : moneyNumber(AdminDash.orderTotal(order));
     const dbox = document.getElementById('odDriverBox');
     const dEl = document.getElementById('odDriver');
     if(order.driverName){ dbox.style.display='block'; dEl.textContent = `${order.driverName} — ${order.customerPhone||''}`; }
@@ -1539,6 +1559,21 @@ const OrderDetail = {
     document.getElementById('orderDetailModal').classList.add('show');
   },
   close(){ document.getElementById('orderDetailModal').classList.remove('show'); },
+  async saveBill(){
+    const order=this.current;
+    if(!order||order.orderType!=='custom-bazar')return;
+    if(order.paymentStatus!=='verified'){toast('আগে ৳১০০ অগ্রিম ম্যানুয়ালি যাচাই করুন','error');return;}
+    const amount=Number(document.getElementById('odBillAmount').value);
+    if(!Number.isSafeInteger(amount)||amount<100){toast('সঠিক মোট বিল লিখুন (কমপক্ষে ৳১০০)','error');return;}
+    try{
+      await FB.updateDoc(FB.doc(FB.db,'orders',order.id),{billAmount:amount,billUpdatedAt:FB.serverTimestamp()});
+      order.billAmount=amount;
+      document.getElementById('odBalanceDue').textContent=money(amount-100);
+      document.getElementById('odTotal').textContent=moneyNumber(amount);
+      toast('বিল সংরক্ষিত। বাকি ক্যাশ '+money(amount-100),'success');
+      await AdminDash.render({force:true});
+    }catch(e){toast('বিল সংরক্ষণ হয়নি: '+e.message,'error');}
+  },
   async handleRefund(status){
     if(!this.current) return;
     const ok = await RefundService.approveRefund(this.current.id, status);
@@ -1551,7 +1586,7 @@ const OrderDetail = {
   print(){
     const o = this.current; if(!o) return;
     const w = window.open('', '_blank');
-    w.document.write(`<html><head><title>${o.orderNumber||o.id}</title><style>body{font-family:sans-serif;padding:30px;max-width:600px;margin:0 auto}h1{color:#C2185B}.row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee}table{width:100%;margin-top:14px}.tot{font-size:18px;font-weight:700;margin-top:14px}</style></head><body><h1>Golapi Shop Online</h1><p>অর্ডার: ${o.orderNumber||o.id}</p><p>তারিখ: ${o.createdAt?.seconds?new Date(o.createdAt.seconds*1000).toLocaleString('bn-BD'):'—'}</p><hr><h3>কাস্টমার</h3><p>${esc(o.customerName)}<br>${esc(o.customerPhone)}<br>${esc(o.village)}, ${esc(AREA_LABELS[o.branchZone])}<br>${esc(o.address)}</p><h3>আইটেম</h3><table><tr><th>পণ্য</th><th>মোট</th></tr>${(o.items||[]).map(it=>{const p=ALL_PRODUCTS.find(x=>x.id===it.productId);return `<tr><td>${esc(p?.name||it.productId)} × ${it.qty}</td><td>${money((p?.salePrice||0)*it.qty)}</td></tr>`}).join('')}</table><div class="tot"><div class="row"><span>মোট</span><span>${moneyNumber(o?.total ?? o?.payableTotal ?? o?.subtotal ?? 0)}</span></div></div><p style="margin-top:20px;font-size:12px;color:#888">Golapi Shop Online — নোয়াখালী</p></body></html>`);
+    w.document.write(`<html><head><title>${esc(o.orderNumber||o.id)}</title><style>body{font-family:sans-serif;padding:30px;max-width:600px;margin:0 auto}h1{color:#C2185B}.row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee}table{width:100%;margin-top:14px}.tot{font-size:18px;font-weight:700;margin-top:14px}</style></head><body><h1>Golapi Shop Online</h1><p>অর্ডার: ${esc(o.orderNumber||o.id)}</p><p>তারিখ: ${o.createdAt?.seconds?new Date(o.createdAt.seconds*1000).toLocaleString('bn-BD'):'—'}</p><hr><h3>কাস্টমার</h3><p>${esc(o.customerName)}<br>${esc(o.customerPhone)}<br>${esc(o.village)}, ${esc(AREA_LABELS[o.branchZone])}<br>${esc(o.address)}</p>${o.orderType==='custom-bazar'?`<h3>বাজারের লিস্ট</h3><p style="white-space:pre-wrap">${esc(o.bazarList||'')}</p><div class="tot"><div class="row"><span>মোট বিল</span><span>${o.billAmount!=null?moneyNumber(o.billAmount):'অপেক্ষমাণ'}</span></div><div class="row"><span>অগ্রিম</span><span>৳১০০</span></div><div class="row"><span>বাকি ক্যাশ</span><span>${o.billAmount!=null?moneyNumber(Math.max(0,Number(o.billAmount)-100)):'অপেক্ষমাণ'}</span></div></div>`:`<h3>আইটেম</h3><table><tr><th>পণ্য</th><th>মোট</th></tr>${(o.items||[]).map(it=>{const p=ALL_PRODUCTS.find(x=>x.id===it.productId);return `<tr><td>${esc(p?.name||it.productId)} × ${it.qty}</td><td>${money((p?.salePrice||0)*it.qty)}</td></tr>`}).join('')}</table><div class="tot"><div class="row"><span>মোট</span><span>${moneyNumber(AdminDash.orderTotal(o))}</span></div></div>`}<p style="margin-top:20px;font-size:12px;color:#888">Golapi Shop Online — নোয়াখালী</p></body></html>`);
     w.document.close(); w.print();
   }
 };
@@ -1662,7 +1697,7 @@ const PaymentVerify = {
     if(!tbody) return;
     tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--ink-muted);padding:20px">লোড হচ্ছে...</td></tr>`;
     try{
-      const snap = await FB.getDocs(FB.query(FB.collection(FB.db,'orders'), FB.where('paymentStatus','==','paid_pending_verification')));
+      const snap = await FB.getDocs(FB.query(FB.collection(FB.db,'orders'), FB.where('paymentStatus','in',['paid_pending_verification','mismatch'])));
       const list=[]; snap.forEach(d=>list.push({id:d.id,...d.data()}));
       await Promise.all(list.filter(o=>o.orderType==='custom-bazar').map(async o=>{
         try{
@@ -1672,7 +1707,7 @@ const PaymentVerify = {
       }));
       list.sort((a,b)=>(a.createdAt?.seconds||0)-(b.createdAt?.seconds||0));
 
-      if(countEl) countEl.textContent = `${list.length}টি পেমেন্ট যাচাইয়ের অপেক্ষায়`;
+      if(countEl) countEl.textContent = `${list.length}টি পেমেন্ট যাচাই/সমাধানের অপেক্ষায়`;
 
       const trxCounts = {};
       list.forEach(o=>{ const t=o.paymentTrxId; if(t){ const key=(o.advanceMethod||o.paymentMethod||'')+':'+t; trxCounts[key]=(trxCounts[key]||0)+1; } });
@@ -1695,11 +1730,11 @@ const PaymentVerify = {
           <td>${esc(o.customerName)||'—'}<br><span style="font-size:10.5px;color:var(--ink-muted)">${esc(o.customerPhone)}</span></td>
           <td>${o.orderType==='custom-bazar'?'কাস্টম বাজার অগ্রিম · ':''}${['bkash','bkash+cod'].includes(o.paymentMethod)?'bKash':'Nagad'}</td>
           <td style="color:var(--gold);font-weight:600">${moneyNumber(o.orderType==='custom-bazar'?o.advanceAmount:(o?.total ?? o?.payableTotal ?? o?.subtotal ?? 0))}</td>
-          <td style="font-family:monospace;font-size:12px;${isDupe?'color:#f87171;font-weight:700':''}">${o.paymentTrxId||'—'}${isDupe?' ⚠️':''}</td>
+          <td style="font-family:monospace;font-size:12px;${isDupe?'color:#f87171;font-weight:700':''}">${esc(o.paymentTrxId)||'—'}${isDupe?' ⚠️':''}${o.paymentStatus==='mismatch'?'<br>মিসম্যাচ · গ্রাহকের সঙ্গে যোগাযোগ করুন':''}</td>
           <td style="font-size:11px;${isOverdue?'color:#fbbf24':''}">${o.createdAt?.seconds?new Date(o.createdAt.seconds*1000).toLocaleString('bn-BD'):'—'}${isOverdue?' <br>⏰ '+Math.floor(hoursWaiting)+' ঘণ্টা+':''}</td>
           <td style="display:flex;gap:6px;flex-wrap:wrap">
             <button onclick="PaymentVerify.verify('${o.id}')" style="padding:5px 10px;border-radius:7px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.2);color:#22c55e;font-size:11.5px">✓ ভেরিফাই</button>
-            <button onclick="PaymentVerify.markMismatch('${o.id}')" style="padding:5px 10px;border-radius:7px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:#f87171;font-size:11.5px">✕ মিসম্যাচ</button>
+            ${o.paymentStatus==='mismatch'?'':`<button onclick="PaymentVerify.markMismatch('${o.id}')" style="padding:5px 10px;border-radius:7px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:#f87171;font-size:11.5px">✕ মিসম্যাচ</button>`}
           </td>
         </tr>`;
       }).join('');
@@ -1711,7 +1746,7 @@ const PaymentVerify = {
     if(!confirm('এই পেমেন্টটা ভেরিফাই করা নিশ্চিত করছেন?')) return;
     try{
       const orderSnap=await FB.getDoc(FB.doc(FB.db,'orders',orderId));
-      if(!orderSnap.exists() || orderSnap.data().paymentStatus!=='paid_pending_verification') throw new Error('যাচাইয়ের অপেক্ষায় থাকা পেমেন্ট পাওয়া যায়নি');
+      if(!orderSnap.exists() || !['paid_pending_verification','mismatch'].includes(orderSnap.data().paymentStatus)) throw new Error('যাচাইয়ের অপেক্ষায় থাকা পেমেন্ট পাওয়া যায়নি');
       await FB.updateDoc(FB.doc(FB.db,'orders',orderId), {
         paymentStatus:'verified', paymentVerifiedAt: FB.serverTimestamp(), status:'confirmed'
       });
@@ -1724,15 +1759,17 @@ const PaymentVerify = {
     const reason = prompt('মিসম্যাচের কারণ লিখুন (কাস্টমারকে জানানো হবে):', 'ট্রানজেকশন ID মিলছে না, সঠিক ID দিয়ে আবার সাবমিট করুন');
     if(!reason || !FB) return;
     try{
+      const current=await FB.getDoc(FB.doc(FB.db,'orders',orderId));
+      if(!current.exists() || current.data().paymentStatus!=='paid_pending_verification') throw new Error('যাচাইয়ের অপেক্ষায় থাকা পেমেন্ট পাওয়া যায়নি');
       await FB.updateDoc(FB.doc(FB.db,'orders',orderId), {
         paymentStatus:'mismatch', paymentMismatchReason: reason
       });
       const orderSnap = await FB.getDoc(FB.doc(FB.db,'orders',orderId));
       if(orderSnap.exists()){
         const o = orderSnap.data();
-        await SMSGateway.send(o.customerPhone, `Golapi Shop: আপনার অর্ডার #${(o.orderNumber||orderId).slice(0,8).toUpperCase()}-এর পেমেন্ট যাচাই করা যায়নি। কারণ: ${reason}। যোগাযোগ: 01612-057371`);
+        const sent=await SMSGateway.send(o.customerPhone, `Golapi Shop: আপনার অর্ডার #${(o.orderNumber||orderId).slice(0,8).toUpperCase()}-এর পেমেন্ট যাচাই করা যায়নি। কারণ: ${reason}। যোগাযোগ: 01612-057371`);
+        toast(sent?'মিসম্যাচ সংরক্ষিত, SMS পাঠানো হয়েছে':'মিসম্যাচ সংরক্ষিত; SMS যায়নি, গ্রাহককে ফোন করুন',sent?'success':'error');
       }
-      toast('✓ মিসম্যাচ মার্ক করা হয়েছে, কাস্টমারকে SMS পাঠানো হয়েছে','success');
       await this.render();
     }catch(e){ toast('সমস্যা: '+e.message,'error'); }
   }

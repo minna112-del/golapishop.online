@@ -846,13 +846,13 @@ function orderTrackHTML(o){
     : '';
   const memoBtn = (o.orderType==='custom-bazar')
     ? (()=>{ const k=BazarMemo.register(o); return `<button class="btn btn-outline btn-block" style="margin-top:8px;font-size:12.5px" onclick="BazarMemo.openById('${esc(k)}')">🧾 মেমো দেখুন / প্রিন্ট করুন</button>`; })() : '';
-  const billBox = (o.orderType==='custom-bazar' && (o.billPhotos?.length || o.bazarItems?.length))
+  const billBox = (o.orderType==='custom-bazar' && (o.billAmount!=null || o.billPhotos?.length || o.bazarItems?.length))
     ? `<div style="margin-top:10px">
         ${o.bazarItems?.length ? `<div style="background:rgba(255,255,255,.02);border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px">
           ${o.bazarItems.map(it=>`<div class="row-between" style="font-size:12px"><span>${esc(it.text)}</span><span>${money(it.price)}</span></div>`).join('')}
-          <div class="row-between" style="font-weight:700;color:var(--ink);border-top:1px solid var(--line);margin-top:6px;padding-top:6px"><span>মোট বিল</span><span style="color:var(--gold)">${money(o.billAmount||0)}</span></div>
         </div>` : ''}
-        ${(o.billPhotos||[]).map(url=>`<img src="${url}" style="width:100%;border-radius:10px;border:1px solid var(--line);margin-bottom:6px">`).join('')}
+        ${o.billAmount!=null ? `<div class="row-between" style="font-size:12.5px;font-weight:700"><span>মোট বিল</span><span>${money(o.billAmount)}</span></div><div class="row-between" style="font-size:12.5px"><span>অগ্রিম বাদে বাকি ক্যাশ</span><strong>${money(Math.max(0,Number(o.billAmount)-100))}</strong></div>` : ''}
+        ${(o.billPhotos||[]).map(url=>`<img src="${safeImgSrc(url)}" style="width:100%;border-radius:10px;border:1px solid var(--line);margin-bottom:6px">`).join('')}
         <div style="font-size:11.5px;color:var(--ink-muted)">ড্রাইভার ডেলিভারির সময় আসল দোকানের মেমো/রশিদও সাথে নিয়ে আসবে — টাকা রেডি রাখুন।</div>
       </div>` : '';
   const chatBtn = `<button class="btn btn-outline btn-block" style="margin-top:8px;font-size:12.5px" onclick="OrderChat.open('${o.id}','customer')">💬 ড্রাইভারের সাথে চ্যাট করুন</button>`;
