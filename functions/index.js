@@ -90,7 +90,7 @@ exports.onOrderCreated = onDocumentCreated('orders/{orderId}', async (event) => 
 
   await sendMulticast(tokens, {
     title: 'নতুন অর্ডার এসেছে',
-    body: `${order.orderNumber || event.params.orderId} · ${order.branchZone || 'জোন'} · ৳${order.total ?? order.subtotal ?? 0}`
+    body: `${order.orderNumber || event.params.orderId} · ${order.branchZone || 'জোন'} · ${order.orderType === 'custom-bazar' ? '৳১০০ অগ্রিম যাচাই করুন' : `৳${order.total ?? order.subtotal ?? 0}`}`
   }, { type: 'new_order', orderId: event.params.orderId });
 });
 
@@ -299,7 +299,7 @@ exports.createCustomerProfileSecure = onCall(async (request) => {
  * ------------------------------------------------------------------- */
 const DELIVERY_DEFAULTS = { baseFee: 30, perKmFee: 8, perItemFee: 3, avgDistanceKm: 3, freeAboveSubtotal: 1000 };
 const PHONE_RE = /^(?:\+880|880|0)1[3-9]\d{8}$/;
-const NID_RE = /^\d{10}$|^\d{13}$/;
+const NID_RE = /^(?:\d{10}|\d{13}|\d{17})$/;
 
 const SERVICE_AREA_DEFAULTS = {
   zone_a: ['চরমটুয়া','দাদপুর','নোয়ান্নই','কাদির হানিফ','বিনোদপুর','নোয়াখালী','ধর্মপুর','এওজবালিয়া','কালা দরাপ','অশ্বদিয়া','নেয়াজপুর','আন্ডারচর'],
@@ -420,9 +420,9 @@ exports.createOrderSecure = onCall(async (request) => {
 
   if (!customerName) throw new HttpsError('invalid-argument', 'নাম প্রয়োজন।');
   if (!PHONE_RE.test(customerPhone)) throw new HttpsError('invalid-argument', 'সঠিক মোবাইল নম্বর প্রয়োজন।');
-  if (customerNid && !NID_RE.test(customerNid)) throw new HttpsError('invalid-argument', 'NID ১০ বা ১৩ সংখ্যার হতে হবে।');
+  if (!NID_RE.test(customerNid)) throw new HttpsError('invalid-argument', 'NID ১০, ১৩ বা ১৭ সংখ্যার হতে হবে।');
   if (address.length < 5) throw new HttpsError('invalid-argument', 'ঠিকানা বিস্তারিত লিখুন।');
-  if (!branchZone || !zone || !village || !instructions) throw new HttpsError('invalid-argument', 'ডেলিভারি তথ্য অসম্পূর্ণ।');
+  if (!branchZone || !zone || !village) throw new HttpsError('invalid-argument', 'ডেলিভারি তথ্য অসম্পূর্ণ।');
   if (!deliveryZoneId) throw new HttpsError('invalid-argument', 'ডেলিভারি জোন নির্বাচন করা হয়নি।');
 
   // Guest checkout-সহ coupon lookup — cancelOrderSecure-এর মতোই transaction-এর
@@ -578,6 +578,7 @@ exports.createCustomBazarOrderSecure = onCall(async (request) => {
 
   const customerName = typeof data.customerName === 'string' ? data.customerName.trim().slice(0, 120) : '';
   const customerPhone = typeof data.customerPhone === 'string' ? data.customerPhone.trim().replace(/[\s-]/g, '') : '';
+  const customerNid = typeof data.customerNid === 'string' ? data.customerNid.trim().replace(/\s/g, '') : '';
   const address = typeof data.address === 'string' ? data.address.trim().slice(0, 500) : '';
   const village = typeof data.village === 'string' ? data.village.trim().slice(0, 200) : '';
   const instructions = typeof data.instructions === 'string' ? data.instructions.trim().slice(0, 500) : '';
@@ -592,8 +593,9 @@ exports.createCustomBazarOrderSecure = onCall(async (request) => {
 
   if (!customerName) throw new HttpsError('invalid-argument', 'নাম প্রয়োজন।');
   if (!PHONE_RE.test(customerPhone)) throw new HttpsError('invalid-argument', 'সঠিক মোবাইল নম্বর প্রয়োজন।');
+  if (!NID_RE.test(customerNid)) throw new HttpsError('invalid-argument', 'NID ১০, ১৩ বা ১৭ সংখ্যার হতে হবে।');
   if (address.length < 5) throw new HttpsError('invalid-argument', 'ঠিকানা বিস্তারিত লিখুন।');
-  if (!branchZone || !zone || !village || !instructions) throw new HttpsError('invalid-argument', 'ডেলিভারি তথ্য অসম্পূর্ণ।');
+  if (!branchZone || !zone || !village) throw new HttpsError('invalid-argument', 'ডেলিভারি তথ্য অসম্পূর্ণ।');
   if (!bazarList) throw new HttpsError('invalid-argument', 'বাজারের লিস্ট দিন।');
   if (!/^[A-Z0-9]{8,50}$/.test(bkashTrxId)) throw new HttpsError('invalid-argument', 'সঠিক অগ্রিম পেমেন্টের ট্রানজেকশন ID দিন।');
 
@@ -641,6 +643,7 @@ exports.createCustomBazarOrderSecure = onCall(async (request) => {
       status: 'pending', userId: uid, createdAt: now
     });
     tx.set(orderRef.collection('private').doc('payment'), { bkashTrxId, advanceAmount: 100, method: advanceMethod, createdAt: now });
+    tx.set(orderRef.collection('private').doc('contact'), { nid: customerNid, createdAt: now });
   });
 
   return { orderId: orderRef.id, orderNumber: orderNo };
