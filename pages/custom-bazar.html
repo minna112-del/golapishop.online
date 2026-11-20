@@ -7,6 +7,7 @@
     <div class="card-box">
       <div class="field"><label for="cbName">আপনার নাম *</label><input type="text" id="cbName"></div>
       <div class="field"><label for="cbPhone">মোবাইল নম্বর *</label><input type="tel" id="cbPhone" placeholder="01XXXXXXXXX"></div>
+      <div class="field"><label for="cbNid">জাতীয় পরিচয়পত্র নম্বর *</label><input type="text" id="cbNid" placeholder="১০, ১৩ বা ১৭ সংখ্যার NID" inputmode="numeric" autocomplete="off" required></div>
       <div class="field"><label for="cbAddress">সম্পূর্ণ ঠিকানা *</label><textarea id="cbAddress" rows="2" placeholder="বাড়ি/রোড/এলাকা"></textarea></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
         <div class="field"><label for="cbDistrict">ডেলিভারি জোন *</label><select id="cbDistrict" onchange="onDeliveryZoneChange('cb')"><option value="">বেছে নিন</option><option value="zone_a">Zone-A</option><option value="zone_b">Zone-B</option><option value="zone_c">Zone-C</option><option value="zone_d">Zone-D</option></select></div>
@@ -23,7 +24,7 @@
       <div class="field"><label>বিশেষ কিছু বলার থাকলে লিখুন</label><textarea id="cbNotes" rows="2" placeholder="যেমন: সবচেয়ে ভালো মানের চাল নিবেন"></textarea></div>
       <div class="card" style="padding:14px;margin-bottom:16px;border-color:var(--gold-line);background:rgba(212,175,55,.05)">
         <strong style="font-size:12.5px;color:var(--gold)">বিল কীভাবে দেবেন</strong>
-        <p style="font-size:12px;color:var(--ink-soft);margin-top:4px;line-height:1.7">ড্রাইভার বাজার করার পর বিলের ছবি আপলোড করবে। আপনি বিল দেখে টাকা প্রস্তুত রাখতে পারবেন। পণ্য হাতে পাওয়ার সময় ক্যাশে পরিশোধ করবেন।</p>
+        <p style="font-size:12px;color:var(--ink-soft);margin-top:4px;line-height:1.7">বাজার করার পর চূড়ান্ত বিল জানানো হবে। অগ্রিম ৳১০০ বাদ দিয়ে বাকি টাকা পণ্য হাতে পাওয়ার সময় ক্যাশে পরিশোধ করবেন।</p>
       </div>
       <div style="background:rgba(212,175,55,.06);border:1px solid var(--gold-line);border-radius:12px;padding:14px;margin-bottom:16px">
         <strong style="color:var(--gold);font-size:13px">⚠️ কাস্টম বাজারে ১০০ টাকা অগ্রিম কেন লাগে:</strong>
@@ -37,7 +38,7 @@
           <li>আপনি নিজে অর্ডার বাতিল করলে — ড্রাইভারের যাতায়াত খরচ বাবদ <strong style="color:var(--ink)">৫০% (৫০ টাকা) ফেরত</strong> দেওয়া হবে, বাকি ৫০ টাকা কাটা যাবে।</li>
           <li>বাজারে কোনো পণ্য না পাওয়া গেলে — ড্রাইভার/আমাদের টিম আপনাকে ফোনে জানিয়ে সমঝোতা করবে (বিকল্প পণ্য বা বাদ দেওয়া)।</li>
           <li>বাজারের মোট বিল আপনার আনুমানিক বাজেটের চেয়ে বেশি হলে — বাজার শেষ করার আগেই ফোনে জানিয়ে অনুমতি নেওয়া হবে।</li>
-          <li>বাজার সম্পূর্ণ হওয়ার পরই মূল রসিদ/বিলের ছবি অর্ডার পেজে আপলোড হবে — আগে থেকে দেখা যাবে না।</li>
+          <li>বাজার সম্পূর্ণ হওয়ার পর অর্ডার পেজে চূড়ান্ত বিল ও বাকি টাকার পরিমাণ দেখানো হবে।</li>
           <li>১০০ টাকা অগ্রিম সবসময় চূড়ান্ত বিল থেকে বাদ দিয়েই ডেলিভারির সময় বাকি টাকা নেওয়া হয়।</li>
         </ul>
       </div>
