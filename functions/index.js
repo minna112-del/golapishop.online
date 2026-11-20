@@ -77,17 +77,20 @@ exports.onOrderCreated = onDocumentCreated('orders/{orderId}', async (event) => 
 
   const staffSnap = await db.collection('staff')
     .where('role', 'in', STAFF_NOTIFY_ROLES)
-    .where('status', '==', 'active')
-    .get()
-    .catch(() => null);
-  if (!staffSnap || staffSnap.empty) return;
+    .get();
+  const recipients = staffSnap.docs.filter(doc => {
+    const staff = doc.data();
+    if (staff.active === false || ['inactive', 'suspended', 'resigned'].includes(staff.status)) return false;
+    if (staff.role !== 'zone_manager') return true;
+    return (staff.branchZone || staff.zoneId) === order.branchZone;
+  });
 
-  const tokens = await collectFcmTokens(staffSnap.docs.map(d => d.id));
+  const tokens = await collectFcmTokens(recipients.map(d => d.id));
   if (!tokens.length) return;
 
   await sendMulticast(tokens, {
-    title: '🔔 নতুন অর্ডার এসেছে',
-    body: `${order.customerName || 'কাস্টমার'} — ${order.orderNumber || event.params.orderId} (৳${order.total ?? order.subtotal ?? 0})`
+    title: 'নতুন অর্ডার এসেছে',
+    body: `${order.orderNumber || event.params.orderId} · ${order.branchZone || 'জোন'} · ৳${order.total ?? order.subtotal ?? 0}`
   }, { type: 'new_order', orderId: event.params.orderId });
 });
 
@@ -171,8 +174,11 @@ exports.cancelOrderSecure = onCall(async (request) => {
     // MT Studio audit fix: আগে শুধু 'cancelled'/'delivered' status ব্লক করা হতো —
     // 'picked_up'/'in_transit' অবস্থায়ও (ডেলিভারি ম্যান রাস্তায় থাকা অবস্থায়) বাতিল
     // করা যেত, যেটা স্টক/রিফান্ড হিসাব এলোমেলো করে দিতে পারত।
-    if (['delivered', 'picked_up', 'in_transit'].includes(order.status)) {
+    if (['delivered', 'picked_up', 'in_transit', 'picked', 'out_for_delivery'].includes(order.status)) {
       throw new HttpsError('failed-precondition', 'ডেলিভারি প্রক্রিয়া শুরু হয়ে যাওয়া অর্ডার বাতিল করা যায় না।');
+    }
+    if (['paid_pending_verification', 'verified', 'paid'].includes(order.paymentStatus)) {
+      throw new HttpsError('failed-precondition', 'জমা দেওয়া পেমেন্টের অর্ডার বাতিল করতে সাপোর্টে যোগাযোগ করুন।');
     }
 
     // --- reads আগে (transaction rule) ---
@@ -310,10 +316,10 @@ const SERVICE_AREA_DEFAULTS = {
 // বন্ধ আছে" এরর পেতেন — কারণ createOrderSecure এখানের পুরনো fallback ব্যবহার করত।
 // এখন client ও server-এর ডেটা হুবহু মেলানো হলো।
 const SERVICE_BRANCH_DEFAULTS = {
-  zone_a: { label:'Zone-A', lat:22.9447125, lng:91.1021595, active:true, bkashNumber:'01311128584', nagadNumber:'01311128584' },
-  zone_b: { label:'Zone-B', lat:22.8698125, lng:91.0966875, active:true, bkashNumber:'01311128584', nagadNumber:'01311128584' },
-  zone_c: { label:'Zone-C', lat:22.8633125, lng:91.0472376, active:true, bkashNumber:'01311128584', nagadNumber:'01311128584' },
-  zone_d: { label:'Zone-D', lat:22.9434375, lng:91.0485625, active:true, bkashNumber:'01311128584', nagadNumber:'01311128584' }
+  zone_a: { label:'Zone-A', lat:22.9447125, lng:91.1021595, active:true, bkashNumber:'01612057371', nagadNumber:'01310006959' },
+  zone_b: { label:'Zone-B', lat:22.8698125, lng:91.0966875, active:true, bkashNumber:'01612057371', nagadNumber:'01310006959' },
+  zone_c: { label:'Zone-C', lat:22.8633125, lng:91.0472376, active:true, bkashNumber:'01612057371', nagadNumber:'01310006959' },
+  zone_d: { label:'Zone-D', lat:22.9434375, lng:91.0485625, active:true, bkashNumber:'01612057371', nagadNumber:'01310006959' }
 };
 const SERVICE_DELIVERY_DEFAULTS = {
   zone_a:[{id:'zone_a_near',label:'নিকটবর্তী ডেলিভারি সীমা',radiusKm:3,fee:30},{id:'zone_a_mid',label:'মাঝারি ডেলিভারি সীমা',radiusKm:7,fee:50},{id:'zone_a_far',label:'সর্বোচ্চ ডেলিভারি সীমা',radiusKm:12,fee:80}],
@@ -582,13 +588,14 @@ exports.createCustomBazarOrderSecure = onCall(async (request) => {
   const bazarList = typeof data.bazarList === 'string' ? data.bazarList.trim().slice(0, 3000) : '';
   const notes = typeof data.notes === 'string' ? data.notes.trim().slice(0, 500) : '';
   const bkashTrxId = typeof data.bkashTrxId === 'string' ? data.bkashTrxId.trim().toUpperCase().slice(0, 50) : '';
+  const advanceMethod = ['bkash', 'nagad'].includes(data.advanceMethod) ? data.advanceMethod : 'bkash';
 
   if (!customerName) throw new HttpsError('invalid-argument', 'নাম প্রয়োজন।');
   if (!PHONE_RE.test(customerPhone)) throw new HttpsError('invalid-argument', 'সঠিক মোবাইল নম্বর প্রয়োজন।');
   if (address.length < 5) throw new HttpsError('invalid-argument', 'ঠিকানা বিস্তারিত লিখুন।');
   if (!branchZone || !zone || !village || !instructions) throw new HttpsError('invalid-argument', 'ডেলিভারি তথ্য অসম্পূর্ণ।');
   if (!bazarList) throw new HttpsError('invalid-argument', 'বাজারের লিস্ট দিন।');
-  if (bkashTrxId.length < 6) throw new HttpsError('invalid-argument', 'সঠিক bKash ট্রানজেকশন ID দিন।');
+  if (!/^[A-Z0-9]{8,50}$/.test(bkashTrxId)) throw new HttpsError('invalid-argument', 'সঠিক অগ্রিম পেমেন্টের ট্রানজেকশন ID দিন।');
 
   const normalizedBazarZone = normalizeServiceZoneId(branchZone);
   const [bazarAreasSnap, bazarBranchesSnap] = await Promise.all([
@@ -612,25 +619,28 @@ exports.createCustomBazarOrderSecure = onCall(async (request) => {
 
   // New orders use a hash-keyed claim document inside the same transaction, closing
   // the query-then-write race. The raw transaction id is kept private from drivers.
-  const claimId = hashGuestAccessToken(`custom-bazar:bkash:${bkashTrxId}`);
+  const claimId = hashGuestAccessToken(`manual:${advanceMethod}:${bkashTrxId}`);
   const claimRef = db.collection('payment_claims').doc(claimId);
+  const oldClaimRef = advanceMethod === 'bkash' ? db.collection('payment_claims').doc(hashGuestAccessToken(`custom-bazar:bkash:${bkashTrxId}`)) : null;
   const orderRef = db.collection('orders').doc();
   const orderNo = 'CB-' + new Date().getFullYear() + '-' + String(Math.floor(Math.random() * 900000) + 100000);
   await db.runTransaction(async tx => {
     const claimSnap = await tx.get(claimRef);
-    if (claimSnap.exists) {
+    const oldClaimSnap = oldClaimRef ? await tx.get(oldClaimRef) : null;
+    if (claimSnap.exists || oldClaimSnap?.exists) {
       throw new HttpsError('already-exists', 'এই ট্রানজেকশন ID দিয়ে ইতিমধ্যে একটি অর্ডার জমা হয়েছে।');
     }
     const now = admin.firestore.FieldValue.serverTimestamp();
-    tx.create(claimRef, { orderId: orderRef.id, method: 'bkash', purpose: 'custom-bazar', createdAt: now });
+    tx.create(claimRef, { orderId: orderRef.id, method: advanceMethod, purpose: 'custom-bazar', createdAt: now });
     tx.set(orderRef, {
       orderNumber: orderNo, orderType: 'custom-bazar', bazarType, bazarTypeLabel: BAZAR_TYPE_LABELS[bazarType],
       customerName, customerPhone, address, village, instructions, branchZone: normalizedBazarZone, district,
-      zone, bazarList, notes, advanceAmount: 100, paymentMethod: 'bkash+cod',
+      zone, bazarList, notes, advanceAmount: 100, paymentMethod: `${advanceMethod}+cod`,
+      advanceMethod, paymentStatus: 'paid_pending_verification',
       billPhotoUrl: null, billAmount: null,
       status: 'pending', userId: uid, createdAt: now
     });
-    tx.set(orderRef.collection('private').doc('payment'), { bkashTrxId, advanceAmount: 100, method: 'bkash', createdAt: now });
+    tx.set(orderRef.collection('private').doc('payment'), { bkashTrxId, advanceAmount: 100, method: advanceMethod, createdAt: now });
   });
 
   return { orderId: orderRef.id, orderNumber: orderNo };
@@ -673,10 +683,18 @@ exports.updateOrderPaymentSecure = onCall(async (request) => {
       throw new HttpsError('failed-precondition', 'এই অবস্থায় পেমেন্ট পরিবর্তন করা যাবে না।');
     }
 
+    if (['paid_pending_verification', 'verified', 'paid'].includes(order.paymentStatus)) {
+      throw new HttpsError('failed-precondition', 'জমা দেওয়া বা যাচাই হওয়া পেমেন্ট পরিবর্তন করতে সাপোর্টে যোগাযোগ করুন।');
+    }
+
     if (action === 'cod') {
+      if (!['pending_submission', 'mismatch', 'cod'].includes(order.paymentStatus)) {
+        throw new HttpsError('failed-precondition', 'এই পেমেন্ট COD করা যাবে না।');
+      }
       tx.update(orderRef, {
         paymentMethod: 'cod',
         paymentStatus: 'cod',
+        paymentTrxId: admin.firestore.FieldValue.delete(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
       });
       return { paymentMethod: 'cod', paymentStatus: 'cod' };
@@ -686,6 +704,23 @@ exports.updateOrderPaymentSecure = onCall(async (request) => {
     const trxId = typeof data.trxId === 'string' ? data.trxId.trim().toUpperCase().slice(0, 64) : '';
     if (!method || !/^[A-Z0-9]{8,64}$/.test(trxId)) {
       throw new HttpsError('invalid-argument', 'সঠিক পেমেন্ট মাধ্যম ও ট্রানজেকশন ID দিন।');
+    }
+    if (!['cod', 'pending_submission', 'mismatch'].includes(order.paymentStatus)) {
+      throw new HttpsError('failed-precondition', 'এই অর্ডারে নতুন ট্রানজেকশন ID দেওয়া যাবে না।');
+    }
+    const claimId = hashGuestAccessToken(`manual:${method}:${trxId}`);
+    const claimRef = db.collection('payment_claims').doc(claimId);
+    const claimSnap = await tx.get(claimRef);
+    const oldCustomClaimRef = method === 'bkash' ? db.collection('payment_claims').doc(hashGuestAccessToken(`custom-bazar:bkash:${trxId}`)) : null;
+    const oldCustomClaimSnap = oldCustomClaimRef ? await tx.get(oldCustomClaimRef) : null;
+    if (oldCustomClaimSnap?.exists) {
+      throw new HttpsError('already-exists', 'এই ট্রানজেকশন ID আগে ব্যবহার হয়েছে।');
+    }
+    if (claimSnap.exists && claimSnap.data()?.orderId !== orderId) {
+      throw new HttpsError('already-exists', 'এই ট্রানজেকশন ID আগে ব্যবহার হয়েছে।');
+    }
+    if (!claimSnap.exists) {
+      tx.create(claimRef, { orderId, method, purpose: 'order-payment', createdAt: admin.firestore.FieldValue.serverTimestamp() });
     }
     tx.update(orderRef, {
       paymentMethod: method,
@@ -774,6 +809,9 @@ exports.updateDriverOrderSecure = onCall(async (request) => {
     const staff = staffSnap.data();
     const driverId = String(staff?.driverId || uid);
     const order = orderSnap.data();
+    if (order.orderType === 'custom-bazar' && order.paymentStatus !== 'verified') {
+      throw new HttpsError('failed-precondition', 'কাস্টম বাজারের ৳১০০ অগ্রিম যাচাই না হওয়া পর্যন্ত কাজ শুরু করা যাবে না।');
+    }
     if (![driverId, uid].includes(String(order.driverId || ''))) {
       throw new HttpsError('permission-denied', 'এই অর্ডারটি আপনার জন্য অ্যাসাইন করা নয়।');
     }
@@ -878,9 +916,9 @@ async function sendMulticast(tokens, notification, data) {
   try {
     await messaging.sendEachForMulticast({
       tokens,
-      notification,
-      data: Object.fromEntries(Object.entries(data).map(([k, v]) => [k, String(v)])),
-      webpush: { fcmOptions: { link: 'https://www.golapishop.online/myorders' } }
+      // Data-only: our service worker displays a single notification and handles the click.
+      data: Object.fromEntries(Object.entries({ ...data, title: notification.title, body: notification.body })
+        .map(([k, v]) => [k, String(v)]))
     });
   } catch (e) {
     console.warn('push send failed', e.message);
