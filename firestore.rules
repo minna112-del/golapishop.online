@@ -193,10 +193,9 @@ service cloud.firestore {
        * যদি frontend এখনও self-create করে, wallet/referral-sensitive fields
        * client থেকে নির্ধারণ করা যাবে না।
        */
-      allow create: if isSignedIn() &&
-        request.auth.uid == userId &&
-        request.resource.data.get('walletBalance', 0) == 0 &&
-        request.resource.data.get('referralBonusGiven', false) == false;
+      // Profiles and referral relationships are created only by
+      // createCustomerProfileSecure; clients must not choose referredBy.
+      allow create: if false;
 
       allow update: if
 

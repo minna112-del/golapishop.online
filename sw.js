@@ -205,12 +205,12 @@ const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage(payload => {
   self.registration.showNotification(
-    payload.notification?.title || 'নতুন অর্ডার!',
+    payload.data?.title || payload.notification?.title || 'অর্ডারের খবর',
     {
-      body: payload.notification?.body || 'নতুন অর্ডার এসেছে',
+      body: payload.data?.body || payload.notification?.body || 'অর্ডারের আপডেট এসেছে',
       icon: '/icons/head_logo.webp',
       badge: '/icons/head_logo.webp',
-      tag: 'order-' + Date.now(),
+      tag: 'order-' + (payload.data?.orderId || Date.now()),
       renotify: true,
       vibrate: [300, 100, 300],
       requireInteraction: true,
@@ -221,15 +221,16 @@ messaging.onBackgroundMessage(payload => {
 
 self.addEventListener('notificationclick', event => {
   event.notification.close();
+  const isNewOrder = event.notification.data?.type === 'new_order';
+  const target = self.location.origin + (isNewOrder ? '/admin' : '/myorders');
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
       for (const c of list) {
         if (c.url.startsWith(self.location.origin) && 'focus' in c) {
-          c.postMessage({ type: 'OPEN_ZM' });
-          return c.focus();
+          return c.navigate(target).then(() => c.focus());
         }
       }
-      return clients.openWindow(self.location.origin + '#zone-manager');
+      return clients.openWindow(target);
     })
   );
 });
