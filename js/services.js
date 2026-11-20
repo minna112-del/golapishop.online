@@ -35,6 +35,11 @@ const OrdersService = {
   async assignDriver(orderId, driverId, driverName) {
     if (!FB) return false;
     try {
+      const orderSnap = await FB.getDoc(FB.doc(FB.db, 'orders', orderId));
+      if (!orderSnap.exists()) throw new Error('অর্ডার পাওয়া যায়নি');
+      if (orderSnap.data().orderType === 'custom-bazar' && orderSnap.data().paymentStatus !== 'verified') {
+        throw new Error('৳১০০ অগ্রিম যাচাইয়ের পর ড্রাইভার অ্যাসাইন করুন');
+      }
       await FB.updateDoc(FB.doc(FB.db, 'orders', orderId), {
         driverId, driverName, status: 'assigned', assignedAt: FB.serverTimestamp()
       });

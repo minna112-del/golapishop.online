@@ -201,8 +201,18 @@ const StaffAccess = {
     }
     return meta.roles.includes(role);
   },
-  request(page){
-    this.pendingPage=page||'company-os';
+  async request(page){
+    const requestedPage=page||'company-os';
+    this.pendingPage=requestedPage;
+    if(!document.getElementById('ownerGateModal')){
+      const loaded=await PageLoader.loadPartial('pages/modals.html','slot-modals');
+      if(!loaded){
+        toast(this.t('লগইন ফর্ম লোড হয়নি, আবার চেষ্টা করুন','Login form could not load; please retry'),'error');
+        Router.go('home');
+        return;
+      }
+    }
+    if(this.pendingPage!==requestedPage)return;
     const meta=AppRegistry.staffMeta(this.pendingPage),modal=document.getElementById('ownerGateModal');
     const title=document.getElementById('ownerGateTitle'),text=document.getElementById('ownerGateText'),button=document.getElementById('ownerGateSubmit');
     if(title)title.textContent=meta?.name||'Staff Workspace';
@@ -230,18 +240,18 @@ const StaffAccess = {
     const fb=await this.waitForFirebase();
     if(!fb){toast(this.t('Firebase সংযোগ পাওয়া যায়নি','Firebase is unavailable'),'error');return false;}
     const user=fb.auth.currentUser;
-    if(!user){this.request(page);return false;}
+    if(!user){await this.request(page);return false;}
     try{
       if(!this.staff||this.staff.uid!==user.uid)await this.load(user);
       if(!this.canOpen(page)){
-        this.request(page);
+        await this.request(page);
         const message=document.getElementById('ownerGateMsg');
         if(message){message.textContent=this.t('বর্তমান account-এর এই Workspace ব্যবহারের অনুমতি নেই','The current account does not have access to this workspace');message.className='form-msg err';}
         return false;
       }
       return true;
     }catch(error){
-      this.request(page);
+      await this.request(page);
       const message=document.getElementById('ownerGateMsg');
       if(message){message.textContent=error.message;message.className='form-msg err';}
       return false;
@@ -282,7 +292,7 @@ const Router = {
       path: '/',
 
       title:
-        'Golapi Shop Online — নোয়াখালিতের অনলাইন শপ',
+        'Golapi Shop Online — নোয়াখালীর অনলাইন শপ',
 
       desc:
         'নোয়াখালিতে মুদি, ঔষধ, গ্যাস ও দৈনন্দিন প্রয়োজনীয় পণ্য অর্ডার করুন অথবা নিজের বাজারের লিস্ট পাঠান। স্থানীয় ডেলিভারি ও সহজ পেমেন্ট।'

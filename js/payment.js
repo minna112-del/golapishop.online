@@ -170,10 +170,6 @@ const PaymentGateway = {
   async cancelOrder(orderId){
     if(!FB) return;
     try{
-      const snap = await FB.getDoc(FB.doc(FB.db,'orders',orderId));
-      if(!snap.exists()){ this.closeModal(); Router.go('home'); return; }
-      const order = snap.data();
-
       // ⚠️ আগে এখানে wallet refund, coupon usedCount কমানো এবং stock ফেরত —
       // এই তিনটাই client থেকে সরাসরি Firestore-এ লেখার চেষ্টা হতো। কিন্তু
       // security rules নিজের walletBalance client-side বদলাতে দেয় না (শুধু
@@ -183,10 +179,10 @@ const PaymentGateway = {
       // Cloud Function transaction-এ atomic ভাবে হয় — এখানে fail হলে সত্যিকারের
       // error দেখানো হয়, চুপচাপ গেলা হয় না।
       const cancel = FB.httpsCallable(FB.functions, 'cancelOrderSecure');
-      await cancel({ orderId });
+      const result = await cancel({ orderId, guestAccessToken: this.getGuestAccessToken(orderId) });
 
-      if(Array.isArray(order.items)){
-        order.items.forEach(it=>{ Cart.items[it.productId] = (Cart.items[it.productId]||0) + it.qty; });
+      if(!result.data.alreadyCancelled && Array.isArray(result.data.items)){
+        result.data.items.forEach(it=>{ Cart.items[it.productId] = (Cart.items[it.productId]||0) + it.qty; });
         Cart.save();
       }
 

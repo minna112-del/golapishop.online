@@ -34,6 +34,7 @@
   ];
   const container = document.getElementById('pageContainer');
   const requests = new Map();
+  const partialRequests = new Map();
   let ready = false;
   let readyTimeout = null;
 
@@ -65,14 +66,21 @@
   async function loadPartial(url, slotId) {
     const slot = document.getElementById(slotId);
     if (!slot) return false;
-    try {
-      slot.innerHTML = await fetchFragment(url);
-      translate(slot);
-      return true;
-    } catch (error) {
-      console.warn('[page-loader] partial load failed:', url, error.message);
-      return false;
-    }
+    if (slot.firstElementChild) return true;
+    if (partialRequests.has(slotId)) return partialRequests.get(slotId);
+    const request = (async () => {
+      try {
+        slot.innerHTML = await fetchFragment(url);
+        translate(slot);
+        return true;
+      } catch (error) {
+        partialRequests.delete(slotId);
+        console.warn('[page-loader] partial load failed:', url, error.message);
+        return false;
+      }
+    })();
+    partialRequests.set(slotId, request);
+    return request;
   }
 
   async function ensurePage(name) {

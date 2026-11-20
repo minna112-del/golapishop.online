@@ -4,9 +4,15 @@ const CustomBazar = {
     ['cbName','cbPhone','cbAddress','cbList','cbNotes','cbTrxId','cbVillage','cbInstructions'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
     const d=document.getElementById('cbDistrict'); if(d) d.value='';
     const z=document.getElementById('cbZone'); if(z) z.innerHTML='<option value="">প্রথমে ডেলিভারি জোন বেছে নিন</option>';
-    const b=document.getElementById('cbBkashNum'); if(b) b.textContent='ডেলিভারি জোন বেছে নিলে দেখাবে';
+    const method=document.getElementById('cbAdvanceMethod'); if(method) method.value='bkash';
+    this.updatePaymentNumber();
     const m=document.getElementById('cbMsg'); if(m) m.className='form-msg';
     this.renderPastOrders();
+  },
+  updatePaymentNumber(){
+    const method=document.getElementById('cbAdvanceMethod')?.value==='nagad'?'nagad':'bkash';
+    const b=document.getElementById('cbBkashNum');
+    if(b) b.textContent=(method==='nagad'?'01310-006959 (Nagad)':'01612-057371 (bKash)');
   },
   async renderPastOrders(){
     const box = document.getElementById('cbPastOrdersBox');
@@ -71,6 +77,7 @@ const CustomBazar = {
     const list=document.getElementById('cbList')?.value.trim()||'';
     const notes=document.getElementById('cbNotes')?.value.trim()||'';
     const trxId=document.getElementById('cbTrxId')?.value.trim()||'';
+    const advanceMethod=document.getElementById('cbAdvanceMethod')?.value==='nagad'?'nagad':'bkash';
     if(!name||!phone||!address||!district||!zone||!village||!list||!trxId){ msgEl.textContent='সব প্রয়োজনীয় তথ্য পূরণ করুন'; msgEl.className='form-msg err'; return; }
     const phoneRe=/^(?:\+880|880|0)1[3-9]\d{8}$/;
     if(!phoneRe.test(phone.replace(/[\s-]/g,''))){ msgEl.textContent='সঠিক মোবাইল নম্বর দিন'; msgEl.className='form-msg err'; return; }
@@ -80,7 +87,7 @@ const CustomBazar = {
     // এখন এই সেশনে ইতিমধ্যে সাবমিট হওয়া trxId আবার দিলে আটকে দেওয়া হয়।
     let recentTrxIds = [];
     try{ recentTrxIds = JSON.parse(sessionStorage.getItem('golapi_cb_submitted_trx')||'[]'); }catch(e){}
-    if(recentTrxIds.includes(trxId.toUpperCase())){
+    if(recentTrxIds.includes(`${advanceMethod}:${trxId.toUpperCase()}`)){
       msgEl.textContent = 'এই ট্রানজেকশন ID দিয়ে ইতিমধ্যে একটি অর্ডার জমা হয়েছে — নতুন লিস্টের জন্য নতুন পেমেন্ট করুন।';
       msgEl.className='form-msg err';
       return;
@@ -99,15 +106,15 @@ const CustomBazar = {
       const res = await createBazarOrder({
         customerName:name, customerPhone:phone, address, village, instructions,
         branchZone:district, district:AREA_LABELS[district]||'',
-        zone, bazarType:type, bazarList:list, notes, bkashTrxId:trxId
+        zone, bazarType:type, bazarList:list, notes, bkashTrxId:trxId, advanceMethod
       });
       const orderNo = res.data.orderNumber;
-      const submittedOrder = {orderNumber:orderNo, orderType:'custom-bazar', bazarType:type, bazarTypeLabel:typeLabels[type]||type, customerName:name, customerPhone:phone, address, village, instructions, notes, bazarList:list, advanceAmount:100};
+      const submittedOrder = {orderNumber:orderNo, orderType:'custom-bazar', bazarType:type, bazarTypeLabel:typeLabels[type]||type, customerName:name, customerPhone:phone, address, village, instructions, notes, bazarList:list, advanceAmount:100, advanceMethod};
       const memoKey = BazarMemo.register(submittedOrder);
 
       // duplicate-guard-এর জন্য এই trxId মনে রাখা হলো
       try{
-        recentTrxIds.push(trxId.toUpperCase());
+        recentTrxIds.push(`${advanceMethod}:${trxId.toUpperCase()}`);
         sessionStorage.setItem('golapi_cb_submitted_trx', JSON.stringify(recentTrxIds.slice(-20)));
       }catch(e){}
 
@@ -127,12 +134,12 @@ const CustomBazar = {
         orderNumber:orderNo,
         total:100,
         itemCount: list.split('\n').filter(Boolean).length,
-        paymentMethod:'bkash+cod',
+        paymentMethod:`${advanceMethod}+cod`,
         deliveryArea: AREA_LABELS[district] || district,
         customBazarMemoKey: memoKey
       });
 
-      msgEl.innerHTML = `✅ আপনার বাজার অর্ডার (${esc(orderNo)}) সফলভাবে জমা হয়েছে!`;
+      msgEl.innerHTML = `✅ অর্ডার (${esc(orderNo)}) জমা হয়েছে। ৳১০০ অগ্রিম যাচাইয়ের পর বাজার শুরু হবে।`;
       msgEl.className='form-msg ok';
       btn.textContent=orig; btn.disabled=false;
       setTimeout(()=>Router.go('order-success'), 900);

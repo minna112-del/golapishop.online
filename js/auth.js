@@ -58,21 +58,8 @@ const AuthUI = {
     try{
       const cred = await FB.createUserWithEmailAndPassword(FB.auth,email,pass);
       await FB.updateProfile(cred.user,{displayName:name});
-      const myReferralCode = cred.user.uid.slice(0,6).toUpperCase();
-
-      let referredBy = null;
-      if(referralCodeInput){
-        try{
-          const q = FB.query(FB.collection(FB.db,'users'), FB.where('referralCode','==',referralCodeInput), FB.limit(1));
-          const snap = await FB.getDocs(q);
-          if(!snap.empty){ referredBy = snap.docs[0].id; }
-        }catch(e){ devWarn('referral lookup failed', e.message); }
-      }
-
-      await FB.setDoc(FB.doc(FB.db,'users',cred.user.uid),{
-        name, email, phone, role:'customer', createdAt:FB.serverTimestamp(),
-        referralCode: myReferralCode, referredBy, referralBonusGiven:false, walletBalance:0
-      });
+      const createProfile = FB.httpsCallable(FB.functions, 'createCustomerProfileSecure');
+      await createProfile({name, email, phone, referralCode: referralCodeInput});
       if(typeof dataLayer!=='undefined') dataLayer.push({event:'sign_up', method:'email'});
       this.showMsg('✓ রেজিস্ট্রেশন সফল','ok'); setTimeout(()=>this.close(),700);
     }catch(e){ this.showMsg('রেজিস্ট্রেশন ব্যর্থ: '+e.message,'err'); }

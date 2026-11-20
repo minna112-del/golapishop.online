@@ -107,11 +107,12 @@ const AREA_ZONES = {
   zone_d: ['বাংলা বাজার']
 };
 
+const PAYMENT_NUMBERS = Object.freeze({ bkashNumber: '01612057371', nagadNumber: '01310006959' });
 const BRANCH_INFO = {
-  zone_a:{label:'Zone-A',address:'মসজিদ মার্কেট (তৃতীয় তলা), চৌরাস্তা, বেগমগঞ্জ, নোয়াখালী',managerName:'সৃজন',managerPhone:'+880 1310-006959',bkashNumber:'01311128584',nagadNumber:'01311128584',lat:22.9447125,lng:91.1021595,active:true},
-  zone_b:{label:'Zone-B',address:'এম রহমান প্লাজা, হোল্ডিং ১৭৩, পুরাতন বাসস্ট্যান্ড, প্রধান সড়ক, মাইজদী, সদর, নোয়াখালী',managerName:'রিমন',managerPhone:'+880 1627-010060',bkashNumber:'01311128584',nagadNumber:'01311128584',lat:22.8698125,lng:91.0966875,active:true},
-  zone_c:{label:'Zone-C',address:'ইসলামগঞ্জ বাজার, সদর, নোয়াখালী',managerName:'রাজু',managerPhone:'+880 1878-712787',bkashNumber:'01311128584',nagadNumber:'01311128584',lat:22.8633125,lng:91.0472376,active:true},
-  zone_d:{label:'Zone-D',address:'বাংলা বাজার, পূর্ব গলি, বেগমগঞ্জ, নোয়াখালী',managerName:'শিবলু',managerPhone:'+880 1827-505364',bkashNumber:'01311128584',nagadNumber:'01311128584',lat:22.9434375,lng:91.0485625,active:true}
+  zone_a:{label:'Zone-A',address:'মসজিদ মার্কেট (তৃতীয় তলা), চৌরাস্তা, বেগমগঞ্জ, নোয়াখালী',managerName:'সৃজন',managerPhone:'+880 1310-006959',...PAYMENT_NUMBERS,lat:22.9447125,lng:91.1021595,active:true},
+  zone_b:{label:'Zone-B',address:'এম রহমান প্লাজা, হোল্ডিং ১৭৩, পুরাতন বাসস্ট্যান্ড, প্রধান সড়ক, মাইজদী, সদর, নোয়াখালী',managerName:'রিমন',managerPhone:'+880 1627-010060',...PAYMENT_NUMBERS,lat:22.8698125,lng:91.0966875,active:true},
+  zone_c:{label:'Zone-C',address:'ইসলামগঞ্জ বাজার, সদর, নোয়াখালী',managerName:'রাজু',managerPhone:'+880 1878-712787',...PAYMENT_NUMBERS,lat:22.8633125,lng:91.0472376,active:true},
+  zone_d:{label:'Zone-D',address:'বাংলা বাজার, পূর্ব গলি, বেগমগঞ্জ, নোয়াখালী',managerName:'শিবলু',managerPhone:'+880 1827-505364',...PAYMENT_NUMBERS,lat:22.9434375,lng:91.0485625,active:true}
 };
 
 const AREA_LABELS = {zone_a:BRANCH_INFO.zone_a.label, zone_b:BRANCH_INFO.zone_b.label, zone_c:BRANCH_INFO.zone_c.label, zone_d:BRANCH_INFO.zone_d.label};
@@ -174,6 +175,11 @@ async function loadLiveBranches(){
     const snap = await FB.getDoc(FB.doc(FB.db,'setting','branches'));
     if(snap.exists() && snap.data().branches){
       Object.assign(BRANCH_INFO, snap.data().branches);
+      // Older Firestore branch settings may still contain the previous numbers.
+      Object.values(BRANCH_INFO).forEach(branch => {
+        branch.bkashNumber = PAYMENT_NUMBERS.bkashNumber;
+        branch.nagadNumber = PAYMENT_NUMBERS.nagadNumber;
+      });
       Object.keys(BRANCH_INFO).forEach(id=>{ AREA_LABELS[id] = BRANCH_INFO[id].label; });
       document.dispatchEvent(new Event('branches-updated'));
     }
@@ -221,11 +227,11 @@ const MED_LIST = [
 ];
 
 const FAQ_LIST = [
-  {q:'কাস্টম বাজার সেবা কীভাবে কাজ করে?',a:'আপনি আপনার বাজারের লিস্ট লিখে দিন, আমাদের ড্রাইভার সেই লিস্ট অনুযায়ী বাজার করে আপনার বাসায় পৌঁছে দেবে। অর্ডার নিশ্চিত করার জন্য ১০০ টাকা বিকাশ পে করতে হয়, বাকি টাকা ক্যাশ অন ডেলিভারি।'},
+  {q:'কাস্টম বাজার সেবা কীভাবে কাজ করে?',a:'বাজারের লিস্ট দিন। বিকাশ বা নগদে ৳১০০ অগ্রিম পাঠিয়ে ট্রানজেকশন আইডি জমা দিন। টাকা যাচাই হলে আমরা বাজার শুরু করব; বাকি টাকা ক্যাশ অন ডেলিভারি।'},
   {q:'ডেলিভারি চার্জ ও সময় কীভাবে ঠিক হয়?',a:'ডেলিভারি চার্জ ও সময় দুটোই নির্ভর করে আপনার অর্ডারের পরিমাণ (কতগুলো আইটেম) এবং আপনার ঠিকানার দূরত্বের (মাইলেজ) উপর। চেকআউটের সময় সঠিক চার্জ ও আনুমানিক সময় দেখানো হয় — আগে থেকে কোনো নির্দিষ্ট সময় প্রতিশ্রুতি দেওয়া হয় না, কারণ প্রতিটা অর্ডার আলাদা।'},
-  {q:'কোন এলাকায় ডেলিভারি হয়?',a:'বর্তমানে নোয়াখালিতে Zone-A, Zone-B এবং কনফিগার করা Zone-C এলাকার নির্দিষ্ট অংশে ডেলিভারি হয়। অর্ডারের আগে ম্যাপে লোকেশন যাচাই করুন।'},
+  {q:'কোন এলাকায় ডেলিভারি হয়?',a:'নোয়াখালিতে Zone-A, Zone-B, Zone-C এবং Zone-D-এর নির্ধারিত এলাকায় ডেলিভারি হয়। অর্ডারের আগে ম্যাপে লোকেশন যাচাই করুন।'},
   {q:'কোন সময় অর্ডার করা যায়?',a:'যেকোনো সময় অর্ডার করতে পারেন। ডেলিভারি কখন পৌঁছাবে তা নির্ভর করে সেই মুহূর্তে অর্ডারের পরিমাণ ও দূরত্বের উপর — অর্ডার করার পর নির্দিষ্ট সময় জানিয়ে দেওয়া হবে।'},
-  {q:'পেমেন্ট কীভাবে করব?',a:'ক্যাশ অন ডেলিভারি (COD), bKash, অথবা Nagad। জোন অনুযায়ী আলাদা bKash/Nagad নাম্বার চেকআউট পেজে দেখানো হয়।'},
+  {q:'পেমেন্ট কীভাবে করব?',a:'সাধারণ অর্ডারে ডেলিভারির সময় ক্যাশ দিতে পারবেন; চাইলে আগে bKash 01612-057371 বা Nagad 01310-006959-এ Send Money করে ট্রানজেকশন ID জমা দিন। আমরা যাচাই করে নিশ্চিত করব। কাস্টম বাজারে ৳১০০ অগ্রিম বাধ্যতামূলক, বাকি টাকা ডেলিভারির সময় ক্যাশ। চার জোনে একই পেমেন্ট নম্বর।'},
   {q:'অর্ডার কীভাবে ট্র্যাক করব?',a:'"আমার অর্ডার" পেজে গিয়ে রিয়েল-টাইম অর্ডারের খবর ও ড্রাইভারের লাইভ লোকেশন দেখতে পারবেন।'},
   {q:'অর্ডার ক্যানসেল করা যায়?',a:'হ্যাঁ, ড্রাইভার পণ্য নেওয়া শুরু করার আগে অর্ডার ক্যানসেল করা যায়। এরপর আর ক্যানসেল করা যাবে না।'},
   {q:'রিটার্ন/রিফান্ড কীভাবে?',a:'ডেলিভারির ২৪ ঘন্টার মধ্যে কোনো সমস্যা হলে রিটার্ন/রিফান্ড রিকোয়েস্ট করতে পারবেন। "আমার অর্ডার" পেজ থেকে রিফান্ড রিকোয়েস্ট করুন।'}

@@ -699,7 +699,7 @@ function onDeliveryZoneChange(prefix){
   else { zoneSel.innerHTML = '<option value="">এলাকা বেছে নিন</option>' + AREA_ZONES[deliveryZone].map(z=>`<option value="${z}">${z}</option>`).join(''); }
   if(prefix==='cb'){
     const numEl = document.getElementById('cbBkashNum');
-    if(numEl) numEl.textContent = deliveryZone ? BRANCH_INFO[deliveryZone].bkashNumber : 'ডেলিভারি জোন বেছে নিলে দেখাবে';
+    if(numEl && window.CustomBazar) CustomBazar.updatePaymentNumber();
   }
   if(prefix==='ck'){
     const payInfo = document.getElementById('ckPayInfo');
@@ -748,15 +748,15 @@ const OrderSuccess = {
     set('successOrderTotal', Number.isFinite(Number(data.total)) ? money(Number(data.total)) : '—');
     set('successItemCount', data.itemCount ? `${data.itemCount}টি` : '—');
     set('successDeliveryArea', data.deliveryArea);
-    const methodLabel={cod:'ক্যাশ অন ডেলিভারি',bkash:'বিকাশ',nagad:'নগদ','bkash+cod':'অগ্রিম বিকাশ + বাকি COD'}[data.paymentMethod]||'—';
+    const methodLabel={cod:'ক্যাশ অন ডেলিভারি',bkash:'বিকাশ',nagad:'নগদ','bkash+cod':'অগ্রিম বিকাশ + বাকি COD','nagad+cod':'অগ্রিম নগদ + বাকি COD'}[data.paymentMethod]||'—';
     set('successPaymentMethod', methodLabel);
     const lead=document.getElementById('orderSuccessLead');
     const note=document.getElementById('successPaymentNote');
     if(data.paymentMethod==='bkash' || data.paymentMethod==='nagad'){
       if(lead) lead.textContent='পেমেন্টের তথ্য জমা হয়েছে। মিলিয়ে দেখা হলে অর্ডারের খবর আপডেট হবে।';
       if(note) note.querySelector('p').textContent='ট্রানজেকশন মিলিয়ে দেখা না হওয়া পর্যন্ত পেমেন্ট অপেক্ষায় থাকবে।';
-    }else if(data.paymentMethod==='bkash+cod'){
-      if(lead) lead.textContent='আপনার Custom Bazar অর্ডার জমা হয়েছে। ড্রাইভার বাজার করার পর বিলের ছবি এখানেই দেখতে পাবেন।';
+    }else if(data.paymentMethod==='bkash+cod' || data.paymentMethod==='nagad+cod'){
+      if(lead) lead.textContent='কাস্টম বাজারের ৳১০০ অগ্রিম জমা দেওয়ার তথ্য পেয়েছি। ম্যানুয়ালি যাচাই হলে বাজারের কাজ শুরু হবে।';
       if(note) note.querySelector('p').textContent='অগ্রিম ৳১০০ বাদে বাকি বিল ডেলিভারির সময় নগদ পরিশোধ করুন।';
     }else{
       if(lead) lead.textContent='অর্ডারের পরবর্তী আপডেট “আমার অর্ডার” পেজে দেখতে পারবেন।';

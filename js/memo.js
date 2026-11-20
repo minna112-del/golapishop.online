@@ -90,7 +90,7 @@ const BazarMemo = {
     ${order.notes?`<div class="notes"><b>বিশেষ নির্দেশনা:</b> ${esc(order.notes)}</div>`:''}
     ${order.instructions?`<div class="notes"><b>ডেলিভারি নির্দেশনা:</b> ${esc(order.instructions)}</div>`:''}
     <div class="foot">
-      অগ্রিম পরিশোধ: <b>৳${(order.advanceAmount||100).toLocaleString('bn-BD')}</b> (বিকাশ) · বাকি ক্যাশ অন ডেলিভারি<br>
+      অগ্রিম পরিশোধ: <b>৳${(order.advanceAmount||100).toLocaleString('bn-BD')}</b> (${order.advanceMethod==='nagad'?'নগদ':'বিকাশ'}) · বাকি ক্যাশ অন ডেলিভারি<br>
       ধন্যবাদ, Golapi Shop Online-এ আস্থা রাখার জন্য 🌹
     </div>
   </div>

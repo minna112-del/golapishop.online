@@ -69,25 +69,26 @@ try{
       const { getMessaging, getToken, isSupported: messagingIsSupported } =
         await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js");
       const supported = await messagingIsSupported();
-      if(!supported || !('Notification' in window)) return;
+      if(!supported || !('Notification' in window)) throw new Error('এই ব্রাউজারে পুশ নোটিফিকেশন সাপোর্ট নেই');
       // ⚠️ আগে login হলেই স্বয়ংক্রিয়ভাবে notification permission popup আসতো —
       // অনেক mobile browser এটা block করে বা বিরক্তিকর মনে করে। এখন শুধু
       // permission আগে থেকেই 'granted' থাকলে (আগে কখনো manually অনুমতি দেওয়া
       // হয়েছিল) নীরবে token রেজিস্টার হয় — নতুন করে prompt কখনো auto-দেখানো হয় না,
       // সেটা এখন শুধু "নোটিফিকেশন চালু করুন" বাটনে ট্যাপ করলেই হয় (NotifHelper)।
-      if(Notification.permission !== 'granted') return;
+      if(Notification.permission !== 'granted') return false;
       const messaging = getMessaging(app);
-      const swReg = await navigator.serviceWorker.getRegistration('/');
+      const swReg = await navigator.serviceWorker.getRegistration('/') ||
+        await navigator.serviceWorker.register('/sw.js', { scope: '/' });
       const token = await getToken(messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: swReg });
-      if(token){
-        await setDoc(doc(db,'fcmTokens', userId), { token, updatedAt: serverTimestamp() }, { merge:true });
-      }
-    }catch(e){ console.warn('FCM token error', e.message); }
+      if(!token) throw new Error('পুশ টোকেন পাওয়া যায়নি');
+      await setDoc(doc(db,'fcmTokens', userId), { token, updatedAt: serverTimestamp() }, { merge:true });
+      return true;
+    }catch(e){ console.warn('FCM token error', e.message); throw e; }
   }
   window.__fb.registerPushToken = registerPushToken;
 
   onAuthStateChanged(auth, user=>{
-    if(user) registerPushToken(user.uid);
+    if(user && 'Notification' in window && Notification.permission === 'granted') registerPushToken(user.uid).catch(()=>{});
   });
 
 }catch(initErr){

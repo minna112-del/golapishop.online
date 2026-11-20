@@ -58,6 +58,38 @@ const AdminDash = {
     this.renderDriverPerformance(orders);
     this.loadStoreSettings();
     this.startRealtimeListener();
+    this.updatePushButton();
+  },
+
+  updatePushButton(){
+    const button=document.getElementById('adminPushButton');
+    if(!button) return;
+    button.textContent=this._pushRegistered ? 'নোটিফিকেশন চালু আছে'
+      : typeof Notification!=='undefined' && Notification.permission==='granted'
+        ? 'নোটিফিকেশন সংযুক্ত করুন' : 'নোটিফিকেশন চালু করুন';
+  },
+
+  async enableOrderPush(){
+    const button=document.getElementById('adminPushButton');
+    if(!FB?.auth?.currentUser || !OwnerAuth.isUnlocked()){
+      toast('আগে অ্যাডমিন হিসেবে লগইন করুন','error'); return;
+    }
+    if(!('Notification' in window) || !('serviceWorker' in navigator)){
+      toast('এই ব্রাউজারে পুশ নোটিফিকেশন সাপোর্ট নেই','error'); return;
+    }
+    try{
+      if(Notification.permission!=='granted'){
+        const permission=await Notification.requestPermission();
+        if(permission!=='granted') throw new Error('ফোনের ব্রাউজারে নোটিফিকেশনের অনুমতি দিন');
+      }
+      button.disabled=true;
+      button.textContent='চালু হচ্ছে…';
+      const saved=await FB.registerPushToken(FB.auth.currentUser.uid);
+      if(!saved) throw new Error('পুশ টোকেন সংরক্ষণ হয়নি');
+      this._pushRegistered=true;
+      toast('অর্ডার নোটিফিকেশন এই ফোনে চালু হয়েছে','success');
+    }catch(e){ toast('নোটিফিকেশন চালু হয়নি: '+(e.message||e),'error'); }
+    finally{ button.disabled=false; this.updatePushButton(); }
   },
 
   async refresh(){ await this.render({force:true}); toast('✓ আপডেট হয়েছে','success'); },
@@ -969,7 +1001,9 @@ const AdminDash = {
   openAddBranch(){
     this._branchEditId = null;
     const t=document.getElementById('brFormTitle'); if(t) t.textContent='🆕 নতুন শাখা যোগ করুন';
-    ['brId','brLabel','brAddress','brManagerName','brManagerPhone','brBkash','brNagad','brLat','brLng'].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';});
+    ['brId','brLabel','brAddress','brManagerName','brLat','brLng'].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';});
+    const bkash=document.getElementById('brBkash'); if(bkash) bkash.value=PAYMENT_NUMBERS.bkashNumber;
+    const nagad=document.getElementById('brNagad'); if(nagad) nagad.value=PAYMENT_NUMBERS.nagadNumber;
     const idEl=document.getElementById('brId'); if(idEl) idEl.disabled=false;
     const m=document.getElementById('brMsg'); if(m) m.className='form-msg';
   },
@@ -1000,9 +1034,9 @@ const AdminDash = {
       label,
       address: document.getElementById('brAddress')?.value.trim()||'',
       managerName: document.getElementById('brManagerName')?.value.trim()||'',
-      managerPhone: document.getElementById('brBanagerPhone')?.value.trim()||'',
-      bkashNumber: document.getElementById('brBkash')?.value.trim()||'',
-      nagadNumber: document.getElementById('brNagad')?.value.trim()||'',
+      managerPhone: document.getElementById('brManagerPhone')?.value.trim()||'',
+      bkashNumber: PAYMENT_NUMBERS.bkashNumber,
+      nagadNumber: PAYMENT_NUMBERS.nagadNumber,
       lat: Number(document.getElementById('brLat')?.value)||0,
       lng: Number(document.getElementById('brLng')?.value)||0,
       active: this._branchEditId ? (BRANCH_INFO[this._branchEditId]?.active !== false) : true
@@ -1630,12 +1664,18 @@ const PaymentVerify = {
     try{
       const snap = await FB.getDocs(FB.query(FB.collection(FB.db,'orders'), FB.where('paymentStatus','==','paid_pending_verification')));
       const list=[]; snap.forEach(d=>list.push({id:d.id,...d.data()}));
+      await Promise.all(list.filter(o=>o.orderType==='custom-bazar').map(async o=>{
+        try{
+          const payment=await FB.getDoc(FB.doc(FB.db,'orders',o.id,'private','payment'));
+          if(payment.exists()) o.paymentTrxId=payment.data().bkashTrxId||'';
+        }catch(e){ devWarn('custom bazar payment lookup failed',e.message); }
+      }));
       list.sort((a,b)=>(a.createdAt?.seconds||0)-(b.createdAt?.seconds||0));
 
       if(countEl) countEl.textContent = `${list.length}টি পেমেন্ট যাচাইয়ের অপেক্ষায়`;
 
       const trxCounts = {};
-      list.forEach(o=>{ const t=o.paymentTrxId; if(t) trxCounts[t]=(trxCounts[t]||0)+1; });
+      list.forEach(o=>{ const t=o.paymentTrxId; if(t){ const key=(o.advanceMethod||o.paymentMethod||'')+':'+t; trxCounts[key]=(trxCounts[key]||0)+1; } });
       const dupes = Object.entries(trxCounts).filter(([t,c])=>c>1).map(([t])=>t);
       if(dupes.length){
         dupWarnEl.style.display='block';
@@ -1646,15 +1686,15 @@ const PaymentVerify = {
 
       const now = Date.now();
       tbody.innerHTML = list.map(o=>{
-        const isDupe = o.paymentTrxId && trxCounts[o.paymentTrxId] > 1;
+        const isDupe = o.paymentTrxId && trxCounts[(o.advanceMethod||o.paymentMethod||'')+':'+o.paymentTrxId] > 1;
         const submittedAt = o.createdAt?.seconds ? o.createdAt.seconds*1000 : now;
         const hoursWaiting = (now - submittedAt) / (1000*60*60);
         const isOverdue = hoursWaiting > 2;
         return `<tr style="${isDupe?'background:rgba(239,68,68,.05)':''}">
           <td style="font-size:11px">${o.orderNumber||o.id.slice(-6)}</td>
           <td>${esc(o.customerName)||'—'}<br><span style="font-size:10.5px;color:var(--ink-muted)">${esc(o.customerPhone)}</span></td>
-          <td>${o.paymentMethod==='bkash'?'📱 bKash':'📱 Nagad'}</td>
-          <td style="color:var(--gold);font-weight:600">${moneyNumber(o?.total ?? o?.payableTotal ?? o?.subtotal ?? 0)}</td>
+          <td>${o.orderType==='custom-bazar'?'কাস্টম বাজার অগ্রিম · ':''}${['bkash','bkash+cod'].includes(o.paymentMethod)?'bKash':'Nagad'}</td>
+          <td style="color:var(--gold);font-weight:600">${moneyNumber(o.orderType==='custom-bazar'?o.advanceAmount:(o?.total ?? o?.payableTotal ?? o?.subtotal ?? 0))}</td>
           <td style="font-family:monospace;font-size:12px;${isDupe?'color:#f87171;font-weight:700':''}">${o.paymentTrxId||'—'}${isDupe?' ⚠️':''}</td>
           <td style="font-size:11px;${isOverdue?'color:#fbbf24':''}">${o.createdAt?.seconds?new Date(o.createdAt.seconds*1000).toLocaleString('bn-BD'):'—'}${isOverdue?' <br>⏰ '+Math.floor(hoursWaiting)+' ঘণ্টা+':''}</td>
           <td style="display:flex;gap:6px;flex-wrap:wrap">
@@ -1670,6 +1710,8 @@ const PaymentVerify = {
     if(!FB) return;
     if(!confirm('এই পেমেন্টটা ভেরিফাই করা নিশ্চিত করছেন?')) return;
     try{
+      const orderSnap=await FB.getDoc(FB.doc(FB.db,'orders',orderId));
+      if(!orderSnap.exists() || orderSnap.data().paymentStatus!=='paid_pending_verification') throw new Error('যাচাইয়ের অপেক্ষায় থাকা পেমেন্ট পাওয়া যায়নি');
       await FB.updateDoc(FB.doc(FB.db,'orders',orderId), {
         paymentStatus:'verified', paymentVerifiedAt: FB.serverTimestamp(), status:'confirmed'
       });
