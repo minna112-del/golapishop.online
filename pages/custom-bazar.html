@@ -27,7 +27,7 @@
       </div>
       <div style="background:rgba(212,175,55,.06);border:1px solid var(--gold-line);border-radius:12px;padding:14px;margin-bottom:16px">
         <strong style="color:var(--gold);font-size:13px">⚠️ কাস্টম বাজারে ১০০ টাকা অগ্রিম কেন লাগে:</strong>
-        <p style="font-size:12.5px;color:var(--ink-soft);line-height:1.7;margin-top:4px">কাস্টম বাজারে ড্রাইভার আগে টাকা খরচ করে বাজার করে। তাই অর্ডার নিশ্চিত করতে <strong style="color:var(--ink)">১০০ টাকা অগ্রিম</strong> নেওয়া হয়। এই টাকা আপনার মোট বিল থেকে বাদ যাবে। বিকাশ নম্বর: <strong id="cbBkashNum" style="color:var(--gold)">ডেলিভারি জোন বেছে নিলে দেখাবে</strong><br>বাকি সম্পূর্ণ টাকা ক্যাশ অন ডেলিভারি — পণ্য হাতে পাওয়ার পর। <strong style="color:var(--ink)">bKash-এর নিজস্ব চার্জ (যদি থাকে) আমরা বহন করি, আপনাকে দিতে হবে না।</strong></p>
+        <p style="font-size:12.5px;color:var(--ink-soft);line-height:1.7;margin-top:4px">কাস্টম বাজারে ড্রাইভার আগে টাকা খরচ করে বাজার করে। তাই অর্ডার নিশ্চিত করতে <strong style="color:var(--ink)">১০০ টাকা অগ্রিম</strong> বাধ্যতামূলক। bKash অথবা Nagad-এ Send Money করুন; ট্রানজেকশন যাচাই হওয়ার পর অর্ডার প্রক্রিয়ায় যাবে। এই টাকা মোট বিল থেকে বাদ যাবে। নম্বর: <strong id="cbBkashNum" style="color:var(--gold)">01612-057371 (bKash)</strong><br>বাকি টাকা পণ্য হাতে পাওয়ার সময় ক্যাশে দিন।</p>
       </div>
 
       <div class="card-box" style="margin-bottom:16px">
@@ -41,7 +41,8 @@
           <li>১০০ টাকা অগ্রিম সবসময় চূড়ান্ত বিল থেকে বাদ দিয়েই ডেলিভারির সময় বাকি টাকা নেওয়া হয়।</li>
         </ul>
       </div>
-      <div class="field"><label>বিকাশ ট্রানজেকশন ID *</label><input type="text" id="cbTrxId" placeholder="পেমেন্টের পর ট্রানজেকশন ID"></div>
+      <div class="field"><label for="cbAdvanceMethod">৳১০০ অগ্রিম দেওয়ার মাধ্যম *</label><select id="cbAdvanceMethod" onchange="CustomBazar.updatePaymentNumber()"><option value="bkash">bKash</option><option value="nagad">Nagad</option></select></div>
+      <div class="field"><label for="cbTrxId">bKash/Nagad ট্রানজেকশন ID *</label><input type="text" id="cbTrxId" placeholder="পেমেন্টের পর ট্রানজেকশন ID"></div>
       <div id="cbMsg" class="form-msg"></div>
       <button class="btn btn-rose btn-block" id="cbSubmitBtn" onclick="CustomBazar.submit()"><span class="ic ic-pencil" style="width:13px;height:13px;vertical-align:-2px;margin-right:3px"></span>বাজার অর্ডার জমা দিন</button>
     </div>
