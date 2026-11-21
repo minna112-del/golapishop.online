@@ -75,10 +75,48 @@
         </section>
 
         <section id="zmDriversPane" style="display:none">
-          <div class="zm-pane-head"><div><span class="eyebrow">ডেলিভারি টিম</span><h2>এই শাখার ড্রাইভার</h2></div><button class="btn btn-outline" type="button" onclick="DriverManage.openAdd(ZoneManagerDash.currentZone)">+ নতুন ড্রাইভার</button></div>
+          <div class="zm-pane-head"><div><span class="eyebrow">ডেলিভারি টিম</span><h2>এই শাখার ড্রাইভার</h2></div><span>নতুন ড্রাইভার অ্যাডমিন যোগ করবেন</span></div>
           <div class="table-scroll card-box"><table class="data-table"><thead><tr><th>নাম</th><th>মোবাইল</th><th>স্ট্যাটাস</th></tr></thead><tbody id="zmDriverManageTable"></tbody></table></div>
         </section>
       </main>
     </div>
   </section>
+  <dialog id="zmOrderDetailDialog" class="zm-order-dialog" aria-labelledby="zmOrderDetailTitle">
+    <div class="zm-order-dialog-head">
+      <h2 id="zmOrderDetailTitle">অর্ডারের বিস্তারিত</h2>
+      <button type="button" class="btn btn-outline" onclick="ZoneManagerDash.closeOrderDetail()" aria-label="বন্ধ করুন">বন্ধ করুন</button>
+    </div>
+    <div class="zm-order-dialog-content">
+      <p><strong>অর্ডার:</strong> <span id="zmDetailNumber"></span></p>
+      <p><strong>কাস্টমার:</strong> <span id="zmDetailCustomer"></span></p>
+      <p><strong>মোবাইল:</strong> <span id="zmDetailPhone"></span></p>
+      <p><strong>ঠিকানা:</strong> <span id="zmDetailAddress"></span></p>
+      <p><strong>স্ট্যাটাস:</strong> <span id="zmDetailStatus"></span></p>
+      <p><strong>পেমেন্ট:</strong> <span id="zmDetailPayment"></span></p>
+      <p id="zmDetailTrxRow" hidden><strong>ট্রানজেকশন ID:</strong> <span id="zmDetailTrx"></span></p>
+      <div><strong id="zmDetailListLabel">পণ্যের তালিকা</strong><pre id="zmDetailList"></pre></div>
+      <p><strong>ডেলিভারি নির্দেশনা:</strong> <span id="zmDetailInstructions"></span></p>
+      <p><strong>বিশেষ অনুরোধ:</strong> <span id="zmDetailNotes"></span></p>
+      <p><strong>মোট বিল:</strong> <span id="zmDetailBill"></span></p>
+      <p><strong>বাকি ক্যাশ:</strong> <span id="zmDetailDue"></span></p>
+    </div>
+  </dialog>
+  <dialog id="zmProductDialog" class="zm-order-dialog" aria-labelledby="zmProductTitle">
+    <div class="zm-order-dialog-head">
+      <h2 id="zmProductTitle">প্রোডাক্ট</h2>
+      <button type="button" class="btn btn-outline" onclick="ZoneManagerDash.closeProductForm()">বন্ধ করুন</button>
+    </div>
+    <div class="zm-product-fields">
+      <label>নাম <input id="zmProductName" type="text" maxlength="150" required></label>
+      <label>ক্যাটাগরি <select id="zmProductCategory"></select></label>
+      <label>ইউনিট <input id="zmProductUnit" type="text" maxlength="30" required></label>
+      <label>সাধারণ দাম (৳) <input id="zmProductPrice" type="number" min="0" step="0.01"></label>
+      <label>বিক্রয়মূল্য (৳) <input id="zmProductSalePrice" type="number" min="0.01" step="0.01" required></label>
+      <label>স্টক <input id="zmProductStock" type="number" min="0" step="1" required></label>
+      <label>প্রোডাক্টের ছবি <input id="zmProductImage" type="file" accept="image/*"></label>
+      <label>বিবরণ <textarea id="zmProductDescription" rows="3"></textarea></label>
+      <p id="zmProductMessage" role="status"></p>
+      <button id="zmProductSave" type="button" class="btn btn-primary" onclick="ZoneManagerDash.saveProduct()">সংরক্ষণ করুন</button>
+    </div>
+  </dialog>
 </div>
