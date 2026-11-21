@@ -222,7 +222,9 @@ messaging.onBackgroundMessage(payload => {
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   const isNewOrder = event.notification.data?.type === 'new_order';
-  const target = self.location.origin + (isNewOrder ? '/admin' : '/myorders');
+  // Company OS is available to both the admin and zone managers. /admin
+  // would send a zone manager to a page their role cannot open.
+  const target = self.location.origin + (isNewOrder ? '/company-os' : '/myorders');
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
       for (const c of list) {
