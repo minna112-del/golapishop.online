@@ -128,7 +128,8 @@ const DriverManage = {
       await FB.addDoc(FB.collection(FB.db,'drivers'),{name,phone,branchZone,active:true,createdAt:FB.serverTimestamp()});
       msgEl.textContent='✓ ড্রাইভার যুক্ত হয়েছে — এখন Firebase Console-এ গিয়ে এই ড্রাইভারের জন্য একটা ইমেইল/পাসওয়ার্ড অ্যাকাউন্ট বানাও'; msgEl.className='form-msg ok';
       await this.renderTable(this.presetZone);
-      if(ZoneManagerDash.currentZone) await ZoneManagerDash.render(); else AdminDash.render();
+      if(typeof ZoneManagerDash!=='undefined' && ZoneManagerDash.currentZone) await ZoneManagerDash.render();
+      else if(typeof AdminDash!=='undefined') AdminDash.render();
       setTimeout(()=>this.close(),1800);
     }catch(e){ msgEl.textContent='সমস্যা: '+e.message; msgEl.className='form-msg err'; }
   }

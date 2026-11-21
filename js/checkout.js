@@ -270,10 +270,16 @@ const Checkout = {
     const presFile = document.getElementById('ckPrescriptionFile')?.files[0];
     if(presFile){
       try{
-        const fileRef = FB.storageRef(FB.storage, `prescriptions/${Date.now()}_${presFile.name}`);
+        const userId=(Auth.currentUser || FB.auth.currentUser).uid;
+        const fileRef = FB.storageRef(FB.storage, `prescriptions/${userId}/${Date.now()}_${presFile.name}`);
         await FB.uploadBytes(fileRef, presFile);
         prescriptionUrl = await FB.getDownloadURL(fileRef);
-      }catch(e){ devWarn('prescription upload failed', e.message); }
+      }catch(e){
+        devWarn('prescription upload failed', e.message);
+        this.setPlaceOrderLoading(false);
+        toast('প্রেসক্রিপশন আপলোড হয়নি। আবার চেষ্টা করুন।','error');
+        return;
+      }
     }
     const cartEntries = Object.entries(Cart.items);
     let committedOrder;

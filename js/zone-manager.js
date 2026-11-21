@@ -1,6 +1,6 @@
 /* zone-manager.js — ZoneManagerDash (Firebase Auth secured) */
 const ZoneManagerDash = {
-  currentZone: null, currentUid: null, _orders: [],
+  currentZone: null, currentUid: null, _orders: [], _orderUnsub: null,
   orderTotal(o){ return Number(o?.orderType==='custom-bazar' ? (o?.billAmount ?? 0) : (o?.total ?? o?.grandTotal ?? o?.payableTotal ?? o?.subtotal ?? 0)) || 0; },
   applyHeader(zone){
     const info = BRANCH_INFO[zone] || {label: zone || 'নির্ধারিত জোন', managerName:'—'};
@@ -32,6 +32,8 @@ const ZoneManagerDash = {
     }catch(e){ msgEl.textContent='লগইন ব্যর্থ: ইমেইল বা পাসওয়ার্ড সঠিক নয়'; msgEl.className='form-msg err'; }
   },
   async logout(){
+    if(this._orderUnsub){ this._orderUnsub(); this._orderUnsub=null; }
+    this.closeOrderDetail();
     if(FB) await FB.signOut(FB.auth).catch(()=>{});
     this.currentZone=null; this.currentUid=null;
     document.getElementById('zmLoginBox').style.display='block';
@@ -49,16 +51,17 @@ const ZoneManagerDash = {
       }
     }catch(e){ devWarn('zone-manager session restore failed', e.message); }
   },
-  async render(){
+  async render({force=false}={}){
     await this._restoreSession();
     if(!this.currentZone){ document.getElementById('zmLoginBox').style.display='block'; document.getElementById('zmDashBox').style.display='none'; return; }
     document.getElementById('zmLoginBox').style.display='none';
     document.getElementById('zmDashBox').style.display='block';
     this.applyHeader(this.currentZone);
     if(typeof EmployeeWorkspace!=='undefined') await EmployeeWorkspace.mountCurrent('zmEmployeeWorkspace');
-    const allOrders = await OrdersService.loadAll({zone:this.currentZone});
+    const allOrders = await OrdersService.loadAll({zone:this.currentZone,force});
     const orders = allOrders.filter(o=>o.branchZone===this.currentZone);
     this._orders = orders;
+    this.startOrderAlerts();
     const products = ALL_PRODUCTS.filter(p=>p.zone===this.currentZone);
     await DriverManage.loadDrivers();
 
@@ -192,7 +195,7 @@ const ZoneManagerDash = {
         <td>${esc(o.customerName)||'—'}</td>
         <td style="color:var(--gold)">${money(this.orderTotal(o))}</td>
         <td><span class="status-pill ${s.cls}">${s.label}</span></td>
-        <td><a href="#" onclick="event.preventDefault();OrderDetail.open(${JSON.stringify(o).replace(/"/g,'&quot;')})" style="color:var(--gold);font-size:12px">বিস্তারিত</a></td>
+        <td><a href="#" onclick="event.preventDefault();ZoneManagerDash.openOrderDetail('${o.id}')" style="color:var(--gold);font-size:12px">বিস্তারিত</a></td>
       </tr>`;
     }).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--ink-muted);padding:16px">কোনো অর্ডার নেই</td></tr>';
   },
@@ -207,7 +210,7 @@ const ZoneManagerDash = {
       <td style="color:var(--gold)">${money(p.salePrice)}</td>
       <td><input type="number" value="${p.stock}" min="0" onchange="ZoneManagerDash.quickStock('${p.id}',this.value)" style="width:55px;padding:3px 5px;border-radius:6px;background:var(--bg2);border:1px solid ${p.stock<=5?'rgba(239,68,68,.4)':'var(--line)'};color:${p.stock===0?'#f87171':p.stock<=5?'#fbbf24':'#fff'};font-size:12px;text-align:center"></td>
       <td><span class="status-pill ${p.stock>0?'delivered':'cancelled'}">${p.stock>0?'লাইভ':'আউট'}</span></td>
-      <td><a href="#" onclick="event.preventDefault();ProductForm.openEdit('${p.id}')" style="color:var(--gold);font-size:12px">এডিট</a></td>
+      <td><a href="#" onclick="event.preventDefault();ZoneManagerDash.openProductForm('${p.id}')" style="color:var(--gold);font-size:12px">এডিট</a></td>
     </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--ink-muted);padding:16px">কোনো প্রোডাক্ট নেই</td></tr>';
   },
   filterProducts(){ this.renderProducts(ALL_PRODUCTS.filter(p=>p.zone===this.currentZone)); },
@@ -238,7 +241,7 @@ const ZoneManagerDash = {
             ${Object.entries(ORDER_STATUS).map(([k,v])=>`<option value="${k}" ${o.status===k?'selected':''}>${v.label}</option>`).join('')}
           </select>
         </td>
-        <td><a href="#" onclick="event.preventDefault();OrderDetail.open(${JSON.stringify(o).replace(/"/g,'&quot;')})" style="color:var(--gold);font-size:12px;display:block;margin-bottom:3px">বিস্তারিত</a>
+        <td><a href="#" onclick="event.preventDefault();ZoneManagerDash.openOrderDetail('${o.id}')" style="color:var(--gold);font-size:12px;display:block;margin-bottom:3px">বিস্তারিত</a>
           <a href="#" onclick="event.preventDefault();ZoneManagerDash.escalateOrder('${o.id}')" style="color:#f87171;font-size:11px;display:block;margin-bottom:3px">⚠️ এস্কেলেট</a>
           ${o.paymentMethod==='cod'&&o.status==='delivered'&&!o.codDeposited?`<a href="#" onclick="event.preventDefault();ZoneManagerDash.markCodDeposited('${o.id}')" style="color:#22c55e;font-size:11px;display:block">💰 COD জমা দিন</a>`:''}
         </td>
@@ -246,6 +249,70 @@ const ZoneManagerDash = {
     }).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--ink-muted);padding:16px">কোনো অর্ডার নেই</td></tr>';
   },
   filterOrders(){ this.renderOrders(this._orders); },
+  startOrderAlerts(){
+    if(this._orderUnsub || !this.currentZone || !FB) return;
+    const zone=this.currentZone;
+    let initialized=false;
+    this._orderUnsub=FB.onSnapshot(
+      FB.query(FB.collection(FB.db,'orders'),FB.where('branchZone','==',zone)),
+      snap=>{
+        if(!initialized){ initialized=true; return; }
+        for(const change of snap.docChanges()){
+          if(change.type!=='added') continue;
+          const order={id:change.doc.id,...change.doc.data()};
+          toast(`নতুন অর্ডার: ${order.orderNumber||order.id}`,'success');
+          if(typeof Notification!=='undefined' && Notification.permission==='granted' && 'serviceWorker' in navigator){
+            navigator.serviceWorker.ready.then(reg=>reg.showNotification('নতুন অর্ডার এসেছে',{
+              body:`${order.orderNumber||order.id} · ${zone}`,
+              tag:`live-order-${order.id}`,data:{type:'new_order',orderId:order.id}
+            })).catch(()=>{});
+          }
+        }
+        if(snap.docChanges().some(change=>change.type==='added')) this.render({force:true});
+      },
+      error=>{ this._orderUnsub=null; devWarn('zone order alerts failed',error.message); }
+    );
+  },
+  closeOrderDetail(){
+    const dialog=document.getElementById('zmOrderDetailDialog');
+    if(dialog?.open) dialog.close();
+    this._detailOrderId=null;
+  },
+  async openOrderDetail(orderId){
+    const order=this._orders.find(item=>item.id===orderId);
+    if(!order || order.branchZone!==this.currentZone) return;
+    const dialog=document.getElementById('zmOrderDetailDialog');
+    if(!dialog) return;
+    this._detailOrderId=orderId;
+    const set=(id,value)=>{ const el=document.getElementById(id); if(el) el.textContent=String(value ?? '—'); };
+    set('zmDetailNumber',order.orderNumber||order.id);
+    set('zmDetailCustomer',order.customerName);
+    set('zmDetailPhone',order.customerPhone);
+    set('zmDetailAddress',[order.village,order.zone,order.address].filter(Boolean).join(', '));
+    set('zmDetailStatus',ORDER_STATUS[order.status]?.label||order.status);
+    set('zmDetailPayment',order.orderType==='custom-bazar'
+      ? `৳১০০ ${order.advanceMethod==='nagad'?'নগদ':'বিকাশ'} অগ্রিম · যাচাই ম্যানুয়াল · বাকি COD`
+      : ({cod:'ক্যাশ অন ডেলিভারি',bkash:'বিকাশ',nagad:'নগদ'}[order.paymentMethod]||order.paymentMethod));
+    const custom=order.orderType==='custom-bazar';
+    const trxRow=document.getElementById('zmDetailTrxRow');
+    if(trxRow) trxRow.hidden=!custom;
+    set('zmDetailTrx',custom?'লোড হচ্ছে…':'');
+    set('zmDetailListLabel',custom?'বাজারের তালিকা':'পণ্যের তালিকা');
+    set('zmDetailList',custom?order.bazarList:(order.items||[]).map(item=>`${item.name||item.productId} × ${item.qty}`).join('\n'));
+    set('zmDetailInstructions',order.instructions||'নেই');
+    set('zmDetailNotes',order.notes||'নেই');
+    set('zmDetailBill',custom?(order.billAmount==null?'বাজার শেষে জানানো হবে':money(order.billAmount)):money(this.orderTotal(order)));
+    set('zmDetailDue',custom?(order.billAmount==null?'বাজার শেষে জানানো হবে':money(Math.max(0,Number(order.billAmount)-100))):'অর্ডারের পেমেন্ট পদ্ধতি অনুযায়ী');
+    if(!dialog.open) dialog.showModal();
+    if(custom){
+      try{
+        const payment=await FB.getDoc(FB.doc(FB.db,'orders',order.id,'private','payment'));
+        if(this._detailOrderId===orderId) set('zmDetailTrx',payment.exists()?payment.data().bkashTrxId||'দেওয়া হয়নি':'পাওয়া যায়নি');
+      }catch(e){
+        if(this._detailOrderId===orderId) set('zmDetailTrx','লোড করা যায়নি');
+      }
+    }
+  },
   renderAnalytics(orders){
     const active=orders.filter(o=>o.status!=='cancelled');
     const now=new Date();
@@ -274,12 +341,12 @@ const ZoneManagerDash = {
     if(!driverId) return;
     const d=DriverManage.drivers.find(x=>x.id===driverId); if(!d) return;
     const ok=await OrdersService.assignDriver(orderId,driverId,d.name);
-    if(ok){ toast(`✓ ${d.name}-কে অ্যাসাইন করা হয়েছে`,'success'); await this.render(); }
+    if(ok){ toast(`✓ ${d.name}-কে অ্যাসাইন করা হয়েছে`,'success'); await this.render({force:true}); }
   },
   async quickStatus(orderId,status){
     if(!status) return;
     const ok=await OrdersService.updateStatus(orderId,status);
-    if(ok){ toast('✓ স্ট্যাটাস আপডেট','success'); await this.render(); }
+    if(ok){ toast('✓ স্ট্যাটাস আপডেট','success'); await this.render({force:true}); }
   },
   tab(btn,name){
     ['overview','products','orders','analytics','drivers'].forEach(t=>{
@@ -291,8 +358,60 @@ const ZoneManagerDash = {
     if(name==='products') this.renderProducts(ALL_PRODUCTS.filter(p=>p.zone===this.currentZone));
     if(name==='analytics') this.renderAnalytics(this._orders);
   },
-  openAddProduct(){
-    ProductForm.openAdd();
-    ProductForm.renderZoneCheckboxes(this.currentZone, true);
+  openAddProduct(){ this.openProductForm(); },
+  openProductForm(id=null){
+    const product=id?ALL_PRODUCTS.find(item=>item.id===id && item.zone===this.currentZone):null;
+    if(id && !product){ toast('নিজের জোনের প্রোডাক্ট পাওয়া যায়নি','error'); return; }
+    this._productEditId=id;
+    document.getElementById('zmProductTitle').textContent=id?'প্রোডাক্ট সম্পাদনা':'নতুন প্রোডাক্ট';
+    const categories=document.getElementById('zmProductCategory');
+    categories.innerHTML=CATEGORIES.map(item=>`<option value="${esc(item.id)}">${esc(item.label)}</option>`).join('');
+    const fields={zmProductName:product?.name||'',zmProductUnit:product?.unit||'পিস',zmProductPrice:product?.price??'',zmProductSalePrice:product?.salePrice??'',zmProductStock:product?.stock??0,zmProductDescription:product?.description||''};
+    for(const [field,value] of Object.entries(fields)) document.getElementById(field).value=value;
+    categories.value=product?.category||'grocery';
+    document.getElementById('zmProductImage').value='';
+    document.getElementById('zmProductMessage').textContent='';
+    document.getElementById('zmProductDialog').showModal();
+  },
+  closeProductForm(){
+    const dialog=document.getElementById('zmProductDialog');
+    if(dialog?.open) dialog.close();
+  },
+  async saveProduct(){
+    const value=id=>document.getElementById(id).value.trim();
+    const message=document.getElementById('zmProductMessage');
+    const button=document.getElementById('zmProductSave');
+    const name=value('zmProductName'),unit=value('zmProductUnit'),category=value('zmProductCategory');
+    const salePrice=Number(value('zmProductSalePrice')),price=Number(value('zmProductPrice'))||salePrice;
+    const stock=Number(value('zmProductStock'));
+    if(!name || !unit || !category || !Number.isFinite(salePrice) || salePrice<=0 || !Number.isInteger(stock) || stock<0){
+      message.textContent='নাম, দাম ও স্টক সঠিকভাবে দিন'; return;
+    }
+    button.disabled=true;
+    try{
+      const data={name,unit,category,salePrice,price,stock,description:value('zmProductDescription'),updatedAt:FB.serverTimestamp()};
+      const file=document.getElementById('zmProductImage').files[0];
+      if(file){
+        if(!file.type.startsWith('image/') || file.size>=5*1024*1024) throw new Error('৫ MB-এর কম আকারের ছবি দিন');
+        const fileRef=FB.storageRef(FB.storage,`products/${this.currentZone}/${Date.now()}_${file.name}`);
+        await FB.uploadBytes(fileRef,file);
+        data.imageUrl=await FB.getDownloadURL(fileRef);
+      }
+      if(this._productEditId){
+        const current=ALL_PRODUCTS.find(item=>item.id===this._productEditId && item.zone===this.currentZone);
+        if(!current) throw new Error('নিজের জোনের প্রোডাক্ট পাওয়া যায়নি');
+        await FB.updateDoc(FB.doc(FB.db,'products',this._productEditId),data);
+      }else{
+        await FB.addDoc(FB.collection(FB.db,'products'),{
+          ...data,zone:this.currentZone,status:'active',createdAt:FB.serverTimestamp(),
+          rating:'৫.০',reviews:0,sold:0,fastDelivery:true,cod:true
+        });
+      }
+      await ProductStore.refreshAndRerender();
+      this.renderProducts(ALL_PRODUCTS.filter(item=>item.zone===this.currentZone));
+      this.closeProductForm();
+      toast('প্রোডাক্ট সংরক্ষণ হয়েছে','success');
+    }catch(error){ message.textContent='সংরক্ষণ হয়নি: '+error.message; }
+    finally{ button.disabled=false; }
   }
 };window.ZoneManagerDash=ZoneManagerDash;
