@@ -16,6 +16,7 @@ interface DriverContextType {
   preferences: PreferencesState; updatePreferences: (key: keyof PreferencesState, val: unknown) => void; resetPreferences: () => void;
   hotspots: Hotspot[]; driverLocation: [number, number] | null; activeOrder: Order | null;
   acceptOrder: () => void; declineOrder: () => void; advanceOrderStatus: () => void; cancelActiveOrder: () => void;
+  submitCustomBazarBill: (amount: number) => Promise<void>;
   tipNotifications: TipNotification[]; sendThanksForTip: (id: string) => void; deleteTipNotification: (id: string) => void; clearAllInbox: () => void;
   earningsDays: EarningsDay[]; payoutTransactions: PayoutTransaction[];
   viewMode: 'mobile' | 'dashboard'; setViewMode: (mode: 'mobile' | 'dashboard') => void;
@@ -62,7 +63,8 @@ const mapOrder = (id: string, data: any): Order => {
   })) : [];
   const address = [data.village, data.zone, data.district, data.address].filter(Boolean).join(', ');
   return {
-    id, restaurantName: data.storeName || data.shopName || 'Golapi Shop',
+    id, orderType: data.orderType || '', bazarList: data.bazarList || '', billAmount: data.billAmount ?? null,
+    restaurantName: data.storeName || data.shopName || 'Golapi Shop',
     restaurantAddress: data.pickupAddress || data.branchAddress || data.branchZone || 'Golapi Shop শাখা',
     customerName: data.customerName || 'কাস্টমার', customerCode: data.orderNumber || id.slice(-6).toUpperCase(),
     customerAddress: address || 'ঠিকানা দেওয়া হয়নি', customerPhone: data.customerPhone || '',
@@ -268,6 +270,11 @@ export const DriverProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const declineOrder = () => void runDriverOrderAction('decline');
   const advanceOrderStatus = () => void runDriverOrderAction('advance');
   const cancelActiveOrder = () => void runDriverOrderAction('decline');
+  const submitCustomBazarBill = async (amount: number) => {
+    if (!activeOrderId) throw new Error('অর্ডার পাওয়া যায়নি।');
+    const submit = httpsCallable(functions, 'submitCustomBazarBill');
+    await submit({ orderId: activeOrderId, billAmount: amount });
+  };
   // ⚠️ MT Studio audit fix: আগে এখানে শুধু client-side হিসাব করা
   // computedProfile.walletBalance-এর বিপরীতে amount চেক করে সরাসরি
   // payoutRequests-এ addDoc হতো — DevTools দিয়ে এই ফাংশন সরাসরি কল করলে আসল
@@ -288,7 +295,7 @@ export const DriverProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const deleteTipNotification = (id: string) => void updateDoc(doc(db, 'orders', id), { driverNotificationHidden: true }).catch(console.error);
   const clearAllInbox = () => { tipNotifications.forEach(item => void updateDoc(doc(db, 'orders', item.id), { driverNotificationHidden: true }).catch(console.error)); };
 
-  return <DriverContext.Provider value={{ authReady, currentUser, driverId, authError, login, logout, isOnline, setIsOnline, language, setLanguage, activeTab, setActiveTab, profile: computedProfile, updateProfile, preferences, updatePreferences, resetPreferences, hotspots, driverLocation, activeOrder, acceptOrder, declineOrder, advanceOrderStatus, cancelActiveOrder, tipNotifications, sendThanksForTip, deleteTipNotification, clearAllInbox, earningsDays, payoutTransactions, viewMode, setViewMode, showPreferencesModal, setShowPreferencesModal, showCashOutModal, setShowCashOutModal, showProfileModal, setShowProfileModal, unableOnlineMessage, setUnableOnlineMessage, requestInstantPayout, requestDetailedPayout, isPayoutSuccess }}>{children}</DriverContext.Provider>;
+  return <DriverContext.Provider value={{ authReady, currentUser, driverId, authError, login, logout, isOnline, setIsOnline, language, setLanguage, activeTab, setActiveTab, profile: computedProfile, updateProfile, preferences, updatePreferences, resetPreferences, hotspots, driverLocation, activeOrder, acceptOrder, declineOrder, advanceOrderStatus, cancelActiveOrder, submitCustomBazarBill, tipNotifications, sendThanksForTip, deleteTipNotification, clearAllInbox, earningsDays, payoutTransactions, viewMode, setViewMode, showPreferencesModal, setShowPreferencesModal, showCashOutModal, setShowCashOutModal, showProfileModal, setShowProfileModal, unableOnlineMessage, setUnableOnlineMessage, requestInstantPayout, requestDetailedPayout, isPayoutSuccess }}>{children}</DriverContext.Provider>;
 };
 
 export const useDriver = () => { const context = useContext(DriverContext); if (!context) throw new Error('useDriver must be used within DriverProvider'); return context; };
