@@ -2,8 +2,8 @@
 
 এই ZIP-এ সাইটের সোর্স ও Firebase Functions আছে; dist বা node_modules নেই। ZIP নিজে রিপোতে একটি ফাইল হিসেবে আপলোড করলে Netlify সেটি দিয়ে সাইট তৈরি করতে পারবে না। ZIP খুলে ভেতরের ফাইলগুলো রিপোর root-এ একই পাথে বসিয়ে commit করতে হবে।
 
-Netlify main-এ নতুন commit পেলে npm run build চালিয়ে dist প্রকাশ করে। Firebase Cloud Functions Netlify-তে প্রকাশ হয় না। একই প্রকল্প golapishoponline-এ Firebase CLI দিয়ে `firebase deploy --only functions:createOrderSecure,functions:createCustomBazarOrderSecure,functions:createCustomerProfileSecure,functions:onOrderCreated` চালাতে হবে। Firebase Console-এ Firestore Rules আগে আপডেট করা থাকলে নতুন rules আবার দেওয়ার দরকার নেই; এই ZIP-এর firestore.rules ওই repo সংস্করণই।
+Netlify main-এ নতুন commit পেলে npm run build চালিয়ে dist প্রকাশ করে। Firebase Cloud Functions Netlify-তে প্রকাশ হয় না। একই প্রকল্প golapishoponline-এ Firebase CLI দিয়ে `firebase deploy --only functions` চালাতে হবে। Firestore Rules-এ পুরোনো নিয়ম থাকলে `firebase deploy --only firestore:rules` বা Firebase Console থেকে এই রিপোর firestore.rules প্রকাশ করতে হবে।
 
 ওয়েব ও Functions আলাদা সিস্টেম, তাই দুটো deploy কাছাকাছি সময়ে শেষ করুন। তারপর একটি পরীক্ষামূলক COD অর্ডার, কাস্টম বাজারের প্রতিটি জোনে একটি করে পরীক্ষা, admin payment verify ও driver assignment, Company OS notification পরীক্ষা করুন। লাইভ পরীক্ষা না হওয়া পর্যন্ত অর্ডার নেওয়া নিশ্চিত ধরে নেবেন না।
 
-যাচাই: npm run check পাস; functions/index.js syntax পাস; mocked backend-এ zone_a/b/c/d custom bazar submit, private NID ও ৳১০০ pending verification পাস। Firebase-এ আসল অর্ডার বা ফোনে notification পরীক্ষা হয়নি। GitHub connector-এ write 403 হওয়ায় এই প্যাকেজ এখনো লাইভ নয়।
+রিপোর build ও check পাস করলেও নতুন কোড প্রকাশ না করলে লাইভ সাইট বদলাবে না। প্রকাশের পর আসল অর্ডার, ম্যানুয়াল পেমেন্ট দেখা, জোন ম্যানেজারের ড্রাইভার অ্যাসাইন এবং ফোনে নোটিফিকেশন পরীক্ষা করুন।

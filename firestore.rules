@@ -518,6 +518,13 @@ service cloud.firestore {
 
       match /private/{docId} {
         allow read: if isAdmin() || isFinance();
+        // Zone managers may inspect the payment reference for orders in their
+        // own zone. The private contact/NID document remains restricted.
+        allow get: if docId == 'payment' &&
+          isZoneManager() &&
+          staffZone() != null &&
+          exists(/databases/$(database)/documents/orders/$(orderId)) &&
+          get(/databases/$(database)/documents/orders/$(orderId)).data.get('branchZone', null) == staffZone();
         allow write: if false;
       }
     }
