@@ -385,6 +385,7 @@ function resolveDeliveryServer({ branchZone, areaName, deliveryZoneId, customerL
 
 exports.createOrderSecure = onCall(async (request) => {
   const uid = request.auth?.uid || null;
+  if (!uid) throw new HttpsError('unauthenticated', 'অর্ডার করতে লগইন করুন।');
   const data = request.data || {};
 
   // ---- input shape validation (defense in depth; UI already checks most of this) ----
@@ -566,14 +567,14 @@ exports.createOrderSecure = onCall(async (request) => {
  *      (allow create: if false, createOrderSecure চালু হওয়ার পর থেকে) — ফলে
  *      হোমপেজে প্রচারিত এই ফিচারটা প্রতিটি গ্রাহকের জন্য সম্পূর্ণ অকার্যকর হয়ে
  *      গিয়েছিল (প্রতিটি সাবমিট silently ব্যর্থ হতো)। এখন createOrderSecure-এর
- *      মতোই একটা dedicated, server-side validated Cloud Function — advance
- *      amount/paymentMethod সার্ভারে ফিক্সড, bkashTrxId ডুপ্লিকেট-চেক করা হয়
- *      (client-side sessionStorage গার্ড সহজেই বাইপাসযোগ্য ছিল)।
+ *      মতোই একটা dedicated Cloud Function — advance amount/paymentMethod
+ *      সার্ভারে ফিক্সড; দেওয়া ID কর্মীরা পরে ম্যানুয়ালি মিলিয়ে দেখেন।
  * ------------------------------------------------------------------- */
 const BAZAR_TYPE_LABELS = { weekly: 'সাপ্তাহিক', monthly: 'মাসিক', wedding: 'বিয়ের', ramadan: 'রমজানের', qurbani: 'কুরবানির', other: 'অন্যান্য' };
 
 exports.createCustomBazarOrderSecure = onCall(async (request) => {
   const uid = request.auth?.uid || null;
+  if (!uid) throw new HttpsError('unauthenticated', 'বাজারের লিস্ট দিতে লগইন করুন।');
   const data = request.data || {};
 
   const customerName = typeof data.customerName === 'string' ? data.customerName.trim().slice(0, 120) : '';
@@ -597,7 +598,7 @@ exports.createCustomBazarOrderSecure = onCall(async (request) => {
   if (address.length < 5) throw new HttpsError('invalid-argument', 'ঠিকানা বিস্তারিত লিখুন।');
   if (!branchZone || !zone || !village) throw new HttpsError('invalid-argument', 'ডেলিভারি তথ্য অসম্পূর্ণ।');
   if (!bazarList) throw new HttpsError('invalid-argument', 'বাজারের লিস্ট দিন।');
-  if (!/^[A-Z0-9]{8,50}$/.test(bkashTrxId)) throw new HttpsError('invalid-argument', 'সঠিক অগ্রিম পেমেন্টের ট্রানজেকশন ID দিন।');
+  if (!bkashTrxId) throw new HttpsError('invalid-argument', 'ট্রানজেকশন ID লিখুন।');
 
   const normalizedBazarZone = normalizeServiceZoneId(branchZone);
   const [bazarAreasSnap, bazarBranchesSnap] = await Promise.all([
@@ -610,31 +611,13 @@ exports.createCustomBazarOrderSecure = onCall(async (request) => {
     throw new HttpsError('failed-precondition', 'এই এরিয়ায় এখনো Golapi Shop-এর ডেলিভারি চালু হয়নি।');
   }
 
-  // Legacy orders used the transaction id on the root document; reject those first.
-  const dupQuery = await db.collection('orders')
-    .where('orderType', '==', 'custom-bazar')
-    .where('bkashTrxId', '==', bkashTrxId)
-    .limit(1).get();
-  if (!dupQuery.empty) {
-    throw new HttpsError('already-exists', 'এই ট্রানজেকশন ID দিয়ে ইতিমধ্যে একটি অর্ডার জমা হয়েছে।');
-  }
-
-  // New orders use a hash-keyed claim document inside the same transaction, closing
-  // the query-then-write race. The raw transaction id is kept private from drivers.
-  const claimId = hashGuestAccessToken(`manual:${advanceMethod}:${bkashTrxId}`);
-  const claimRef = db.collection('payment_claims').doc(claimId);
-  const oldClaimRef = advanceMethod === 'bkash' ? db.collection('payment_claims').doc(hashGuestAccessToken(`custom-bazar:bkash:${bkashTrxId}`)) : null;
   const orderRef = db.collection('orders').doc();
   const orderNo = 'CB-' + new Date().getFullYear() + '-' + String(Math.floor(Math.random() * 900000) + 100000);
-  await db.runTransaction(async tx => {
-    const claimSnap = await tx.get(claimRef);
-    const oldClaimSnap = oldClaimRef ? await tx.get(oldClaimRef) : null;
-    if (claimSnap.exists || oldClaimSnap?.exists) {
-      throw new HttpsError('already-exists', 'এই ট্রানজেকশন ID দিয়ে ইতিমধ্যে একটি অর্ডার জমা হয়েছে।');
-    }
+  // The team reviews the transaction manually. An incorrect or reused ID must
+  // still reach the order desk so the customer can be contacted.
+  const batch = db.batch();
     const now = admin.firestore.FieldValue.serverTimestamp();
-    tx.create(claimRef, { orderId: orderRef.id, method: advanceMethod, purpose: 'custom-bazar', createdAt: now });
-    tx.set(orderRef, {
+    batch.set(orderRef, {
       orderNumber: orderNo, orderType: 'custom-bazar', bazarType, bazarTypeLabel: BAZAR_TYPE_LABELS[bazarType],
       customerName, customerPhone, address, village, instructions, branchZone: normalizedBazarZone, district,
       zone, bazarList, notes, advanceAmount: 100, paymentMethod: `${advanceMethod}+cod`,
@@ -642,11 +625,37 @@ exports.createCustomBazarOrderSecure = onCall(async (request) => {
       billPhotoUrl: null, billAmount: null,
       status: 'pending', userId: uid, createdAt: now
     });
-    tx.set(orderRef.collection('private').doc('payment'), { bkashTrxId, advanceAmount: 100, method: advanceMethod, createdAt: now });
-    tx.set(orderRef.collection('private').doc('contact'), { nid: customerNid, createdAt: now });
-  });
+    batch.set(orderRef.collection('private').doc('payment'), { bkashTrxId, advanceAmount: 100, method: advanceMethod, createdAt: now });
+    batch.set(orderRef.collection('private').doc('contact'), { nid: customerNid, createdAt: now });
+  await batch.commit();
 
   return { orderId: orderRef.id, orderNumber: orderNo };
+});
+
+// The driver records the market bill after shopping; the customer sees it before delivery.
+exports.submitCustomBazarBill = onCall(async (request) => {
+  const uid = request.auth?.uid;
+  if (!uid) throw new HttpsError('unauthenticated', 'ড্রাইভার লগইন প্রয়োজন।');
+  const orderId = typeof request.data?.orderId === 'string' ? request.data.orderId.trim() : '';
+  const amount = request.data?.billAmount;
+  if (!/^[a-zA-Z0-9]{8,80}$/.test(orderId) || !Number.isSafeInteger(amount) || amount < 100 || amount > 1000000) {
+    throw new HttpsError('invalid-argument', 'সঠিক অর্ডার ও মোট বিল দিন।');
+  }
+  const staffSnap = await db.collection('staff').doc(uid).get();
+  const staff = staffSnap.data();
+  if (!staffSnap.exists || staff?.role !== 'driver' || staff?.active === false) throw new HttpsError('permission-denied', 'ড্রাইভার অনুমোদিত নয়।');
+  const orderRef = db.collection('orders').doc(orderId);
+  await db.runTransaction(async tx => {
+    const snap = await tx.get(orderRef);
+    const order = snap.data();
+    if (!snap.exists || order.orderType !== 'custom-bazar' ||
+        ![uid, String(staff.driverId || '')].includes(String(order.driverId || '')) ||
+        order.driverAccepted !== true || !['assigned', 'packed', 'picked_up'].includes(order.status)) {
+      throw new HttpsError('failed-precondition', 'এই অর্ডারের বিল এখন দেওয়া যাবে না।');
+    }
+    tx.update(orderRef, { billAmount: amount, billUpdatedAt: admin.firestore.FieldValue.serverTimestamp() });
+  });
+  return { billAmount: amount, balanceDue: amount - 100 };
 });
 
 /* ---------------------------------------------------------------------
@@ -812,9 +821,6 @@ exports.updateDriverOrderSecure = onCall(async (request) => {
     const staff = staffSnap.data();
     const driverId = String(staff?.driverId || uid);
     const order = orderSnap.data();
-    if (order.orderType === 'custom-bazar' && order.paymentStatus !== 'verified') {
-      throw new HttpsError('failed-precondition', 'কাস্টম বাজারের ৳১০০ অগ্রিম যাচাই না হওয়া পর্যন্ত কাজ শুরু করা যাবে না।');
-    }
     if (![driverId, uid].includes(String(order.driverId || ''))) {
       throw new HttpsError('permission-denied', 'এই অর্ডারটি আপনার জন্য অ্যাসাইন করা নয়।');
     }
@@ -849,6 +855,9 @@ exports.updateDriverOrderSecure = onCall(async (request) => {
       };
       patch = transitions[current];
       if (!patch) throw new HttpsError('failed-precondition', 'এই স্ট্যাটাস থেকে পরবর্তী ধাপে যাওয়া যাবে না।');
+      if (order.orderType === 'custom-bazar' && current === 'picked_up' && order.billAmount == null) {
+        throw new HttpsError('failed-precondition', 'ডেলিভারির আগে বাজারের মোট বিল গ্রাহককে জানান।');
+      }
       patch.updatedAt = now;
     }
 
