@@ -47,6 +47,9 @@ export interface OrderItem {
 
 export interface Order {
   id: string;
+  orderType?: string;
+  bazarList?: string;
+  billAmount?: number | null;
   restaurantName: string;
   restaurantAddress: string;
   customerName: string;
