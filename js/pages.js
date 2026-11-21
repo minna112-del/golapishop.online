@@ -442,11 +442,17 @@ const PDP = {
     const el=document.getElementById('pdpQty'); if(el) el.textContent = bn(this.qty);
   },
   addToCart(){ if(!this.product||Number(this.product.stock)<=0){ toast('পণ্যটি বর্তমানে স্টকে নেই','error'); return; } Cart.add(this.product.id, this.qty); },
-  buyNow(){ if(!this.product||Number(this.product.stock)<=0){ toast('পণ্যটি বর্তমানে স্টকে নেই','error'); return; } Cart.add(this.product.id, this.qty); Router.go('checkout'); }
+  buyNow(){ if(!this.product||Number(this.product.stock)<=0){ toast('পণ্যটি বর্তমানে স্টকে নেই','error'); return; } if(Cart.add(this.product.id, this.qty)) Router.go('checkout'); }
 };
 
 /* ---------- Cart ---------- */
 const Cart = {
+  pendingAdd:null,
+  resumePendingAdd(){
+    const pending=this.pendingAdd;
+    this.pendingAdd=null;
+    if(pending && (Auth.currentUser || FB?.auth?.currentUser)) this.add(pending.id,pending.qty);
+  },
   items:{},
   lastFocused:null,
   load(){
@@ -476,6 +482,12 @@ const Cart = {
     this.badge();
   },
   add(id,qty=1){
+    if(!Auth.currentUser && !FB?.auth?.currentUser){
+      this.pendingAdd={id,qty};
+      AuthUI.open(); AuthUI.switchTab('register');
+      toast('কার্টে পণ্য যোগ করতে আগে অ্যাকাউন্ট খুলুন বা লগইন করুন','info');
+      return false;
+    }
     const p=ALL_PRODUCTS.find(x=>x.id===id);
     if(!p){ toast('পণ্যটি খুঁজে পাওয়া যায়নি','error'); return; }
     const stock=Math.max(0,Number(p.stock)||0);
@@ -490,6 +502,7 @@ const Cart = {
     if(typeof dataLayer!=='undefined'){
       dataLayer.push({event:'add_to_cart', currency:'BDT', value:p.salePrice*(next-current), items:[{item_id:id,item_name:p.name||'',quantity:Math.max(0,next-current),price:p.salePrice||0}]});
     }
+    return true;
   },
   remove(id){
     const p=ALL_PRODUCTS.find(x=>x.id===id);
@@ -770,6 +783,44 @@ const OrderSuccess = {
     }
     const copy=document.getElementById('successCopyBtn');
     if(copy) copy.disabled=!data.orderNumber;
+    this.startCustomProgress(data);
+  },
+  _progressUnsub:null,
+  stopCustomProgress(){
+    if(this._progressUnsub){ this._progressUnsub(); this._progressUnsub=null; }
+    const orderId=this.get().orderId;
+    if(orderId && window.LiveMap) LiveMap.destroy(orderId);
+  },
+  async startCustomProgress(data){
+    this.stopCustomProgress();
+    const box=document.getElementById('customBazarProgress');
+    if(!box) return;
+    box.hidden=!(data.customBazarMemoKey && data.orderId);
+    if(box.hidden) return;
+    if(!FB){ window.addEventListener('firebase-ready',()=>this.startCustomProgress(data),{once:true}); return; }
+    const statusEl=document.getElementById('customBazarProgressStatus');
+    const billEl=document.getElementById('customBazarProgressBill');
+    const mapEl=document.getElementById('customBazarProgressMap');
+    const link=document.getElementById('customBazarProgressMapLink');
+    this._progressUnsub=FB.onSnapshot(FB.doc(FB.db,'orders',data.orderId),snap=>{
+      if(!snap.exists()){ statusEl.textContent='অর্ডার পাওয়া যায়নি।'; return; }
+      const order=snap.data();
+        const labels={pending:'অর্ডার পেয়েছি',confirmed:'অর্ডার প্রস্তুত হচ্ছে',assigned:'ড্রাইভার অ্যাসাইন হয়েছে',packed:'ড্রাইভার বাজার করছে',picked_up:'বাজার শেষ, ডেলিভারি প্রস্তুত',in_transit:'ড্রাইভার আপনার পথে',delivered:'ডেলিভারি সম্পন্ন',cancelled:'অর্ডার বাতিল'};
+        const stages=['pending','assigned','packed','picked_up','in_transit','delivered'];
+        const step=stages.indexOf(order.status);
+        statusEl.textContent=`${labels[order.status]||order.status}${step>=0?' · ধাপ '+(step+1)+'/'+stages.length:''}${order.driverName?' · '+order.driverName:''}`;
+        billEl.textContent=order.billAmount==null?'বাজার শেষে মোট বিল এখানে দেখা যাবে।':`মোট বিল ৳${order.billAmount} · অগ্রিম ৳১০০ বাদে ক্যাশ ৳${Math.max(0,order.billAmount-100)} রেডি রাখুন।`;
+        const inTransit=order.status==='in_transit' && Number.isFinite(order.driverLat) && Number.isFinite(order.driverLng);
+        mapEl.style.display=inTransit?'block':'none';
+        link.style.display=inTransit?'block':'none';
+        if(inTransit){
+          link.href=`https://www.google.com/maps?q=${order.driverLat},${order.driverLng}`;
+          if(window.LiveMap){
+            if(LiveMap.instances[data.orderId]) LiveMap.updatePosition(data.orderId,order.driverLat,order.driverLng);
+            else LiveMap.init(data.orderId,'customBazarProgressMap',order.driverLat,order.driverLng,true);
+          }
+        }else if(window.LiveMap) LiveMap.destroy(data.orderId);
+    },()=>{ statusEl.textContent='অগ্রগতি পাওয়া যায়নি। সংযোগ পরীক্ষা করুন।'; });
   },
   async copyOrderNumber(){
     const no=this.get().orderNumber;
@@ -946,7 +997,7 @@ const SavedLists = {
 
 /* ---------- My Orders ---------- */
 const MyOrders = {
-  cache: [], tab: 'active',
+  cache: [], tab: 'active', _unsub:null,
   switchTab(tab){
     this.tab = ['active','past','saved'].includes(tab) ? tab : 'active';
     const tabs = {active:'ordersTabActive',past:'ordersTabPast',saved:'ordersTabSaved'};
@@ -972,6 +1023,7 @@ const MyOrders = {
   async render(){
     const list=document.getElementById('myOrdersList');
     if(!list) return;
+    if(this._unsub){ this._unsub(); this._unsub=null; }
     list.innerHTML='<div class="orders-loading"><span class="spinner"></span><p>অর্ডার লোড হচ্ছে…</p></div>';
     const user=Auth.currentUser;
     if(!user){
@@ -980,17 +1032,16 @@ const MyOrders = {
       return;
     }
     if(!FB){ list.innerHTML='<div class="orders-error"><strong>সংযোগ পাওয়া যাচ্ছে না</strong><p>ইন্টারনেট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।</p><button class="btn btn-outline" type="button" onclick="MyOrders.render()">আবার চেষ্টা করুন</button></div>'; return; }
-    try{
-      const snap=await FB.getDocs(FB.query(FB.collection(FB.db,'orders'),FB.where('userId','==',user.uid)));
+    this._unsub=FB.onSnapshot(FB.query(FB.collection(FB.db,'orders'),FB.where('userId','==',user.uid)),snap=>{
       const orders=[]; snap.forEach(d=>orders.push({id:d.id,...d.data()}));
       orders.sort((a,b)=>this.createdMs(b)-this.createdMs(a));
       this.cache=orders;
       this.updateCounts();
       this.switchTab(this.tab);
-    }catch(e){
+    },e=>{
       list.innerHTML='<div class="orders-error"><strong>অর্ডার লোড করা যায়নি</strong><p>কিছুক্ষণ পর আবার চেষ্টা করুন।</p><button class="btn btn-outline" type="button" onclick="MyOrders.render()">আবার চেষ্টা করুন</button></div>';
       devWarn('orders load failed',e.message);
-    }
+    });
   },
   createdMs(order){
     const value=order?.createdAt;

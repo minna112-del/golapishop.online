@@ -3,6 +3,11 @@ const Checkout = {
   pay:'cod', currentStep:1, walletAvailable:0, couponCode:null, couponData:null, isPlacingOrder:false,
   locationData:null, // LocationPicker থেকে আসা {lat,lng,address,branchZone,distanceKm,etaMin,deliveryFee}
   async init(){
+    const contact=await Auth.customerContact();
+    for(const [id,value] of [['ckName',contact?.name],['ckPhone',contact?.phone]]){
+      const field=document.getElementById(id);
+      if(field && !field.value.trim() && value) field.value=value;
+    }
     const d=document.getElementById('ckDistrict'); if(d) d.value='';
     const z=document.getElementById('ckZone'); if(z) z.innerHTML=`<option value="">${currentLang==='bn'?'প্রথমে ডেলিভারি জোন বেছে নিন':'Select delivery zone first'}</option>`;
     const v=document.getElementById('ckVillage'); if(v) v.value='';
@@ -239,6 +244,7 @@ const Checkout = {
   },
   async placeOrder(){
     if(this.isPlacingOrder) return;
+    if(!Auth.currentUser && !FB?.auth?.currentUser){ AuthUI.open(); AuthUI.switchTab('register'); return; }
     if(!this.validateCartForOrder()) return;
     if(!this.locationData){ toast(currentLang==='bn'?'⚠ লোকেশন নির্বাচন করা হয়নি — "ম্যাপে সঠিক লোকেশন পিন করুন" বাটনে ট্যাপ করুন':'⚠ No location selected — tap "Pin Exact Location on Map"','error'); this.goStep(1); return; }
     if(!this.locationData.zone){ toast(currentLang==='bn'?'⚠ এই লোকেশন ডেলিভারি জোনের বাইরে':'⚠ This location is outside the delivery zone','error'); this.goStep(1); return; }

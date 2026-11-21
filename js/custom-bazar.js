@@ -1,5 +1,19 @@
 /* custom-bazar.js — Custom Bazar page logic (lazy-loaded, শুধু custom-bazar পেজে গেলে লোড হয়) */
 const CustomBazar = {
+  pendingListFocus:false,
+  resumePendingList(){
+    const pending=this.pendingListFocus;
+    this.pendingListFocus=false;
+    if(pending && (Auth.currentUser || FB?.auth?.currentUser)) document.getElementById('cbList')?.focus();
+  },
+  async fillCustomer(){
+    const contact=await Auth.customerContact();
+    if(!contact || !document.getElementById('page-custom-bazar')?.classList.contains('active')) return;
+    for(const [id,value] of [['cbName',contact.name],['cbPhone',contact.phone]]){
+      const field=document.getElementById(id);
+      if(field && !field.value.trim()) field.value=value;
+    }
+  },
   init(){
     ['cbName','cbPhone','cbNid','cbAddress','cbList','cbNotes','cbTrxId','cbVillage','cbInstructions'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
     const d=document.getElementById('cbDistrict'); if(d) d.value='';
@@ -7,6 +21,16 @@ const CustomBazar = {
     const method=document.getElementById('cbAdvanceMethod'); if(method) method.value='bkash';
     this.updatePaymentNumber();
     const m=document.getElementById('cbMsg'); if(m) m.className='form-msg';
+    const list=document.getElementById('cbList');
+    if(list && !list.dataset.authGate){
+      list.dataset.authGate='1';
+      list.addEventListener('focus',()=>{
+        if(Auth.currentUser || FB?.auth?.currentUser) return;
+        this.pendingListFocus=true;
+        list.blur(); AuthUI.open(); AuthUI.switchTab('register');
+      });
+    }
+    this.fillCustomer();
     this.renderPastOrders();
   },
   updatePaymentNumber(){
@@ -69,6 +93,11 @@ const CustomBazar = {
   },
   async submit(){
     const msgEl=document.getElementById('cbMsg');
+    if(!Auth.currentUser && !FB?.auth?.currentUser){
+      AuthUI.open(); AuthUI.switchTab('register');
+      msgEl.textContent='অর্ডার জমা দিতে আগে অ্যাকাউন্ট খুলুন বা লগইন করুন';
+      msgEl.className='form-msg err'; return;
+    }
     const name=document.getElementById('cbName')?.value.trim()||'';
     const phone=document.getElementById('cbPhone')?.value.trim()||'';
     const customerNid=document.getElementById('cbNid')?.value.trim().replace(/\s/g,'')||'';
@@ -86,17 +115,6 @@ const CustomBazar = {
     if(!/^(?:\d{10}|\d{13}|\d{17})$/.test(customerNid)){ msgEl.textContent='NID নম্বর ১০, ১৩ বা ১৭ সংখ্যার লিখুন'; msgEl.className='form-msg err'; return; }
     const phoneRe=/^(?:\+880|880|0)1[3-9]\d{8}$/;
     if(!phoneRe.test(phone.replace(/[\s-]/g,''))){ msgEl.textContent='সঠিক মোবাইল নম্বর দিন'; msgEl.className='form-msg err'; return; }
-    // ⚠️ duplicate submission guard: form reset না হওয়ায় ও বাটন সাথে সাথে আবার
-    // enable হয়ে যাওয়ায় customer একই ট্রানজেকশন ID দিয়ে দ্বিতীয়বার submit
-    // করে ফেলতে পারতো — একটা bKash পেমেন্ট দিয়ে দুইটা অর্ডার তৈরি হয়ে যেতো।
-    // এখন এই সেশনে ইতিমধ্যে সাবমিট হওয়া trxId আবার দিলে আটকে দেওয়া হয়।
-    let recentTrxIds = [];
-    try{ recentTrxIds = JSON.parse(sessionStorage.getItem('golapi_cb_submitted_trx')||'[]'); }catch(e){}
-    if(recentTrxIds.includes(`${advanceMethod}:${trxId.toUpperCase()}`)){
-      msgEl.textContent = 'এই ট্রানজেকশন ID দিয়ে ইতিমধ্যে একটি অর্ডার জমা হয়েছে — নতুন লিস্টের জন্য নতুন পেমেন্ট করুন।';
-      msgEl.className='form-msg err';
-      return;
-    }
     if(!FB){ msgEl.textContent='সংযোগ সমস্যা'; msgEl.className='form-msg err'; return; }
     const btn=document.getElementById('cbSubmitBtn'); const orig=btn.textContent; btn.textContent='জমা হচ্ছে...'; btn.disabled=true;
     const typeLabels={weekly:'সাপ্তাহিক',monthly:'মাসিক',wedding:'বিয়ের',ramadan:'রমজানের',qurbani:'কুরবানির',other:'অন্যান্য'};
@@ -106,7 +124,7 @@ const CustomBazar = {
       // চালু হওয়ার পর থেকে) — ফলে এই ফিচার প্রতিটি গ্রাহকের জন্য silently ব্যর্থ হতো।
       // এখন createOrderSecure-এর মতোই একটা dedicated, server-side validated Cloud
       // Function (createCustomBazarOrderSecure) দিয়ে অর্ডার তৈরি হয় — orderNumber ও
-      // ডুপ্লিকেট bKash ট্রানজেকশন ID চেকও এখন সার্ভার-সাইডে হয়।
+      // ID সঠিক কি না কর্মীরা অর্ডার পাওয়ার পরে ম্যানুয়ালি যাচাই করবেন।
       const createBazarOrder = FB.httpsCallable(FB.functions, 'createCustomBazarOrderSecure');
       const res = await createBazarOrder({
         customerName:name, customerPhone:phone, customerNid, address, village, instructions,
@@ -117,11 +135,6 @@ const CustomBazar = {
       const submittedOrder = {orderNumber:orderNo, orderType:'custom-bazar', bazarType:type, bazarTypeLabel:typeLabels[type]||type, customerName:name, customerPhone:phone, address, village, instructions, notes, bazarList:list, advanceAmount:100, advanceMethod};
       const memoKey = BazarMemo.register(submittedOrder);
 
-      // duplicate-guard-এর জন্য এই trxId মনে রাখা হলো
-      try{
-        recentTrxIds.push(`${advanceMethod}:${trxId.toUpperCase()}`);
-        sessionStorage.setItem('golapi_cb_submitted_trx', JSON.stringify(recentTrxIds.slice(-20)));
-      }catch(e){}
 
       // ⚠️ আগে ফর্মের ভ্যালু (নাম, ঠিকানা, trxId ইত্যাদি) সাবমিটের পরও ফর্মে থেকে
       // যেতো, আর বাটন সাথে সাথেই আবার enable হয়ে যেতো — customer ভুলবশত আবার
@@ -136,6 +149,7 @@ const CustomBazar = {
       // মাধ্যমে অর্ডার নম্বর সংরক্ষণ করে সফলতার পেজে নিয়ে যাওয়া হয় (memo
       // দেখার বাটনও সেখানে দেওয়া থাকে)।
       OrderSuccess.save({
+        orderId: res.data.orderId,
         orderNumber:orderNo,
         total:100,
         itemCount: list.split('\n').filter(Boolean).length,

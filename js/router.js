@@ -577,6 +577,10 @@ const Router = {
       return;
     }
 
+    if (this.current === 'order-success' && page !== 'order-success') window.OrderSuccess?.stopCustomProgress?.();
+    if (this.current === 'myorders' && page !== 'myorders' && window.MyOrders?._unsub) {
+      window.MyOrders._unsub(); window.MyOrders._unsub = null;
+    }
     this.current = page;
     this.params = params;
 

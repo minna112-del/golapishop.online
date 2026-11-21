@@ -1523,9 +1523,17 @@ const OrderDetail = {
       if(order.orderType==='custom-bazar'){
         document.getElementById('odBazarList').textContent=order.bazarList||'—';
         document.getElementById('odAdvanceStatus').textContent=`৳১০০ ${order.advanceMethod==='nagad'?'নগদ':'বিকাশ'} · ${order.paymentStatus==='verified'?'ম্যানুয়ালি যাচাই হয়েছে':'যাচাই বাকি/সমস্যা আছে'}`;
+        const trxEl=document.getElementById('odAdvanceTrxId');
+        trxEl.textContent='ট্রানজেকশন ID: লোড হচ্ছে…';
+        FB.getDoc(FB.doc(FB.db,'orders',order.id,'private','payment')).then(snap=>{
+          if(this.current!==order) return;
+          trxEl.textContent=`ট্রানজেকশন ID: ${snap.data()?.bkashTrxId||'পাওয়া যায়নি'}`;
+        }).catch(()=>{
+          if(this.current===order) trxEl.textContent='ট্রানজেকশন ID: দেখার অনুমতি নেই';
+        });
         document.getElementById('odBillAmount').value=order.billAmount??'';
         document.getElementById('odBalanceDue').textContent=order.billAmount==null?'বিল এখনও দেওয়া হয়নি':money(Math.max(0,Number(order.billAmount)-100));
-        document.getElementById('odBillSave').disabled=order.paymentStatus!=='verified';
+        document.getElementById('odBillSave').disabled=false;
       }
     }
     const ship = order.shippingCost||0;
@@ -1562,7 +1570,6 @@ const OrderDetail = {
   async saveBill(){
     const order=this.current;
     if(!order||order.orderType!=='custom-bazar')return;
-    if(order.paymentStatus!=='verified'){toast('আগে ৳১০০ অগ্রিম ম্যানুয়ালি যাচাই করুন','error');return;}
     const amount=Number(document.getElementById('odBillAmount').value);
     if(!Number.isSafeInteger(amount)||amount<100){toast('সঠিক মোট বিল লিখুন (কমপক্ষে ৳১০০)','error');return;}
     try{

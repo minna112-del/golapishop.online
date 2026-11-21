@@ -3,6 +3,8 @@ const OrdersService = {
   cache:[],
   _cachedAt:0,
   _inflight:null,
+  _cachedScope:null,
+  _inflightScope:null,
   // ⚠️ আগে এখানে গোটা 'orders' collection কোনো limit/date-range ছাড়াই fetch হতো,
   // আর Admin, Zone Manager ও Finance — তিনটা dashboard-ই আলাদাভাবে loadAll() কল
   // করত। ফলে অর্ডার সংখ্যা বাড়ার সাথে সাথে প্রতিটা dashboard open-এ পুরো collection
@@ -12,23 +14,26 @@ const OrdersService = {
   // network request না পাঠিয়ে একই cache/promise শেয়ার করা হয়।
   MAX_ORDERS: 500,
   CACHE_MS: 30000,
-  async loadAll({force=false}={}){
+  async loadAll({force=false,zone=null}={}){
     if(!FB) return [];
+    const scope=`${FB.auth.currentUser?.uid||'guest'}:${zone||'*'}`;
+    if(this._cachedScope!==scope){ this.cache=[]; this._cachedAt=0; this._cachedScope=scope; }
     const fresh = !force && this.cache.length && (Date.now()-this._cachedAt) < this.CACHE_MS;
     if(fresh) return this.cache;
-    if(this._inflight) return this._inflight;
+    if(this._inflight && this._inflightScope===scope) return this._inflight;
+    this._inflightScope=scope;
     this._inflight = (async()=>{
       try{
-        const snap = await FB.getDocs(FB.query(
-          FB.collection(FB.db,'orders'),
-          FB.orderBy('createdAt','desc'),
-          FB.limit(this.MAX_ORDERS)
-        ));
+        const query=zone
+          ? FB.query(FB.collection(FB.db,'orders'),FB.where('branchZone','==',zone),FB.limit(this.MAX_ORDERS))
+          : FB.query(FB.collection(FB.db,'orders'),FB.orderBy('createdAt','desc'),FB.limit(this.MAX_ORDERS));
+        const snap = await FB.getDocs(query);
         const orders=[]; snap.forEach(d=>orders.push({id:d.id,...d.data()}));
-        this.cache=orders; this._cachedAt=Date.now();
+        if(zone) orders.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+        if(this._cachedScope===scope){this.cache=orders; this._cachedAt=Date.now();}
         return orders;
       }catch(e){ devWarn(e.message); return []; }
-      finally{ this._inflight=null; }
+      finally{ if(this._inflightScope===scope){this._inflight=null;this._inflightScope=null;} }
     })();
     return this._inflight;
   },
@@ -37,9 +42,6 @@ const OrdersService = {
     try {
       const orderSnap = await FB.getDoc(FB.doc(FB.db, 'orders', orderId));
       if (!orderSnap.exists()) throw new Error('অর্ডার পাওয়া যায়নি');
-      if (orderSnap.data().orderType === 'custom-bazar' && orderSnap.data().paymentStatus !== 'verified') {
-        throw new Error('৳১০০ অগ্রিম যাচাইয়ের পর ড্রাইভার অ্যাসাইন করুন');
-      }
       await FB.updateDoc(FB.doc(FB.db, 'orders', orderId), {
         driverId, driverName, status: 'assigned', assignedAt: FB.serverTimestamp()
       });
@@ -55,9 +57,6 @@ const OrdersService = {
     try {
       const orderSnap = await FB.getDoc(FB.doc(FB.db, 'orders', orderId));
       if (!orderSnap.exists()) throw new Error('অর্ডার পাওয়া যায়নি');
-      if (orderSnap.data().orderType === 'custom-bazar' && orderSnap.data().paymentStatus !== 'verified' && !['pending', 'cancelled'].includes(status)) {
-        throw new Error('৳১০০ অগ্রিম যাচাইয়ের পর কাজ শুরু করুন');
-      }
       await FB.updateDoc(FB.doc(FB.db, 'orders', orderId), { status });
       const order = this.cache.find(o => o.id === orderId) || { id: orderId };
       if (status === 'delivered') {

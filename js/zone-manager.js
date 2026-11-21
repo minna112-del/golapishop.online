@@ -1,7 +1,7 @@
 /* zone-manager.js — ZoneManagerDash (Firebase Auth secured) */
 const ZoneManagerDash = {
   currentZone: null, currentUid: null, _orders: [],
-  orderTotal(o){ return Number(o?.total ?? o?.grandTotal ?? o?.payableTotal ?? o?.subtotal ?? 0) || 0; },
+  orderTotal(o){ return Number(o?.orderType==='custom-bazar' ? (o?.billAmount ?? 0) : (o?.total ?? o?.grandTotal ?? o?.payableTotal ?? o?.subtotal ?? 0)) || 0; },
   applyHeader(zone){
     const info = BRANCH_INFO[zone] || {label: zone || 'নির্ধারিত জোন', managerName:'—'};
     const zl=document.getElementById('zmZoneLabel'); if(zl) zl.textContent = info.label;
@@ -56,7 +56,7 @@ const ZoneManagerDash = {
     document.getElementById('zmDashBox').style.display='block';
     this.applyHeader(this.currentZone);
     if(typeof EmployeeWorkspace!=='undefined') await EmployeeWorkspace.mountCurrent('zmEmployeeWorkspace');
-    const allOrders = await OrdersService.loadAll();
+    const allOrders = await OrdersService.loadAll({zone:this.currentZone});
     const orders = allOrders.filter(o=>o.branchZone===this.currentZone);
     this._orders = orders;
     const products = ALL_PRODUCTS.filter(p=>p.zone===this.currentZone);

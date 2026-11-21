@@ -1,9 +1,23 @@
 /* auth.js — Firebase Auth + login/register modal + Account page + Order editing + Wishlist page + Refund */
 const Auth = {
   currentUser:null,
+  async customerContact(){
+    const user=this.currentUser || FB?.auth?.currentUser;
+    if(!user) return null;
+    let profile={};
+    try{
+      if(FB){
+        const snap=await FB.getDoc(FB.doc(FB.db,'users',user.uid));
+        if(snap.exists()) profile=snap.data();
+      }
+    }catch(e){ devWarn('customer profile load failed',e.message); }
+    if((this.currentUser || FB?.auth?.currentUser)?.uid!==user.uid) return null;
+    return {name:profile.name||user.displayName||'',phone:profile.phone||user.phoneNumber||''};
+  },
   init(){
     FB.onAuthStateChanged(FB.auth, user=>{
       this.currentUser = user;
+      if(user && document.getElementById('page-custom-bazar')?.classList.contains('active') && typeof CustomBazar!=='undefined') CustomBazar.fillCustomer();
       const accountButton = document.getElementById('loginBtn');
       if(accountButton) accountButton.setAttribute('aria-label', user ? I18n.t('আমার অ্যাকাউন্ট খুলুন','Open my account') : I18n.t('লগইন বা অ্যাকাউন্ট খুলুন','Sign in or open account'));
     });
@@ -17,7 +31,17 @@ const AuthUI = {
     const refInput = document.getElementById('regReferralCode');
     if(ref && refInput) refInput.value = ref.toUpperCase();
   },
-  close(){ document.getElementById('authModal').classList.remove('show'); this.clearMsg(); },
+  close(){
+    document.getElementById('authModal').classList.remove('show'); this.clearMsg();
+    if(typeof Cart!=='undefined') Cart.pendingAdd=null;
+    if(typeof CustomBazar!=='undefined') CustomBazar.pendingListFocus=false;
+  },
+  complete(){
+    document.getElementById('authModal').classList.remove('show'); this.clearMsg();
+    if(typeof Cart!=='undefined') Cart.resumePendingAdd();
+    if(typeof CustomBazar!=='undefined') CustomBazar.fillCustomer();
+    if(typeof CustomBazar!=='undefined') CustomBazar.resumePendingList();
+  },
   switchTab(tab){
     ['phone','login','register'].forEach(t=>{
       const btn = document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1));
@@ -42,7 +66,7 @@ const AuthUI = {
       for(let i=0; i<10 && !FB; i++){ await new Promise(r=>setTimeout(r,300)); }
       if(!FB){ this.showMsg('সংযোগ সমস্যা — ইন্টারনেট চেক করে আবার চেষ্টা করুন','err'); return; }
     }
-    try{ await FB.signInWithEmailAndPassword(FB.auth,email,pass); this.showMsg('✓ লগইন সফল','ok'); setTimeout(()=>this.close(),700); }
+    try{ await FB.signInWithEmailAndPassword(FB.auth,email,pass); this.showMsg('✓ লগইন সফল','ok'); setTimeout(()=>this.complete(),700); }
     catch(e){ this.showMsg('লগইন ব্যর্থ: '+e.message,'err'); }
   },
   async register(){
@@ -61,7 +85,7 @@ const AuthUI = {
       const createProfile = FB.httpsCallable(FB.functions, 'createCustomerProfileSecure');
       await createProfile({name, email, phone, referralCode: referralCodeInput});
       if(typeof dataLayer!=='undefined') dataLayer.push({event:'sign_up', method:'email'});
-      this.showMsg('✓ রেজিস্ট্রেশন সফল','ok'); setTimeout(()=>this.close(),700);
+      this.showMsg('✓ রেজিস্ট্রেশন সফল','ok'); setTimeout(()=>this.complete(),700);
     }catch(e){ this.showMsg('রেজিস্ট্রেশন ব্যর্থ: '+e.message,'err'); }
   }
 };
@@ -345,7 +369,7 @@ const PhoneAuth = {
         if(typeof dataLayer!=='undefined') dataLayer.push({event:'sign_up', method:'phone'});
       }
       AuthUI.showMsg('✓ লগইন সফল','ok');
-      setTimeout(()=>AuthUI.close(),700);
+      setTimeout(()=>AuthUI.complete(),700);
     }catch(e){
       devWarn('OTP verify failed', e.message);
       AuthUI.showMsg(e.code==='auth/invalid-verification-code' ? '❌ ভুল OTP কোড' : 'ভেরিফিকেশন ব্যর্থ','err');

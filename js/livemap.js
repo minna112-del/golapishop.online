@@ -41,7 +41,7 @@ const LiveMap = {
     });
   },
 
-  async init(orderId, containerId, lat, lng){
+  async init(orderId, containerId, lat, lng, guest=false){
     try{ await this._ensureLeaflet(); }catch(e){ devWarn?.('Leaflet load failed', e.message); return; }
     const el = document.getElementById(containerId);
     if(!el) return;
@@ -58,7 +58,7 @@ const LiveMap = {
 
     this.instances[orderId] = { map, marker, lastPos: {lat,lng} };
 
-    if(window.__fb){
+    if(window.__fb && !guest){
       const unsub = FB.onSnapshot(FB.doc(FB.db,'orders',orderId), snap=>{
         if(!snap.exists()) return;
         const d = snap.data();
