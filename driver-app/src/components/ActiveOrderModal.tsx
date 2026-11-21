@@ -17,8 +17,10 @@ import { useDriver } from '../context/DriverContext';
 import { Heatmap } from './Heatmap';
 
 export const ActiveOrderModal: React.FC = () => {
-  const { activeOrder, advanceOrderStatus, cancelActiveOrder, language } = useDriver();
+  const { activeOrder, advanceOrderStatus, cancelActiveOrder, submitCustomBazarBill, language } = useDriver();
   const [verifiedOrder, setVerifiedOrder] = useState<boolean>(false);
+  const [billInput, setBillInput] = useState<string>('');
+  const [billMessage, setBillMessage] = useState<string>('');
   const [showHelpModal, setShowHelpModal] = useState<boolean>(false);
 
   if (!activeOrder || activeOrder.status === 'idle' || activeOrder.status === 'incoming') {
@@ -119,6 +121,26 @@ export const ActiveOrderModal: React.FC = () => {
               </p>
               <p className="text-sm font-semibold text-zinc-200">{activeOrder.businessNote}</p>
             </div>
+          {activeOrder.orderType === 'custom-bazar' && (
+            <div className="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-4 space-y-3">
+              <p className="text-sm font-bold text-white">কাস্টমারের বাজারের লিস্ট</p>
+              <p className="whitespace-pre-wrap text-sm text-zinc-200">{activeOrder.bazarList}</p>
+              <label className="block text-sm text-zinc-200" htmlFor="custom-bazar-bill">বাজার শেষে মোট বিল (৳)</label>
+              <input id="custom-bazar-bill" type="number" min="100" step="1" inputMode="numeric"
+                placeholder={activeOrder.billAmount != null ? String(activeOrder.billAmount) : 'মোট টাকার অংক'}
+                value={billInput} onChange={event => setBillInput(event.target.value)}
+                className="w-full rounded-xl bg-zinc-950 border border-zinc-700 text-white p-3" />
+              <button type="button" className="w-full rounded-xl bg-pink-600 text-white p-3 font-bold"
+                onClick={async () => {
+                  const amount = Number(billInput);
+                  if (!Number.isSafeInteger(amount) || amount < 100) { setBillMessage('সঠিক মোট বিল লিখুন।'); return; }
+                  try { await submitCustomBazarBill(amount); setBillMessage(`গ্রাহককে বিল জানানো হয়েছে। বাকি ক্যাশ ৳${amount - 100}`); setBillInput(''); }
+                  catch (error: any) { setBillMessage(error?.message || 'বিল পাঠানো যায়নি।'); }
+                }}>গ্রাহককে বিল জানান</button>
+              {activeOrder.billAmount != null && <p className="text-sm text-emerald-300">সংরক্ষিত মোট বিল ৳{activeOrder.billAmount} · বাকি ক্যাশ ৳{Math.max(0, activeOrder.billAmount - 100)}</p>}
+              {billMessage && <p className="text-xs text-zinc-300">{billMessage}</p>}
+            </div>
+          )}
 
             {/* Customer Item Card */}
             <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 flex items-center justify-between">
