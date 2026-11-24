@@ -5,13 +5,13 @@ service firebase.storage {
       return request.auth != null;
     }
     function isAdmin() {
-      return isSignedIn() &&
-        firestore.exists(/databases/(default)/documents/staff/$(request.auth.uid)) &&
-        firestore.get(/databases/(default)/documents/staff/$(request.auth.uid)).data.role == 'admin';
+      return isStaff() && staffRole() == 'admin';
     }
     function isStaff() {
       return isSignedIn() &&
-        firestore.exists(/databases/(default)/documents/staff/$(request.auth.uid));
+        firestore.exists(/databases/(default)/documents/staff/$(request.auth.uid)) &&
+        firestore.get(/databases/(default)/documents/staff/$(request.auth.uid)).data.get('active', true) != false &&
+        !(firestore.get(/databases/(default)/documents/staff/$(request.auth.uid)).data.get('status', 'active') in ['inactive', 'suspended', 'resigned']);
     }
     function staffRole() {
       return firestore.get(/databases/(default)/documents/staff/$(request.auth.uid)).data.role;
